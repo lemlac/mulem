@@ -102,13 +102,13 @@ fib(n) =
 
 ### Lambda Functions
 
-You can define a function within an expression with the pattern `(_) = _`. This is useful for passing functions to other functions. If the lambda function has multiple lines, it must terminate with a double semi-colon (`;;`).
+You can define a function within an expression with the pattern `(_) => _`. This is useful for passing functions to other functions. If the lambda function has multiple lines, it must terminate with a double semi-colon (`;;`).
 
 ```mu
 map(array, func) = [for x in array then func(x)]
 array0 = [1 2 3 4]
-array1 = map(array0, (x) = x + 1)
-array2 = map(array0, (x) =
+array1 = map(array0, (x) => x + 1)
+array2 = map(array0, (x) =>
     if x < 2 then
         x - 1
     else
@@ -203,13 +203,13 @@ Putting a constant value after `::` creates a constant. This holds an unchangeab
 PI :: 3.1415926535
 ```
 
-### Inline functions
+### Comptime Functions
 
-Analogous to constant values, you can define an inline function by creating a function after the double colon. Like constants, they don't output a value in memory when compiled, useful for helper functions or collecting repeated code.
+Analogous to constant values, you can define an comptime function by passing a lambda function after the double colon. Like constants, they don't output a value in memory when compiled, useful for helper functions or collecting repeated code.
 
 ```mu
-max :: (a, b) = if a > b then a else b
-min :: (a, b) = if a < b then a else b
+max :: (a, b) => if a > b then a else b
+min :: (a, b) => if a < b then a else b
 ```
 
 ### Alias
