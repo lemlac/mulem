@@ -203,7 +203,7 @@ Putting a constant value after `::` creates a constant. This holds an unchangeab
 PI :: 3.1415926535
 ```
 
-Not that constants are lazily evaluated. You can call a function in it, and it won't be evaluated until it's used.
+Note that constants are lazily evaluated. You can call a function in it, and it won't be evaluated until it's used.
 
 ```mu
 SQRT_TWO :: sqrt(2)
