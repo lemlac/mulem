@@ -203,13 +203,20 @@ Putting a constant value after `::` creates a constant. This holds an unchangeab
 PI :: 3.1415926535
 ```
 
-### Inline Functions
-
-Analogous to constant values, you can define an comptime function by passing a lambda function after the double colon. Like constants, they don't output a value in memory when compiled, useful for helper functions or collecting repeated code.
+Not that constants are lazily evaluated. You can call a function in it, and it won't be evaluated until it's used.
 
 ```mu
-max :: (a, b) => if a > b then a else b
-min :: (a, b) => if a < b then a else b
+SQRT_TWO :: sqrt(2)
+value = SQRT_TWO + 1  -- Here sqrt(2) is calculated.
+```
+
+You can also bind a function to a constant. When calling it, it would be the same as defining it inline and then calling. This can be useful if you need to pass a function multiple times but don't want it to be outputed when compiled.
+
+```mu
+IDENTITY :: (x) => x
+addOne :: (x) => x + 1
+value = addOne(2) -- Same as ((x) => x + 1)(2), result is 3.
+array = map([1 2 3 4], addOne)
 ```
 
 ### Alias
@@ -341,6 +348,48 @@ impl MyEnum(MyVirtual)
             "I am a MyEnum of Second({x})"
         case Third{val} then
             "I am a MyEnum of Third {{ val={val} }}"
+```
+
+### Inline Functions / Macros / Generics
+
+Adding a parameter before the double colon (`::`) turns in into a macro. 
+
+Analogous to constant values, you can define an inline function by adding a parameter before the double colons. Like constants, they don't output a value in memory when compiled, useful for collecting repeated code. Unlike constant functions, they cannot be passed to another function. They are only for inserting an expression.
+
+```mu
+max(a, b) :: if a > b then a else b
+min(a, b) :: if a < b then a else b
+```
+
+You can also have multi-line macros similar to functions. The last expression is the return value.
+
+```mu
+doSomethingComplicated(x) ::
+	x = x + 1
+	x = x / 2
+	x * x
+
+value = doSomethingComplicated(3)
+```
+
+Note that this is basically the same as this:
+
+```mu
+value = (let x = 3 then
+	x = x + 1
+	x = x / 2
+	x * x
+;;)
+```
+
+You can also pass a type back to make generic types.
+
+```mu
+Option(T) :: enum
+	Some(T)
+	None
+
+maybeInt = Option(int).Some(1)
 ```
 
 ## Inheritance and Visibility
