@@ -196,6 +196,23 @@ max :: (a, b) = if a > b then a else b
 min :: (a, b) = if a < b then a else b
 ```
 
+### Alias
+
+Assigning a type after `::` creates an alias
+
+```mu
+numberType :: int
+```
+
+You can also create aliases for basic product types (tuples) or sum times (unions).
+
+```mu
+tuple :: int, float, char 
+alsoTuple :: (int, floar, char) -- Optional parentheses.
+namedTuple :: {count: int; scale: float; code: char}
+union :: int | float | char
+```
+
 ### Proceedures (`proc`)
 
 Another type of double-colon declaration is a `proc`, short for proceedure. Unlike normal functions, procs are impure but don't return anything. They also don't use any parantheses, and you can use `out` on parameters instead of a return value.  Triple dash (---) is used to divide the parameters from the function body. Captured mutable variables need to be redeclared with the `inherit` keyword. This helps make sure that the proc is actually capturing a variable and declaring a new variable.
@@ -222,21 +239,24 @@ myProc 1, 2, out sum
 doSomethingWith(sum)
 ```
 
-### Alias
+#### Parameter Bindings
+There are different kinds of bindings for a proc's parameters.
 
-Assigning a type after `::` creates an alias
-
-```mu
-numberType :: int
-```
-
-You can also create aliases for basic product types (tuples) or sum times (unions).
+1. One-way input binding (default) — the value is copied.
+2. One-way output binding (`out`) — the value will be discarded and set to a new value within the scope.
+3. One-way input binding with `ref` — the value is passed by reference but not changed.
+4. Two-way binding (`ref`+`mu`) — the value is passed by reference and may be altered.
 
 ```mu
-tuple :: int, float, char 
-alsoTuple :: (int, floar, char) -- Optional parentheses.
-namedTuple :: {count: int; scale: float; code: char}
-union :: int | float | char
+normalize_in_place :: proc
+    ref v: mu Vector2
+    ---
+    normalized = normalize(v)
+    v.x = normalized.x
+    v.y = normalized.y
+
+mu mutable_v = Vector2{ x: 5.0; y: 12.0 }
+normalize_in_place mutable_v
 ```
 
 ### Structures (`struct`)
