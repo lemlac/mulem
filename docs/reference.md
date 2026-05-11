@@ -299,11 +299,11 @@ impl MyStruct(MyVirtual)
 impl MyEnum(MyVirtual)
     speak(self) =
         match self
-        case First
+        case First then
             "I am a MyEnum of First"
-        case Second(x)
+        case Second(x) then
             "I am a MyEnum of Second({x})"
-        case Third{val}
+        case Third{val} then
             "I am a MyEnum of Third {{ val={val} }}"
 ```
 
@@ -350,7 +350,7 @@ A subtype cannot accidentally expose or clash with a private inherited member be
 
 ## Control Flow
 
-All six branching constructs (`if`, `match`, `for`, `while`, `try`, and `with`) share the same block / inline pattern:
+All branching constructs (`if`, `match`, `for`, `while`, `do`+`until`, `try`, and `with`) share the same block / inline pattern:
 
 ```mu
 -- Block form
@@ -366,6 +366,8 @@ keyword expr
 
 ### if / else
 
+Basic boolean branching.
+
 ```mu
 x = if x > 0 then x else -x
 
@@ -377,7 +379,7 @@ else
 
 ### match / case
 
-Exhaustive by default. `case _ then` for the default case.
+Enum/exception branching. Exhaustive by default. `case _ then` for the default case. The indentation of each `case` must be the same as the starting `match`.
 
 ```mu
 match self
@@ -396,6 +398,8 @@ message = (match e
 
 ### for
 
+Iterates through an array.
+
 ```mu
 new_list = [for x in list then x * 2]
 
@@ -405,9 +409,40 @@ for x in list then
 
 ### while
 
+Repeats a block of code until the condition is true.
+
 ```mu
 while cond then
     body
+```
+
+### do / until
+
+`do` marks a block of code with its own scope that runs only once.
+
+```mu
+x = 0
+do
+   x = 1
+   print "{x}"  -- 1
+print "{x}"     -- 0
+```
+
+`until` repeats the previous expression until the condition is true.
+
+```mu
+mu count = 0
+count += 1
+until count >= 10
+-- `count` is now 10 or more.
+```
+
+The two can be combined to create another type of loop.
+
+```mu
+do
+    body
+until cond
 ```
 
 ### try / except
@@ -417,13 +452,15 @@ Exceptionable types are unwrapped with a question mark within a try block. Funct
 ```mu
 safeResult = try divide(1, 0) except _ then 0.0
 
-try:
+try
     risky()?
-except e:
-    print(e)
+except e then
+    print "{e}"
 ```
 
 ### with
+
+Automically cleans up certain objects. Use `as` to use the object within a scope.
 
 ```mu
 try
@@ -435,15 +472,13 @@ except _ then
 
 ### Closing Multiple Blocks with `;;`
 
+Multiple blocks can be closed at once with `;;`. This can help with readability.
+
 ```mu
-try
-    if file1.endswith(".txt") and file2.endswith(".txt") then
-        with file.open(file1)? as f, file.open(file2)? as g then
-            g.write(f.read()?)?
-    ;;     -- closes both `if` and `with`
-    print "Success"
-except e then
-    print "Error: {str(e)}"
+if file1.endswith(".txt") and file2.endswith(".txt") then
+    with file.open(file1)? as f, file.open(file2)? as g then
+        g.write(f.read()?)?
+;; -- closes both `if` and `with`
 ```
 
 ---
@@ -462,16 +497,6 @@ except e then
 - Full `match` / `case` (exhaustive unless `case _` is present).
 - `if case Pattern(x) = value then` — like Rust's `if let`.
 - Destructuring supports structs, tuples, enum variants, and wildcards (`_`).
-
-Importing can be done with the `import` keyword. A module should have `mod name` at the top to be importable.
-
-```mu
-import something.thing
-
-mod myModule 
-
-exportedFunc(x) = x + thing
-```
 
 ---
 
