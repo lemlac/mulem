@@ -100,7 +100,7 @@ fib(n) =
         fib(n - 1) + fib(n - 2)
 ```
 
-## Lambda Functions
+### Lambda Functions
 
 You can pass a function to another function using the pattern `(_) = _`. If the lambda function has multiple lines, it must terminate with a double semi-colon (`;;`).
 
