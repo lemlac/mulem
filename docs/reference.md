@@ -102,7 +102,7 @@ fib(n) =
 
 ### Lambda Functions
 
-You can pass a function to another function using the pattern `(_) = _`. If the lambda function has multiple lines, it must terminate with a double semi-colon (`;;`).
+You can define a function within an expression with the pattern `(_) = _`. This is useful for passing functions to other functions. If the lambda function has multiple lines, it must terminate with a double semi-colon (`;;`).
 
 ```mu
 map(array, func) = [for x in array then func(x)]
