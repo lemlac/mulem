@@ -2,9 +2,9 @@
 
 *Version 0.1 (Draft)*
 
-Mu is a general-purpose, multi-paradigm programming language with Python-like syntax and significant whitespace. It targets Python developers who need C-level performance all within the same language. It is expression-oriented where possible and provides explicit control over evaluation strategy, memory model, and error handling. Another goal is to make it minimalist and have opinionated formatting to make it easier for both humans to read and LLMs to produce without over-consumimg tokens.
+Mu is a general-purpose, multi-paradigm programming language with Python-like syntax and significant whitespace. It targets Python developers who need C-level performance all within the same language. It is expression-oriented where possible and provides explicit control over evaluation strategy, memory model, and error handling. Another goal is to make it minimalist and have opinionated formatting to make it easier for both humans to read and LLMs to produce without over-consuming tokens.
 
-Mu will be both a compiled and an interpretted language. Unlike Python, you won't need to use another language like C to increase performance. You can instead compile some of it and then call it as a shared library all within the same language. Some use cases for this are AI, systems programming, and game development.
+Mu will be both a compiled and an interpreted language. Unlike Python, you won't need to use another language like C to increase performance. You can instead compile some of it and then call it as a shared library all within the same language. Some use cases for this are AI, systems programming, and game development.
 
 ---
 
@@ -13,7 +13,7 @@ Mu will be both a compiled and an interpretted language. Unlike Python, you won'
 - **Indentation**: Significant whitespace (4 spaces recommended). 
 - **Statements**: Each statement is divided by new lines. Semi-colons (;) can also be used, but there must be another statement after it—i.e. no trailing semi-colons. Double semi-colon (`;;`) has a special meaning to end a block.
 - **Comments**: Double dash (`--`) to end-of-line. Block comments start with `--[[` and end with `--]]`.
-- **String literals**: `"..."` with interpolation with `{expr}` inside. To write a literature curly brace (`{`), escape it with a backslash `\{`. 
+- **String literals**: `"..."` with interpolation with `{expr}` inside. To write a literal curly brace (`{`), escape it with a backslash `\{`. 
 
 ---
 
@@ -154,14 +154,14 @@ myStr =
     "But this is the last line."
 ```
 
-Arrays are declared with the hash symbol (`#`). A number after the hash makes it a fixed length array. Arrays are fixed length by default, but this mainly matters for mutable arrays since immutable arrays can be shadowed with different type. Items in an array are seperated with spaces or new lines. This helps keep the number of characters low when initializing arrays. If one of the items in an inline array is an expression, you must surround the expression in parantheses. The hash symbol is also used for accessing an array.
+Arrays are declared with the hash symbol (`#`). A number after the hash makes it a fixed length array. Arrays are fixed length by default, but this mainly matters for mutable arrays since immutable arrays can be shadowed with different type. Items in an array are separated with spaces or new lines. This helps keep the number of characters low when initializing arrays. If one of the items in an inline array is an expression, you must surround the expression in parentheses. The hash symbol is also used for accessing an array.
 
 ```mu
 list: float#4 = [1 2 3 4]
 compressedList = [(list#0 + list#1) (list#3 + list#4)]
 ```
 
-To make chaining accessions easier, there's a special rule for square brackets: any operator `o` can be expressed with `a[o b]` which is the same as `((a) o (b))`.   
+To make chaining accesses easier, there's a special rule for square brackets: any operator `o` can be expressed with `a[o b]` which is the same as `((a) o (b))`.   
 
 ```mu
 matrix = [
@@ -181,7 +181,7 @@ Variable and functions primarily use the equals sign (`=`), but there's another 
 
 ### Constants
 
-Putting a constant value after `::` creates a constant. This holds an unchangeable value that must be knowm at comiple time. Its type is inferred. Explicit typing isn't necessary since it cannot be changed.
+Putting a constant value after `::` creates a constant. This holds an unchangeable value that must be known at compile time. Its type is inferred. Explicit typing isn't necessary since it cannot be changed.
 
 ```mu
 PI :: 3.1415926535
@@ -208,14 +208,14 @@ You can also create aliases for basic product types (tuples) or sum times (union
 
 ```mu
 tuple :: int, float, char 
-alsoTuple :: (int, floar, char) -- Optional parentheses.
+alsoTuple :: (int, float, char) -- Optional parentheses.
 namedTuple :: {count: int; scale: float; code: char}
 union :: int | float | char
 ```
 
-### Proceedures (`proc`)
+### Procedures (`proc`)
 
-Another type of double-colon declaration is a `proc`, short for proceedure. Unlike normal functions, procs are impure but don't return anything. They also don't use any parantheses, and you can use `out` on parameters instead of a return value.  Triple dash (---) is used to divide the parameters from the function body. Captured mutable variables need to be redeclared with the `inherit` keyword. This helps make sure that the proc is actually capturing a variable and declaring a new variable.
+Another type of double-colon declaration is a `proc`, short for procedure. Unlike normal functions, procs are impure but don't return anything. They also don't use any parentheses, and you can use `out` on parameters instead of a return value.  Triple dash (---) is used to divide the parameters from the function body. Captured mutable variables need to be redeclared with the `inherit` keyword. This helps make sure that the proc is actually capturing a variable and declaring a new variable.
 
 ```mu
 count: mu int = 0
@@ -309,7 +309,7 @@ impl MyStruct
         MyStruct{ x: x; y: y }
 ```
 
-To impliment a virt to another type, you write `impl Type(Virt)` — following "type extends type" order and mirroring Python's `class Name(Super)` pattern.
+To implement a virt to another type, you write `impl Type(Virt)` — following "type extends type" order and mirroring Python's `class Name(Super)` pattern.
 
 ```mu
 impl MyStruct(MyVirtual)
@@ -359,8 +359,8 @@ PrivateType :: struct
     val: int
     secret: int
 
-PublicType :: PrivateTyoe
-    inherit val from PrivateClass  -- redeclared — remains public in MyOtherClass
+PublicType :: struct
+    inherit val from PrivateType  -- redeclared — remains public in MyOtherClass
     other: int
 ```
 
