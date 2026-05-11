@@ -361,7 +361,7 @@ max(a, b) :: if a > b then a else b
 min(a, b) :: if a < b then a else b
 ```
 
-You can also have multi-line macros similar to functions. You must start a block after the double colon (`::`) and before the new line first. The simplest way is to use `do` which creates a new scope and then runs once. The last expression is the return value.
+You can also have multi-line macros similar to functions. You need to create a block scope to define variables. Defining variables that could bleed into the surrounding scope is not allowed. The simplest method is to use `do` which creates a new scope that runs once. The last expression is the return value.
 
 ```mu
 doSomethingComplicated(x) :: do
@@ -372,15 +372,17 @@ doSomethingComplicated(x) :: do
 value = doSomethingComplicated(3)
 ```
 
-Note that this is the same as this:
+This is the same as this:
 
 ```mu
 value = (do
-	x = 3 + 1
+	x = (3) + 1
 	x = x / 2
 	x * x
 ;;)
 ```
+
+The compiler will read the body of the macro and understand where to insert its parameters, so if a parameter gets shadowed, then it will no longer insert it for the rest of that scope. 
 
 You can also pass a type back to make generic types.
 
