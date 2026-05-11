@@ -210,7 +210,7 @@ SQRT_TWO :: sqrt(2)
 value = SQRT_TWO + 1  -- Here sqrt(2) is calculated.
 ```
 
-You can also bind a function to a constant. When calling it, it would be the same as defining it inline and then calling. This can be useful if you need to pass a function multiple times but don't want it to be outputed when compiled.
+You can also bind a function to a constant. When calling it, it would be the same as defining it inline and then calling. This can be useful if you need to pass a function multiple times but don't want it to be outputted when compiled.
 
 ```mu
 IDENTITY :: (x) => x
@@ -361,10 +361,10 @@ max(a, b) :: if a > b then a else b
 min(a, b) :: if a < b then a else b
 ```
 
-You can also have multi-line macros similar to functions. The last expression is the return value.
+You can also have multi-line macros similar to functions. You must start a block after the double colon (`::`) and before the new line first. The simplest way is to use `do` which creates a new scope and then runs once. The last expression is the return value.
 
 ```mu
-doSomethingComplicated(x) ::
+doSomethingComplicated(x) :: do
 	x = x + 1
 	x = x / 2
 	x * x
@@ -372,11 +372,11 @@ doSomethingComplicated(x) ::
 value = doSomethingComplicated(3)
 ```
 
-Note that this is basically the same as this:
+Note that this is the same as this:
 
 ```mu
-value = (let x = 3 then
-	x = x + 1
+value = (do
+	x = 3 + 1
 	x = x / 2
 	x * x
 ;;)
@@ -389,7 +389,9 @@ Option(T) :: enum
 	Some(T)
 	None
 
-maybeInt = Option(int).Some(1)
+Some(x) :: Option(typeof(x)).Some(x)
+
+maybeInt = Some(1)
 ```
 
 ## Inheritance and Visibility
@@ -435,7 +437,7 @@ A subtype cannot accidentally expose or clash with a private inherited member be
 
 ## Control Flow
 
-All branching constructs (`if`, `match`, `for`, `while`, `do`+`until`, `try`, and `with`) share the same block / inline pattern:
+All branching constructs (`do`, `if`, `match`, `for`, `while`, `loop`+`until`, `try`, and `with`) share the same block / inline pattern:
 
 ```mu
 -- Block form
@@ -447,6 +449,18 @@ keyword
 -- Inline expression form
 keyword subject then expr
 keyword expr
+```
+
+### do
+
+Marks a block of code with its own scope that runs only once.
+
+```mu
+x = 0
+do
+   x = 1
+   print "{x}"  -- 1
+print "{x}"     -- 0
 ```
 
 ### if / else
@@ -501,31 +515,20 @@ while cond then
     body
 ```
 
-### do / until
+### loop / until
 
-`do` marks a block of code with its own scope that runs only once.
+Repeats a block of code until it `break` is called.
 
 ```mu
-x = 0
-do
-   x = 1
-   print "{x}"  -- 1
-print "{x}"     -- 0
+loop
+	print "I'm looping!"
+	break
 ```
 
-`until` repeats the previous expression until the condition is true.
+Add `until` after a `loop` block to create a condition that will break the loop. Unlike `while`, this will break when the condition is true, analogous to `if cond then break`, and the loop will run at least once before checking the condition.
 
 ```mu
-mu count = 0
-count += 1
-until count >= 10
--- `count` is now 10 or more.
-```
-
-The two can be combined to create another type of loop.
-
-```mu
-do
+loop
     body
 until cond
 ```
