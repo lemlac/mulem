@@ -100,6 +100,22 @@ fib(n) =
         fib(n - 1) + fib(n - 2)
 ```
 
+## Lambda Functions
+
+You can pass a function to another function using the pattern `(_) = _`. If the lambda function has multiple lines, it must terminate with a double semi-colon (`;;`).
+
+```mu
+map(array, func) = [for x in array then func(x)]
+array0 = [1 2 3 4]
+array1 = map(array0, (x) = x + 1)
+array2 = map(array0, (x) =
+    if x < 2 then
+        x - 1
+    else
+        x + 2
+;;)
+```
+
 ## Inline binding (`let` and `as`)
 
 You can also bind variables within an expression using `let ... then` and `as`. `let` is used for a single expression, while `as` binds for the rest of the scope.
@@ -467,7 +483,7 @@ until cond
 
 ### try / except
 
-Exceptionable types are unwrapped with a question mark within a try block. Functiom that return an exceotionable type act as a try block. If a function doesn't have a return type and a `?` is used, then a exceotionable type is inferred. Use of `?` outside of a try-like block is a syntax. Note that inline try expression don't use `?` because it expects an exceptionable type to be passed directly.
+Exceptionable types are unwrapped with a question mark within a try block. Function that return an exceptionable type act as a try block. If a function doesn't have a return type and a `?` is used, then a exceptionable type is inferred. Use of `?` outside of a try-like block is a syntax. Note that inline try expression don't use `?` because it expects an exceptionable type to be passed directly.
 
 ```mu
 safeResult = try divide(1, 0) except _ then 0.0
@@ -522,19 +538,19 @@ if file1.endswith(".txt") and file2.endswith(".txt") then
 
 ## Importing and Modules
 
-Use `import _ from _` to import sometbing. You can give the import an alias with `as`. All imports must be implicitly declared—no "import *". This helps prevent naming conflicts and track where things are defined.
+Use `import _ from _` to import something. You can give the import an alias with `as`. All imports must be implicitly declared—no "import *". This helps prevent naming conflicts and track where things are defined.
 
 Modules are named with the keyword `mod` near the top before anything is defined. This is the name you'll use after `from` when importing. 
 
 ```mu
-import thing from somewhwre
+import thing from somewhere
 
 mod myModule
 
 addThing(x) = x + thing
 ```
 
-Modules define how memory is handled with the `@memory` decorator. By default, modules use a garbage collector. Some options include `Collect(GC)` (default),  `Count(ARC)` (reference counting), `Borrow` (borrow checking), and `Manual`. `GC` and `ARC` represent the standard garbage collector and reference counter respectfully, but others can be defined and used instead.
+Modules define how memory is handled with the `@memory` decorator. By default, modules use a garbage collector. Some options include `Collect(GC)` (default),  `Count(ARC)` (reference counting), `Borrow` (borrow checking), and `Manual`. `GC` and `ARC` represent the standard garbage collector and reference counter respectively, but others can be defined and used instead.
 
 ```mu
 import memory, Count, ARC from std.mem
