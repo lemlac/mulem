@@ -222,7 +222,7 @@ count: mu int = 0
 myProc :: proc
     a: int
     b: int
-    out result: int
+    result: out int
     ---
     inherit count
     count += 1
@@ -249,7 +249,7 @@ There are different kinds of bindings for a proc's parameters.
 
 ```mu
 normalize_in_place :: proc
-    ref v: mu Vector2
+    v: ref mu Vector2
     ---
     normalized = normalize(v)
     v.x = normalized.x
