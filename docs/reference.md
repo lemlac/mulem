@@ -203,7 +203,7 @@ Putting a constant value after `::` creates a constant. This holds an unchangeab
 PI :: 3.1415926535
 ```
 
-### Comptime Functions
+### Inline Functions
 
 Analogous to constant values, you can define an comptime function by passing a lambda function after the double colon. Like constants, they don't output a value in memory when compiled, useful for helper functions or collecting repeated code.
 
