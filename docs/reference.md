@@ -365,6 +365,8 @@ keyword subject then expr
 keyword expr
 ```
 
+#### `pass`
+
 The keyword `pass` can be put into any body to leave it empty. This might result in a compile-time error when the block is expected to return a value. 
 
 ```mu
@@ -372,7 +374,7 @@ keyword [subject then]
 	pass
 ```
 
-### `do`
+#### `do`
 
 Marks a block of code with its own scope that runs only once.
 
@@ -384,7 +386,7 @@ do
 print("{x}")     -- 0
 ```
 
-### `if` / `else`
+#### `if` / `else`
 
 Basic boolean branching.
 
@@ -397,7 +399,7 @@ else
     print("non-positive")
 ```
 
-### `match` / `case`
+#### `match` / `case`
 
 Enum/exception branching. Exhaustive by default. `case _ then` for the default case. The indentation of each `case` must be the same as the starting `match` unless it's inlined.
 
@@ -416,7 +418,7 @@ message = (match e
     case _ then "Unknown error")
 ```
 
-### `if case`
+#### `if case`
 
 This combines `match` and `if` into one expression. Useful if you just want to handle a single case.
 
@@ -427,7 +429,7 @@ else
 	print("value doesn't match")
 ```
 
-### `for` / `in`
+#### `for` / `in`
 
 Iterates through an array.
 
@@ -438,7 +440,7 @@ for x in list then
     print(x)
 ```
 
-### `while`
+#### `while`
 
 Repeats a block of code until the condition is true.
 
@@ -447,7 +449,7 @@ while cond then
     body
 ```
 
-### `loop` / `until`
+#### `loop` / `until`
 
 Repeats a block of code until `break` is called.
 
@@ -465,11 +467,11 @@ loop
 until cond
 ```
 
-### `break` / `continue`
+#### `break` / `continue`
 
 Controls the iteration of any loop type mentioned. `break` exits out of the loop, and `continue` skips to the next iteration.
 
-### `some`
+#### `some`
 
 Wraps a value in a option type. You can use `?` to unwrap multiple option types within an expression. If one `?` returns `none`, then the whole expression stops and returns `none`.
 
@@ -487,7 +489,7 @@ Option types automatically flatten in the following manner:
 - `some some _` = `some _`
 - `some none` = `none`
 
-### `try` / `except`
+#### `try` / `except`
 
 Result types are unwrapped with an exclamation mark (`!`) within a try block. Use of `!` outside of a `try` block is a syntax error.
 
@@ -529,7 +531,7 @@ doSomething(x: str?) = try some
 	doSomethingElse(x)!
 ```
 
-### `with`
+#### `with`
 
 Automatically cleans up certain objects. Use `as` to use the object within a scope.
 
@@ -541,7 +543,7 @@ except _ then
     pass       -- Ignore all errors
 ```
 
-### `raise`
+#### `raise`
 
 Passes an error type within a `try` block
 
@@ -550,9 +552,9 @@ try
 	raise MyError("error message")
 ```
 
-In a `proc` or `func` this automatically returns out of the function.
+In a `proc` or `func`, `raise` automatically returns out of the function with an exception value.
 
-### `return`
+#### `return`
 
 This exits out of a `proc` or `func`. It can't be used in a basic or lambda function. 
 
