@@ -849,7 +849,7 @@ value = (do
 
 The compiler will read the body of the macro and understand where to insert its parameters, so if a parameter gets shadowed, then it will no longer insert it for the rest of that scope. 
 
-You can also pass a type back to make generic types.
+You can also pass a type back to make generic types and functions.
 
 ```mu
 Option T :: enum
