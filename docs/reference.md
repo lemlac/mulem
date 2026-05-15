@@ -99,14 +99,14 @@ Math operators:
 - `lhs * rhs` = multiplication
 - `lhs / rhs` = division
 - `lhs % rhs` = modulo
-- `lhr ** rhs` = exponential
+- `lhs ** rhs` = exponential
 
 Comparison operators:
 - `lhs == rhs` = equality
 - `lhs >< rhs` = inequality, resembles an X
-- `lhs > rhs` = greator than
+- `lhs > rhs` = greater than
 - `lhs < rhs` = less than
-- `lhs >= rhs` = greator than or equals to
+- `lhs >= rhs` = greater than or equals to
 - `lhs <= rhs` = less than or equals to
 
 Boolean:
@@ -467,7 +467,7 @@ until cond
 
 ### `break` / `continue`
 
-Controls the interation of any loop type mentioned. `break` exists a loop, and `continue` skips to the next iteration.
+Controls the iteration of any loop type mentioned. `break` exists a loop, and `continue` skips to the next iteration.
 
 ### `some`
 
@@ -518,7 +518,7 @@ doSomething(x: str?) = try some
 
 ### `with`
 
-Automically cleans up certain objects. Use `as` to use the object within a scope.
+Automatically cleans up certain objects. Use `as` to use the object within a scope.
 
 ```mu
 try
@@ -541,7 +541,7 @@ In a `proc` or `func` this automatically returns out of the function.
 
 ### `return`
 
-This exists out of a `proc` or `func`. It can't be used in a basic or lambda function. 
+This exits out of a `proc` or `func`. It can't be used in a basic or lambda function. 
 
 ### Closing Multiple Blocks with `;;`
 
@@ -602,7 +602,7 @@ Assigning a type after `::` creates an alias
 numberType :: int
 ```
 
-You can also create aliases for basic product types (tuples) or sum times (unions).
+You can also create aliases for basic product types (tuples) or sum types (unions).
 
 ```mu
 tuple :: int, float, char 
@@ -658,7 +658,7 @@ mu mutable_v = Vector2{ x: 5.0; y: 12.0 }
 normalize_in_place(mutable_v)
 ```
 
-### Imperitive Functions (`func`)
+### Imperative Functions (`func`)
 
 Unlike basic functions, these functions have the same rules as `proc` but they can return a value. The last parameter must be an `out` type but it does not need a name. If it doesn't have a name, it gets set by passing a value after `return` or the value of the last evaluated expression in the function body.
 
@@ -783,7 +783,7 @@ v3 = Vector3{
 }
 
 radius2d(v: Vector2) = sqrt(v.x*v.x+v.y*v.y)
-print("{radius2d(v3}") -- This works because Vector3 inherits from Vector2.
+print("{radius2d(v3)}") -- This works because Vector3 inherits from Vector2.
 ```
 
 When you inherit, you don't just pick out some members. The entire super type is inherited, but only some members are visible. 
@@ -802,9 +802,9 @@ PublicType :: struct
 
 A subtype cannot accidentally expose or clash with a private inherited member because types only see members that have been explicitly declared within them. This mirrors the convention used for imports.
 
-## Inline Functions / Macros / Generics
+## Abstract Functions
 
-Adding a parameter before the double colon (`::`) turns in into an abscract function which combines the concepts of inline functionsm, macros, and generics. Parameters are divided with spaces like in functional programming languages such as Haskell or OCaml. The values of parameters can sometimes be inferred based on context. 
+Adding a parameter before the double colon (`::`) turns in into an **abstract function** which combines the concepts of **inline functions**, **macros**, and **generics**. Parameters are divided with spaces like in functional programming languages such as Haskell or OCaml. The values of parameters can sometimes be inferred based on context. 
 
 Analogous to constant values, you can define an inline function or macro by adding a parameter before the double colons and writing an expression after it. Like constants, they don't output a value in memory when compiled, useful for collecting repeated code. Unlike constant functions, they cannot be passed to another function. They are only for inserting an expression. Each parameter is a variable within the expression, so you don't need to wrap them in parantheses `()` like with C macros. 
 
@@ -846,6 +846,16 @@ Option T :: enum
 Some T :: (x: T) => Option(T).Some(x)
 
 maybeInt = Some(1)
+```
+
+Type parameters can be omitted at the call site if they can be fully inferred from the value arguments, in which case the call uses parentheses like a regular function. It can also be called explicitly by either making an alias for it or putting the abstract function in paranetheses first and then calling it.
+
+```mu
+SomeInt :: Some int
+maybeInt = SomeInt(1)
+
+-- Or in one line:
+maybeInt = (Some int)(1)
 ```
 
 ### Where Block
