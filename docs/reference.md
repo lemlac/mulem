@@ -2,7 +2,7 @@
 
 *Version 0.1 (Draft)*
 
-Mu is a general-purpose, multi-paradigm programming language with Python-like syntax and significant whitespace. It targets Python developers who need C-level performance all within the same language. It is expression-oriented where possible and provides explicit control over evaluation strategy, memory model, and error handling. Another goal is to make it minimalist and have opinionated formatting to make it easier for both humans to read and LLMs to produce without over-consuming tokens.
+Mu is a general-purpose, multi-paradigm programming language with significant whitespace. It targets Python developers who need C-level performance all within the same language. It is expression-oriented where possible and provides explicit control over evaluation strategy, memory model, and error handling. Another goal is to make it minimalist and have opinionated formatting to make it easier for both humans to read and LLMs to produce without over-consuming tokens.
 
 Mu will be both a compiled and an interpreted language. Unlike Python, you won't need to use another language like C to increase performance. You can instead compile some of it and then call it as a shared library all within the same language. Some use cases for this are AI, systems programming, and game development.
 
@@ -11,28 +11,145 @@ Mu will be both a compiled and an interpreted language. Unlike Python, you won't
 ## Lexical Conventions
 
 - **Indentation**: Significant whitespace (4 spaces recommended). 
-- **Statements**: Each statement is divided by new lines. Semi-colons (;) can also be used, but there must be another statement after it—i.e. no trailing semi-colons. Double semi-colon (`;;`) has a special meaning to end a block.
-- **Comments**: Double dash (`--`) to end-of-line. Block comments start with `--[[` and end with `--]]`.
+- **Statements**: Each statement is divided by new lines. Semi-colons (;) can also be used, but there must be another statement after it&mdash;i.e. no trailing semi-colons. Double semi-colon (`;;`) has a special meaning to end a block.
+- **Comments**: Double dash (`--`) to end-of-line. Block comments start with `(--` and end with `--)`.
 - **String literals**: `"..."` with interpolation with `{expr}` inside. To write a literal curly brace (`{`), escape it with a backslash `\{`. 
 
----
+## Basic Syntax
 
-## Expressions vs Statements
+Comments are made with double dash `--`.
+
+```mu
+-- Comment until new line.
+
+(--
+Multi-line
+comment.
+--)
+
+(--
+  (--
+    Nesting is allowed.
+  --)
+--)
+```
+
+A Mu program consists of a list of **expressions** seperated by new-lines or inlined with semi-colons (`;`). Trailing semi-colons are not allowed, so if you have a `;`, you must have an expression after it. 
+
+```
+expr
+expr
+
+expr; expr
+```
 
 Almost everything is an expression. Some statements can be either inline or block depending on the presence of a new-line. When mixing the two (i.e. a block statement within an inline statement), the `;;` symbol is required to exit block mode and return to inline mode. The last statement evaluated in a block is its value. 
 
-## Comments
+To split one expression into multiple lines, you must wrap it in parentheses. The indentation inside the parentheses doesn't matter as long as it's the same as or greater than the opening parenthesis.
 
-Double dash (`--`) is a comment. Double dash and double square bracket (`--[[`+`--]]`) is a multi-line comment.
-
-```mu
--- This is a comment.   
---[[
-This is a comment.
---]]
+```
+(word1
+    word2
+   word3
+      word4)
 ```
 
-## Variable Declarations
+Some keywords can start a block. A **block** wraps multiple expressions into one. The last expression evaluated in a block becomes its value. The most basic block type is `do` which runs a block only once.
+
+```mu
+do
+	expr
+	expr
+```
+
+You can optionally use double semi-colons `;;` to end a block. This will end all blocks of the same indentation or more. If a block is inside of another expression and not by itself, then the closing `;;` is required and must be at the same indentation as the opening part of the block.
+
+```mu
+do
+	do
+		expr
+;; -- Ends both expressions.
+
+(do
+	expr
+;;) -- Required here since the block is in parentheses.
+```
+
+The difference on whether a block keyword starts a block or is inlined is based on the presence of a new-line immediately after it&mdash;ignoring comments and trailing spaces.
+
+```mu
+do expr -- Inline block.
+
+do -- New line here, so start a block.
+	expr -- Next line should be one or more indentations higher.
+
+expr -- Unindenting exits the block.
+```
+
+All subsequent expressions within a block should have the same indentation. If an expression has less indentation than the first but more than the opening of the block, then that's a syntax error. If an expression has more intentation than the first, then it must be in a new block or inside parantheses otherwise, it's also a syntax error.
+
+## Operators
+
+The philosophy of Mu is that symbols should be easy to understand and that generally keywords are prefered over symbols. That being said, there are mix of symbols and keyword operators. Mu will check any combination of symbols greedily until the next space or word, so for example `++` would be different from `+ +`. Spaces are required between multiple symbolic operators, much like how spaces are required between words. Symbol characters include any ASCII character that isn't alphanumeric, whitespace, or quotation marks, or brackets&mdash;in other words these symbols: `~!@#$%^&*-+=|\:;'",<.>/?`. 
+
+Math operators:
+- `lhs + rhs` = addition
+- `lhs - rhs` = subtraction
+- `- rhs` = sign-flip
+- `lhs * rhs` = multiplication
+- `lhs / rhs` = division
+- `lhs % rhs` = modulo
+- `lhr ** rhs` = exponential
+
+Comparison operators:
+- `lhs == rhs` = equality
+- `lhs >< rhs` = inequality, resembles an X
+- `lhs > rhs` = greator than
+- `lhs < rhs` = less than
+- `lhs >= rhs` = greator than or equals to
+- `lhs <= rhs` = less than or equals to
+
+Boolean:
+- `lhs and rhs` = false if any are false
+- `lhs or rhs` = true if any are true
+- `not rhs` = inverts a boolean
+
+Bitwise:
+- `lhs band rhs` = bitwise AND
+- `lhs bor rhs` = bitwise OR
+- `lhs bxor rhs` = bitwise XOR
+- `bnot rhs` = bitwise NOT
+
+Arrays:
+- `lhs # rhs` = get an item at an index (starting at 0)
+- `lhs #` = returns the length of an array
+- `lhs #- rhs` = get an item at an length - index (same as `lhs # (lhs# - rhs)`
+- `lhs ++ rhs` = concatenation or appendation, always returns a new array
+- `lhs .. rhs` = creates an iterator that starts at the left value and ends just before the right value (inclusive)
+- `lhs ..= rhs` = creates an iterator that starts at the left value and ends with the right value (exclusive)
+
+Option types
+- `lhs ?` = returns the some result if it's not `none`, otherwise propagate to the nearest `some` keyword (see `some` block)
+- `lhs ?. rhs` = gets a method or member of an optional type if it has something, otherwise return `none`
+- `lhs ?? rhs` = fallback to another value if the left side is `none`.
+
+Result types
+- `lhs !` = returns the ok result if it's not an exception, otherwise propagate to the nearest `try` keyword (see `try` block)
+
+Some operators also allow an equal sign after it to set a variable based on its previous value. Left-hand side must be a defined variable.
+
+- `lhs += rhs` -> `lhs = lhs + rhs` = increment
+- `lhs -= rhs` -> `lhs = lhs - rhs` = decrement
+- `lhs *= rhs` -> `lhs = lhs * rhs` = self-multiply
+- `lhs /= rhs` -> `lhs = lhs / rhs` = self-divide
+- `lhs ++= rhs` -> `lhs = lhs + rhs` = append to an array
+- `lhs ??= rhs` -> `lhs = lhs ?? rhs` = set a default value to an option type
+
+## Basic Bindings
+
+There are two types of bindings: basic `=` and abstract `::`. See [Abstract Bindings](#Abstract-Bindings) below for details about `::`.
+
+### Variable Declarations
 
 Variables are declared with just the equals sign (=). Type is inferred, but can be declared with a colon (:).
 
@@ -47,6 +164,7 @@ Variables are immutable, but setting it again shadows it.
 a = 1
 a = 2
 a = 3
+a = "hello" -- The type of a shadowed variable doesn't have to match.
 ```
 
 You can also shadow a variable using its previous value.
@@ -57,7 +175,7 @@ i = i + 1
 i += 1 -- Same as above
 ```
 
-Mutable variables are declared with `mu type`. Setting it will change the value instead of shadowing it.
+Mutable variables are declared with `mu type`. Setting it will change the value instead of shadowing it. The type of value when mutating it should match its original type.
 
 ```mu
 x: mu int = 0
@@ -79,7 +197,16 @@ doSomething()
 x = 1
 ```
 
-## Functions
+Not defining a mutable variable implies `= undefined` after it which means it cannot be used until it's been set.
+
+```mu
+x: mu int = undefined
+-- x cannot be used here.
+x = 1
+-- x can not be used.
+```
+
+### Functions
 
 Functions are declared with parentheses before the equals sign. These are pure functions, so mutable variables cannot be captured. The type of the parameters can be either explicitly typed or inferred based on usage.
 
@@ -100,7 +227,7 @@ fib(n) =
         fib(n - 1) + fib(n - 2)
 ```
 
-### Lambda Functions
+#### Lambda Functions
 
 You can define a function within an expression with the pattern `(_) => _`. This is useful for passing functions to other functions. If the lambda function has multiple lines, it must terminate with a double semi-colon (`;;`).
 
@@ -116,7 +243,7 @@ array2 = map(array0, (x) =>
 ;;)
 ```
 
-## Inline binding (`let` and `as`)
+### Inline binding (`let` and `as`)
 
 You can also bind variables within an expression using `let ... then` and `as`. `let` is used for a single expression, while `as` binds for the rest of the scope.
 
@@ -124,7 +251,7 @@ You can also bind variables within an expression using `let ... then` and `as`. 
 squared = let x = getSomething() then x * x
 
 while next() as val != None then
-    print "{val}"
+    print("{val}")
 ```
 
 ---
@@ -133,7 +260,8 @@ while next() as val != None then
 
 - **Basic**: `name: type`
 - **Function**: `(type, type): type`
-- **Result / error**: `type!` or `type!error`
+- **Option**: `type?`
+- **Result**: `type!` or `type!error`
 - **Inferred**: omit the annotation entirely
 
 ### Built-in Types
@@ -145,6 +273,13 @@ myInt: int = 1234
 myFloat: float = 12.34
 myChar: char = 'a'
 myStr: str = "Hello"
+```
+
+You can get the type of any variable with the `typeof` keyword.
+
+```mu
+x = 0
+y: typeof x = 1 -- Ensures that x and y have the same type.
 ```
 
 Strings can be formatted with curly braces (`{expr}`) in the string. Use a backslash to write a literal opening curly brace (`\{`).
@@ -177,38 +312,260 @@ list: float#4 = [1 2 3 4]
 compressedList = [(list#0 + list#1) (list#3 + list#4)]
 ```
 
-To make chaining accesses easier, there's a special rule for square brackets: any operator `o` can be expressed with `a[o b]` which is the same as `((a) o (b))`.   
+Matrices are defined with `|` at the start of each row. Each row must have the same number of columns. 
 
 ```mu
 matrix = [
-    [1 2 3 4]
-    [5 6 7 8]
-    [9 10 11 12]
-    [13 14 15 16]
+    |  1  2  3  4
+    |  5  6  7  8
+	|  9 10 11 12
+    | 13 14 15 16
 ]
-oneItem = matrix[#2][#1]   -- 3rd row, 2nd column
+```
+
+To make chaining accesses easier, there's a special rule for square brackets: any operator `op` can be expressed with `a[op b]` which is the same as `((a) op (b))`. This can be used together with the index operator `#` to get an item from a matrix or multi-dimensional array.
+
+```mu
+oneItem = matrix[#2][#1]   -- 3rd row, 2nd column, value 10
 ```
 
 ---
 
-## Special Bindings (`::`)
+## Control Flow
 
-Variable and functions primarily use the equals sign (`=`), but there's another type of binding used for constants, types, and procedures (another function type). This type of declaration is constant; in other words, they cannot be mutated or shadowed. 
+All branching constructs share the same block / inline pattern:
+
+```mu
+-- Block form
+keyword subject then
+    body
+keyword
+    body
+
+-- Inline expression form
+keyword subject then expr
+keyword expr
+```
+
+The keyword `pass` can be put into any body to leave it empty. This might result in a compile-time error when the block is expected to return a value. 
+
+```mu
+keyword [subject then]
+	pass
+```
+
+### `do`
+
+Marks a block of code with its own scope that runs only once.
+
+```mu
+x = 0
+do
+   x = 1
+   print("{x}")  -- 1
+print("{x}")     -- 0
+```
+
+### `if` / `else`
+
+Basic boolean branching.
+
+```mu
+x = if x > 0 then x else -x
+
+if x > 0 then
+    print("positive")
+else
+    print("non-positive")
+```
+
+### `match` / `case`
+
+Enum/exception branching. Exhaustive by default. `case _ then` for the default case. The indentation of each `case` must be the same as the starting `match` unless it's inlined.
+
+```mu
+match self
+case First then
+    print("First")
+case Second(x) then
+    print("Second({x})")
+case Third{val} then
+    print("Third {{ val={val} }}")
+
+-- Inline form (line breaks ignored inside parentheses)
+message = (match e
+    case file.OpenError { filename } then "Open error: {filename}"
+    case _ then "Unknown error")
+```
+
+### `if case`
+
+This combines `match` and `if` into one expression. Useful if you just want to handle a single case.
+
+```mu
+if case Patter(x) == value then
+	print("value is {x}")
+else
+	print("value doesn't match")
+```
+
+### `for` / `in`
+
+Iterates through an array.
+
+```mu
+new_list = [for x in list then x * 2]
+
+for x in list then
+    print(x)
+```
+
+### `while`
+
+Repeats a block of code until the condition is true.
+
+```mu
+while cond then
+    body
+```
+
+### `loop` / `until`
+
+Repeats a block of code until `break` is called.
+
+```mu
+loop
+	print("I'm looping!")
+	break
+```
+
+Add `until` after a `loop` block to create a condition that will break the loop. Unlike `while`, this will break when the condition is true, analogous to `if cond then break`, and the loop will run at least once before checking the condition.
+
+```mu
+loop
+    body
+until cond
+```
+
+### `break` / `continue`
+
+Controls the interation of any loop type mentioned. `break` exists a loop, and `continue` skips to the next iteration.
+
+### `some`
+
+Wraps a value in a option type. You can use `?` to unwrap multiple option types within an expression. If one `?` returns `none`, then the whole expression stops and returns `none`.
+
+```mu
+x = some f(a?) ?? "fallback" -- x is "fallback" if a is none.
+
+addStuff(a, b) = some
+	a = getSomething(a)?
+	b = getSomething(b)?
+	a + b
+```
+
+Option types automatically flatten in the following manner:
+
+- `some some _` = `some _`
+- `some none` = `none`
+
+### `try` / `except`
+
+Result types are unwrapped with an exclamation mark (`!`) within a try block. Use of `!` outside of a `try` block is a syntax.
+
+```mu
+safeResult = try divide(1, 0)! except _ then 0.0
+
+try
+    risky()!
+except e then
+    print("{e}")
+```
+
+If `except` is missing, then it wraps the last expression in a result. If any exceptions are raised, then the whole result is an error.
+
+```mu
+riskyFunction() = try
+	doSomething1()!
+	doSomething2()!
+```
+
+You can combine `try` and `some` together to use both at the same time.
+
+```mu
+doSomething(x: str?) = try some
+	x = x?
+	doSomethingElse(x)!
+```
+
+### `with`
+
+Automically cleans up certain objects. Use `as` to use the object within a scope.
+
+```mu
+try
+	with file.open("a.txt")! as f, file.open("b.txt")! as g then
+	    g.write(f.read()!)!
+except _ then
+    pass       -- Ignore all errors
+```
+
+### `raise`
+
+Passes an error type within a `try` block
+
+```mu
+try
+	raise MyError("error message")
+```
+
+In a `proc` or `func` this automatically returns out of the function.
+
+### `return`
+
+This exists out of a `proc` or `func`. It can't be used in a basic or lambda function. 
+
+### Closing Multiple Blocks with `;;`
+
+Multiple blocks can be closed at once with `;;`. This can help with readability.
+
+```mu
+if file1.endswith(".txt") and file2.endswith(".txt") then
+    with file.open(file1)! as f, file.open(file2)! as g then
+        g.write(f.read()!)!
+;; -- Closes both `if` and `with`.
+```
+
+---
+
+## Error Handling
+
+- `expr!` &mdash; propagate an error upward (Rust/Swift style).
+- Exceptions are sum types; the compiler unions all possible exception types from every `!` site in a `try` block.
+- `try` / `except` can be an expression or a block and must unify return types (like `if` / `else`).
+- Pattern matching on errors works with `match` or `if case Pattern(x) = value`.
+
+## Pattern Matching and Destructuring
+
+- Full `match` / `case` (exhaustive unless `case _` is present).
+- `if case Pattern(x) = value then` &mdash; like Rust's `if let`.
+- Destructuring supports structs, tuples, enum variants, and wildcards (`_`).
+
+---
+
+## Abstract Bindings (`::`)
+
+Variable and functions primarily use the equals sign (`=`) and are for storing actual data within a program, but there's another type of binding used for abstract values for the compiler to know about such as constants, inline-functions, types, and procedures (another function type). This type of declaration is constant; in other words, they cannot be mutated or shadowed. However, depending on what it is, subsequent `::` of the same name will modify its definition. 
 
 ### Constants
 
-Putting a constant value after `::` creates a constant. This holds an unchangeable value that must be known at compile time. Its type is inferred. Explicit typing isn't necessary since it cannot be changed.
+Putting a constant value after `::` creates a constant. This holds an unchangeable value that must be known at compile time. Its type is a `const _` where _ is its value. Explicit typing isn't necessary since it cannot be changed.
 
 ```mu
 PI :: 3.1415926535
 ```
 
-Note that constants are lazily evaluated. You can call a function in it, and it won't be evaluated until it's used.
-
-```mu
-SQRT_TWO :: sqrt(2)
-value = SQRT_TWO + 1  -- Here sqrt(2) is calculated.
-```
+`PI` in this case would be type `const 3.1415926535` which is a subtype of `float`. 
 
 You can also bind a function to a constant. When calling it, it would be the same as defining it inline and then calling. This can be useful if you need to pass a function multiple times but don't want it to be outputted when compiled.
 
@@ -238,7 +595,7 @@ union :: int | float | char
 
 ### Procedures (`proc`)
 
-Another type of double-colon declaration is a `proc`, short for procedure. Unlike normal functions, procs are impure but don't return anything. They also don't use any parentheses, and you can use `out` on parameters instead of a return value.  Triple dash (---) is used to divide the parameters from the function body. Captured mutable variables need to be redeclared with the `inherit` keyword. This helps make sure that the proc is actually capturing a variable and declaring a new variable.
+Another type of `::` declaration is a `proc`, short for procedure. Unlike normal functions, procs are impure but don't return anything. Instead, you use `out` parameters to get a return value. The keyword `then` is used to divide the parameters from the function body. Captured mutable variables need to be redeclared with the `capture` keyword. This helps make sure that the proc is actually capturing a variable and declaring a new variable.
 
 ```mu
 count: mu int = 0
@@ -246,45 +603,83 @@ myProc :: proc
     a: int
     b: int
     result: out int
-    ---
-    inherit count
+then
+    capture count
     count += 1
     result = a + b + count
 
 sum: mu int
-myProc 1, 2, sum
+myProc(1, 2, sum)
 ```
 
 You can also use `out` when calling a proc to declare an out parameter and input it at the same time. This is useful if you want it to be immutable.
 
 ```mu
-myProc 1, 2, out sum
+myProc(1, 2, out sum)
 doSomethingWith(sum)
 ```
 
 #### Parameter Bindings
+
 There are different kinds of bindings for a proc's parameters.
 
-1. One-way input binding (default) — the value is copied.
-2. One-way output binding (`out`) — the value will be discarded and set to a new value within the scope.
-3. One-way input binding with `ref` — the value is passed by reference but not changed.
-4. Two-way binding (`ref`+`mu`) — the value is passed by reference and may be altered.
+1. One-way input binding (default) &mdash; the value is copied.
+2. One-way output binding (`out`) &mdash; the value will be discarded and set to a new value within the scope.
+3. One-way input binding with `ref` &mdash; the value is passed by reference but not changed.
+4. Two-way binding (`ref`+`mu`) &mdash; the value is passed by reference and may be altered.
 
 ```mu
 normalize_in_place :: proc
     v: ref mu Vector2
-    ---
+then
     normalized = normalize(v)
     v.x = normalized.x
     v.y = normalized.y
 
 mu mutable_v = Vector2{ x: 5.0; y: 12.0 }
-normalize_in_place mutable_v
+normalize_in_place(mutable_v)
+```
+
+### Imperitive Functions (`func`)
+
+Unlike basic functions, these functions have the same rules as `proc` but they can return a value. The last parameter must be an `out` type but it does not need a name. If it doesn't have a name, it gets set by passing a value after `return` or the value of the last evaluated expression in the function body.
+
+```mu
+-- Named out parameter
+addAndCount :: func
+    a: int
+    b: int
+    result: out int
+then
+    capture count
+    count += 1
+    result = a + b + count
+
+-- Nameless out parameter
+addAndCount :: func
+    a: int
+    b: int
+    out int
+then
+    capture count
+    count += 1
+    return a + b + count
+```
+
+`func` can be called like a function or like a `proc` when you pass an out variable at the end.
+
+```mu
+-- Function style: out parameter is the return value
+sum = addAndCount(1, 2)
+
+-- Proc style: out parameter passed explicitly
+addAndCount(1, 2, out sum)
+addAndCount(1, 2, sum)    -- if sum is mu
 ```
 
 ### Structures (`struct`)
 
-Structs are product types—or in other words—plain data containers. They cannot extend other structs, but can inherit members of other structs (see [Inheritance and Visibility](#Inheritance-and-Visibility)).
+Structs are product types&mdash;or in other words&mdash;plain data containers. They cannot extend other structs, but can inherit members of other structs (see [Inheritance and Visibility](#Inheritance-and-Visibility)).
 
 ```mu
 MyStruct :: struct
@@ -305,7 +700,7 @@ MyEnum :: enum
 
 ### Exceptions (`except`)
 
-Exceptions are similar to enums but used for error handling. See "Error Handling" down below for more details.
+Exceptions are similar to enums but used for error handling. See "Error Handling" for more details.
 
 ```mu
 MyException :: except
@@ -315,7 +710,7 @@ MyException :: except
 
 ### Virtual Types (`virt`)
 
-A `virt` is an abstract interface — a named contract with no data. It is equivalent to a trait or interface in other languages.
+A `virt` is an abstract interface &mdash; a named contract with no data. It is equivalent to a trait or interface in other languages.
 
 ```mu
 MyVirtual :: virt
@@ -327,19 +722,19 @@ MyVirtual :: virt
 Methods and trait implementations are added separately with `impl`:
 
 ```mu
-impl MyStruct
+MyStruct :: impl
     init(x: int, y: int): Self =
         MyStruct{ x: x; y: y }
 ```
 
-To implement a virt to another type, you write `impl Type(Virt)` — following "type extends type" order and mirroring Python's `class Name(Super)` pattern.
+To implement a virt to another type, you add the virt after `impl`:
 
 ```mu
-impl MyStruct(MyVirtual)
+MyStruct :: impl MyVirtual
     speak(self) =
         "I am a MyStruct {{ x={self.x}, y={self.y} }}"
 
-impl MyEnum(MyVirtual)
+MyEnum :: impl MyVirtual
     speak(self) =
         match self
         case First then
@@ -348,52 +743,6 @@ impl MyEnum(MyVirtual)
             "I am a MyEnum of Second({x})"
         case Third{val} then
             "I am a MyEnum of Third {{ val={val} }}"
-```
-
-### Inline Functions / Macros / Generics
-
-Adding a parameter before the double colon (`::`) turns in into a macro. 
-
-Analogous to constant values, you can define an inline function by adding a parameter before the double colons. Like constants, they don't output a value in memory when compiled, useful for collecting repeated code. Unlike constant functions, they cannot be passed to another function. They are only for inserting an expression.
-
-```mu
-max(a, b) :: if a > b then a else b
-min(a, b) :: if a < b then a else b
-```
-
-You can also have multi-line macros similar to functions. You need to create a block scope to define variables. Defining variables that could bleed into the surrounding scope is not allowed. The simplest method is to use `do` which creates a new scope that runs once. The last expression is the return value.
-
-```mu
-doSomethingComplicated(x) :: do
-	x = x + 1
-	x = x / 2
-	x * x
-
-value = doSomethingComplicated(3)
-```
-
-This is the same as this:
-
-```mu
-value = (do
-	x = (3) + 1
-	x = x / 2
-	x * x
-;;)
-```
-
-The compiler will read the body of the macro and understand where to insert its parameters, so if a parameter gets shadowed, then it will no longer insert it for the rest of that scope. 
-
-You can also pass a type back to make generic types.
-
-```mu
-Option(T) :: enum
-	Some(T)
-	None
-
-Some(x) :: Option(typeof(x)).Some(x)
-
-maybeInt = Some(1)
 ```
 
 ## Inheritance and Visibility
@@ -416,7 +765,7 @@ v3 = Vector3{
 }
 
 radius2d(v: Vector2) = sqrt(v.x*v.x+v.y*v.y)
-print "{radius2d(v3}" -- This works because Vector3 inherits from Vector2.
+print("{radius2d(v3}") -- This works because Vector3 inherits from Vector2.
 ```
 
 When you inherit, you don't just pick out some members. The entire super type is inherited, but only some members are visible. 
@@ -429,170 +778,156 @@ PrivateType :: struct
     secret: int
 
 PublicType :: struct
-    inherit val from PrivateType  -- redeclared — remains public in MyOtherClass
+    inherit val from PrivateType  -- redeclared &mdash; remains public in MyOtherClass
     other: int
 ```
 
 A subtype cannot accidentally expose or clash with a private inherited member because types only see members that have been explicitly declared within them. This mirrors the convention used for imports.
 
----
+## Inline Functions / Macros / Generics
 
-## Control Flow
+Adding a parameter before the double colon (`::`) turns in into an abscract function which combines the concepts of inline functionsm, macros, and generics. Parameters are divided with spaces like in functional programming languages such as Haskell or OCaml. The values of parameters can sometimes be inferred based on context. 
 
-All branching constructs (`do`, `if`, `match`, `for`, `while`, `loop`+`until`, `try`, and `with`) share the same block / inline pattern:
+Analogous to constant values, you can define an inline function or macro by adding a parameter before the double colons and writing an expression after it. Like constants, they don't output a value in memory when compiled, useful for collecting repeated code. Unlike constant functions, they cannot be passed to another function. They are only for inserting an expression. Each parameter is a variable within the expression, so you don't need to wrap them in parantheses `()` like with C macros. 
 
 ```mu
--- Block form
-keyword subject then
-    body
-keyword
-    body
-
--- Inline expression form
-keyword subject then expr
-keyword expr
+MAX a b :: if a > b then a else b
+MIN a b :: if a < b then a else b
 ```
 
-### do
-
-Marks a block of code with its own scope that runs only once.
+You can also have multi-line macros similar to functions. You need to create a block scope to define variables. Defining variables that could bleed into the surrounding scope is not allowed. The simplest method is to use `do` which creates a new scope that runs once. The last expression is the return value.
 
 ```mu
-x = 0
-do
-   x = 1
-   print "{x}"  -- 1
-print "{x}"     -- 0
+doSomethingComplicated x :: do
+	x = x + 1
+	x = x / 2
+	x * x
+
+value = doSomethingComplicated 3
 ```
 
-### if / else
-
-Basic boolean branching.
+This is the same as this:
 
 ```mu
-x = if x > 0 then x else -x
-
-if x > 0 then
-    print "positive"
-else
-    print "non-positive"
+value = (do
+	x = (3) + 1
+	x = x / 2
+	x * x
+;;)
 ```
 
-### match / case
+The compiler will read the body of the macro and understand where to insert its parameters, so if a parameter gets shadowed, then it will no longer insert it for the rest of that scope. 
 
-Enum/exception branching. Exhaustive by default. `case _ then` for the default case. The indentation of each `case` must be the same as the starting `match`.
+You can also pass a type back to make generic types.
 
 ```mu
-match self
-case First then
-    print "First"
-case Second(x)
-    print "Second({x})"
-case Third{val}
-    print "Third {{ val={val} }}"
+Option T :: enum
+	Some T
+	None
 
--- Inline form (line breaks ignored inside parentheses)
-message = (match e
-    case file.OpenError { filename } then "Open error: {filename}"
-    case _ then "Unknown error")
+Some(x) :: Option(typeof(x)).Some(x)
+
+maybeInt = Some(1)
 ```
 
-### for
+### Where Block
 
-Iterates through an array.
+This is used to define what each parameter's type is for an abstract function. It must be the first defintion, and any subsequent definitions should have patterns that match the where clause. 
 
 ```mu
-new_list = [for x in list then x * 2]
+List T N :: where
+	T: type
+	N: int -- Must be known at compile time
 
-for x in list then
-    print(x)
+List T N :: struct
+	data: T#N
+
+List T N :: impl
+	init() =
+		data: mu T#N
+		for mu x in data then
+			x = default T
+		Self {data} -- Same as {data: data}		
 ```
 
-### while
+### Manual Implementation
 
-Repeats a block of code until the condition is true.
-
-```mu
-while cond then
-    body
-```
-
-### loop / until
-
-Repeats a block of code until it `break` is called.
+Generics will automatically generate code based on their parameters, but you can also implement them by hand using pattern matching. If you only want to use the manual implementations for a generic function, you can set its body to `undefined`. This creates a virtual function that can be overloaded later. If you use a function that is defined as `undefined`, it will throw a compile-time error.
 
 ```mu
-loop
-	print "I'm looping!"
-	break
-```
+-- Forces every type to have its own implementation
+increment T :: func
+    c: ref mu T
+    out T
+then
+    undefined
 
-Add `until` after a `loop` block to create a condition that will break the loop. Unlike `while`, this will break when the condition is true, analogous to `if cond then break`, and the loop will run at least once before checking the condition.
+-- Specialized for Counter
+increment Counter :: func
+    c: ref mu Counter
+    out int
+then
+    c.value += 1
+    c.value
 
-```mu
-loop
-    body
-until cond
-```
-
-### try / except
-
-Exceptionable types are unwrapped with a question mark within a try block. Function that return an exceptionable type act as a try block. If a function doesn't have a return type and a `?` is used, then a exceptionable type is inferred. Use of `?` outside of a try-like block is a syntax. Note that inline try expression don't use `?` because it expects an exceptionable type to be passed directly.
-
-```mu
-safeResult = try divide(1, 0) except _ then 0.0
-
-try
-    risky()?
-except e then
-    print "{e}"
-```
-
-### with
-
-Automically cleans up certain objects. Use `as` to use the object within a scope.
-
-```mu
-try
-	with file.open("a.txt")? as f, file.open("b.txt")? as g then
-	    g.write(f.read()?)?
-except _ then
-    pass       -- Ignore all errors
-```
-
-### Closing Multiple Blocks with `;;`
-
-Multiple blocks can be closed at once with `;;`. This can help with readability.
-
-```mu
-if file1.endswith(".txt") and file2.endswith(".txt") then
-    with file.open(file1)? as f, file.open(file2)? as g then
-        g.write(f.read()?)?
-;; -- closes both `if` and `with`
+-- Specialized for float
+increment float :: func
+    c: ref mu float
+    out float
+then
+    c += 1.0
+    c
 ```
 
 ---
 
-## Error Handling
+## Function Types
 
-- `expr?` — propagate an error upward (Rust/Swift style).
-- Errors are typed sum types; the compiler unions all possible error types from every `?` site in a function.
-- `try` / `except` can be an expression or a block and must unify return types (like `if` / `else`).
-- Pattern matching on errors works with `match` or `if case Pattern(x) = value`.
+As explained in this document, they are 3 main types of functions: basic/lambda, `proc`, and `func`. Both basic and lambda have the same type signatures and are treated the same, so we'll call them both lambda functions. 
 
----
+| Form | Type Signature | Pure | `out` param | Call style |
+|:--|:--|:--|:--|:--|
+| Lambda `f(a) =` or `(a) =>` | `(param) => type` | Yes | No | `(a) => expr` |
+| `func` | `func(param, out type)` | No | Required (last) | `f(a)` or `f(a, out r)` |
+| `proc` | `proc(param[, out type])` | No | Optional | `p(a, out r)` |
 
-## Pattern Matching and Destructuring
+`func` and `proc` are designed to be low-level and imperative, while lambda are designed to be both used as functions and as values themselves. The same input always results in the same output since lambdas are required to be pure. Mu will allow you to analyze and modify a lambda function similar to how a mathematician would analyze an algebraic formula, allowing you to do things like get the derivative or integral of a function.
 
-- Full `match` / `case` (exhaustive unless `case _` is present).
-- `if case Pattern(x) = value then` — like Rust's `if let`.
-- Destructuring supports structs, tuples, enum variants, and wildcards (`_`).
+```mu
+f(x) = x * x + 2.0 * x + 1.0
+
+df = derivative(f)        -- (x) => 2.0 * x + 2.0
+integral_f = integral(f)  -- (x) => x^3/3 + x^2 + x
+```
+
+Since Mu's pure functions map directly to these algebraic forms, the compiler can walk the AST and apply these rules symbolically, producing a new lambda rather than a numerical approximation. This is exact, unlike finite difference methods.
+
+This can go further than just calculus though.
+
+```mu
+-- Simplification
+simplified = simplify((x) => x * 1.0 + 0.0)  -- (x) => x
+
+-- Partial application analysis  
+add(x, y) = x + y
+addOne = partial(add, 1)   -- (y) => 1 + y
+
+-- Composition
+g(x)= x + 1.0
+h(x)= x * 2.0
+gh = compose(g, h)   -- (x) => (x + 1.0) * 2.0
+
+-- Solving (within decidable cases)
+roots = solve(f)   -- returns values where f(x) == 0
+```
+
+This is a work in progress though. The methods for defining how a programmer would be able to analyze a lambda function within the Mu language are yet to be determined.
 
 ---
 
 ## Importing and Modules
 
-Use `import _ from _` to import something. You can give the import an alias with `as`. All imports must be implicitly declared—no "import *". This helps prevent naming conflicts and track where things are defined.
+Use `import _ from _` to import something. You can give the import an alias with `as`. All imports must be implicitly declared&mdash;no "import *". This helps prevent naming conflicts and track where things are defined.
 
 Modules are named with the keyword `mod` near the top before anything is defined. This is the name you'll use after `from` when importing. 
 
@@ -613,19 +948,19 @@ import memory, Count, ARC from std.mem
 mod moduleThatUsesReferenceCounting
 ```
 
-## Memory Models
+### Memory Models
 
-Mu is multi-paradigm: different functions, structs, or modules can use different memory strategies in the same program. The model is controlled per-module via decorators. Boundary crossing between models follows FFI-like rules — automatic marshalling where possible, explicit escapes otherwise.
+Mu is multi-paradigm: different functions, structs, or modules can use different memory strategies in the same program. The model is controlled per-module via decorators. Boundary crossing between models follows FFI-like rules &mdash; automatic marshalling where possible, explicit escapes otherwise.
 
 ---
 
 ## Design Philosophy
 
-- **Readability first** — Python-like syntax with significant whitespace and opinionated formatting.
-- **Performance on demand** — start with GC; change to a lower level memory model where necessary.
-- **Explicit but ergonomic** — `?` for errors, attributes for memory models, same keywords used between inline and block expressions.
-- **Unified concepts** — `inherit` for both scope capture and member visibility; `::` for all top-level definitions.
-- **Python-developer friendly** — gradual typing, familiar control flow, no second language or FFI layer required.
+- **Readability first** &mdash; Python-like syntax with significant whitespace and opinionated formatting.
+- **Performance on demand** &mdash; start with GC; change to a lower level memory model where necessary.
+- **Explicit but ergonomic** &mdash; `!` for errors, attributes for memory models, same keywords used between inline and block expressions.
+- **Unified concepts** &mdash; `capture` for scope capture; `inherit` for member visibility; `::` for all top-level definitions.
+- **Python-developer friendly** &mdash; gradual typing, familiar control flow, no second language or FFI layer required.
 
 ---
 
