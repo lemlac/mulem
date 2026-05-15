@@ -34,7 +34,7 @@ comment.
 --)
 ```
 
-A Mu program consists of a list of **expressions** seperated by new-lines or inlined with semi-colons (`;`). Trailing semi-colons are not allowed, so if you have a `;`, you must have an expression after it. 
+A Mu program consists of a list of **expressions** separated by new-lines or inlined with semi-colons (`;`). Trailing semi-colons are not allowed, so if you have a `;`, you must have an expression after it. 
 
 ```
 expr
@@ -86,11 +86,11 @@ do -- New line here, so start a block.
 expr -- Unindenting exits the block.
 ```
 
-All subsequent expressions within a block should have the same indentation. If an expression has less indentation than the first but more than the opening of the block, then that's a syntax error. If an expression has more intentation than the first, then it must be in a new block or inside parantheses otherwise, it's also a syntax error.
+All subsequent expressions within a block should have the same indentation. If an expression has less indentation than the first but more than the opening of the block, then that's a syntax error. If an expression has more indentation than the first, then it must be in a new block or inside parentheses otherwise, it's also a syntax error.
 
 ## Operators
 
-The philosophy of Mu is that symbols should be easy to understand and that generally keywords are prefered over symbols. That being said, there are mix of symbols and keyword operators. Mu will check any combination of symbols greedily until the next space or word, so for example `++` would be different from `+ +`. Spaces are required between multiple symbolic operators, much like how spaces are required between words. Symbol characters include any ASCII character that isn't alphanumeric, whitespace, or quotation marks, or brackets&mdash;in other words these symbols: `~!@#$%^&*-+=|\:;'",<.>/?`. 
+The philosophy of Mu is that symbols should be easy to understand and that generally keywords are preferred over symbols. That being said, there are mix of symbols and keyword operators. Mu will check any combination of symbols greedily until the next space or word, so for example `++` would be different from `+ +`. Spaces are required between multiple symbolic operators, much like how spaces are required between words. Symbol characters include any ASCII character that isn't alphanumeric, whitespace, or quotation marks, or brackets&mdash;in other words these symbols: `~!@#$%^&*-+=|\:;'",<.>/?`. 
 
 Math operators:
 - `lhs + rhs` = addition
@@ -123,7 +123,7 @@ Bitwise:
 Arrays:
 - `lhs # rhs` = get an item at an index (starting at 0)
 - `lhs #` = returns the length of an array
-- `lhs #- rhs` = get an item at an length - index (same as `lhs # (lhs# - rhs)`
+- `lhs #- rhs` = get an item from the end of an array (same as `lhs # (lhs# - rhs)`
 - `lhs ++ rhs` = concatenation or appendation, always returns a new array
 - `lhs .. rhs` = creates an iterator that starts at the left value and ends just before the right value (exclusive)
 - `lhs ..= rhs` = creates an iterator that starts at the left value and ends with the right value (inclusive)
@@ -314,7 +314,7 @@ myStr =
     "But this is the last line."
 ```
 
-Subequent string literals will automatically concatenate, and the `++` operator can be used to concatenate non-literal strings.
+Subsequent string literals will automatically concatenate, and the `++` operator can be used to concatenate non-literal strings.
 
 ```mu
 str1 = "This" " string"
@@ -421,7 +421,7 @@ message = (match e
 This combines `match` and `if` into one expression. Useful if you just want to handle a single case.
 
 ```mu
-if case Pattern(x) == value then
+if case Pattern(x) = value then
 	print("value is {x}")
 else
 	print("value doesn't match")
@@ -457,7 +457,7 @@ loop
 	break
 ```
 
-Add `until` after a `loop` block to create a condition that will break the loop. Unlike `while`, this will break when the condition is true, analogous to `if cond then break`, and the loop will run at least once before checking the condition.
+Add `until` after a `loop` block to create a condition that will break the loop. Unlike `while`, this will break when the condition is true, analogous to `if cond then break`. The loop will run at least once before checking the condition.
 
 ```mu
 loop
@@ -467,7 +467,7 @@ until cond
 
 ### `break` / `continue`
 
-Controls the iteration of any loop type mentioned. `break` exists a loop, and `continue` skips to the next iteration.
+Controls the iteration of any loop type mentioned. `break` exits out of the loop, and `continue` skips to the next iteration.
 
 ### `some`
 
@@ -489,7 +489,7 @@ Option types automatically flatten in the following manner:
 
 ### `try` / `except`
 
-Result types are unwrapped with an exclamation mark (`!`) within a try block. Use of `!` outside of a `try` block is a syntax.
+Result types are unwrapped with an exclamation mark (`!`) within a try block. Use of `!` outside of a `try` block is a syntax error.
 
 ```mu
 safeResult = try divide(1, 0)! except _ then 0.0
@@ -804,9 +804,9 @@ A subtype cannot accidentally expose or clash with a private inherited member be
 
 ## Abstract Functions
 
-Adding a parameter before the double colon (`::`) turns in into an **abstract function** which combines the concepts of **inline functions**, **macros**, and **generics**. Parameters are divided with spaces like in functional programming languages such as Haskell or OCaml. The values of parameters can sometimes be inferred based on context. 
+Adding a parameter before the double colon (`::`) turns it into an **abstract function** which combines the concepts of **inline functions**, **macros**, and **generics**. Parameters are divided with spaces like in functional programming languages such as Haskell or OCaml. The values of parameters can sometimes be inferred based on context. 
 
-Analogous to constant values, you can define an inline function or macro by adding a parameter before the double colons and writing an expression after it. Like constants, they don't output a value in memory when compiled, useful for collecting repeated code. Unlike constant functions, they cannot be passed to another function. They are only for inserting an expression. Each parameter is a variable within the expression, so you don't need to wrap them in parantheses `()` like with C macros. 
+Analogous to constant values, you can define an inline function or macro by adding a parameter before the double colons and writing an expression after it. Like constants, they don't output a value in memory when compiled, useful for collecting repeated code. Unlike constant functions, they cannot be passed to another function. They are only for inserting an expression. Each parameter is a variable within the expression, so you don't need to wrap them in parentheses `()` like with C macros. 
 
 ```mu
 MAX a b :: if a > b then a else b
@@ -860,7 +860,7 @@ maybeInt = (Some int)(1)
 
 ### Where Block
 
-This is used to define what each parameter's type is for an abstract function. It must be the first defintion, and any subsequent definitions should have patterns that match the where clause. 
+This is used to define what each parameter's type is for an abstract function. It must be the first definition, and any subsequent definitions should have patterns that match the where clause. 
 
 ```mu
 List T N :: where
