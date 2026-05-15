@@ -500,7 +500,20 @@ except e then
     print("{e}")
 ```
 
-If `except` is missing, then it wraps the last expression in a result. If any exceptions are raised, then the whole result is an error.
+Pattern matching works in the `except` clause like in `case`. If a pattern is missing, the exception is raised to the next block above it. The type of exception in the last `except e then` block is all the possible exceptions minus the caught exceptions. 
+
+```mu
+try
+	risky()!
+except Exception(e) then
+	print("Exception {e}")
+(-- implied:
+except e then
+	raise e
+--)
+```
+
+If `except` is missing entirely, then it wraps the last expression in a result. If any exceptions are raised, then the whole result is an error.
 
 ```mu
 riskyFunction() = try
