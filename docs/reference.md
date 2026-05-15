@@ -595,7 +595,7 @@ union :: int | float | char
 
 ### Procedures (`proc`)
 
-Another type of `::` declaration is a `proc`, short for procedure. Unlike normal functions, procs are impure but don't return anything. Instead, you use `out` parameters to get a return value. The keyword `then` is used to divide the parameters from the function body. Captured mutable variables need to be redeclared with the `capture` keyword. This helps make sure that the proc is actually capturing a variable and declaring a new variable.
+Another type of `::` declaration is a `proc`, short for procedure. Unlike normal functions, procs are impure but don't return anything. Instead, you use `out` parameters to get a return value. The keyword `then` is used to divide the parameters from the function body. Captured mutable variables need to be redeclared with the `capture` keyword. This helps make sure that the proc is actually capturing a variable instead of declaring a new variable.
 
 ```mu
 count: mu int = 0
