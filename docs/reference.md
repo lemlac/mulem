@@ -125,8 +125,8 @@ Arrays:
 - `lhs #` = returns the length of an array
 - `lhs #- rhs` = get an item at an length - index (same as `lhs # (lhs# - rhs)`
 - `lhs ++ rhs` = concatenation or appendation, always returns a new array
-- `lhs .. rhs` = creates an iterator that starts at the left value and ends just before the right value (inclusive)
-- `lhs ..= rhs` = creates an iterator that starts at the left value and ends with the right value (exclusive)
+- `lhs .. rhs` = creates an iterator that starts at the left value and ends just before the right value (exclusive)
+- `lhs ..= rhs` = creates an iterator that starts at the left value and ends with the right value (inclusive)
 
 Option types
 - `lhs ?` = returns the some result if it's not `none`, otherwise propagate to the nearest `some` keyword (see `some` block)
@@ -136,7 +136,7 @@ Option types
 Result types
 - `lhs !` = returns the ok result if it's not an exception, otherwise propagate to the nearest `try` keyword (see `try` block)
 
-Some operators also allow an equal sign after it to set a variable based on its previous value. Left-hand side must be a defined variable.
+Some operators also allow an equal sign after it to set a variable based on its previous value. The left-hand side must be a defined variable. If it's immutable, then this is the same as shadowing it. If it's mutable, then the value is mutated.
 
 - `lhs += rhs` -> `lhs = lhs + rhs` = increment
 - `lhs -= rhs` -> `lhs = lhs - rhs` = decrement
@@ -151,7 +151,7 @@ There are two types of bindings: basic `=` and abstract `::`. See [Abstract Bind
 
 ### Variable Declarations
 
-Variables are declared with just the equals sign (=). Type is inferred, but can be declared with a colon (:).
+Variables are declared with just the equals sign (`=`). Type is inferred, but can be declared with a colon (`:`).
 
 ```mu
 a = 1
@@ -203,7 +203,7 @@ Not defining a mutable variable implies `= undefined` after it which means it ca
 x: mu int = undefined
 -- x cannot be used here.
 x = 1
--- x can not be used.
+-- x can be used now.
 ```
 
 ### Functions
@@ -245,12 +245,12 @@ array2 = map(array0, (x) =>
 
 ### Inline binding (`let` and `as`)
 
-You can also bind variables within an expression using `let ... then` and `as`. `let` is used for a single expression, while `as` binds for the rest of the scope.
+You can also bind variables within an expression using `let ... then` and `as`. `let` is used for a single expression, where as `as` binds for the rest of the scope.
 
 ```mu
 squared = let x = getSomething() then x * x
 
-while next() as val != None then
+while next() as val >< None then
     print("{val}")
 ```
 
@@ -282,6 +282,15 @@ x = 0
 y: typeof x = 1 -- Ensures that x and y have the same type.
 ```
 
+You can also get the default value of any type with the keyword `default`. The type needs to have a default value defined which is yet to be determined how, but they're already defined for basic types.
+
+```mu
+x = default int    -- 0
+x = default float  -- 0.0
+x = default char   -- '\0'
+x = default str    -- ""
+```
+
 Strings can be formatted with curly braces (`{expr}`) in the string. Use a backslash to write a literal opening curly brace (`\{`).
 
 ```mu
@@ -303,6 +312,15 @@ myStr =
     "Hello.
     "This string has multiple lines.
     "But this is the last line."
+```
+
+Subequent string literals will automatically concatenate, and the `++` operator can be used to concatenate non-literal strings.
+
+```mu
+str1 = "This" " string"
+str2 = " is broken"
+str3 = str1 ++ str2 ++ " into multiple parts."
+print(str3) -- "This string is broken up into multiple parts."
 ```
 
 Arrays are declared with the hash symbol (`#`). A number after the hash makes it a fixed length array. Arrays are fixed length by default, but this mainly matters for mutable arrays since immutable arrays can be shadowed with different type. Items in an array are separated with spaces or new lines. This helps keep the number of characters low when initializing arrays. If one of the items in an inline array is an expression, you must surround the expression in parentheses. The hash symbol is also used for accessing an array.
@@ -403,7 +421,7 @@ message = (match e
 This combines `match` and `if` into one expression. Useful if you just want to handle a single case.
 
 ```mu
-if case Patter(x) == value then
+if case Pattern(x) == value then
 	print("value is {x}")
 else
 	print("value doesn't match")
@@ -710,7 +728,7 @@ MyException :: except
 
 ### Virtual Types (`virt`)
 
-A `virt` is an abstract interface &mdash; a named contract with no data. It is equivalent to a trait or interface in other languages.
+A `virt` is an abstract interface &mdash; a named contract with no data. It is equivalent to a trait or interface in other languages. Each member is a function, also called a **method**. Methods that have a parameter named `self` at the beginning will be called as methods on the instance of that type, i.e. `instance.method(...)`. This is equivalent to saying `(typeof instance).method(instance, ...)`. `self` is inferred to be type of `Self` which represents the current type implementing this virt. 
 
 ```mu
 MyVirtual :: virt
@@ -719,7 +737,7 @@ MyVirtual :: virt
 
 ### Implementing (`impl`)
 
-Methods and trait implementations are added separately with `impl`:
+Methods and trait implementations are added separately with `impl`. Much like `virt`, `self` refers to the current instance and `Self` refers to the current type.
 
 ```mu
 MyStruct :: impl
@@ -822,10 +840,10 @@ You can also pass a type back to make generic types.
 
 ```mu
 Option T :: enum
-	Some T
+	Some(T)
 	None
 
-Some(x) :: Option(typeof(x)).Some(x)
+Some T :: (x: T) => Option(T).Some(x)
 
 maybeInt = Some(1)
 ```
@@ -844,9 +862,7 @@ List T N :: struct
 
 List T N :: impl
 	init() =
-		data: mu T#N
-		for mu x in data then
-			x = default T
+		mu data = default T#N
 		Self {data} -- Same as {data: data}		
 ```
 
@@ -887,7 +903,7 @@ As explained in this document, they are 3 main types of functions: basic/lambda,
 
 | Form | Type Signature | Pure | `out` param | Call style |
 |:--|:--|:--|:--|:--|
-| Lambda `f(a) =` or `(a) =>` | `(param) => type` | Yes | No | `(a) => expr` |
+| Lambda `f(a) =` or `(a) =>` | `lambda(param) => type` | Yes | No | `(a) => expr` |
 | `func` | `func(param, out type)` | No | Required (last) | `f(a)` or `f(a, out r)` |
 | `proc` | `proc(param[, out type])` | No | Optional | `p(a, out r)` |
 
