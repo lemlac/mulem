@@ -211,7 +211,10 @@ x = 1
 Functions are declared with parentheses before the equals sign. These are pure functions, so mutable variables cannot be captured. The type of the parameters can be either explicitly typed or inferred based on usage.
 
 ```mu
+add(a: int, b: int): int = a + b
+-- Or inferred:
 add(a, b) = a + b
+
 result = add(1, 2)
 ```
 
@@ -452,13 +455,20 @@ else
 
 #### `for` / `in`
 
-Iterates through an array.
+Iterates through an array or iterator.
 
 ```mu
 new_list = [for x in list then x * 2]
 
 for x in list then
-    print(x)
+    print("{x}")
+```
+
+For an async iterator or an array of async types, you can use `for await` to automatically wait for each on in sequential order. (See [`await`](#await).)
+
+```mu
+for await x in asyncIter() then
+	print("{x}")
 ```
 
 #### `while`
@@ -600,7 +610,7 @@ asyncFn(a, b): async int =
 	a + b
 ```
 
-Both `yeild` and `await` can be used together in an `iter async T` type. Use `for await` to iterate through it.
+Both `yield` and `await` can be used together in an `iter async T` type. Use `for await` to iterate through it.
 
 ```mu
 asyncIterFn(n): iter async int =
@@ -617,16 +627,25 @@ asyncCollect(n) async int# =
 
 #### `param ()`
 
-Exits out of a function with another function. The variables in parentheses become the parameter of the return function. Use of `param` will infer the return type as a function automatically. 
+Exits out of a function with another function. The variables in parentheses become the parameter of the return function. The return function continues where `param` left off. Use of `param` will infer the return type as a function automatically. Using multiple `param` in a function returns a function at each `param`. 
 
 ```mu
-curryAdd(a: int) =
+curryAdd(a: int): (int) => int =
 	param (b: int)
 	a + b
 
 addOne = curryAdd(1)
 afterOne = addOne(1)   -- ==2
 afterTwo = addOne(2)   -- ==3
+
+curryAdd3(a: int): (int) => (int) => int =
+	param (b)    -- Type already known based on return type.
+	param (c)
+	a + b + c
+
+curryAddWithOne = curryAdd3(1)
+addOneMore = curryAddWithOne(1)
+next = addOneMore(1)    -- 1+1+1 = 3
 ```
 
 ### Closing Multiple Blocks with `;;`
@@ -744,9 +763,9 @@ mu mutable_v = Vector2{ x: 5.0; y: 12.0 }
 normalize_in_place(mutable_v)
 ```
 
-### Imperative Functions
+#### `proc` + return value
 
-Unlike basic functions, these functions have the same rules as `proc` but they can return a value. The last parameter must be an `out` type but it does not need a name. If it doesn't have a name, it gets set by passing a value after `return` or the value of the last evaluated expression in the function body.
+`proc` can have a return value like basic functions. Unlike basic functions, they have the same rules as `proc` but include capturing and mutating referenced variables. There can only be one `out` type, and it must be the last parameter; however, the out parameter does not need a name. If it doesn't have a name, it gets set by passing a value after `return` or the value of the last evaluated expression in the function body.
 
 ```mu
 -- Named out parameter
@@ -770,7 +789,7 @@ then
     return a + b + count
 ```
 
-This can be called like a function or like a `proc` when you pass an out variable at the end.
+This can be called like a function or like a void `proc` when you pass an out variable at the end.
 
 ```mu
 -- Function style: out parameter is the return value
@@ -778,7 +797,7 @@ sum = addAndCount(1, 2)
 
 -- Proc style: out parameter passed explicitly
 addAndCount(1, 2, out sum)
-addAndCount(1, 2, sum)    -- if sum is mu
+addAndCount(1, 2, sum)    -- if sum is mutable
 ```
 
 ### Structures (`struct`)
@@ -934,7 +953,7 @@ Some T :: (x: T) => Option(T).Some(x)
 maybeInt = Some(1)
 ```
 
-Type parameters can be omitted at the call site if they can be fully inferred from the value arguments, in which case the call uses parentheses like a regular function. It can also be called explicitly by either making an alias for it or putting the abstract function in paranetheses first and then calling it.
+Type parameters can be omitted at the call site if they can be fully inferred from the value arguments, in which case the call uses parentheses like a regular function. It can also be called explicitly by either making an alias for it or putting the abstract function in parentheses first and then calling it.
 
 ```mu
 SomeInt :: Some int
@@ -1078,6 +1097,7 @@ Mu is multi-paradigm: different functions, structs, or modules can use different
 ## Keywords
 
 * `and`
+* `as`
 * `async`
 * `await`
 * `band`
@@ -1100,7 +1120,7 @@ Mu is multi-paradigm: different functions, structs, or modules can use different
 * `for`
 * `from`
 * `if`
-* `insert`
+* `inherit`
 * `impl`
 * `import`
 * `in`
@@ -1108,16 +1128,20 @@ Mu is multi-paradigm: different functions, structs, or modules can use different
 * `iter`
 * `loop`
 * `match`
+* `mod`
 * `mu`
 * `none`
 * `not`
 * `or`
 * `out`
+* `pass`
 * `param`
 * `proc`
 * `raise`
 * `ref`
 * `return`
+* `self`
+* `Self`
 * `sizeof`
 * `some`
 * `str`
@@ -1130,6 +1154,7 @@ Mu is multi-paradigm: different functions, structs, or modules can use different
 * `until`
 * `virt`
 * `void`
+* `with`
 * `where`
 * `while`
 * `yield`
