@@ -354,13 +354,13 @@ print("{count}") -- 3
 
 #### Lambda Functions
 
-You can define a function within an expression with the pattern `(_) => _`. This is useful for passing functions to other functions. If the lambda function has multiple lines, it must terminate with `end`. As mentioned before, the purity of the lambda must match the function that it's being passed to.
+You can define a function within an expression with the keyword `fn` in the pattern `fn(_) = _`. This is useful for passing functions to other functions. If the lambda function has multiple lines, it must terminate with `end`. As mentioned before, the purity of the lambda must match the function that it's being passed to.
 
 ```mu
 map(array, func) = [for x in array then func(x)]
 array0 = [1 2 3 4]
-array1 = map(array0, (x) => x + 1)
-array2 = map(array0, (x) =>
+array1 = map(array0, fn(x) = x + 1)
+array2 = map(array0, fn(x) =
     if x < 2 then
         x - 1
     else
@@ -759,7 +759,7 @@ asyncCollect(n): async int# =
 Exits out of a function with another function. The variables in parentheses become the parameter of the return function. The return function continues where `param` left off. Use of `param` will infer the return type as a function automatically. Using multiple `param` in a function returns a function at each `param`. 
 
 ```mu
-curryAdd(a: int): (int) => int =
+curryAdd(a: int): fn(int): int =
 	param (b: int)
 	a + b
 
@@ -767,7 +767,7 @@ addOne = curryAdd(1)
 afterOne = addOne(1)   -- ==2
 afterTwo = addOne(2)   -- ==3
 
-curryAdd3(a: int): (int) => (int) => int =
+curryAdd3(a: int): fn(int): fn(int): int =
 	param (b)    -- Type already known based on return type.
 	param (c)
 	a + b + c
@@ -822,9 +822,9 @@ PI :: 3.1415926535
 You can also bind a function to a constant. When calling it, it would be the same as defining it inline and then calling. This can be useful if you need to pass a function multiple times but don't want it to be outputted when compiled.
 
 ```mu
-IDENTITY :: (x) => x
-addOne :: (x) => x + 1
-value = addOne(2) -- Same as ((x) => x + 1)(2), result is 3.
+IDENTITY :: fn(x) = x
+addOne :: fn(x) = x + 1
+value = addOne(2) -- Same as (fn(x) = x + 1)(2), result is 3.
 array = map([1 2 3 4], addOne)
 ```
 
@@ -1082,7 +1082,7 @@ Option T :: enum
 	Some(T)
 	None
 
-Some T :: (x: T) => Option(T).Some(x)
+Some T :: fn(x: T) = Option(T).Some(x)
 
 maybeInt = Some(1)
 ```
@@ -1152,8 +1152,8 @@ As explained in this document, they are 2 function types: basic/lambda and `proc
 
 | Form | Type Signature | Pure | Void | Call style |
 |:--|:--|:--|:--|:--|
-| Lambda `f(a) =` or `(a) =>` | `(param) => type` | Sometimes | No | `f(param)` *--> result* |
-| Pure `@pure f(a) =` | `pure(param) => type` | Always | No | `f(param)` *--> result* |
+| basic | `fn(param): type` | Sometimes | No | `f(param)` *--> result* |
+| `@pure` | `pure fn(param): type` | Always | No | `f(param)` *--> result* |
 | `proc` | `proc(param[, out type])` | Never | Optional | `f(param, out result)`*--> void* **or** `f(param)` *--> result* |
 
 `proc`s are designed to be low-level and imperative, while lambdas are designed to be high-level and used both as functions and as values themselves. Pure functions always have the same input that results in the same output, but this is not guarenteed for impure functions. Mu will allow you to analyze and modify pure functions similar to how a mathematician would analyze an algebraic formula, allowing you to do things like get the derivative or integral of a function.
@@ -1161,8 +1161,8 @@ As explained in this document, they are 2 function types: basic/lambda and `proc
 ```mu
 f(x) = x * x + 2.0 * x + 1.0
 
-df = derivative(f)        -- (x) => 2.0 * x + 2.0
-integral_f = integral(f)  -- (x) => x^3/3 + x^2 + x
+df = derivative(f)        -- fn(x) = 2.0 * x + 2.0
+integral_f = integral(f)  -- fn(x) = x^3/3 + x^2 + x
 ```
 
 Since Mu's pure functions map directly to these algebraic forms, the compiler can walk the AST and apply these rules symbolically, producing a new lambda rather than a numerical approximation. This is exact, unlike finite difference methods.
@@ -1171,16 +1171,16 @@ This can go further than just calculus though.
 
 ```mu
 -- Simplification
-simplified = simplify((x) => x * 1.0 + 0.0)  -- (x) => x
+simplified = simplify(fn(x) = x * 1.0 + 0.0)  -- fn(x) = x
 
 -- Partial application analysis  
 add(x, y) = x + y
-addOne = partial(add, 1)   -- (y) => 1 + y
+addOne = partial(add, 1)   -- fn(y) = 1 + y
 
 -- Composition
 g(x)= x + 1.0
 h(x)= x * 2.0
-gh = compose(g, h)   -- (x) => (x + 1.0) * 2.0
+gh = compose(g, h)   -- fn(x) = (x + 1.0) * 2.0
 
 -- Solving (within decidable cases)
 roots = solve(f)   -- returns values where f(x) == 0
@@ -1231,7 +1231,7 @@ Mu is multi-paradigm: different functions, structs, or modules can use different
 
 ## Keywords
 
-There are 66 keywords in total:
+There are 67 keywords in total:
 
 * `and`
 * `as`
@@ -1256,6 +1256,7 @@ There are 66 keywords in total:
 * `except`
 * `false`
 * `float`
+* `fn`
 * `for`
 * `from`
 * `if`
