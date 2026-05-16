@@ -136,7 +136,7 @@ Option types
 Result types
 - `lhs !` = returns the ok value if it's not an exception, otherwise propagate to the nearest `try` keyword (see `try` block)
 
-Some operators also allow an equal sign after it to set a variable based on its previous value. The left-hand side must be a defined variable. If it's immutable, then this is the same as shadowing it. If it's mutable, then the value is mutated.
+Some operators also allow an equal sign after it to set a variable based on its previous value. The left-hand side must be a defined variable. If it's immutable, then this is the same as shadowing it. If it's mutable, then the value is mutated. All of these are void statements, i.e. they return nothing and should only be used in an expression by themselves.
 
 - `lhs += rhs` -> `lhs = lhs + rhs` = increment
 - `lhs -= rhs` -> `lhs = lhs - rhs` = decrement
@@ -175,6 +175,18 @@ i = i + 1            -- Sets new `i` based on old `i`
 i += 1               -- Same as above
 ```
 
+Using the single equal-sign is a void statement, so using it within an expression and not on its own is a syntax error. This helps prevent the common bug of using `=` when you meant `==`. For inline binding, use `let ... then` or `as`. (See below.)
+
+```mu
+-- Error:
+-- if x = 0 then
+-- Do this instead:
+if x == 0 then
+	print("x is 0")
+```
+
+#### Mutability (`mu`)
+
 Mutable variables are declared with `mu type`. Setting it will change the value instead of shadowing it. The type of value when mutating it should match its original type.
 
 ```mu
@@ -206,9 +218,25 @@ x = 1
 -- `x` can be used now.
 ```
 
+#### References (`ref`/`ref mu`)
+
+A reference type points to the same spot in memory as another variable. Both sides of the equation must be variables, i.e. no references that point to a constant. References are immutable by default unless declared with `ref mu`. The syntax follows the same pattern as `mu`:
+
+* `x: ref T = y` = Immutable reference with explicit type.
+* `ref x = y` = Immutable reference with inferred type.
+* `x: ref mu T = y` = Mutable refernece with explicit type.
+* `ref mu x = y` = Mutable reference with inferred type. 
+
+```mu
+mu x = 0
+ref mu xRef = x
+xRef = 1
+print("x is {x}")   -- "x is 1"
+```
+
 ### Function Declarations
 
-Functions are declared with parentheses before the equals sign. These are pure functions, so mutable variables cannot be captured. The type of the parameters can be either explicitly typed or inferred based on usage.
+Functions are declared with parentheses before the equals sign. This kind of function is pure by default but become impure when using certain features (explained below). The type of the parameters can be either explicitly typed or inferred based on usage.
 
 ```mu
 add(a: int, b: int): int = a + b
@@ -230,9 +258,98 @@ fib(n) =
         fib(n - 1) + fib(n - 2)
 ```
 
+#### Pure Functions
+
+Functions can either be pure or impure. This affects whether they can be analyzed or not. To enforce purity, you can add the decorator `@pure` before the function.
+
+```mu
+@pure
+f(x) = x*x + 2*x + 1
+```
+
+Purity is passed down to all functions within a function. So if you pass another function to a pure function, then it also must be pure. 
+
+```mu
+@pure
+callFn(f, x) = f(x)
+
+-- Pure by default:
+f(x) = x*x + 2*x + 1
+
+-- Impure because `capture` is used:
+mu a = 0
+g(x) =
+	capture a
+	a += 1
+	x + a
+
+callFn(f, 0)     -- Allowed.
+-- callFn(g, 0)  -- Error if uncommented.
+```
+
+Things not allowed in `@pure` functions:
+
+* Calling impure functions.
+* Having a mutable reference parameter `ref mu`.
+* Capturing a variable with `capture`.
+* Using an explicit `return`. (See [Control Flow](#Control-Flow).)
+
+#### Mutable / Reference parameters
+
+Function parameters can be declared like variables. Likewise, you can modify their mutability and referenceness the same way.
+
+```mu
+increment(x: ref mu int) =
+	x += 1
+
+y = 0
+increment(y)
+```
+
+What each modifier means changes the functionality and the function's purity:
+
+| Modifiers | What it does | Allowed in `@pure` |
+|:--|:--|:--|
+| nothing | Copies by value, immutable in the function. | Yes. |
+| `mu` | Copies by value, mutable within the function. | Yes, but can't be captured to another function or passed by a mutable reference. |
+| `ref` | Copies by value, immutable in the function. | Yes. |
+| `ref mu` | Copies by value, mutable in the function | No. |
+
+#### Capturing (`capture`)
+
+Immutable variables can be captured without an issue. If you try to set it within a function, it will get shadowed within the scope of the function. This also includes other functions which are also immutable by default.
+
+```mu
+x = 1
+
+addFromX(y) = x + y
+addFromX2(y, z) = addFromX(y) + z
+
+cannotChangeX(newX) =
+	x = newX
+	print("{x}")
+
+cannotChangeX(2) -- prints 2
+print("{x}")     -- prints 1
+```
+
+To capture a mutable variable, you must redeclare it in the function with `capture _`. Note that this is not allowed within a function declared with `@pure`. 
+
+```mu
+count = 0
+addCount() =
+	capture count
+	count += 1
+
+addCount()
+addCount()
+addCount()
+print("{count}") -- 3
+```
+
 #### Lambda Functions
 
-You can define a function within an expression with the pattern `(_) => _`. This is useful for passing functions to other functions. If the lambda function has multiple lines, it must terminate with a double semi-colon (`;;`).
+You can define a function within an expression with the pattern `(_) => _`. This is useful for passing functions to other functions. If the lambda function has multiple lines, it must terminate with a double semi-colon (`;;`). As mentioned before, the purity of the lambda must match the function that it's being passed to&mdash;.
 
 ```mu
 map(array, func) = [for x in array then func(x)]
@@ -587,7 +704,22 @@ In a `proc`, `raise` can be used outside of a `try` block to return out of the f
 
 #### `return`
 
-This exits out of a `proc`. It can't be used in a basic/lambda function. 
+Exits out of a function. If a value is after it, that value is the return value, otherwise it's `void`. This must match the return type of the function. It also disables purity and can't be used inside a `@pure` function. 
+
+```mu
+-- Impure:
+isThirteen(x) =
+	if x == 13 then
+		return true
+	false
+
+-- Pure:
+isThirteen(x) =
+	if x == 13 then
+		true
+	else
+		false
+```
 
 #### `yield`
 
@@ -718,9 +850,14 @@ union      ::  int | float | char
 
 ### Procedures (`proc`)
 
-Another type of `::` declaration is a `proc`, short for procedure. Unlike normal functions, procs are impure but don't return anything. Instead, you use `out` parameters to get a return value. The keyword `then` is used to divide the parameters from the function body. Captured mutable variables need to be redeclared with the `capture` keyword. This helps make sure that the proc is actually capturing a variable instead of declaring a new variable.
+Another type of `::` declaration is a `proc`, short for procedure. Unlike normal functions which can be pure, procs are always impure but don't return anything by default. Instead, you use `out` parameters to get a return value. The keyword `then` is used to divide the parameters from the function body. Parameters can either be indented like `struct` or `enum` or declared in parentheses. Captured mutable variables need to be redeclared with the `capture` keyword. This helps make sure that the proc is actually capturing a variable instead of declaring a new variable.
 
 ```mu
+sayHi :: proc () then print("Hi!")
+
+sayHello :: proc (name: str) then
+	print("Hello, {name}!)
+
 count: mu int = 0
 myProc :: proc
     a: int
@@ -735,7 +872,7 @@ sum: mu int
 myProc(1, 2, sum)
 ```
 
-You can also use `out` when calling a proc to declare an out parameter and input it at the same time. This is useful if you want it to be immutable.
+You can also use `out` when calling a proc to declare an out parameter and input it at the same time. This is useful if you want an immutable binding without making a mutable variable first.
 
 ```mu
 myProc(1, 2, out sum)
@@ -833,7 +970,7 @@ MyException :: except
 
 ### Virtual Types (`virt`)
 
-A `virt` is an abstract interface &mdash; a named contract with no data. It is equivalent to a trait or interface in other languages. Each member is a function, also called a **method**. Methods that have a parameter named `self` at the beginning will be called as methods on the instance of that type, i.e. `instance.method(...)`. This is equivalent to saying `(typeof instance).method(instance, ...)`. `self` is inferred to be type of `Self` which represents the current type implementing this virt. 
+A `virt` is an abstract interface &mdash; a named contract with no data. It is equivalent to a trait or interface in other languages. Each member is a function, also called a **method**. Methods that have a parameter named `self` at the beginning will be called as methods on the instance of that type, i.e. `instance.method(...)`. This is equivalent to saying `(typeof instance).method(instance, ...)`. `self` is inferred to be type of `Self` which represents the current type implementing this virt. All methods should be basic/lambda functions, no `proc`s. 
 
 ```mu
 MyVirtual :: virt
@@ -850,7 +987,7 @@ MyStruct :: impl
         MyStruct{ x: x; y: y }
 ```
 
-To implement a virt to another type, you add the virt after `impl`:
+To implement a virt onto another type, you add the virt's name after `impl`:
 
 ```mu
 MyStruct :: impl MyVirtual
@@ -1014,14 +1151,15 @@ then
 
 ## Function Types
 
-As explained in this document, they are 2 function types: basic/lambda and `proc`. Both basic and lambda have the same type signatures and are treated the same, so we'll call them both lambda functions. 
+As explained in this document, they are 2 function types: basic/lambda and `proc`. Both basic and lambda have the same type signatures and are treated the same, so we'll call them both lambda functions. However, lambda functions are split between pure and impure. A pure type can always converge to an impure type, so only pure functions are distinguished with the keyword `pure` in their type where necessary. When inside a function marked as `@pure` though, all functions inside it also become pure.
 
 | Form | Type Signature | Pure | Void | Call style |
 |:--|:--|:--|:--|:--|
-| Lambda `f(a) =` or `(a) =>` | `(param) => type` | Yes | No | `(a) => expr` |
-| `proc` | `proc(param[, out type])` | No | Optional | `p(a, out r)` |
+| Lambda `f(a) =` or `(a) =>` | `(param) => type` | Sometimes | No | `f(param) --> result` |
+| Pure `@pure f(a) =` | `pure(param) => type` | Always | No | `f(param) --> result` |
+| `proc` | `proc(param[, out type])` | Never | Optional | `f(param, out result)` or `f(param) --> result` |
 
-`proc`s are designed to be low-level and imperative, while lambdas are designed to be both used as functions and as values themselves. The same input always results in the same output since lambdas are required to be pure. Mu will allow you to analyze and modify a lambda function similar to how a mathematician would analyze an algebraic formula, allowing you to do things like get the derivative or integral of a function.
+`proc`s are designed to be low-level and imperative, while lambdas are designed to be high-level and used both as functions and as values themselves. Pure functions always have the same input that results in the same output, but this is not guarenteed for impure functions. Mu will allow you to analyze and modify pure functions similar to how a mathematician would analyze an algebraic formula, allowing you to do things like get the derivative or integral of a function.
 
 ```mu
 f(x) = x * x + 2.0 * x + 1.0
@@ -1096,6 +1234,8 @@ Mu is multi-paradigm: different functions, structs, or modules can use different
 
 ## Keywords
 
+There are 64 keywords in total:
+
 * `and`
 * `as`
 * `async`
@@ -1106,6 +1246,7 @@ Mu is multi-paradigm: different functions, structs, or modules can use different
 * `bor`
 * `break`
 * `bxor`
+* `capture`
 * `case`
 * `char`
 * `const`
@@ -1140,8 +1281,7 @@ Mu is multi-paradigm: different functions, structs, or modules can use different
 * `raise`
 * `ref`
 * `return`
-* `self`
-* `Self`
+* `self`/`Self`
 * `sizeof`
 * `some`
 * `str`
@@ -1150,6 +1290,7 @@ Mu is multi-paradigm: different functions, structs, or modules can use different
 * `true`
 * `try`
 * `typeof`
+* `undefined`
 * `uint`
 * `until`
 * `virt`
