@@ -517,7 +517,7 @@ This marks that something should not be used. If the compiler detects that a cod
 unusedFn() =
 	undefined
 
--- `unusedFn` cannont be used.
+-- `unusedFn` cannot be used.
 ```
 
 #### `do`
