@@ -1005,4 +1005,59 @@ Mu is multi-paradigm: different functions, structs, or modules can use different
 
 ---
 
+## Keywords
+
+* `and`
+* `async`
+* `await`
+* `band`
+* `bnot`
+* `bool`
+* `bor`
+* `break`
+* `bxor`
+* `case`
+* `char`
+* `const`
+* `continue`
+* `do`
+* `else`
+* `enum`
+* `except`
+* `false`
+* `float`
+* `for`
+* `func`
+* `if`
+* `impl`
+* `in`
+* `int`
+* `iter`
+* `loop`
+* `match`
+* `mu`
+* `none`
+* `not`
+* `or`
+* `out`
+* `param`
+* `proc`
+* `raise`
+* `ref`
+* `return`
+* `some`
+* `str`
+* `struct`
+* `then`
+* `true`
+* `try`
+* `uint`
+* `until`
+* `virt`
+* `where`
+* `while`
+* `yield`
+
+---
+
 *This document captures the current state of the Mu design. The language is still evolving; future revisions will cover modules, async/concurrency, operator overloading, and full Python interop.*
