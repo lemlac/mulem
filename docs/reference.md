@@ -354,7 +354,7 @@ print("{count}") -- 3
 
 #### Lambda Functions
 
-You can define a function within an expression with the pattern `(_) => _`. This is useful for passing functions to other functions. If the lambda function has multiple lines, it must terminate with `end`. As mentioned before, the purity of the lambda must match the function that it's being passed to&mdash;.
+You can define a function within an expression with the pattern `(_) => _`. This is useful for passing functions to other functions. If the lambda function has multiple lines, it must terminate with `end`. As mentioned before, the purity of the lambda must match the function that it's being passed to.
 
 ```mu
 map(array, func) = [for x in array then func(x)]
@@ -1231,7 +1231,7 @@ Mu is multi-paradigm: different functions, structs, or modules can use different
 
 ## Keywords
 
-There are 64 keywords in total:
+There are 66 keywords in total:
 
 * `and`
 * `as`
