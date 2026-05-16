@@ -310,10 +310,10 @@ What each modifier means changes the functionality and the function's purity:
 
 | Modifiers | What it does | Allowed in `@pure` |
 |:--|:--|:--|
-| nothing | Copies by value, immutable in the function. | Yes. |
-| `mu` | Copies by value, mutable within the function. | Yes, but can't be captured to another function or passed by a mutable reference. |
-| `ref` | Copies by value, immutable in the function. | Yes. |
-| `ref mu` | Copies by value, mutable in the function | No. |
+| *nothing* | Copies value, immutable in the function. | Yes. |
+| `mu` | Copies value, mutable within the function. | Yes, but can't be captured to another function or passed by a mutable reference. |
+| `ref` | Passes reference, immutable in the function. | Yes. |
+| `ref mu` | Passes reference, mutable in the function | No. |
 
 #### Capturing (`capture`)
 
@@ -336,7 +336,7 @@ print("{x}")     -- prints 1
 To capture a mutable variable, you must redeclare it in the function with `capture _`. Note that this is not allowed within a function declared with `@pure`. 
 
 ```mu
-count = 0
+mu count = 0
 addCount() =
 	capture count
 	count += 1
@@ -1155,9 +1155,9 @@ As explained in this document, they are 2 function types: basic/lambda and `proc
 
 | Form | Type Signature | Pure | Void | Call style |
 |:--|:--|:--|:--|:--|
-| Lambda `f(a) =` or `(a) =>` | `(param) => type` | Sometimes | No | `f(param) --> result` |
-| Pure `@pure f(a) =` | `pure(param) => type` | Always | No | `f(param) --> result` |
-| `proc` | `proc(param[, out type])` | Never | Optional | `f(param, out result)` or `f(param) --> result` |
+| Lambda `f(a) =` or `(a) =>` | `(param) => type` | Sometimes | No | `f(param)` *--> result* |
+| Pure `@pure f(a) =` | `pure(param) => type` | Always | No | `f(param)` *--> result* |
+| `proc` | `proc(param[, out type])` | Never | Optional | `f(param, out result)`*--> void* **or** `f(param)` *--> result* |
 
 `proc`s are designed to be low-level and imperative, while lambdas are designed to be high-level and used both as functions and as values themselves. Pure functions always have the same input that results in the same output, but this is not guarenteed for impure functions. Mu will allow you to analyze and modify pure functions similar to how a mathematician would analyze an algebraic formula, allowing you to do things like get the derivative or integral of a function.
 
@@ -1278,6 +1278,7 @@ There are 64 keywords in total:
 * `pass`
 * `param`
 * `proc`
+* `pure`
 * `raise`
 * `ref`
 * `return`
