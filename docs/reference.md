@@ -594,6 +594,20 @@ asyncCollect(n) async int# =
 	ret
 ```
 
+#### `param ()`
+
+Exits out of a function with another function. The variables in parentheses become the parameter of the return function. Use of `param` will infer the return type as a function automatically in lambda functions. 
+
+```mu
+curryAdd(a: int) =
+	param (b: int)
+	a + b
+
+addOne = curryAdd(1)
+afterOne = addOne(1)   -- ==2
+afterTwo = addOne(2)   -- ==3
+```
+
 ### Closing Multiple Blocks with `;;`
 
 Multiple blocks can be closed at once with `;;`. This can help with readability.
