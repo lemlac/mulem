@@ -11,7 +11,7 @@ Mu will be both a compiled and an interpreted language. Unlike Python, you won't
 ## Lexical Conventions
 
 - **Indentation**: Significant whitespace (4 spaces recommended). 
-- **Statements**: Each statement is divided by new lines. Semi-colons (;) can also be used, but there must be another statement after it&mdash;i.e. no trailing semi-colons. Double semi-colon (`;;`) has a special meaning to end a block.
+- **Statements**: Each statement is divided by new lines. Semi-colons (;) can also be used, but there must be another statement after it&mdash;i.e. no trailing semi-colons. Keyword `end` has a special meaning to end a block.
 - **Comments**: Double dash (`--`) to end-of-line. Block comments start with `(--` and end with `--)`.
 - **String literals**: `"..."` with interpolation with `{expr}` inside. To write a literal curly brace (`{`), escape it with a backslash `\{`. 
 
@@ -43,7 +43,7 @@ expr
 expr; expr
 ```
 
-Almost everything is an expression. Some statements can be either inline or block depending on the presence of a new-line. When mixing the two (i.e. a block statement within an inline statement), the `;;` symbol is required to exit block mode and return to inline mode. The last statement evaluated in a block is its value. 
+Almost everything is an expression. Some statements can be either inline or block depending on the presence of a new-line. When mixing the two (i.e. a block statement within an inline statement), the `end` symbol is required to exit block mode and return to inline mode. The last statement evaluated in a block is its value. 
 
 To split one expression into multiple lines, you must wrap it in parentheses. The indentation inside the parentheses doesn't matter as long as it's the same as or greater than the opening parenthesis.
 
@@ -62,17 +62,17 @@ do
 	expr
 ```
 
-You can optionally use double semi-colons `;;` to end a block. This will end all blocks of the same indentation or more. If a block is inside of another expression and not by itself, then the closing `;;` is required and must be at the same indentation as the opening part of the block.
+You can optionally use `end` to end a block. This will end all blocks of the same indentation or more. If a block is inside of another expression and not by itself, then the closing `end` is required and must be at the same indentation as the opening part of the block.
 
 ```mu
 do
 	do
 		expr
-;;              -- Ends both expressions.
+end              -- Ends both expressions.
 
 (do
 	expr
-;;)             -- Required here since the block is in parentheses.
+end)             -- Required here since the block is in parentheses.
 ```
 
 The difference on whether a block keyword starts a block or is inlined is based on the presence of a new-line immediately after it&mdash;ignoring comments and trailing spaces.
@@ -348,7 +348,7 @@ print("{count}") -- 3
 
 #### Lambda Functions
 
-You can define a function within an expression with the pattern `(_) => _`. This is useful for passing functions to other functions. If the lambda function has multiple lines, it must terminate with a double semi-colon (`;;`). As mentioned before, the purity of the lambda must match the function that it's being passed to&mdash;.
+You can define a function within an expression with the pattern `(_) => _`. This is useful for passing functions to other functions. If the lambda function has multiple lines, it must terminate with `end`. As mentioned before, the purity of the lambda must match the function that it's being passed to&mdash;.
 
 ```mu
 map(array, func) = [for x in array then func(x)]
@@ -359,7 +359,7 @@ array2 = map(array0, (x) =>
         x - 1
     else
         x + 2
-;;)
+end)
 ```
 
 ### Inline binding (`let` and `as`)
@@ -771,15 +771,15 @@ addOneMore = curryAddWithOne(1)
 next = addOneMore(1)    -- 1+1+1 = 3
 ```
 
-### Closing Multiple Blocks with `;;`
+### Closing Multiple Blocks with `end`
 
-Multiple blocks can be closed at once with `;;`. This can help with readability.
+Multiple blocks can be closed at once with `end`. This can help with readability.
 
 ```mu
 if file1.endswith(".txt") and file2.endswith(".txt") then
     with file.open(file1)! as f, file.open(file2)! as g then
         g.write(f.read()!)!
-;; -- Closes both `if` and `with`.
+end -- Closes both `if` and `with`.
 ```
 
 ---
@@ -1064,7 +1064,7 @@ value = (do
 	x = (3) + 1
 	x = x / 2
 	x * x
-;;)
+end)
 ```
 
 The compiler will read the body of the macro and understand where to insert its parameters, so if a parameter gets shadowed, then it will no longer insert it for the rest of that scope. 
@@ -1245,6 +1245,7 @@ There are 64 keywords in total:
 * `default`
 * `do`
 * `else`
+* `end`
 * `enum`
 * `except`
 * `false`
