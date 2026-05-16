@@ -747,7 +747,7 @@ asyncIterFn(n): iter async int =
 		val = await fetch(i)
 		yield val
 
-asyncCollect(n) async int# =
+asyncCollect(n): async int# =
 	mu ret: int# = []
 	for await x in asyncIterFn(n) then
 		ret ++= x
