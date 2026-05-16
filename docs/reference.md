@@ -279,7 +279,7 @@ You can get the type of any variable with the `typeof` keyword.
 
 ```mu
 x = 0
-y: typeof x = 1 -- Ensures that x and y have the same type.
+y: typeof x = 1       -- Ensures that x and y have the same type.
 ```
 
 You can also get the default value of any type with the keyword `default`. The type needs to have a default value defined which is yet to be determined how, but they're already defined for basic types.
@@ -320,7 +320,7 @@ Subsequent string literals will automatically concatenate, and the `++` operator
 str1 = "This" " string"
 str2 = " is broken"
 str3 = str1 ++ str2 ++ " into multiple parts."
-print(str3) -- "This string is broken up into multiple parts."
+print(str3)         -- "This string is broken up into multiple parts."
 ```
 
 Arrays are declared with the hash symbol (`#`). A number after the hash makes it a fixed length array. Arrays are fixed length by default, but this mainly matters for mutable arrays since immutable arrays can be shadowed with different type. Items in an array are separated with spaces or new lines. This helps keep the number of characters low when initializing arrays. If one of the items in an inline array is an expression, you must surround the expression in parentheses. The hash symbol is also used for accessing an array.
