@@ -853,7 +853,7 @@ Another type of `::` declaration is a `proc`, short for procedure. Unlike normal
 sayHi :: proc () then print("Hi!")
 
 sayHello :: proc (name: str) then
-	print("Hello, {name}!)
+	print("Hello, {name}!")
 
 count: mu int = 0
 myProc :: proc
