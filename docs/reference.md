@@ -266,11 +266,12 @@ while next() as val >< None then
 
 ### Built-in Types
 
-Built-in types include `int`, `float`, `char`, and `str`. 
+Built-in types include `int`, `float`, `bool`, `char`, and `str`. 
 
 ```mu
 myInt: int = 1234
 myFloat: float = 12.34
+myBool: bool = true
 myChar: char = 'a'
 myStr: str = "Hello"
 ```
@@ -287,6 +288,7 @@ You can also get the default value of any type with the keyword `default`. The t
 ```mu
 x = default int    -- 0
 x = default float  -- 0.0
+x = default bool   -- false
 x = default char   -- '\0'
 x = default str    -- ""
 ```
