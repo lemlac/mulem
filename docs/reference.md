@@ -68,22 +68,22 @@ You can optionally use double semi-colons `;;` to end a block. This will end all
 do
 	do
 		expr
-;; -- Ends both expressions.
+;;              -- Ends both expressions.
 
 (do
 	expr
-;;) -- Required here since the block is in parentheses.
+;;)             -- Required here since the block is in parentheses.
 ```
 
 The difference on whether a block keyword starts a block or is inlined is based on the presence of a new-line immediately after it&mdash;ignoring comments and trailing spaces.
 
 ```mu
-do expr -- Inline block.
+do expr         -- Inline block.
 
-do -- New line here, so start a block.
-	expr -- Next line should be one or more indentations higher.
+do              -- New line here, so start a block.
+	expr        -- Next line should be one or more indentations higher.
 
-expr -- Unindenting exits the block.
+expr            -- Unindenting exits the block.
 ```
 
 All subsequent expressions within a block should have the same indentation. If an expression has less indentation than the first but more than the opening of the block, then that's a syntax error. If an expression has more indentation than the first, then it must be in a new block or inside parentheses otherwise, it's also a syntax error.
