@@ -134,6 +134,9 @@ Arrays:
 - `lhs .. rhs` = creates an iterator that starts at the left value and ends just before the right value (exclusive)
 - `lhs ..= rhs` = creates an iterator that starts at the left value and ends with the right value (inclusive)
 
+Objects:
+- `lhs & rhs` = combine two objects into one (See product types)
+
 Option types
 - `lhs ?` = returns the some value if it's not `none`, otherwise propagate to the nearest `some` keyword (see `some` block)
 - `lhs ?. rhs` = gets a method or member of an optional type if it has something, otherwise return `none`
@@ -367,6 +370,32 @@ array2 = map(array0, fn(x) =
         x + 2
 end)
 ```
+
+#### Named Parameters (`&`)
+
+You can declare a named parameter with `&` and a named tuple after it before the `:` or `=`.
+
+```mu
+add() & { a: int, b: int }: int =
+	a + b
+
+add(a: 1, b: 2)
+```
+
+Named parameters can be defined in their own object and then passed in with the `&` operator as well. It has a higher order of operation over the function call. 
+
+```mu
+Options :: { enabled: bool }
+doThing(key: str) & Options{ enabled } =
+	if enabled then
+		callApi(str)
+
+options = Options{ enabled: true }
+
+doThing("foo") & options   -- Puts `options` into the arguments.
+```
+
+See below for more details on the `&` operator.
 
 ### Inline binding (`let` and `as`)
 
@@ -836,14 +865,40 @@ Assigning a type after `::` creates an alias
 numberType :: int
 ```
 
-You can also create aliases for basic product types (tuples) or sum types (unions).
+You can also create aliases for basic product types or sum types.
 
 ```mu
-tuple      ::  int, float, char 
-alsoTuple  :: (int, float, char)               -- Optional parentheses.
-namedTuple :: {count: int; scale: float; code: char}
-union      ::  int | float | char
+tuple        ::  int, float, char 
+alsoTuple    :: (int, float, char)                     -- Optional parentheses.
+namedTuple   :: {count: int; scale: float; code: char} -- Position not guarenteed.
+productUnion ::  int & float & char                    -- Is the size of all types combined.
+sumUnion     ::  int | float | char                    -- Is the size of the largest type.
 ```
+
+Every type by itself is its own tuple, so for example `char` and `(char)` are the same.
+
+Product unions with the `&` operator can be used for both types and values. When you combine two or more positional tuples, the positions of subsequent tuples get bumped up by the number of positions in the previous tuples, i.e. `(a, b) & (c, d)` becomes `(a, b, c, d)`. When you combine two or more named tuples, conflicting named parameters override each other with the last tuple taking priority&mdash;much like how shadowing works. So if you have `{x: 1} & {x: 2}`, the result is just `{x: 2}` since it overrides the `x` of the previous tuple. Positional tuples and named tuples can be combined together for example `(0, 1) & {x: 2}`. The shorthand for this is to write named parameters in a positional tuple like `(0, 1, x: 2)`. 
+
+You can think of it as every tuple always having both dimensions, just with most slots empty:
+
+```mu
+(0, 1)           -- positional: (0, 1), named: {}
+{x: 2}           -- positional: (),     named: {x: 2}
+(0, 1) & {x: 2}  -- positional: (0, 1), named: {x: 2}
+{x: 2} & (0, 1)  -- positional: (0, 1), named: {x: 2} -- identical
+```
+
+So `&` has different commutativity rules depending on what's being combined:
+
+| Combination | Commutative? | Rule |
+|:--|:--|:--|
+| Positional + positional | No | Positions concatenate in order |
+| Named + named | No | Conflicts resolve last-wins |
+| Positional + named | Yes | Orthogonal, no interaction |
+
+This makes the algebra quite principled. The only cases where order matters are also the cases where a conflict is actually possible &mdash; two positional slots or two named slots with the same key. When there's no possible conflict, order is irrelevant.
+
+It also means the shorthand `(0, 1, x: 2)` isn't really special syntax. It's the natural representation of a tuple that has both dimensions populated, which any `&` expression across the two types would produce anyway.
 
 ### Procedures (`proc`)
 
