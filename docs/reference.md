@@ -131,11 +131,13 @@ Arrays:
 - `lhs #` = returns the length of an array
 - `lhs #- rhs` = get an item from the end of an array (same as `lhs # (lhs# - rhs)`
 - `lhs ++ rhs` = concatenation or appendation, always returns a new array
+- `++ rhs` = spread an array or iterator into an array or positional tuple
 - `lhs .. rhs` = creates an iterator that starts at the left value and ends just before the right value (exclusive)
 - `lhs ..= rhs` = creates an iterator that starts at the left value and ends with the right value (inclusive)
 
-Objects:
-- `lhs & rhs` = combine two objects into one (See product types)
+Tuples:
+- `lhs & rhs` = combine two tuples into one
+- `& rhs` = spread a tuple into another tuple
 
 Option types
 - `lhs ?` = returns the some value if it's not `none`, otherwise propagate to the nearest `some` keyword (see `some` block)
@@ -151,7 +153,8 @@ Some operators also allow an equal sign after it to set a variable based on its 
 - `lhs -= rhs` -> `lhs = lhs - rhs` = decrement
 - `lhs *= rhs` -> `lhs = lhs * rhs` = self-multiply
 - `lhs /= rhs` -> `lhs = lhs / rhs` = self-divide
-- `lhs ++= rhs` -> `lhs = lhs + rhs` = append to an array
+- `lhs ++= rhs` -> `lhs = lhs ++ rhs` = append to an array (not allowed if `lhs` is a fixed length array)
+- `lhs &= rhs` -> `lhs = lhs & rhs` = append a tuple to another tuple (not allowed for mutable variables since it creates a new type)
 - `lhs ??= rhs` -> `lhs = lhs ?? rhs` = set a default value to an option type
 
 ## Basic Bindings
@@ -392,7 +395,7 @@ doThing(key: str) & Options{ enabled } =
 
 options = Options{ enabled: true }
 
-doThing("foo") & options   -- Puts `options` into the arguments.
+doThing("foo", &options)   -- Spreads `options` into the arguments.
 ```
 
 See below for more details on the `&` operator.
@@ -658,7 +661,7 @@ Controls the iteration of any loop type mentioned. `break` exits out of the loop
 Wraps a value in a option type. You can use `?` to unwrap multiple option types within an expression. If one `?` returns `none`, then the whole expression stops and returns `none`.
 
 ```mu
-x = some f(a?) ?? "fallback" -- x is "fallback" if a is none.
+x = some f(a?) ?? "fallback"     -- x is "fallback" if a is none.
 
 addStuff(a, b) = some
 	a = getSomething(a)?
