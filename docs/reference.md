@@ -68,7 +68,13 @@ You can optionally use `end` to end a block. This will end all blocks of the sam
 do
 	do
 		expr
-end              -- Ends both expressions.
+	end          -- Ends inner block.
+end              -- Ends outer blocks.
+
+do
+	do
+		expr
+end              -- Ends both blocks.
 
 (do
 	expr
