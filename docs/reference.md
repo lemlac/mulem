@@ -129,12 +129,12 @@ Arrays:
 - `lhs ..= rhs` = creates an iterator that starts at the left value and ends with the right value (inclusive)
 
 Option types
-- `lhs ?` = returns the some result if it's not `none`, otherwise propagate to the nearest `some` keyword (see `some` block)
+- `lhs ?` = returns the some value if it's not `none`, otherwise propagate to the nearest `some` keyword (see `some` block)
 - `lhs ?. rhs` = gets a method or member of an optional type if it has something, otherwise return `none`
 - `lhs ?? rhs` = fallback to another value if the left side is `none`.
 
 Result types
-- `lhs !` = returns the ok result if it's not an exception, otherwise propagate to the nearest `try` keyword (see `try` block)
+- `lhs !` = returns the ok value if it's not an exception, otherwise propagate to the nearest `try` keyword (see `try` block)
 
 Some operators also allow an equal sign after it to set a variable based on its previous value. The left-hand side must be a defined variable. If it's immutable, then this is the same as shadowing it. If it's mutable, then the value is mutated.
 
