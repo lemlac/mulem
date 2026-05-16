@@ -292,7 +292,6 @@ Things not allowed in `@pure` functions:
 * Calling impure functions.
 * Having a mutable reference parameter `ref mu`.
 * Capturing a variable with `capture`.
-* Using an explicit `return`. (See [Control Flow](#Control-Flow).)
 
 #### Mutable / Reference parameters
 
@@ -700,25 +699,17 @@ try
 	raise MyError("error message")
 ```
 
-In a `proc`, `raise` can be used outside of a `try` block to return out of the function with an exception value.
+`raise` can also be used outside of a `try` block to return out of the function with an exception value. The function must return an result type `type!`. If an except type is also declared `type!except`, then the type passed to `raise` must match.
 
 #### `return`
 
-Exits out of a function. If a value is after it, that value is the return value, otherwise it's `void`. This must match the return type of the function. It also disables purity and can't be used inside a `@pure` function. 
+Exits out of a function. If a value is after it, that value is the return value, otherwise it's `void`. This must match the return type of the function. Last-line evaluation is still enabled by default.
 
 ```mu
--- Impure:
 isThirteen(x) =
 	if x == 13 then
-		return true
-	false
-
--- Pure:
-isThirteen(x) =
-	if x == 13 then
-		true
-	else
-		false
+		return true  -- Exits the function and returns true.
+	false            -- Returns false.
 ```
 
 #### `yield`
