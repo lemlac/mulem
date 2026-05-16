@@ -164,22 +164,22 @@ Variables are immutable, but setting it again shadows it.
 a = 1
 a = 2
 a = 3
-a = "hello" -- The type of a shadowed variable doesn't have to match.
+a = "hello"          -- The type of a shadowed variable doesn't have to match.
 ```
 
 You can also shadow a variable using its previous value.
 
 ```mu
 i = 0
-i = i + 1
-i += 1 -- Same as above
+i = i + 1            -- Sets new `i` based on old `i`
+i += 1               -- Same as above
 ```
 
 Mutable variables are declared with `mu type`. Setting it will change the value instead of shadowing it. The type of value when mutating it should match its original type.
 
 ```mu
 x: mu int = 0
-x = 1          -- x is mutated
+x = 1                 -- `x` is mutated
 ```
 
 You can also infer the type with `mu _ = _`:
@@ -201,12 +201,12 @@ Not defining a mutable variable implies `= undefined` after it which means it ca
 
 ```mu
 x: mu int = undefined
--- x cannot be used here.
+-- `x` cannot be used here.
 x = 1
--- x can be used now.
+-- `x` can be used now.
 ```
 
-### Functions
+### Function Declarations
 
 Functions are declared with parentheses before the equals sign. These are pure functions, so mutable variables cannot be captured. The type of the parameters can be either explicitly typed or inferred based on usage.
 
@@ -279,7 +279,7 @@ You can get the type of any variable with the `typeof` keyword.
 
 ```mu
 x = 0
-y: typeof x = 1       -- Ensures that x and y have the same type.
+y: typeof x = 1    -- Ensures that x and y have the same type.
 ```
 
 You can also get the default value of any type with the keyword `default`. The type needs to have a default value defined which is yet to be determined how, but they're already defined for basic types.
@@ -372,6 +372,17 @@ The keyword `pass` can be put into any body to leave it empty. This might result
 ```mu
 keyword [subject then]
 	pass
+```
+
+#### `undefined`
+
+This marks that something should not be used. If the compiler detects that a code is using an `undefined` somewhere, it throws an error.
+
+```mu
+unusedFn() =
+	undefined
+
+-- `unusedFn` cannont be used.
 ```
 
 #### `do`
@@ -560,7 +571,7 @@ This exits out of a `proc`. It can't be used in a basic/lambda function.
 
 #### `yield`
 
-Exits out of a function with an `iter` type. The return value of the function must be of type `infer T` where T is the yield type. The actual return value in the function body is discarded, and using `return _` in a `proc` with an `out iter T` is illegal. Use of `yield` will infer the return type as `iter T` automatically in lambda functions. 
+Exits out of a function with an `iter` type. The return value of the function must be of type `infer T` where T is the yield type. The actual return value in the function body is discarded, and using `return _` in a `proc` with an `out iter T` is illegal. Use of `yield` will infer the return type as `iter T`. 
 
 ```mu
 count(n: int): iter int =
@@ -570,7 +581,7 @@ count(n: int): iter int =
 
 #### `await`
 
-Exits out of a function with an `async` type. The return value of the function must be of type `async T` where T is the return type. The return value of the async instance is determined the same way as a non-async function. Use of `await` will infer the return type as `async T` automatically in lambda functions. 
+Exits out of a function with an `async` type. The return value of the function must be of type `async T` where T is the return type. The return value of the async instance is determined the same way as a non-async function. Use of `await` will infer the return type as `async T`. 
 
 ```mu
 asyncFn(a, b): async int =
@@ -596,7 +607,7 @@ asyncCollect(n) async int# =
 
 #### `param ()`
 
-Exits out of a function with another function. The variables in parentheses become the parameter of the return function. Use of `param` will infer the return type as a function automatically in lambda functions. 
+Exits out of a function with another function. The variables in parentheses become the parameter of the return function. Use of `param` will infer the return type as a function automatically. 
 
 ```mu
 curryAdd(a: int) =
