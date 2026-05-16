@@ -266,7 +266,7 @@ while next() as val >< None then
 
 ### Built-in Types
 
-Built-in types include `int`, `float`, `bool`, `char`, and `str`. 
+Some built-in types include `int`, `float`, `bool`, `char`, and `str`. 
 
 ```mu
 myInt: int = 1234
@@ -291,6 +291,14 @@ x = default float  -- 0.0
 x = default bool   -- false
 x = default char   -- '\0'
 x = default str    -- ""
+```
+
+You can also get the size of any type with the keyword `sizeof`. It returns a constant `uint` (unsigned integer) with the number of bytes of memory that type requires. The exact sizes of some types like `int` or `float` might vary, but you can rely on `char` and `bool` being 1 byte each. There's also the `void` type which represents no data.
+
+```mu
+sizeOfBool = sizeof bool   -- 1
+sizeOfChar = sizeof char   -- 1
+sizeOfVoid = sizeof void   -- 0
 ```
 
 Strings can be formatted with curly braces (`{expr}`) in the string. Use a backslash to write a literal opening curly brace (`\{`).
@@ -1082,6 +1090,7 @@ Mu is multi-paradigm: different functions, structs, or modules can use different
 * `char`
 * `const`
 * `continue`
+* `default`
 * `do`
 * `else`
 * `enum`
@@ -1089,8 +1098,11 @@ Mu is multi-paradigm: different functions, structs, or modules can use different
 * `false`
 * `float`
 * `for`
+* `from`
 * `if`
+* `insert`
 * `impl`
+* `import`
 * `in`
 * `int`
 * `iter`
@@ -1106,15 +1118,18 @@ Mu is multi-paradigm: different functions, structs, or modules can use different
 * `raise`
 * `ref`
 * `return`
+* `sizeof`
 * `some`
 * `str`
 * `struct`
 * `then`
 * `true`
 * `try`
+* `typeof`
 * `uint`
 * `until`
 * `virt`
+* `void`
 * `where`
 * `while`
 * `yield`
