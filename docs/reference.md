@@ -552,11 +552,47 @@ try
 	raise MyError("error message")
 ```
 
-In a `proc` or `func`, `raise` automatically returns out of the function with an exception value.
+In a `proc`, `raise` can be used outside of a `try` block to return out of the function with an exception value.
 
 #### `return`
 
-This exits out of a `proc` or `func`. It can't be used in a basic or lambda function. 
+This exits out of a `proc`. It can't be used in a basic/lambda function. 
+
+#### `yield`
+
+Exits out of a function with an `iter` type. The return value of the function must be of type `infer T` where T is the yield type. The actual return value in the function body is discarded, and using `return _` in a `proc` with an `out iter T` is illegal. Use of `yield` will infer the return type as `iter T` automatically in lambda functions. 
+
+```mu
+count(n: int): iter int =
+	for i in 0..n then
+		yield i
+```
+
+#### `await`
+
+Exits out of a function with an `async` type. The return value of the function must be of type `async T` where T is the return type. The return value of the async instance is determined the same way as a non-async function. Use of `await` will infer the return type as `async T` automatically in lambda functions. 
+
+```mu
+asyncFn(a, b): async int =
+	a = await fetch(a)
+	b = await fetch(b)
+	a + b
+```
+
+Both `yeild` and `await` can be used together in an `iter async T` type. Use `for await` to iterate through it.
+
+```mu
+asyncIterFn(n): iter async int =
+	for i in 0..n then
+		val = await fetch(i)
+		yield val
+
+asyncCollect(n) async int# =
+	mu ret: int# = []
+	for await x in asyncIterFn(n) then
+		ret ++= x
+	ret
+```
 
 ### Closing Multiple Blocks with `;;`
 
@@ -620,10 +656,10 @@ numberType :: int
 You can also create aliases for basic product types (tuples) or sum types (unions).
 
 ```mu
-tuple :: int, float, char 
-alsoTuple :: (int, float, char) -- Optional parentheses.
+tuple      ::  int, float, char 
+alsoTuple  :: (int, float, char)               -- Optional parentheses.
 namedTuple :: {count: int; scale: float; code: char}
-union :: int | float | char
+union      ::  int | float | char
 ```
 
 ### Procedures (`proc`)
@@ -673,13 +709,13 @@ mu mutable_v = Vector2{ x: 5.0; y: 12.0 }
 normalize_in_place(mutable_v)
 ```
 
-### Imperative Functions (`func`)
+### Imperative Functions
 
 Unlike basic functions, these functions have the same rules as `proc` but they can return a value. The last parameter must be an `out` type but it does not need a name. If it doesn't have a name, it gets set by passing a value after `return` or the value of the last evaluated expression in the function body.
 
 ```mu
 -- Named out parameter
-addAndCount :: func
+addAndCount :: proc
     a: int
     b: int
     result: out int
@@ -689,7 +725,7 @@ then
     result = a + b + count
 
 -- Nameless out parameter
-addAndCount :: func
+addAndCount :: proc
     a: int
     b: int
     out int
@@ -699,7 +735,7 @@ then
     return a + b + count
 ```
 
-`func` can be called like a function or like a `proc` when you pass an out variable at the end.
+This can be called like a function or like a `proc` when you pass an out variable at the end.
 
 ```mu
 -- Function style: out parameter is the return value
@@ -880,14 +916,14 @@ This is used to define what each parameter's type is for an abstract function. I
 ```mu
 List T N :: where
 	T: type
-	N: int -- Must be known at compile time
+	N: int        -- Must be known at compile time
 
 List T N :: struct
 	data: T#N
 
 List T N :: impl
 	init() =
-		mu data = default T#N
+		data: T#N = [for _ in 0..N then default T]
 		Self {data} -- Same as {data: data}		
 ```
 
@@ -897,14 +933,14 @@ Generics will automatically generate code based on their parameters, but you can
 
 ```mu
 -- Forces every type to have its own implementation
-increment T :: func
+increment T :: proc
     c: ref mu T
     out T
 then
     undefined
 
 -- Specialized for Counter
-increment Counter :: func
+increment Counter :: proc
     c: ref mu Counter
     out int
 then
@@ -912,7 +948,7 @@ then
     c.value
 
 -- Specialized for float
-increment float :: func
+increment float :: proc
     c: ref mu float
     out float
 then
@@ -924,15 +960,14 @@ then
 
 ## Function Types
 
-As explained in this document, they are 3 main types of functions: basic/lambda, `proc`, and `func`. Both basic and lambda have the same type signatures and are treated the same, so we'll call them both lambda functions. 
+As explained in this document, they are 2 function types: basic/lambda and `proc`. Both basic and lambda have the same type signatures and are treated the same, so we'll call them both lambda functions. 
 
-| Form | Type Signature | Pure | `out` param | Call style |
+| Form | Type Signature | Pure | Void | Call style |
 |:--|:--|:--|:--|:--|
-| Lambda `f(a) =` or `(a) =>` | `lambda(param) => type` | Yes | No | `(a) => expr` |
-| `func` | `func(param, out type)` | No | Required (last) | `f(a)` or `f(a, out r)` |
+| Lambda `f(a) =` or `(a) =>` | `(param) => type` | Yes | No | `(a) => expr` |
 | `proc` | `proc(param[, out type])` | No | Optional | `p(a, out r)` |
 
-`func` and `proc` are designed to be low-level and imperative, while lambda are designed to be both used as functions and as values themselves. The same input always results in the same output since lambdas are required to be pure. Mu will allow you to analyze and modify a lambda function similar to how a mathematician would analyze an algebraic formula, allowing you to do things like get the derivative or integral of a function.
+`proc`s are designed to be low-level and imperative, while lambdas are designed to be both used as functions and as values themselves. The same input always results in the same output since lambdas are required to be pure. Mu will allow you to analyze and modify a lambda function similar to how a mathematician would analyze an algebraic formula, allowing you to do things like get the derivative or integral of a function.
 
 ```mu
 f(x) = x * x + 2.0 * x + 1.0
@@ -1027,7 +1062,6 @@ Mu is multi-paradigm: different functions, structs, or modules can use different
 * `false`
 * `float`
 * `for`
-* `func`
 * `if`
 * `impl`
 * `in`
