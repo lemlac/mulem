@@ -393,12 +393,12 @@ add() & { a: int, b: int }: int =
 add(a: 1, b: 2)
 ```
 
-Named parameters can be defined in their own object and then passed in with the `&` operator as well. It has a higher order of operation over the function call. 
+Named parameters can be defined in their own object and then passed in with the `&` operator as well. It has a higher order of operation over the function call. The named parameters can be collected into a single variable using `as`. 
 
 ```mu
 Options :: { enabled: bool }
-doThing(key: str) & Options{ enabled } =
-	if enabled then
+doThing(key: str) & Options as options =
+	if options.enabled then
 		callApi(str)
 
 options = Options{ enabled: true }
@@ -417,6 +417,15 @@ squared = let x = getSomething() then x * x
 
 while next() as val >< None then
     print("{val}")
+```
+
+`as` has the same rules as `=` but returns the value in the expression instead of being void. This means that it can also mutate a mutable variable.
+
+```mu
+val: mu Choice
+if get() as val >< Target then
+	raise NotTarget(val)
+-- `val` is a `Target` here.
 ```
 
 ---
