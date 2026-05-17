@@ -36,7 +36,7 @@ comment.
 
 A Mu program consists of a list of **expressions** separated by new-lines or inlined with semi-colons (`;`). Trailing semi-colons are not allowed, so if you have a `;`, you must have an expression after it. 
 
-```
+```mu
 expr
 expr
 
@@ -47,7 +47,7 @@ Almost everything is an expression. Some statements can be either inline or bloc
 
 To split one expression into multiple lines, you must wrap it in parentheses. The indentation inside the parentheses doesn't matter as long as it's the same as or greater than the opening parenthesis. Semi-colons (`;`) are a syntax error inside parantheses unless inside a block expression within the parentheses.
 
-```
+```mu
 (word1
     word2
    word3
@@ -576,21 +576,21 @@ str3 = str1 ++ str2 ++ " into multiple parts."
 print(str3)         -- "This string is broken up into multiple parts."
 ```
 
-Arrays are declared with the hash symbol (`#`). A number after the hash makes it a fixed length array. Arrays are fixed length by default, but this mainly matters for mutable arrays since immutable arrays can be shadowed with different type. Items in an array are separated with semi-colons or new lines following the same rules as expressions&mdash;i.e. no trailing semi-colons. The hash symbol is also used for accessing an array.
+Arrays are declared with the hash symbol (`#`). A number after the hash makes it a fixed length array. Arrays are fixed length by default, but this mainly matters for mutable arrays since immutable arrays can be shadowed with different type. Items in an array are separated with whitespace with special rules (explained below). The hash symbol is also used for accessing an array.
 
 ```mu
-list: float#4 = [1; 2; 3; 4]
-compressedList = [list#0 + list#1; list#3 + list#4]
+list: float#4 = [1 2 3 4]
+compressedList = [(list#0 + list#1) (list#3 + list#4)]
 ```
 
 Matrices are defined with `|` at the start of each row. Each row must have the same number of columns. 
 
 ```mu
 matrix = [
-    |  1;  2;  3;  4
-    |  5;  6;  7;  8
-	|  9; 10; 11; 12
-    | 13; 14; 15; 16
+    |  1  2  3  4
+    |  5  6  7  8
+	|  9 10 11 12
+    | 13 14 15 16
 ]
 ```
 
@@ -598,6 +598,37 @@ To make chaining accesses easier, there's a special rule for square brackets: an
 
 ```mu
 oneItem = matrix[#2][#1]   -- 3rd row, 2nd column, value 10
+```
+
+There are special rules for handling how items are delimited in an array. If any of these rules don't apply, one should put the item in parentheses like `(a+b)`.
+
+1. Constants; `1`, `'a'`, `"string"`, etc.
+2. Variable names: `x`, `PI`, etc.
+3. Accessing with `.` or `?.`: `a.b?.c`
+4. Function calls: `f(foo)` &mdash; no space between the function name and the parameter.
+5. Square bracket expressions: `arr[#1]` &mdash; likewise, no space between the name and square bracket.
+6. Prefix/postfix operators: `++a`, `x?`, etc.
+7. A combination of the above: `++x.list[#0].add(1, 2)?`
+8. Sub-bracket expressions like arrays and tuples.
+
+For any item in an array, spaces must not be omitted outside of brackets (`()`/`[]`/`{}`). Inside brackets, whitespace is ignored for the parent array. 
+
+Operators that aren't space properly will throw a syntax error.
+
+```mu
+[a -b]  -- OK. Array of `a` and negative `b`.
+(--     -- Errors:
+[a-b]   -- No spaces.
+[a - b] -- Too many spaces.
+[a- b]  -- `-` isn't a postfix operator.
+--)
+```
+
+One common operator is `++` which spreads an array into another array.
+
+```mu
+a = [1 2 3]
+b = [0 ++a 4]    -- == [0 1 2 3 4]
 ```
 
 ---
@@ -695,10 +726,11 @@ else
 
 #### `for` / `in`
 
-Iterates through an array or iterator.
+Iterates through an array or iterator. If inlined, it returns an iterator which will execute when spread with `++` or passed into another `for _ in` loop. 
 
 ```mu
-list = [for x in list then x * 2]
+iterator = for x in list then x * 2
+list = [++iterator]
 
 for x in list then
     print("{x}")
@@ -1242,6 +1274,21 @@ maybeInt = SomeInt(1)
 
 -- Or in one line:
 maybeInt = (Some int)(1)
+```
+
+The same rules as item delimitation in arrays apply to abstract functions as well except postfix/prefix operators aren't allowed since they could get confused for infix operators. (See [Arrays](#Arrays).) Arguments must be constants or variables since parentheses would get confused for a function call. You can store an expression inside a constant and pass that instead. 
+
+```mu
+ARG1 :: 1 + 2
+ARG2 :: 3 + 4
+print("{MAX ARG1 ARG2}")
+```
+
+Arguments can be function calls. If the abstract functions itself returns a regular function, it should go in parentheses first to call that function.
+
+```mu
+MAXADD a b :: if a > b then fn(c) = a + c else fn(c) = b + c
+(MAXADD f(0) g(0))(1)
 ```
 
 ### Where Block
