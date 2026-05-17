@@ -399,7 +399,9 @@ Named parameters can be defined in their own object and then passed in with the 
 Options :: { enabled: bool }
 doThing(key: str) & Options as options =
 	if options.enabled then
-		callApi(str)
+		some callApi(str)
+	else
+		none
 
 options = Options{ enabled: true }
 
