@@ -1351,7 +1351,7 @@ Mu is multi-paradigm: different functions, structs, or modules can use different
 
 ## Keywords
 
-There are 67 keywords in total:
+There are 68 keywords in total:
 
 * `and`
 * `as`
@@ -1409,6 +1409,7 @@ There are 67 keywords in total:
 * `then`
 * `true`
 * `try`
+* `type`
 * `typeof`
 * `undefined`
 * `uint`
