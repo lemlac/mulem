@@ -324,7 +324,7 @@ add3(,1,2, ,3,,) -- This is not okay.
 
 #### Pure Functions
 
-Functions can either be pure or impure. This affects whether they can be analyzed or not. To enforce purity, you can add the decorator `@pure` before the function.
+Functions can either be pure or impure. This affects whether they can be analyzed or not. (See [Function Types](#Function-Types).) To enforce purity, you can add the decorator `@pure` before the function.
 
 ```mu
 @pure
