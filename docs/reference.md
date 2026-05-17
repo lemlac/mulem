@@ -185,15 +185,15 @@ Variables are immutable, but setting it again shadows it.
 a = 1
 a = 2
 a = 3
-a = "hello"          -- The type of a shadowed variable doesn't have to match.
+a = "hello"   -- The type of a shadowed variable doesn't have to match.
 ```
 
 You can also shadow a variable using its previous value.
 
 ```mu
 i = 0
-i = i + 1            -- Sets new `i` based on old `i`
-i += 1               -- Same as above
+i = i + 1     -- Sets new `i` based on old `i`
+i += 1        -- Same as above
 ```
 
 Using the single equal-sign is a void statement, so using it within an expression and not on its own is a syntax error. This helps prevent the common bug of using `=` when you meant `==`. For inline binding, use `let ... then` or `as`. (See [Inline binding](#Inline-binding-let-and-as).)
@@ -214,7 +214,7 @@ Mutable variables are declared with `mu type`. Setting it will change the value 
 
 ```mu
 x: mu int = 0
-x = 1                 -- `x` is mutated
+x = 1          -- `x` is mutated
 ```
 
 You can also infer the type with `mu _ = _`:
