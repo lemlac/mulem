@@ -147,8 +147,8 @@ The philosophy of Mu is that symbols should be easy to understand and that gener
 
 **Pointers:**
 
-- `^ rhs` = dereference a pointer
-- `ref rhs` = reference a variable
+- `^ rhs` = dereferencing a pointer
+- `ref rhs` = getting the pointer to a variable
 
 **Options:**
 
@@ -248,7 +248,7 @@ x = 1
 
 #### References (`ref`/`ref mu`)
 
-A reference type points to the same spot in memory as another variable. Both sides of the equation must be variables, i.e. no references that point to a constant. References are immutable by default unless declared with `ref mu`. The syntax follows the same pattern as `mu`:
+A reference type points to the same spot in memory as another variable. It's like a lightweight version of a pointer. (See [Pointers](#Pointers).) Both sides of the equation must be variables, i.e. no references that point to a constant. References are immutable by default unless declared with `ref mu`. The syntax follows the same pattern as `mu`:
 
 * `x: ref T = y` = Immutable reference with explicit type.
 * `ref x = y` = Immutable reference with inferred type.
@@ -261,6 +261,13 @@ ref mu xRef = x
 xRef = 1
 print("x is {x}")   -- "x is 1"
 ```
+
+Note that `ref x = y` is not the same as `x = ref y`. 
+
+* `ref x = y` = declare a variable `x` that points to the same memory address as `y`, `x` is type `ref typeof y`
+* `x = ref y` = declare/set a pointer `x` to now point to `y`, `x` is type `^typeof y`
+
+See [Pointers](#Pointers) for more details.
 
 #### Destructuring
 
