@@ -1464,7 +1464,7 @@ Mu is multi-paradigm: different functions, structs, or modules can use different
 ## Design Philosophy
 
 - **Readability first** &mdash; Python-like syntax with significant whitespace and opinionated formatting.
-- **Patterns scale with complexity** &mdash; simple things like declaring a variable or function use simple patterns, more complex things use biggers patterns.
+- **Patterns scale with complexity** &mdash; simple things like declaring a variable or function use short patterns, more complex things use bigger patterns.
 - **Performance on demand** &mdash; start with GC; change to a lower level memory model where necessary.
 - **Explicit but ergonomic** &mdash; `!` for errors, attributes for memory models, same keywords used between inline and block expressions.
 - **Unified concepts** &mdash; `capture` for scope capture; `inherit` for member visibility; `::` for all top-level definitions.
