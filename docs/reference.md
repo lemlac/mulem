@@ -798,7 +798,7 @@ try
 	raise MyError("error message")
 ```
 
-`raise` can also be used outside of a `try` block to return out of the function with an exception value. The function must return an result type `type!`. If an except type is also declared `type!except`, then the type passed to `raise` must match.
+`raise` can also be used outside of a `try` block to return out of the function with an exception value. The function must return a result type `type!`. If an except type is also declared `type!except`, then the type passed to `raise` must match.
 
 #### `return`
 
