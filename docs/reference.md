@@ -471,6 +471,14 @@ x = default char   -- '\0'
 x = default str    -- ""
 ```
 
+`default` can also infer the type. This can be useful in certain situations, like if you want to leave a function that returns somethng empty so that you can implement it later.
+
+```mu
+doSomething(): int =
+	-- TODO: Implement this function.
+	default
+```
+
 You can also get the size of any type with the keyword `sizeof`. It returns a constant `uint` (unsigned integer) with the number of bytes of memory that type requires. The exact sizes of some types like `int` or `float` might vary, but you can rely on `char` and `bool` being 1 byte each. There's also the `void` type which represents no data.
 
 ```mu
@@ -633,13 +641,13 @@ else
 Iterates through an array or iterator.
 
 ```mu
-new_list = [for x in list then x * 2]
+list = [for x in list then x * 2]
 
 for x in list then
     print("{x}")
 ```
 
-For an async iterator or an array of async types, you can use `for await` to automatically wait for each on in sequential order. (See [`await`](#await).)
+For an async iterator or an array of async types, you can use `for await` to automatically wait for each item in sequential order. (See [`await`](#await).)
 
 ```mu
 for await x in asyncIter() then
@@ -1190,7 +1198,7 @@ List T N :: struct
 
 List T N :: impl
 	init() =
-		data: T#N = [for _ in 0..N then default T]
+		data: T#N = [for _ in 0..N then default]
 		Self {data} -- Same as {data: data}		
 ```
 
