@@ -495,6 +495,8 @@ if get() as val >< Target then
 - **Function**: `(type, type): type`
 - **Option**: `type?`
 - **Result**: `type!` or `type!error`
+- **Arrays**: `type#` or `type#number`
+- **Multi-dimensional Array**: `type##` (an extra `#` for each dimension)
 - **Inferred**: omit the annotation entirely
 
 ### Built-in Types
