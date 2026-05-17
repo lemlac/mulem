@@ -1158,7 +1158,7 @@ MyStruct :: struct
     value: int
 ```
 
-Instantiate an object by calling like a function. Each member is treated as a named argument.
+Instantiate a struct by calling it like a function. Each member is treated as a named argument.
 
 ```mu
 myObject = MyStruct(name: "Foobar", value: 1)
@@ -1175,7 +1175,7 @@ MyEnum :: enum
     Third{val: int}
 ```
 
-Like structs, instantiate my calling the member as a function unless it doesn't carry any data.
+Like structs, instantiate by calling the member as a function unless it doesn't carry any data.
 
 ```mu
 a = MyEnum.First
