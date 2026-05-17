@@ -417,7 +417,7 @@ end)
 
 #### Named Parameters (`&`)
 
-You can declare a named parameter with `&` and a named tuple after it before the `:` or `=`. The named members are marked in curly brackets (`{}`). Parentheses mark a **positional tuple**, and curly braces mark a **named tuple**. (See [Tuples]{#Tuples).) Named tuples can be destructored so that their members become variables in the scope. 
+You can declare a named parameter with `&` and a named tuple after it before the `:` or `=`. The named members are marked in curly brackets (`{}`). Parentheses mark a **positional tuple**, and curly braces mark a **named tuple**. (See [Tuples](#Tuples).) Named tuples can be destructored so that their members become variables in the scope. 
 
 ```mu
 add() & { a: int; b: int }: int =
