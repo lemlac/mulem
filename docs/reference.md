@@ -246,7 +246,7 @@ A reference type points to the same spot in memory as another variable. Both sid
 
 * `x: ref T = y` = Immutable reference with explicit type.
 * `ref x = y` = Immutable reference with inferred type.
-* `x: ref mu T = y` = Mutable refernece with explicit type.
+* `x: ref mu T = y` = Mutable reference with explicit type.
 * `ref mu x = y` = Mutable reference with inferred type. 
 
 ```mu
@@ -417,7 +417,7 @@ end)
 
 #### Named Parameters (`&`)
 
-You can declare a named parameter with `&` and a named tuple after it before the `:` or `=`.
+You can declare a named parameter with `&` and a named tuple after it before the `:` or `=`. The named members are marked in curly brackets (`{}`). Parentheses mark a **positional tuple**, and curly braces mark a **named tuple**. (See [Tuples]{#Tuples).) Named tuples can be destructored so that their members become variables in the scope. 
 
 ```mu
 add() & { a: int; b: int }: int =
@@ -426,7 +426,7 @@ add() & { a: int; b: int }: int =
 add(a: 1, b: 2)
 ```
 
-Named parameters can be defined in their own object and then passed in with the `&` operator as well. The named parameters in the function can be collected into a single variable using `as`. 
+Named parameters can be defined in their own object and then passed in with the `&` operator as well. The named parameters in the function can also be collected into a single variable using `as`. 
 
 ```mu
 Options :: { enabled: bool }
@@ -933,7 +933,7 @@ You can also create aliases for basic product types or sum types.
 ```mu
 tuple        ::  int, float, char 
 alsoTuple    :: (int, float, char)                     -- Optional parentheses.
-namedTuple   :: {count: int; scale: float; code: char} -- Position not guarenteed.
+namedTuple   :: {count: int; scale: float; code: char} -- Position not guaranteed.
 productUnion ::  int & float & char                    -- Is the size of all types combined.
 sumUnion     ::  int | float | char                    -- Is the size of the largest type.
 ```
@@ -966,6 +966,8 @@ So `&` has different commutativity rules depending on what's being combined:
 This makes the algebra quite principled. The only cases where order matters are also the cases where a conflict is actually possible &mdash; two positional slots or two named slots with the same key. When there's no possible conflict, order is irrelevant.
 
 It also means the shorthand `(0, 1, x: 2)` isn't really special syntax. It's the natural representation of a tuple that has both dimensions populated, which any `&` expression across the two types would produce anyway.
+
+Opaque types such as primitives, structs, and enums coerce into a tuple of one, so creating a product type of them creates a positional tuple, e.g. `int & float & char` becomes `(int, float, char)`.
 
 ### Procedures (`proc`)
 
@@ -1274,7 +1276,7 @@ As explained in this document, they are 2 function types: basic/lambda and `proc
 | `@pure` | `pure fn(param): type` | Always | No | `f(param)` *--> result* |
 | `proc` | `proc(param[, out type])` | Never | Optional | `f(param, out result)`*--> void* **or** `f(param)` *--> result* |
 
-`proc`s are designed to be low-level and imperative, while lambdas are designed to be high-level and used both as functions and as values themselves. Pure functions always have the same input that results in the same output, but this is not guarenteed for impure functions. Mu will allow you to analyze and modify pure functions similar to how a mathematician would analyze an algebraic formula, allowing you to do things like get the derivative or integral of a function.
+`proc`s are designed to be low-level and imperative, while lambdas are designed to be high-level and used both as functions and as values themselves. Pure functions always have the same input that results in the same output, but this is not guaranteed for impure functions. Mu will allow you to analyze and modify pure functions similar to how a mathematician would analyze an algebraic formula, allowing you to do things like get the derivative or integral of a function.
 
 ```mu
 f(x) = x * x + 2.0 * x + 1.0
