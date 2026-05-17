@@ -405,7 +405,7 @@ doThing(key: str) & Options as options =
 	else
 		none
 
-options = Options{ enabled: true }
+options = Options(enabled: true)
 
 doThing("foo", &options)   -- Spreads `options` into the arguments.
 ```
@@ -982,7 +982,7 @@ then
     v.x = normalized.x
     v.y = normalized.y
 
-mu mutable_v = Vector2{ x: 5.0; y: 12.0 }
+mu mutable_v = Vector2(x: 5.0, y: 12.0)
 normalize_in_place(mutable_v)
 ```
 
@@ -1070,7 +1070,7 @@ Methods and trait implementations are added separately with `impl`. Much like `v
 ```mu
 MyStruct :: impl
     init(x: int, y: int): Self =
-        MyStruct{ x: x; y: y }
+        MyStruct(x: x, y: y)
 ```
 
 To implement a virt onto another type, you add the virt's name after `impl`:
@@ -1104,11 +1104,7 @@ Vector3 :: struct
     inherit x, y from Vector2
     z: float
 
-v3 = Vector3{
-    x: 1.0
-    y: 2.0
-    z: 3.0
-}
+v3 = Vector3(x: 1.0, y: 2.0, z: 3.0)
 
 radius2d(v: Vector2) = sqrt(v.x*v.x+v.y*v.y)
 print("{radius2d(v3)}") -- This works because Vector3 inherits from Vector2.
@@ -1201,7 +1197,7 @@ List T N :: struct
 List T N :: impl
 	init() =
 		data: T#N = [for _ in 0..N then default]
-		Self {data} -- Same as {data: data}		
+		Self(data: data)
 ```
 
 ### Manual Implementation
