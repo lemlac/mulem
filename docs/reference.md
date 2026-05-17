@@ -838,7 +838,7 @@ isThirteen(x) =
 
 #### `yield`
 
-Exits out of a function with an `iter` type. The return value of the function must be of type `infer T` where T is the yield type. The actual return value in the function body is discarded, and using `return _` in a `proc` with an `out iter T` is illegal. Use of `yield` will infer the return type as `iter T`. 
+Exits out of a function with an `iter` type. The return value of the function must be of type `iter T` where T is the yield type. The actual return value in the function body is discarded, and using `return _` in a function that returns an `iter T` is illegal. Use of `yield` will infer the return type as `iter T`. 
 
 ```mu
 count(n: int): iter int =
