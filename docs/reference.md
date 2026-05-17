@@ -195,7 +195,7 @@ i = i + 1            -- Sets new `i` based on old `i`
 i += 1               -- Same as above
 ```
 
-Using the single equal-sign is a void statement, so using it within an expression and not on its own is a syntax error. This helps prevent the common bug of using `=` when you meant `==`. For inline binding, use `let ... then` or `as`. (See below.)
+Using the single equal-sign is a void statement, so using it within an expression and not on its own is a syntax error. This helps prevent the common bug of using `=` when you meant `==`. For inline binding, use `let ... then` or `as`. (See [Inline binding](#Inline-binding-let-and-as).)
 
 ```mu
 (-- Error:
@@ -280,6 +280,24 @@ fib(n) =
         fib(n - 1) + fib(n - 2)
 ```
 
+Trailing commas are ignored, but leading commas and double commas are considered a syntax error. 
+
+```mu
+add3(a, b, c) = a + b + c
+-- Also okay:
+add3(a, b, c,) = a + b + c
+
+add3(1, 2, 3,)   -- This is okay.
+add(
+	1,
+	2,
+	3,           -- Useful if you list arguments in a block.
+)
+(--
+add3(,1,2, ,3,,) -- This is not okay.
+-- Uncommenting would get an error. --)
+```
+
 #### Pure Functions
 
 Functions can either be pure or impure. This affects whether they can be analyzed or not. To enforce purity, you can add the decorator `@pure` before the function.
@@ -306,7 +324,9 @@ g(x) =
 	x + a
 
 callFn(f, 0)     -- Allowed.
--- callFn(g, 0)  -- Error if uncommented.
+(--
+callFn(g, 0)     -- Error if uncommented.
+--)
 ```
 
 Things not allowed in `@pure` functions:
@@ -384,6 +404,17 @@ array2 = map(array0, fn(x) =
 end)
 ```
 
+A name is optional. Adding a name creates an immutable reference of the function itself.
+
+```mu
+doThing(fn callback(val) =
+	if val > 0 then
+		callback(val - 1)
+	else
+		print("done")
+end)
+```
+
 #### Named Parameters (`&`)
 
 You can declare a named parameter with `&` and a named tuple after it before the `:` or `=`.
@@ -410,7 +441,7 @@ options = Options(enabled: true)
 doThing("foo", &options)   -- Spreads `options` into the arguments.
 ```
 
-See below for more details on the `&` operator.
+See [Tuples](#Tuples) for more details on the `&` operator.
 
 ### Inline binding (`let` and `as`)
 
@@ -908,6 +939,8 @@ sumUnion     ::  int | float | char                    -- Is the size of the lar
 ```
 
 Every type by itself is its own tuple, so for example `char` and `(char)` are the same.
+
+#### Tuples
 
 Like arrays, named tuples use semi-colons (`;`) instead of commas (`,`). This means they have the same rules as expressions: new-lines can be used to seperate members, and trailing semi-colons at the end of lines aren't allowed. This decision was made to reduce unnecessary symbols and keep formatting consistent. Positional tuples don't do this because new-lines are ignored inside parentheses, so commas are used instead to mark this difference. 
 
