@@ -420,7 +420,7 @@ end)
 You can declare a named parameter with `&` and a named tuple after it before the `:` or `=`.
 
 ```mu
-add() & { a: int, b: int }: int =
+add() & { a: int; b: int }: int =
 	a + b
 
 add(a: 1, b: 2)
