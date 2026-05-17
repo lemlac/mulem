@@ -100,65 +100,65 @@ The philosophy of Mu is that symbols should be easy to understand and that gener
 
 **Algebra:**
 
-- `lhs + rhs` = addition
-- `lhs - rhs` = subtraction
+- `lhs + rhs` &mdash; addition
+- `lhs - rhs` &mdash; subtraction
 - `- rhs` = sign-flip
-- `lhs * rhs` = multiplication
-- `lhs / rhs` = division
-- `lhs % rhs` = modulo
-- `lhs ** rhs` = exponential
+- `lhs * rhs` &mdash; multiplication
+- `lhs / rhs` &mdash; division
+- `lhs % rhs` &mdash; modulo
+- `lhs ** rhs` &mdash; exponential
 
 **Comparison:**
 
-- `lhs == rhs` = equality
-- `lhs >< rhs` = inequality, resembles an X
-- `lhs > rhs` = greater than
-- `lhs < rhs` = less than
-- `lhs >= rhs` = greater than or equals to
-- `lhs <= rhs` = less than or equals to
+- `lhs == rhs` &mdash; equality
+- `lhs >< rhs` &mdash; inequality, resembles an X
+- `lhs > rhs` &mdash; greater than
+- `lhs < rhs` &mdash; less than
+- `lhs >= rhs` &mdash; greater than or equals to
+- `lhs <= rhs` &mdash; less than or equals to
 
 **Boolean:**
 
-- `lhs and rhs` = false if any are false
-- `lhs or rhs` = true if any are true
-- `not rhs` = inverts a boolean
+- `lhs and rhs` &mdash; false if any are false
+- `lhs or rhs` &mdash; true if any are true
+- `not rhs` &mdash; inverts a boolean
 
 **Bitwise:**
 
-- `lhs band rhs` = bitwise AND
-- `lhs bor rhs` = bitwise OR
-- `lhs bxor rhs` = bitwise XOR
-- `bnot rhs` = bitwise NOT
+- `lhs band rhs` &mdash; bitwise AND
+- `lhs bor rhs` &mdash; bitwise OR
+- `lhs bxor rhs` &mdash; bitwise XOR
+- `bnot rhs` &mdash; bitwise NOT
 
 **Arrays:**
 
-- `lhs # rhs` = get an item at an index (starting at 0)
-- `lhs #` = returns the length of an array
-- `lhs #- rhs` = get an item from the end of an array (same as `lhs # (lhs# - rhs)`
-- `lhs ++ rhs` = concatenation or appendation, always returns a new array
-- `++ rhs` = spread an array or iterator into an array or positional tuple
-- `lhs .. rhs` = creates an iterator that starts at the left value and ends just before the right value (exclusive)
-- `lhs ..= rhs` = creates an iterator that starts at the left value and ends with the right value (inclusive)
+- `lhs # rhs` &mdash; get an item at an index (starting at 0)
+- `lhs #` &mdash; returns the length of an array
+- `lhs #- rhs` &mdash; get an item from the end of an array (same as `lhs # (lhs# - rhs)`
+- `lhs ++ rhs` &mdash; concatenation or appendation, always returns a new array
+- `++ rhs` &mdash; spread an array or iterator into an array or positional tuple
+- `lhs .. rhs` &mdash; creates an iterator that starts at the left value and ends just before the right value (exclusive)
+- `lhs ..= rhs` &mdash; creates an iterator that starts at the left value and ends with the right value (inclusive)
 
 **Tuples:**
 
-- `lhs & rhs` = combine two tuples into one
-- `& rhs` = spread a tuple into another tuple
+- `lhs & rhs` &mdash; combine two tuples into one
+- `& rhs` &mdash; spread a tuple into another tuple
 
 **Pointers:**
 
-- `^ rhs` = dereferencing a pointer
-- `ref rhs` = getting the pointer to a variable
+- `^ rhs` &mdash; dereferencing a pointer
+- `ref rhs` &mdash; getting the pointer to a variable
 
 **Options:**
 
-- `lhs ?` = returns the some value if it's not `none`, otherwise propagate to the nearest `some` keyword (see `some` block)
-- `lhs ?. rhs` = gets a method or member of an optional type if it has something, otherwise return `none`
-- `lhs ?? rhs` = fallback to another value if the left side is `none`.
+- `lhs ?` &mdash; returns the some value if it's not `none`, otherwise propagate to the nearest `some` keyword (see [`some` block](#some))
+- `lhs ?. rhs` &mdash; gets a method or member of an optional type if it has something, otherwise return `none`
+- `lhs ?? rhs` &mdash; fallback to another value if the left side is `none`.
 
 **Results**
 
-- `lhs !` = returns the ok value if it's not an exception, otherwise propagate to the nearest `try` keyword (see `try` block)
+- `lhs !` &mdash; returns the ok value if it's not an exception, otherwise propagate to the nearest `try` keyword (see [`try` block](#try-except))
 
 Some operators also allow an equal sign after it to set a variable based on its previous value. The left-hand side must be a defined variable. If it's immutable, then this is the same as shadowing it. If it's mutable, then the value is mutated. All of these are void statements, i.e. they return nothing and should only be used in an expression by themselves.
 
@@ -679,14 +679,14 @@ b = [0 ++a 4]    -- == [0 1 2 3 4]
 
 #### Pointers
 
-Although most things can be achieved without manual manipulation of pointers, some low level code requires it. Pointers are marked with a caret `^` before the type, and dereferencing them uses the same symbol. More carets marks how many times you need to dereference it: `^^` = double pointer, `^^^` = triple pointer, etc.. Get the reference to a variable with `ref`. Pointers are immutable by default, so mutating them isn't allowed.
+Although most things can be achieved without manual manipulation of pointers, some low level code requires it. Pointers are marked with a caret (`^`) before the type, and dereferencing them uses the same symbol. More carets marks how many times you need to dereference it: `^^type` = double pointer, `^^^type` = triple pointer, etc.. Get the reference to a variable with `ref`. Pointers are immutable by default, so mutating them isn't allowed.
 
 ```mu
 x: int = 0
 xPtr: ^int = ref x
 ```
 
-Note that shadowing a pointer's reference doesn't update the pointer. How the program handles the old reference is up to the memory model. It some cases, it may have already been dropped. (See [Memory Model](#Memory-Model).)
+Note that shadowing a pointer's reference doesn't update the pointer. How the program handles the old reference is up to the memory model. It some cases, it may have already been dropped. (See [Memory Models](#Memory-Models).)
 
 ```mu
 x = 1
@@ -1053,7 +1053,7 @@ Putting a constant value after `::` creates a constant. This holds an unchangeab
 PI :: 3.1415926535
 ```
 
-`PI` in this case would be type `const 3.1415926535` which is a subtype of `float`. 
+`PI` in this case would be type `const 3.1415926535` which is a subtype of `float`. `const` types can be used in abstract functions for pattern matching. (See [Abstract Functions](#Abstract-Functions).)
 
 You can also bind a function to a constant. When calling it, it would be the same as defining it inline and then calling. This can be useful if you need to pass a function multiple times but don't want it to be outputted when compiled.
 
@@ -1402,8 +1402,8 @@ This is used to define what each parameter's type is for an abstract function. I
 
 ```mu
 List T N :: where
-	T: type
-	N: int        -- Must be known at compile time
+	T: type       -- `type` refers to any literal type, i.e. not a value
+	N: int        -- A constant `int` that must be known at compile time
 
 List T N :: struct
 	data: T#N
