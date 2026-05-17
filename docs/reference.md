@@ -198,8 +198,10 @@ i += 1               -- Same as above
 Using the single equal-sign is a void statement, so using it within an expression and not on its own is a syntax error. This helps prevent the common bug of using `=` when you meant `==`. For inline binding, use `let ... then` or `as`. (See below.)
 
 ```mu
--- Error:
--- if x = 0 then
+(-- Error:
+if x = 0 then
+	print("x is 0")
+--)
 -- Do this instead:
 if x == 0 then
 	print("x is 0")
