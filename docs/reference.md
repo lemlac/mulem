@@ -909,7 +909,7 @@ count(n: int): iter int =
 
 #### `await`
 
-Exits out of a function with an `async` type. The return type of the function must be of type `async T` where T is the type that the async will returns in the end. The return value of the async instance is determined the same way as a non-async function. Use of `await` will infer the return type as `async T`. 
+Exits out of a function with an `async` type. The return type of the function must be of type `async T` where T is the type that the async will return in the end. The return value of the async instance is determined the same way as a non-async function. Use of `await` will infer the return type as `async T`. 
 
 ```mu
 asyncFn(a, b): async int =
@@ -927,7 +927,7 @@ asyncIterFn(n): iter async int =
 		yield val
 
 asyncCollect(n): async int# =
-	mu ret: int# = []
+	ret: mu int# = []
 	for await x in asyncIterFn(n) then
 		ret ++= x
 	ret
