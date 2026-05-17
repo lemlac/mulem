@@ -98,7 +98,8 @@ All subsequent expressions within a block should have the same indentation. If a
 
 The philosophy of Mu is that symbols should be easy to understand and that generally keywords are preferred over symbols. That being said, there are mix of symbols and keyword operators. Mu will check any combination of symbols greedily until the next space or word, so for example `++` would be different from `+ +`. Spaces are required between multiple symbolic operators, much like how spaces are required between words. Symbol characters include any ASCII character that isn't alphanumeric, whitespace, or quotation marks, or brackets&mdash;in other words these symbols: `~!@#$%^&*-+=|\:;'",<.>/?`. 
 
-Math operators:
+**Algebra:**
+
 - `lhs + rhs` = addition
 - `lhs - rhs` = subtraction
 - `- rhs` = sign-flip
@@ -107,7 +108,8 @@ Math operators:
 - `lhs % rhs` = modulo
 - `lhs ** rhs` = exponential
 
-Comparison operators:
+**Comparison:**
+
 - `lhs == rhs` = equality
 - `lhs >< rhs` = inequality, resembles an X
 - `lhs > rhs` = greater than
@@ -115,18 +117,21 @@ Comparison operators:
 - `lhs >= rhs` = greater than or equals to
 - `lhs <= rhs` = less than or equals to
 
-Boolean:
+**Boolean:**
+
 - `lhs and rhs` = false if any are false
 - `lhs or rhs` = true if any are true
 - `not rhs` = inverts a boolean
 
-Bitwise:
+**Bitwise:**
+
 - `lhs band rhs` = bitwise AND
 - `lhs bor rhs` = bitwise OR
 - `lhs bxor rhs` = bitwise XOR
 - `bnot rhs` = bitwise NOT
 
-Arrays:
+**Arrays:**
+
 - `lhs # rhs` = get an item at an index (starting at 0)
 - `lhs #` = returns the length of an array
 - `lhs #- rhs` = get an item from the end of an array (same as `lhs # (lhs# - rhs)`
@@ -135,16 +140,19 @@ Arrays:
 - `lhs .. rhs` = creates an iterator that starts at the left value and ends just before the right value (exclusive)
 - `lhs ..= rhs` = creates an iterator that starts at the left value and ends with the right value (inclusive)
 
-Tuples:
+**Tuples:**
+
 - `lhs & rhs` = combine two tuples into one
 - `& rhs` = spread a tuple into another tuple
 
-Option types
+**Options:**
+
 - `lhs ?` = returns the some value if it's not `none`, otherwise propagate to the nearest `some` keyword (see `some` block)
 - `lhs ?. rhs` = gets a method or member of an optional type if it has something, otherwise return `none`
 - `lhs ?? rhs` = fallback to another value if the left side is `none`.
 
-Result types
+**Results**
+
 - `lhs !` = returns the ok value if it's not an exception, otherwise propagate to the nearest `try` keyword (see `try` block)
 
 Some operators also allow an equal sign after it to set a variable based on its previous value. The left-hand side must be a defined variable. If it's immutable, then this is the same as shadowing it. If it's mutable, then the value is mutated. All of these are void statements, i.e. they return nothing and should only be used in an expression by themselves.
