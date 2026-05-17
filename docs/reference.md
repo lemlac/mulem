@@ -967,7 +967,7 @@ This makes the algebra quite principled. The only cases where order matters are 
 
 It also means the shorthand `(0, 1, x: 2)` isn't really special syntax. It's the natural representation of a tuple that has both dimensions populated, which any `&` expression across the two types would produce anyway.
 
-Opaque types such as primitives, structs, and enums coerce into a tuple of one, so creating a product type of them creates a positional tuple, e.g. `int & float & char` becomes `(int, float, char)`.
+Opaque types such as primitives and enums coerce into a tuple of one, so creating a product type of them creates a positional tuple, e.g. `int & float & char` becomes `(int, float, char)`. Structs convert to named tupels unless declared with an `@opaque` decorator, in which case they behave like opaque types. 
 
 ### Procedures (`proc`)
 
