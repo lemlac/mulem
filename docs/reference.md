@@ -161,6 +161,7 @@ Some operators also allow an equal sign after it to set a variable based on its 
 - `lhs -= rhs` -> `lhs = lhs - rhs` = decrement
 - `lhs *= rhs` -> `lhs = lhs * rhs` = self-multiply
 - `lhs /= rhs` -> `lhs = lhs / rhs` = self-divide
+- `lhs **= rhs` -> `lhs = lhs **= rhs` = self-exponential 
 - `lhs ++= rhs` -> `lhs = lhs ++ rhs` = append to an array (not allowed if `lhs` is a fixed length array)
 - `lhs &= rhs` -> `lhs = lhs & rhs` = append a tuple to another tuple (not allowed for mutable variables since it creates a new type)
 - `lhs ??= rhs` -> `lhs = lhs ?? rhs` = set a default value to an option type
