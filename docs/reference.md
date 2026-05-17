@@ -284,6 +284,12 @@ Tuples can be split into seperate variables. Use parentheses (`()`) for position
 {x as y: int} = {x: 2}        -- Type notation goes after `as`.
 ```
 
+All components of a tuple should be referenced on the left. Use `_` to explicitly skip components. Also put `_` at the end of a named tuple to skip other keys.
+
+```mu
+(_, b, _) & {x, _} = (0, 1, 2, x: 3, y: 4)
+```
+
 When destructuring a type that isn't anonymous, the type can optionally be put before the parentheses/braces, otherwise it's automatically inferred. An ampersand (`&`) should be placed at the start of the expression so it won't be confused for a function declaration (see next section). This guarentees that you are destructuring based on the correct type. This follows the same schema as pattern matching in `match`/`case` and `try`/`except`. (See [Control Flow](#Control-Flow).)
 
 ```mu
