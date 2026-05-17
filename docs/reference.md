@@ -275,9 +275,9 @@ Tuples can be split into seperate variables. Use parentheses (`()`) for position
 When destructuring a type that isn't anonymous, the type can optionally be put before the parentheses/braces, otherwise it's automatically inferred. An ampersand (`&`) should be placed at the start of the expression so it won't be confused for a function declaration (see next section). This guarentees that you are destructuring based on the correct type. This follows the same schema as pattern matching in `match`/`case` and `try`/`except`. (See [Control Flow](#Control-Flow).)
 
 ```mu
-Thing :: {x: int; y: int}
+Thing :: {x: int, y: int}
 thing = Thing(x: 1, y: 2)
-&Thing{x; y} = thing       -- Split thing into its components.
+&Thing{x, y} = thing       -- Split thing into its components.
 ```
 
 ### Function Declarations
@@ -320,6 +320,18 @@ add(
 (--
 add3(,1,2, ,3,,) -- This is not okay.
 -- Uncommenting would get an error. --)
+```
+
+Functions can also be declared with `fn` to be set later. This type is a **function pointer.** It lets you treat functions are variables.
+
+```mu
+action: mu fn(int, int): int
+add(a, b) = a + b
+sub(a, b) = a - b
+action = add
+print("1 + 1 = {action(1, 1)}")  -- 2
+action = sub
+print("1 - 1 = {action(1, 1)}")  -- 0
 ```
 
 #### Pure Functions
@@ -417,8 +429,8 @@ print("{count}") -- 3
 You can define a function within an expression with the keyword `fn` in the pattern `fn(_) = _`. This is useful for passing functions to other functions. If the lambda function has multiple lines, it must terminate with `end`. As mentioned before, the purity of the lambda must match the function that it's being passed to.
 
 ```mu
-map(array, func) = [for x in array then func(x)]
-array0 = [1; 2; 3; 4]
+map(array, func) = [++(for x in array then func(x))]
+array0 = [1 2 3 4]
 array1 = map(array0, fn(x) = x + 1)
 array2 = map(array0, fn(x) =
     if x < 2 then
@@ -444,7 +456,7 @@ end)
 You can declare a named parameter with `&` and a named tuple after it before the `:` or `=`. The named members are marked in curly brackets (`{}`). Parentheses mark a **positional tuple**, and curly braces mark a **named tuple**. (See [Tuples](#Tuples).) Named tuples can be destructored so that their members become variables in the scope. 
 
 ```mu
-add() & { a: int; b: int }: int =
+add() & { a: int, b: int }: int =
 	a + b
 
 add(a: 1, b: 2)
@@ -476,6 +488,12 @@ squared = let x = getSomething() then x * x
 
 while next() as val >< None then
     print("{val}")
+```
+
+If there are more than one variable after `let`, they need to be put into parentheses first.
+
+```mu
+sum = let (x = 1, y = 2) then x + y
 ```
 
 `as` has the same rules as `=` but returns the value in the expression instead of being void. This means that it can also mutate a mutable variable.
@@ -558,13 +576,24 @@ You can also write multi-line strings in the following way:
 2. Add a quotation mark on the next line.
 3. A line with a closing quotation ends the string.
 
-Indentation within the string will start after the starting quotation mark on each line. If the next line starts with anything other than a quotation mark before the string is closed, then it's a syntax error.
+Indentation within the string will start after the starting quotation mark on each line. If the next line starts with anything other than a quotation mark before the string is closed, then it's a syntax error. Whitespace is ignored in the string until the first `"` on each line.
 
 ```mu
 myStr =
     "Hello.
     "This string has multiple lines.
     "But this is the last line."
+```
+
+You can also use the conventional triple quote (`"""`) like in Python. Note that leading whitespace is preserved in the string. Everything between the quotes is part of the string. 
+
+```mu
+do
+    myStr = """
+      This is all one string.
+  and this.
+     Indentation doesn't matter inside the string.
+    """
 ```
 
 Subsequent string literals will automatically concatenate, and the `++` operator can be used to concatenate non-literal strings.
@@ -978,7 +1007,7 @@ value = addOne(2) -- Same as (fn(x) = x + 1)(2), result is 3.
 array = map([1; 2; 3; 4], addOne)
 ```
 
-### Alias
+### Aliases
 
 Assigning a type after `::` creates an alias
 
@@ -986,12 +1015,14 @@ Assigning a type after `::` creates an alias
 numberType :: int
 ```
 
+This alias is unique to the scope. Modifying it only affects the alias and not the original type. This prevents accidental conflictions between modules. (See [Implementation](#Implementing-impl).)
+
 You can also create aliases for basic product types or sum types.
 
 ```mu
 tuple        ::  int , float , char                    -- Also called a "positional tuple".
 alsoTuple    :: (int , float , char)                   -- Optional parentheses.
-namedTuple   :: {count: int; scale: float; code: char} -- Position not guaranteed.
+namedTuple   :: {count: int, scale: float, code: char} -- Position not guaranteed.
 mixedTuple   :: (int, float) & {code: char}            -- Has both positional and named components.
 productUnion ::  int & float & char                    -- Is the size of all types combined.
 sumUnion     ::  int | float | char                    -- Is the size of the largest type.
@@ -1001,7 +1032,7 @@ sumUnion     ::  int | float | char                    -- Is the size of the lar
 
 Every opaque type by itself is its own tuple, so for example `char` and `(char)` are the same. This means that in the example, `int & float & char` is the same as `(int, float, char)`.
 
-Like arrays, named tuples use semi-colons (`;`) instead of commas (`,`). This means they have the same rules as expressions: new-lines can be used to seperate members, and trailing semi-colons at the end of lines aren't allowed. This decision was made to reduce unnecessary symbols and keep formatting consistent. Positional tuples don't do this because new-lines are ignored inside parentheses, so commas are used instead to mark this difference. 
+Tuples use commas (`,`) to separate components for both positional (`()`) and named (`{}`) tuples. This follows the same rules are function parameters. (See [Function Declarations](#Function-Declarations).)
 
 Product unions with the `&` operator can be used for both types and values. When combining two or more positional tuples, the positions of subsequent tuples get bumped up by the number of positions in the previous tuples, i.e. `(a, b) & (c, d)` becomes `(a, b, c, d)`. When you combine two or more named tuples, conflicting named parameters override each other with the last tuple taking priority&mdash;much like how shadowing works. So if you have `{x: 1} & {x: 2}`, the result is just `{x: 2}` since it overrides the `x` of the previous tuple. Positional tuples and named tuples can be combined together for example `(0, 1) & {x: 2}`. The shorthand for this is to write named parameters in a positional tuple like `(0, 1, x: 2)`. 
 
@@ -1127,6 +1158,12 @@ MyStruct :: struct
     value: int
 ```
 
+Instantiate an object by calling like a function. Each member is treated as a named argument.
+
+```mu
+myObject = MyStruct(name: "Foobar", value: 1)
+```
+
 ### Enumerables (`enum`)
 
 Enums are sum types. They define a closed set of variants. Variants may carry data turning them into a tagged union.
@@ -1138,9 +1175,17 @@ MyEnum :: enum
     Third{val: int}
 ```
 
+Like structs, instantiate my calling the member as a function unless it doesn't carry any data.
+
+```mu
+a = MyEnum.First
+b = MyEnum.Second(2)
+c = MyEnum.Third(val: 3)
+```
+
 ### Exceptions (`except`)
 
-Exceptions are similar to enums but used for error handling. See "Error Handling" for more details.
+Exceptions are similar to enums but used for error handling. See "Error Handling" for more details. Instantiation works the same as enums.
 
 ```mu
 MyException :: except
@@ -1159,12 +1204,15 @@ MyVirtual :: virt
 
 ### Implementing (`impl`)
 
-Methods and trait implementations are added separately with `impl`. Much like `virt`, `self` refers to the current instance and `Self` refers to the current type.
+Methods and trait implementations are added separately with `impl`. Much like `virt`, `self` refers to the current instance and `Self` refers to the current type. You can also add static values that are attached to the type itself. Use `.` to access static values and methods like with structs.
 
 ```mu
 MyStruct :: impl
+    staticValue = 1234
     init(x: int, y: int): Self =
         MyStruct(x: x, y: y)
+
+print("{MyStruct.staticValue}")
 ```
 
 To implement a virt onto another type, you add the virt's name after `impl`:
@@ -1305,7 +1353,7 @@ List T N :: struct
 
 List T N :: impl
 	init() =
-		data: T#N = [for _ in 0..N then default]
+		data: T#N = [++(for _ in 0..N then default)]
 		Self(data: data)
 ```
 
