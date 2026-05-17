@@ -1383,7 +1383,7 @@ Option T :: enum
 	Some(T)
 	None
 
-Some T :: fn(x: T) = Option(T).Some(x)
+Some T :: fn(x: T) = (Option T).Some(x)
 
 maybeInt = Some(1)
 ```
