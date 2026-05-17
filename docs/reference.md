@@ -373,7 +373,7 @@ print("{count}") -- 3
 You can define a function within an expression with the keyword `fn` in the pattern `fn(_) = _`. This is useful for passing functions to other functions. If the lambda function has multiple lines, it must terminate with `end`. As mentioned before, the purity of the lambda must match the function that it's being passed to.
 
 ```mu
-map(array, func) = [for x in array then func(x)]
+map(array, func) = [(for x in array then func(x))]
 array0 = [1 2 3 4]
 array1 = map(array0, fn(x) = x + 1)
 array2 = map(array0, fn(x) =
