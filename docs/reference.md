@@ -145,6 +145,11 @@ The philosophy of Mu is that symbols should be easy to understand and that gener
 - `lhs & rhs` = combine two tuples into one
 - `& rhs` = spread a tuple into another tuple
 
+**Pointers:**
+
+- `^ rhs` = dereference a pointer
+- `ref rhs` = reference a variable
+
 **Options:**
 
 - `lhs ?` = returns the some value if it's not `none`, otherwise propagate to the nearest `some` keyword (see `some` block)
@@ -510,11 +515,12 @@ if get() as val >< Target then
 ## Types
 
 - **Basic**: `name: type`
-- **Function**: `(type, type): type`
+- **Function**: `fn(type, type): type`
 - **Option**: `type?`
 - **Result**: `type!` or `type!error`
 - **Arrays**: `type#` or `type#number`
 - **Multi-dimensional Array**: `type##` (an extra `#` for each dimension)
+- **Pointers**: `^type`
 - **Inferred**: omit the annotation entirely
 
 ### Built-in Types
@@ -562,6 +568,8 @@ sizeOfChar = sizeof char   -- 1
 sizeOfVoid = sizeof void   -- 0
 ```
 
+#### Strings
+
 Strings can be formatted with curly braces (`{expr}`) in the string. Use a backslash to write a literal opening curly brace (`\{`).
 
 ```mu
@@ -604,6 +612,8 @@ str2 = " is broken"
 str3 = str1 ++ str2 ++ " into multiple parts."
 print(str3)         -- "This string is broken up into multiple parts."
 ```
+
+#### Arrays
 
 Arrays are declared with the hash symbol (`#`). A number after the hash makes it a fixed length array. Arrays are fixed length by default, but this mainly matters for mutable arrays since immutable arrays can be shadowed with different type. Items in an array are separated with whitespace with special rules (explained below). The hash symbol is also used for accessing an array.
 
@@ -659,6 +669,46 @@ One common operator is `++` which spreads an array into another array.
 a = [1 2 3]
 b = [0 ++a 4]    -- == [0 1 2 3 4]
 ```
+
+#### Pointers
+
+Although most things can be achieved without manual manipulation of pointers, some low level code requires it. Pointers are marked with a caret `^` before the type, and dereferencing them uses the same symbol. More carets marks how many times you need to dereference it: `^^` = double pointer, `^^^` = triple pointer, etc.. Get the reference to a variable with `ref`. Pointers are immutable by default, so mutating them isn't allowed.
+
+```mu
+x: int = 0
+xPtr: ^int = ref x
+```
+
+Note that shadowing a pointer's reference doesn't update the pointer. How the program handles the old reference is up to the memory model. It some cases, it may have already been dropped. (See [Memory Model](#Memory-Model).)
+
+```mu
+x = 1
+print("{^xPtr}")  -- 0, because it's still referencing the old x.
+-- This might lead to a crash.
+```
+
+Pointers can be treated as option types to safely dereference them.
+
+```mu
+some print("{xPtr?}")   -- Treat pointer as an option type, returns none if it's been dropped.
+```
+
+Mutable pointers are marked with `^mu type`. The reference must also be a mutable type. Although it's pointing to a mutable variable, the actual pointer variable is immutable. You would need another `mu` to change the pointer, marked as `mu ^type` or `mu ^mu type`.
+
+```mu
+x: mu int = 0
+xPtr: ^mu int = ref x
+^xPtr = 1
+print("{x}")     -- 1
+
+y: mu int = 2
+ptr: mu ^int = ref x
+print("{^ptr}")  -- 1
+ptr = ref y
+print("{^ptr}")  -- 2
+```
+
+This will need more testing to figure out the best way handle pointers. Consider this a work in progress.
 
 ---
 
