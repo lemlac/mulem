@@ -102,7 +102,7 @@ The philosophy of Mu is that symbols should be easy to understand and that gener
 
 - `lhs + rhs` &mdash; addition
 - `lhs - rhs` &mdash; subtraction
-- `- rhs` = sign-flip
+- `- rhs` &mdash; sign-flip
 - `lhs * rhs` &mdash; multiplication
 - `lhs / rhs` &mdash; division
 - `lhs % rhs` &mdash; modulo
