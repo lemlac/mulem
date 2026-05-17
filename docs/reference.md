@@ -723,6 +723,17 @@ print("{^ptr}")  -- 2
 
 This will need more testing to figure out the best way handle pointers. Consider this a work in progress.
 
+#### Undefined Type
+
+There are some cases where the type can't be infered right away in which case the thing gets typed as `undefined`. This usually gets resolved eventually, and if it doesn't, the compiler should throw an error. 
+
+Sometimes with FFI, we don't really know nor care what the actual type to a pointer is. We just know that it's a pointer to something. In that case, we can type it as `^undefined`. This pointer type should always be immutable&mdash;i.e. no `^mu undefined`&mdash;and dereferencing it will throw a compile-time error. 
+
+```mu
+result: ^undefined = ExternalLib.getSomething()
+ExternalLib.doSomethingWith(result)
+```
+
 ---
 
 ## Control Flow
