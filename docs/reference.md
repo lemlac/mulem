@@ -393,7 +393,7 @@ add() & { a: int, b: int }: int =
 add(a: 1, b: 2)
 ```
 
-Named parameters can be defined in their own object and then passed in with the `&` operator as well. It has a higher order of operation over the function call. The named parameters can be collected into a single variable using `as`. 
+Named parameters can be defined in their own object and then passed in with the `&` operator as well. The named parameters in the function can be collected into a single variable using `as`. 
 
 ```mu
 Options :: { enabled: bool }
