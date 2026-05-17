@@ -1054,7 +1054,7 @@ You can also bind a function to a constant. When calling it, it would be the sam
 IDENTITY :: fn(x) = x
 addOne :: fn(x) = x + 1
 value = addOne(2) -- Same as (fn(x) = x + 1)(2), result is 3.
-array = map([1; 2; 3; 4], addOne)
+array = map([1 2 3 4], addOne)
 ```
 
 ### Aliases
