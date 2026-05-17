@@ -96,7 +96,7 @@ All subsequent expressions within a block should have the same indentation. If a
 
 ## Operators
 
-The philosophy of Mu is that symbols should be easy to understand and that generally keywords are preferred over symbols. That being said, there are mix of symbols and keyword operators. Mu will check any combination of symbols greedily until the next space or word, so for example `++` would be different from `+ +`. Spaces are required between multiple symbolic operators, much like how spaces are required between words. Symbol characters include any ASCII character that isn't alphanumeric, whitespace, or quotation marks, or brackets&mdash;in other words these symbols: `~!@#$%^&*-+=|\:;'",<.>/?`. 
+The philosophy of Mu is that symbols should be easy to understand and that generally keywords are preferred over symbols. Most symbols are consistent with their contextual meaning, for example `*` relates to math, `!` relates to exceptions, `&` relates to tuples, etc.. Mu will check any combination of symbols greedily until the next space or word, so for example `++` would be different from `+ +`. Spaces are required between multiple symbolic operators, much like how spaces are required between words. Symbol characters include any ASCII character that isn't alphanumeric, whitespace, or quotation marks, or brackets&mdash;in other words these symbols: `~!@#$%^&*-+=|\:;'",<.>/?`. 
 
 **Algebra:**
 
