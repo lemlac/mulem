@@ -519,21 +519,21 @@ str3 = str1 ++ str2 ++ " into multiple parts."
 print(str3)         -- "This string is broken up into multiple parts."
 ```
 
-Arrays are declared with the hash symbol (`#`). A number after the hash makes it a fixed length array. Arrays are fixed length by default, but this mainly matters for mutable arrays since immutable arrays can be shadowed with different type. Items in an array are separated with spaces or new lines. This helps keep the number of characters low when initializing arrays. If one of the items in an inline array is an expression, you must surround the expression in parentheses. The hash symbol is also used for accessing an array.
+Arrays are declared with the hash symbol (`#`). A number after the hash makes it a fixed length array. Arrays are fixed length by default, but this mainly matters for mutable arrays since immutable arrays can be shadowed with different type. Items in an array are separated with semi-colons or new lines following the same rules as expressions&mdash;i.e. no trailing semi-colons. The hash symbol is also used for accessing an array.
 
 ```mu
-list: float#4 = [1 2 3 4]
-compressedList = [(list#0 + list#1) (list#3 + list#4)]
+list: float#4 = [1; 2; 3; 4]
+compressedList = [list#0 + list#1; list#3 + list#4]
 ```
 
 Matrices are defined with `|` at the start of each row. Each row must have the same number of columns. 
 
 ```mu
 matrix = [
-    |  1  2  3  4
-    |  5  6  7  8
-	|  9 10 11 12
-    | 13 14 15 16
+    |  1;  2;  3;  4
+    |  5;  6;  7;  8
+	|  9; 10; 11; 12
+    | 13; 14; 15; 16
 ]
 ```
 
