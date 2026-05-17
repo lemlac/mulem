@@ -257,9 +257,32 @@ xRef = 1
 print("x is {x}")   -- "x is 1"
 ```
 
+#### Destructuring
+
+Tuples can be split into seperate variables. Use parentheses (`()`) for positional tuples and curly braces (`{}`) for named tuples. If a tuple is mixed, split each on the left side with `&` like `() & {}` or `{} & ()`. This is to avoid confliction between the different uses of `:`, type notation on the left of the equal sign and key-value pairing on the right of the equal sign. Use `as` to create an alias for named tuples with type notation going after the alias name. See [Tuples](#Tuples) for more information.
+
+```mu
+(a, b) = (0, 1)               -- Basic position destructuring.
+(a: int, b: int) = (0, 1)     -- Type notation.
+{x} = {x: 2}                  -- Named destructuring.
+{x: int} = {x: 2}             -- Named destructuring with type notation.
+(a, b) & {x} = (0, 1, x: 2)   -- This tuple has both positional and named components.
+(a: int, b: int) & {x: int} = (0, 1, x: 2)
+{x as y} = {x: 2}             -- Set the `x` component as `y` in this scope.
+{x as y: int} = {x: 2}        -- Type notation goes after `as`.
+```
+
+When destructuring a type that isn't anonymous, the type can optionally be put before the parentheses/braces, otherwise it's automatically inferred. An ampersand (`&`) should be placed at the start of the expression so it won't be confused for a function declaration (see next section). This guarentees that you are destructuring based on the correct type. This follows the same schema as pattern matching in `match`/`case` and `try`/`except`. (See [Control Flow](#Control-Flow).)
+
+```mu
+Thing :: {x: int; y: int}
+thing = Thing(x: 1, y: 2)
+&Thing{x; y} = thing       -- Split thing into its components.
+```
+
 ### Function Declarations
 
-Functions are declared with parentheses before the equals sign. This kind of function is pure by default but become impure when using certain features (explained below). The type of the parameters can be either explicitly typed or inferred based on usage.
+Functions are declared with parentheses before the equals sign. This kind of function is pure by default but becomes impure when using certain features (explained below). The type of the parameters can be either explicitly typed or inferred based on usage.
 
 ```mu
 add(a: int, b: int): int = a + b
@@ -932,20 +955,21 @@ numberType :: int
 You can also create aliases for basic product types or sum types.
 
 ```mu
-tuple        ::  int, float, char 
-alsoTuple    :: (int, float, char)                     -- Optional parentheses.
+tuple        ::  int , float , char                    -- Also called a "positional tuple".
+alsoTuple    :: (int , float , char)                   -- Optional parentheses.
 namedTuple   :: {count: int; scale: float; code: char} -- Position not guaranteed.
+mixedTuple   :: (int, float) & {code: char}            -- Has both positional and named components.
 productUnion ::  int & float & char                    -- Is the size of all types combined.
 sumUnion     ::  int | float | char                    -- Is the size of the largest type.
 ```
 
-Every type by itself is its own tuple, so for example `char` and `(char)` are the same.
-
 #### Tuples
+
+Every opaque type by itself is its own tuple, so for example `char` and `(char)` are the same. This means that in the example, `int & float & char` is the same as `(int, float, char)`.
 
 Like arrays, named tuples use semi-colons (`;`) instead of commas (`,`). This means they have the same rules as expressions: new-lines can be used to seperate members, and trailing semi-colons at the end of lines aren't allowed. This decision was made to reduce unnecessary symbols and keep formatting consistent. Positional tuples don't do this because new-lines are ignored inside parentheses, so commas are used instead to mark this difference. 
 
-Product unions with the `&` operator can be used for both types and values. When you combine two or more positional tuples, the positions of subsequent tuples get bumped up by the number of positions in the previous tuples, i.e. `(a, b) & (c, d)` becomes `(a, b, c, d)`. When you combine two or more named tuples, conflicting named parameters override each other with the last tuple taking priority&mdash;much like how shadowing works. So if you have `{x: 1} & {x: 2}`, the result is just `{x: 2}` since it overrides the `x` of the previous tuple. Positional tuples and named tuples can be combined together for example `(0, 1) & {x: 2}`. The shorthand for this is to write named parameters in a positional tuple like `(0, 1, x: 2)`. 
+Product unions with the `&` operator can be used for both types and values. When combining two or more positional tuples, the positions of subsequent tuples get bumped up by the number of positions in the previous tuples, i.e. `(a, b) & (c, d)` becomes `(a, b, c, d)`. When you combine two or more named tuples, conflicting named parameters override each other with the last tuple taking priority&mdash;much like how shadowing works. So if you have `{x: 1} & {x: 2}`, the result is just `{x: 2}` since it overrides the `x` of the previous tuple. Positional tuples and named tuples can be combined together for example `(0, 1) & {x: 2}`. The shorthand for this is to write named parameters in a positional tuple like `(0, 1, x: 2)`. 
 
 You can think of it as every tuple always having both dimensions, just with most slots empty:
 
@@ -968,7 +992,7 @@ This makes the algebra quite principled. The only cases where order matters are 
 
 It also means the shorthand `(0, 1, x: 2)` isn't really special syntax. It's the natural representation of a tuple that has both dimensions populated, which any `&` expression across the two types would produce anyway.
 
-Opaque types such as primitives and enums coerce into a tuple of one, so creating a product type of them creates a positional tuple, e.g. `int & float & char` becomes `(int, float, char)`. Structs convert to named tupels unless declared with an `@opaque` decorator, in which case they behave like opaque types. The `void` coerces to an empty tuple `()`, and combining empty tuples produces an empty tuple `() & () == ()`. This also means that empty positional tuples and empty named tupels are equivalent `() == {}`. 
+Opaque types such as primitives and enums coerce into a tuple of one, so creating a product type of them creates a positional tuple, e.g. `int & float & char` becomes `(int, float, char)`. Structs convert to named tupels unless declared with an `@opaque` decorator, in which case they behave like opaque types. The `void` type coerces to an empty tuple `()`, and combining empty tuples produces an empty tuple `() & () == ()`. The same is true for empty named tuples `{} & {} == {}`. This also means that empty positional tuples and empty named tupels are equivalent `() == {}`. 
 
 ### Procedures (`proc`)
 
