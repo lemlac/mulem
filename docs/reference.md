@@ -45,7 +45,7 @@ expr; expr
 
 Almost everything is an expression. Some statements can be either inline or block depending on the presence of a new-line. When mixing the two (i.e. a block statement within an inline statement), the `end` keyword is required to exit block mode and return to inline mode. The last statement evaluated in a block is its value. 
 
-To split one expression into multiple lines, you must wrap it in parentheses. The indentation inside the parentheses doesn't matter as long as it's the same as or greater than the opening parenthesis.
+To split one expression into multiple lines, you must wrap it in parentheses. The indentation inside the parentheses doesn't matter as long as it's the same as or greater than the opening parenthesis. Semi-colons (`;`) are a syntax error inside parantheses unless inside a block expression within the parentheses.
 
 ```
 (word1
@@ -374,7 +374,7 @@ You can define a function within an expression with the keyword `fn` in the patt
 
 ```mu
 map(array, func) = [(for x in array then func(x))]
-array0 = [1 2 3 4]
+array0 = [1; 2; 3; 4]
 array1 = map(array0, fn(x) = x + 1)
 array2 = map(array0, fn(x) =
     if x < 2 then
@@ -886,7 +886,7 @@ You can also bind a function to a constant. When calling it, it would be the sam
 IDENTITY :: fn(x) = x
 addOne :: fn(x) = x + 1
 value = addOne(2) -- Same as (fn(x) = x + 1)(2), result is 3.
-array = map([1 2 3 4], addOne)
+array = map([1; 2; 3; 4], addOne)
 ```
 
 ### Alias
@@ -909,6 +909,8 @@ sumUnion     ::  int | float | char                    -- Is the size of the lar
 
 Every type by itself is its own tuple, so for example `char` and `(char)` are the same.
 
+Like arrays, named tuples use semi-colons (`;`) instead of commas (`,`). This means they have the same rules as expressions: new-lines can be used to seperate members, and trailing semi-colons at the end of lines aren't allowed. This decision was made to reduce unnecessary symbols and keep formatting consistent. Positional tuples don't do this because new-lines are ignored inside parentheses, so commas are used instead to mark this difference. 
+
 Product unions with the `&` operator can be used for both types and values. When you combine two or more positional tuples, the positions of subsequent tuples get bumped up by the number of positions in the previous tuples, i.e. `(a, b) & (c, d)` becomes `(a, b, c, d)`. When you combine two or more named tuples, conflicting named parameters override each other with the last tuple taking priority&mdash;much like how shadowing works. So if you have `{x: 1} & {x: 2}`, the result is just `{x: 2}` since it overrides the `x` of the previous tuple. Positional tuples and named tuples can be combined together for example `(0, 1) & {x: 2}`. The shorthand for this is to write named parameters in a positional tuple like `(0, 1, x: 2)`. 
 
 You can think of it as every tuple always having both dimensions, just with most slots empty:
@@ -924,9 +926,9 @@ So `&` has different commutativity rules depending on what's being combined:
 
 | Combination | Commutative? | Rule |
 |:--|:--|:--|
-| Positional + positional | No | Positions concatenate in order |
-| Named + named | No | Conflicts resolve last-wins |
-| Positional + named | Yes | Orthogonal, no interaction |
+| Positional & Positional | No | Positions concatenate in order |
+| Named & Named | No | Conflicts resolve last-wins |
+| Positional & Named | Yes | Orthogonal, no interaction |
 
 This makes the algebra quite principled. The only cases where order matters are also the cases where a conflict is actually possible &mdash; two positional slots or two named slots with the same key. When there's no possible conflict, order is irrelevant.
 
