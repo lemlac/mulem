@@ -192,7 +192,7 @@ Some operators also allow an equal sign after it to set a variable based on its 
 
 ## Basic Bindings
 
-There are two types of bindings: basic `=` and abstract `::`. See [Abstract Bindings](#Abstract-Bindings) below for details about `::`.
+There are two types of bindings: basic `=` and meta `::`. See [Meta Bindings](#Meta-Bindings) below for details about `::`.
 
 ### Variable Declarations
 
@@ -1234,7 +1234,7 @@ When mixing `await`+`yield`+`param`, the return-type can get quite complicated. 
 
 ---
 
-## Abstract Bindings (`::`)
+## Meta Bindings (`::`)
 
 Variable and functions primarily use the equals sign (`=`) and are for storing actual data within a program, but there's another type of binding used for abstract values for the compiler to know about such as constants, types, inline-functions, and generics. This type of declaration is constant; in other words, they cannot be mutated or shadowed. However, depending on what it is, subsequent `::` of the same name will modify its definition. 
 
@@ -1427,9 +1427,9 @@ PublicFields :: struct
 
 A subtype cannot accidentally expose or clash with a private inherited member because types only see members that have been explicitly declared within them. This mirrors the convention used for imports.
 
-## Abstract Functions
+## Meta Functions
 
-Adding a parameter before the double colon (`::`) turns it into an **abstract function** which combines the concepts of **inline functions**, **macros**, and **generics**. Parameters are divided with spaces like in functional programming languages such as Haskell or OCaml. The values of parameters can sometimes be inferred based on context. 
+Adding a parameter before the double colon (`::`) turns it into a **meta function** which combines the concepts of **inline functions**, **macros**, and **generics**. Parameters are divided with spaces like in functional programming languages such as Haskell or OCaml. The values of parameters can sometimes be inferred based on context. 
 
 Analogous to constant values, you can define an inline function or macro by adding a parameter before the double colons and writing an expression after it. Like constants, they don't output a value in memory when compiled, useful for collecting repeated code. Unlike constant functions, they cannot be passed to another function. They are only for inserting an expression. Each parameter is a variable within the expression, so you don't need to wrap them in parentheses `()` like with C macros. 
 
