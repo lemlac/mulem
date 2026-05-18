@@ -107,7 +107,7 @@ All subsequent expressions within a block should have the same indentation. If a
 
 ## Operators
 
-The philosophy of Mu is that symbols should be easy to understand and that generally keywords are preferred over symbols. Most symbols are consistent with their contextual meaning, for example `*` relates to math, `!` relates to exceptions, `&` relates to tuples, etc.. There's also a common pattern where repeating an operator is a more advanced version of that operator, for example: `+` addition vs `++` concatenation, `*` multiplication vs `**` exponentiation, `/` division vs `//` floor division, and `%` standard modulo vs `%%` floor division modulo. Mu will check any combination of symbols greedily until the next space or word, so for example `++` would be different from `+ +`. Spaces are required between multiple symbolic operators, much like how spaces are required between words. Symbol characters include any ASCII character that isn't alphanumeric, whitespace, quotation marks, delimiters, or brackets&mdash;in other words these symbols: `~!@#$%^&*-+=|\:<.>/?`.
+The philosophy of Mu is that symbols should be easy to understand and that generally keywords are preferred over symbols. Most symbols are consistent with their contextual meaning, for example `*` and `/` relate to math, `~` relates to bitwise operators, `!` relates to exceptions, `&` relates to tuples, etc.. There's also a common pattern where repeating an operator gets you a more advanced version of that operator, for example: `+` addition vs `++` concatenation, `*` multiplication vs `**` exponentiation, `/` division vs `//` floor division, and `%` standard modulo vs `%%` floor division modulo. Mu will check any combination of symbols greedily until the next space or word, so for example `++` would be different from `+ +`. Spaces are required between multiple symbolic operators, much like how spaces are required between words. Symbol characters include any ASCII character that isn't alphanumeric, whitespace, quotation marks, delimiters, or brackets&mdash;in other words these symbols: `~!@#$%^&*-+=|\:<.>/?`.
 
 **Algebra:**
 
@@ -138,8 +138,8 @@ The philosophy of Mu is that symbols should be easy to understand and that gener
 
 **Bitwise:**
 
-- `lhs ~& rhs` &mdash; bitwise AND
-- `lhs ~| rhs` &mdash; bitwise OR
+- `lhs ~and rhs` &mdash; bitwise AND
+- `lhs ~or rhs` &mdash; bitwise OR
 - `lhs ~ rhs` &mdash; bitwise XOR
 - `~ rhs` &mdash; bitwise NOT
 - `lhs << rhs` &mdash; bitshift left
@@ -188,15 +188,7 @@ Some operators also allow an equal sign after it to set a variable based on its 
 - `lhs //= rhs` &mdash; `lhs = lhs // rhs` &mdash; floor division assignment
 - `lhs %= rhs` &mdash; `lhs = lhs % rhs` &mdash; modulo assignment
 - `lhs %%= rhs` &mdash; `lhs = lhs %% rhs` &mdash; floor division modulo assignment (binds `lhs` to a range in `0..rhs`)
-- `lhs **= rhs` &mdash; `lhs = lhs ** rhs` &mdash; exponential assigment
-- `lhs ~&= rhs` &mdash; `lhs = lhs ~& rhs` &mdash; bitwise-*AND* assignment
-- `lhs ~|= rhs` &mdash; `lhs = lhs ~| rhs` &mdash; bitwise-*OR* assignment
-- `lhs ~= rhs` &mdash; `lhs = lhs ~ rhs` &mdash; bitwise-*XOR* assignment
-- `lhs <<= rhs` &mdash; `lhs = lhs << rhs` &mdash; bitshift left assignment
-- `lhs >>= rhs` &mdash; `lhs = lhs >> rhs` &mdash; bitshift right assignment
 - `lhs ++= rhs` &mdash; `lhs = lhs ++ rhs` &mdash; append to an array (not allowed if `lhs` is a fixed length array)
-- `lhs &= rhs` &mdash; `lhs = lhs & rhs` &mdash; append a tuple to another tuple (not allowed for mutable variables since it creates a new type)
-- `lhs ??= rhs` &mdash; `lhs = lhs ?? rhs` &mdash; set a default value to an option type
 
 ## Basic Bindings
 
@@ -525,7 +517,7 @@ print("{count}") -- 3
 You can define a function within an expression with the keyword `fn` in the pattern `fn(_) = _`. This is useful for passing functions to other functions. If the lambda function has multiple lines, it must terminate with `end`. As mentioned before, the purity of the lambda must match the function that it's being passed to.
 
 ```mu
-map(array, func) = [++(for x in array then func(x))]
+map(array, func) = [++for x in array then func(x)]
 array0 = [1, 2, 3, 4]
 array1 = map(array0, fn(x) = x + 1)
 array2 = map(array0, fn(x) =
@@ -776,18 +768,33 @@ b = [0, ++a, 4]    -- == [0, 1, 2, 3, 4]
 Sometimes in systems programming, we need to write out large arrays. To make this easier and more cost effective, arrays can optionally be delimited with whitespace by putting a vertical pipe `|` immediately inside the brackets like this `[| |]`.
 
 ```mu
-list = [|1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25|]
+list: int#26 = [|1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25|]
 ```
 
-Matrices use a `|` at the start of each row. Each row must have the same number of columns. You could put rows in square brackets `[...]` instead, but this way will automatically enforce that each row has the same number of columns.
+Matrices are defined by putting a newline after the `[` and then a `|` at the start of each row. Each row must have the same number of columns. Do this will automatically enforce that each row has the same number of columns.
 
 ```mu
-matrix = [|
-  |  1  2  3  4
-  |  5  6  7  8
-  |  9 10 11 12
-  | 13 14 15 16
-|]
+matrix: int#4#4 = [
+  |  1  2  3  4   -- 1st row
+  |  5  6  7  8   -- 2nd row
+  |  9 10 11 12   -- 3rd row
+  | 13 14 15 16   -- 4th row
+]
+```
+
+You can increase the number of dimensions by adding an aditional ` |` for each dimension. The lengths of arrays in matching dimensions must be consistent. 
+
+```mu
+matrix4D: int#2#2#2#2 = [
+  | | |  1  2    -- (0, 0, 0)
+      |  3  4    -- (0, 0, 1)
+    | |  5  6    -- (0, 1, 0)
+      |  7  8    -- (0, 1, 1)
+  | | |  9 10    -- (1, 0, 0)
+      | 11 12    -- (1, 0, 1)
+    | | 13 14    -- (1, 1, 0)
+      | 15 16    -- (1, 1, 1)
+]
 ```
 
 There are special rules for handling how items are delimited in a whitespace array or matrix. If any of these rules don't apply, one should put the item in parentheses like `(a+b)`.
@@ -1035,6 +1042,15 @@ addStuff(a, b) = opt
     a + b
 ```
 
+If a function returns an option type, then use of the `?` is allowed with `opt`. Using an `?` inside a function will automatically infer the return type as an option. The return will be automatically wrapped in `Some(_)`.
+
+```mu
+addStuff(a: int, b: int): int? =
+    a = getSomething(a)?
+    b = getSomething(b)?
+    a + b
+```
+
 Option types automatically flatten in the following manner:
 
 - `Some(Some(_))` = `Some(_)`
@@ -1042,7 +1058,7 @@ Option types automatically flatten in the following manner:
 
 #### `try` / `except`
 
-Result types are unwrapped with an exclamation mark (`!`) within a try block. Use of `!` outside of a `try` block is a syntax error.
+Result types are unwrapped with an exclamation mark (`!`) within a try block.
 
 ```mu
 safeResult = try divide(1, 0)! except _ then 0.0
@@ -1074,10 +1090,30 @@ riskyFunction() = try
     doSomething2()!
 ```
 
-You can combine `try` and `opt` together to use both at the same time.
+If a function returns a result type `type!`, then it can also use the `!` like in a `try` block. Use of a `!` in a function automatically infers a result type as the return.
 
 ```mu
+riskyFunction(a: int): int! =
+    b = doSomething1(a)!
+    c = doSomething2(b)!
+    c
+```
+
+You can combine `try` and `opt` together to use both at the same time. The return type is `type?!` (an **option result type**).
+
+```mu
+-- With a `try opt` block:
 doSomething(x: str?) = try opt
+    x = x?
+    doSomethingElse(x)!
+
+-- Or with type notation:
+doSomething(x: str?): str?! =
+    x = x?
+    doSomethingElse(x)!
+
+-- Or inferred:
+doSomething(x) =
     x = x?
     doSomethingElse(x)!
 ```
@@ -1476,7 +1512,7 @@ List T N :: struct
 
 List T N :: impl
     init() =
-        data: T#N = [++(for _ in 0..N then default)]
+        data: T#N = [++for _ in 0..N then default]
         Self(data: data)
 ```
 
