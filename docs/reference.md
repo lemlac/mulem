@@ -256,10 +256,10 @@ doSomething()
 x = 1
 ```
 
-Not setting a mutable variable implies `= unset` after it which means it cannot be used until it's been set. The exception is passing unset variables to the `out` parameters of functions. (See [Function Declarations](#Function-Declarations).)
+Not setting a mutable variable implies `= undefined` after it which means it cannot be used until it's been set. The exception is passing undefined variables to the `out` parameters of functions. (See [Function Declarations](#Function-Declarations).)
 
 ```mu
-x: mu int = unset
+x: mu int = undefined
 -- `x` cannot be used here.
 (--
 doSomething(x)   -- This is an error.
@@ -283,25 +283,23 @@ cantSetX()
 print("{x}")   -- still 1
 ```
 
-Since using `=` on a mutable variable mutates it, there's no way to create an immutable variable with the same name until you go out of scope. In other languages, you can say `var _ = _` or `let _ = _` to declare a new variable in scope, but Mu abandoned this pattern for the simpler `_ = _` one. In order to redeclare a immutable variable after it's been declared as mutable, you'll need to use `unset` first. This will release the name within the current scope, allowing you to redeclare it without affecting the original variable. Once you exit the scope, the original variable is accessible again as normal. This works the same as declaring it with `var` or `let` in other languages. 
+Since using `=` on a mutable variable mutates it, there's no way to create an immutable variable with the same name until you go out of scope. In other languages, you can say `var _ = _` to declare a new variable in scope, but Mu abandoned this pattern for the simpler `_ = _` one. In order to redeclare a immutable variable after it's been declared as mutable, you should use `let _`. Note that there's no equals sign after the variable name. This is to distinguish it from the `let _ = _ then` pattern. (See [Inline Binding](#Inline-Binding).) This will release the name within the current scope, allowing you to redeclare it without affecting the original variable. Once you exit the scope, the original variable is accessible again as normal. You can also use commas to redeclare multiple variables like `let a, b, c`. The variable name does not have to be already defined. 
 
 ```mu
 mu x = 0
 do                -- Create a new child scope.
     x = 1         -- Mutates `x` instead of making a new variable.
-    unset x       -- Frees the name `x` in this scope.
+    let x         -- Frees the name `x` in this scope.
     x = 2         -- Define new `x` without affecting the old `x`.
     print("{x}")  -- 2
                   -- Exit scope, `x` is back to the old one.
 print("{x}")      -- 1
                   -- That's because `x` was mutated once.
-unset x           -- Forget about `x` for the rest of the scope.
-                  -- `x` is unset here.
-x = 3             -- `x` is now set.
+let x             -- Forget about `x` for the rest of the scope.
+                  -- `x` is undefined here.
+x = 3             -- `x` is now defined.
 print("{x}")      -- 3
 ```
-
-In situations like these, it would be recommended simply to use a different variable name that doesn't conflict, but this gives you the same options that other languages have. 
 
 #### References (`ref`/`ref mu`)
 
@@ -425,7 +423,7 @@ What each modifier means changes the functionality and the function's purity:
 | `ref` | Passes reference, immutable in the function. |
 | `ref mu` | Passes reference, mutable in the function |
 
-Another type of parameter is `out`. This is like `ref mu` but is treated as `unset` at the start of the function. Use it to set a variable that hasn't been set yet. The parameter must not be `unset` in any branch within the function. This ensures that the variable is set. 
+Another type of parameter is `out`. This is like `ref mu` but is treated as `undefined` at the start of the function. Use it to set a variable that hasn't been set yet. The parameter must not be `undefined` in any branch within the function. This means either setting it within the function or passing it to another function with an `out` parameter. This ensures that the variable is set after the function has been called. 
 
 ```mu
 setInt(out i) =
@@ -575,10 +573,11 @@ if get() as val != Target then
 
 ### Built-in Types
 
-Some built-in types include `int`, `float`, `bool`, `char`, and `str`. 
+Some built-in types include `int`, `uint`, `float`, `bool`, `char`, and `str`. 
 
 ```mu
-myInt: int = 1234
+myInt: int = -1234
+myInt: uint = 5678
 myFloat: float = 12.34
 myBool: bool = True
 myChar: char = 'a'
@@ -807,15 +806,15 @@ print("{^xPtr}")  -- 0, because it's still referencing the old x.
 -- This might lead to a crash.
 ```
 
-Pointers can also be treated as numbers. The resulted type is `^undefined` by default which means it can't be dereferenced unless it's been casted to a known pointer type. Use `(^type)(_)` to cast a pointer to a different type. 
+Pointers can also be treated as numbers. The resulted type is `^unknown` by default which means it can't be dereferenced unless it's been casted to a known pointer type. Use `^type(_)` to cast a pointer to a different type. 
 
 ```mu
 x = 0
 p = @x
-next = (^int)(p + 1)
-print("next: {^next)}")   -- This will probably crash.
-prev = (^int)(p - 1)
-print("prev: {^prev)}")   -- This will probably crash too.
+next = ^int(p + 1)
+print("next: {^next}")   -- This will probably crash.
+prev = ^int(p - 1)
+print("prev: {^prev}")   -- This will probably crash too.
 ```
 
 Mutable pointers are marked with `^mu type`. The reference must also be a mutable type. Although it's pointing to a mutable variable, the actual pointer variable itself is immutable. You would need another `mu` before the caret to change the pointer, marked as `mu ^type` or `mu ^mu type`.
@@ -835,14 +834,14 @@ print("{^ptr}")  -- 2
 
 Consider this a work in progress. This will need more testing to figure out the best way to handle pointers. Some featues like memory allocation and safe pointers will probably be implemented through a standard library. 
 
-#### Undefined Type
+#### Unknown Type
 
-There are some cases where the type can't be infered right away in which case the thing in question gets typed as `undefined`. This usually gets resolved eventually, and if it doesn't, the compiler should throw an error. 
+There are some cases where the type can't be infered right away in which case the thing in question gets typed as `unknown`. This usually gets resolved eventually, and if it doesn't, the compiler should throw an error. 
 
-Sometimes with FFI, we don't really know nor care what the actual type to a pointer is. We just know that it's a pointer to something. In that case, we can type it as `^undefined`. This pointer type should always be immutable&mdash;i.e. no `^mu undefined`&mdash;and dereferencing it will throw a compile-time error. 
+Sometimes with FFI, we don't really know nor care what the actual type to a pointer is. We just know that it's a pointer to something. In that case, we can type it as `^unknown`. This pointer type should always be immutable&mdash;i.e. no `^mu unknown`&mdash;and dereferencing it will throw a compile-time error. 
 
 ```mu
-result: ^undefined = ExternalLib.getSomething()
+result: ^unknown = ExternalLib.getSomething()
 ExternalLib.doSomethingWith(result)
 ```
 
@@ -1472,16 +1471,18 @@ ARG2 :: 3 + 4
 print("{ MAX ARG1 ARG2 }")
 ```
 
-The alternative is to use the pattern `.()` to call meta functions in a conventional way.
-
-print("{ MAX.(1+2, 3+4) }")
-
-Arguments can be function calls. If a meta function itself returns a regular function, the meta function call should either be enclosed in parantheses or by using the `.()` syntax.
+Arguments can also be function calls. If a meta function itself returns a regular function, the meta function call should be enclosed in parantheses.
 
 ```mu
 MAXADD a b :: if a > b then fn(c) = a + c else fn(c) = b + c
-( MAXADD f(0) g(0) )(1)
-MAXADD.(f(0), g(0))(1)
+print("{ ( MAXADD f(0) g(0) )(1) }")
+```
+
+The alternative option is to use the pattern `.()` to call meta functions in a conventional way. This removes any ambiguity that whitespace delimited arguments would have. You can use commas in the parameter like you would with a normal function. 
+
+```mu
+print("{ MAX.(1+2, 3+4) }")
+print("{ MAXADD.(f(0), g(0))(1) }")
 ```
 
 ### Where Block
@@ -1643,7 +1644,7 @@ There are 55 keywords in total:
 * `typeof`
 * `uint`
 * `undefined`
-* `unset`
+* `unknown`
 * `until`
 * `virt`
 * `void`
