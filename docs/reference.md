@@ -367,7 +367,7 @@ print("1 - 1 = {action(1, 1)}")  -- 0
 
 #### Pure Functions
 
-Functions can either be pure or impure. This affects whether they can be analyzed or not. (See [Function Types](#Function-Types).) To enforce purity, you can add the decorator `@pure` before the function.
+Functions can either be pure or impure. This affects whether they can be analyzed or not. (See [Functional Analytics](#Functional-Analytics).) To enforce purity, you can add the decorator `@pure` before the function.
 
 ```mu
 @pure
