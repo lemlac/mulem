@@ -656,6 +656,27 @@ y = float(x)
 print("{y}")     -- 1.0
 ```
 
+#### Booleans
+
+`bool` is an enum type with its only members being `False` and `True`. This means you can also pattern match with a bool, although it's recommended to use `if`/`else` instead.
+
+```mu
+match value
+case True then
+    print("It's true!")
+case False then
+    print("It's false!")
+```
+
+That's the same as this.
+
+```mu
+if value then
+    print("It's true!")
+else
+    print("It's false!")
+```
+
 #### Strings
 
 Strings can be formatted with curly braces (`{expr}`) in the string. Use a backslash to write a literal opening curly brace (`\{`). Note that string insertion and named tuples both use curly braces. This shouldn't be an issue though since they're used in different contexts. 
@@ -931,7 +952,7 @@ for await x in asyncIter() then
 
 #### `while`
 
-Repeats a block of code until the condition is true.
+Repeats a block of code until the condition is `True`.
 
 ```mu
 while cond then
@@ -955,7 +976,7 @@ loop
     break
 ```
 
-Add `until` after a `loop` block to create a condition that will break the loop. Unlike `while`, this will break when the condition is true, analogous to `if cond then break`. The loop will run at least once before checking the condition.
+Add `until` after a `loop` block to create a condition that will break the loop. Unlike `while`, this will break when the condition is `True`, analogous to `if cond then break`. The loop will run at least once before checking the condition.
 
 ```mu
 loop
@@ -1052,8 +1073,8 @@ Exits out of a function. If a value is after it, that value is the return value,
 ```mu
 isThirteen(x) =
     if x == 13 then
-        return true  -- Exits the function and returns true.
-    false            -- Returns false.
+        return True  -- Exits the function and returns true.
+    False            -- Returns false.
 ```
 
 #### `yield`
@@ -1436,7 +1457,7 @@ increment float :: fn(c: ref mu float): void =
 
 c = Counter(value: 2)
 f = 3.0
-b = true
+b = True
 
 increment(c)   -- T is inferred as Counter
 increment(f)   -- T is inferred as float
@@ -1535,12 +1556,13 @@ Mu is multi-paradigm: different functions, structs, or modules can use different
 
 ## Keywords
 
-There are 59 keywords in total:
+There are 58 keywords in total:
 
 * `and`
 * `as`
 * `async`
 * `await`
+* `bool`
 * `capture`
 * `case`
 * `char`
@@ -1551,7 +1573,6 @@ There are 59 keywords in total:
 * `end`
 * `enum`
 * `except`
-* `false`
 * `float`
 * `fn`
 * `for`
@@ -1578,13 +1599,12 @@ There are 59 keywords in total:
 * `raise`
 * `ref`
 * `return`
-* `self`/`Self`
+* `self`
 * `shadow`
 * `sizeof`
 * `str`
 * `struct`
 * `then`
-* `true`
 * `try`
 * `type`
 * `typeof`
