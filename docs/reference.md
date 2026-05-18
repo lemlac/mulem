@@ -6,6 +6,8 @@ Mu is a general-purpose, multi-paradigm programming language with significant wh
 
 Mu will be both a compiled and an interpreted language. Unlike Python, you won't need to use another language like C to increase performance. You can instead compile some of it and then call it as a shared library all within the same language. Some use cases for this are AI, systems programming, and game development.
 
+This document will focus on the language itself. Some features may come in a standard library which will not be discussed here.
+
 ---
 
 ## Lexical Conventions
@@ -111,7 +113,7 @@ The philosophy of Mu is that symbols should be easy to understand and that gener
 **Comparison:**
 
 - `lhs == rhs` &mdash; equality
-- `lhs >< rhs` &mdash; inequality, resembles an X
+- `lhs != rhs` &mdash; inequality
 - `lhs > rhs` &mdash; greater than
 - `lhs < rhs` &mdash; less than
 - `lhs >= rhs` &mdash; greater than or equals to
@@ -122,13 +124,6 @@ The philosophy of Mu is that symbols should be easy to understand and that gener
 - `lhs and rhs` &mdash; false if any are false
 - `lhs or rhs` &mdash; true if any are true
 - `not rhs` &mdash; inverts a boolean
-
-**Bitwise:**
-
-- `lhs band rhs` &mdash; bitwise AND
-- `lhs bor rhs` &mdash; bitwise OR
-- `lhs bxor rhs` &mdash; bitwise XOR
-- `bnot rhs` &mdash; bitwise NOT
 
 **Arrays:**
 
@@ -148,10 +143,9 @@ The philosophy of Mu is that symbols should be easy to understand and that gener
 **Pointers:**
 
 - `^ rhs` &mdash; dereferencing a pointer
-- `lhs ^?` &mdash; safe dereference, will switch to nearest `some` keyword if null.
 - `ref rhs` &mdash; getting the pointer to a variable
 - `lhs ^. rhs` &mdash; access a member of a pointer (same as `(^lhs).rhs`)
-- `lhs ^?. rhs` &mdash; safe access a member of a pointer, returns `none` if its null.
+- `lhs ^= rhs` &mdash; set the value of the variable that a pointer is referencing
 
 *Pointer chaining* &mdash; for any `^` operator, you can add `^` to repeatedly dereference a pointer. 
 
@@ -523,7 +517,7 @@ You can also bind variables within an expression using `let ... then` and `as`. 
 ```mu
 squared = let x = getSomething() then x * x
 
-while next() as val >< None then
+while next() as val != None then
     print("{val}")
 ```
 
@@ -537,7 +531,7 @@ sum = let (x = 1, y = 2) then x + y
 
 ```mu
 val: mu Choice
-if get() as val >< Target then
+if get() as val != Target then
     raise NotTarget(val)
 -- `val` is a `Target` here.
 ```
@@ -598,6 +592,14 @@ You can also get the size of any type with the keyword `sizeof`. It returns a co
 sizeOfBool = sizeof bool   -- 1
 sizeOfChar = sizeof char   -- 1
 sizeOfVoid = sizeof void   -- 0
+```
+
+You can call a type as a function to convert types into other types if conversion is possible. 
+
+```mu
+x = 1
+y = float(x)
+print("{y}")     -- 1.0
 ```
 
 #### Strings
@@ -720,50 +722,33 @@ print("{^xPtr}")  -- 0, because it's still referencing the old x.
 -- This might lead to a crash.
 ```
 
-Pointers can be safely dereferenced with the `^?` operator. This works like the `?` for options.
-
-```mu
-some print("{xPtr?}")   -- Treat pointer as an option type, returns none if it's been dropped.
-```
-
-Pointers can also be treated as numbers. Dereferencing them may lead to unexpected behavior, so causion is needed.
+Pointers can also be treated as numbers. The resulted type is `^undefined` by default which means it can't be dereferenced unless it's been casted to a known pointer type. Use `(^type)(_)` to cast a pointer to a different type. 
 
 ```mu
 x = 0
 p = ref x
-next = p + 1
-print("next: {some str(next^?) ?? "null"}")
-prev = p - 1
-print("prev: {some str(prev^?) ?? "null"}")
+next = (^int)(p + 1)
+print("next: {^next)}")   -- This will probably crash.
+prev = (^int)(p - 1)
+print("prev: {^prev)}")   -- This will probably crash too.
 ```
 
-Mutable pointers are marked with `^mu type`. The reference must also be a mutable type. Although it's pointing to a mutable variable, the actual pointer variable is immutable. You would need another `mu` to change the pointer, marked as `mu ^type` or `mu ^mu type`.
+Mutable pointers are marked with `^mu type`. The reference must also be a mutable type. Although it's pointing to a mutable variable, the actual pointer variable itself is immutable. You would need another `mu` before the caret to change the pointer, marked as `mu ^type` or `mu ^mu type`.
 
 ```mu
 x: mu int = 0
 xPtr: ^mu int = ref x
-^xPtr = 1
+xPtr ^= 1
 print("{x}")     -- 1
 
-y: mu int = 2
+y = 2
 ptr: mu ^int = ref x
 print("{^ptr}")  -- 1
 ptr = ref y
 print("{^ptr}")  -- 2
 ```
 
-Memory can be allocated using `new` and deallocated using `delete`. You will need to check if the pointer succeeded by unwrapping it.
-
-```mu
-Thing :: {a: int, b: int}
-some
-    thing = new Thing(a: 1, b: 2)
-    value = thing^?                -- Dereference or exit block if it's null
-    print("{value}")
-    delete thing
-```
-
-This will need more testing to figure out the best way handle pointers. Consider this a work in progress.
+Consider this a work in progress. This will need more testing to figure out the best way to handle pointers. Some featues like memory allocation and safe pointers will probably be implemented through a standard library. 
 
 #### Undefined Type
 
@@ -1106,20 +1091,18 @@ Variable and functions primarily use the equals sign (`=`) and are for storing a
 
 ### Constants
 
-Putting a constant value after `::` creates a constant. This holds an unchangeable value that must be known at compile time. Its type is a `const _` where _ is its value. Explicit typing isn't necessary since it cannot be changed.
+Putting a constant value after `::` creates a constant. This holds an unchangeable value that must be known at compile time. Explicit typing isn't necessary since it cannot be changed.
 
 ```mu
 PI :: 3.1415926535
 ```
-
-`PI` in this case would be type `const 3.1415926535` which is a subtype of `float`. `const` types can be used in abstract functions for pattern matching. (See [Abstract Functions](#Abstract-Functions).)
 
 You can also bind a function to a constant. When calling it, it would be the same as defining it inline and then calling. This can be useful if you need to pass a function multiple times but don't want it to be outputted when compiled.
 
 ```mu
 IDENTITY :: fn(x) = x
 addOne :: fn(x) = x + 1
-value = addOne(2) -- Same as (fn(x) = x + 1)(2), result is 3.
+value = addOne(2)               -- Same as (fn(x) = x + 1)(2), result is 3.
 array = map([1 2 3 4], addOne)
 ```
 
@@ -1175,6 +1158,7 @@ It also means the shorthand `(0, 1, x: 2)` isn't really special syntax. It's the
 
 Opaque types such as primitives and enums coerce into a tuple of one, so creating a product type of them creates a positional tuple, e.g. `int & float & char` becomes `(int, float, char)`. Structs convert to named tuples unless declared with an `@opaque` decorator, in which case they behave like opaque types. The `void` type coerces to an empty tuple `()`, and combining empty tuples produces an empty tuple `() & () == ()`. The same is true for empty named tuples `{} & {} == {}`. This also means that empty positional tuples and empty named tuples are equivalent `() == {}`. `void` itself is treated as an equivalent of these types: `void == ()` and `void == {}`.
 
+<!--
 ### Procedures (`proc`)
 
 Another type of `::` declaration is a `proc`, short for procedure. Unlike normal functions which can be pure, procs are always impure but don't return anything by default. Instead, you use `out` parameters to get a return value. The keyword `then` is used to divide the parameters from the function body. Parameters can either be indented like `struct` or `enum` or declared in parentheses. Captured mutable variables need to be redeclared with the `capture` keyword. This helps make sure that the proc is actually capturing a variable instead of declaring a new variable.
@@ -1263,6 +1247,7 @@ sum = addAndCount(1, 2)
 addAndCount(1, 2, out sum)
 addAndCount(1, 2, sum)    -- if sum is mutable
 ```
+-->
 
 ### Structures (`struct`)
 
@@ -1590,22 +1575,15 @@ Mu is multi-paradigm: different functions, structs, or modules can use different
 
 ## Keywords
 
-There are 71 keywords in total:
+There are 64 keywords in total:
 
 * `and`
 * `as`
 * `async`
 * `await`
-* `band`
-* `bnot`
-* `bool`
-* `bor`
-* `break`
-* `bxor`
 * `capture`
 * `case`
 * `char`
-* `const`
 * `continue`
 * `default`
 * `delete`
