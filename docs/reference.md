@@ -685,7 +685,7 @@ b = [0 ++a 4]    -- == [0 1 2 3 4]
 
 #### Pointers
 
-Although most things can be achieved without manual manipulation of pointers, some low level code requires it. Pointers are marked with a caret (`^`) before the type, and dereferencing them uses the same symbol. More carets marks how many times you need to dereference it: `^^type` = double pointer, `^^^type` = triple pointer, etc.. Get the reference to a variable with `ref`. Pointers are immutable by default, so mutating them isn't allowed.
+Although most things can be achieved without manual manipulation of pointers, some low level code requires it. Pointers are marked with a caret (`^`) before the type, and dereferencing them uses the same symbol. More carets mark how many times you need to dereference it: `^^type` = double pointer, `^^^type` = triple pointer, etc.. Get the reference to a variable with `ref`. Pointers are immutable by default, so mutating them isn't allowed.
 
 ```mu
 x: int = 0
@@ -725,7 +725,7 @@ This will need more testing to figure out the best way handle pointers. Consider
 
 #### Undefined Type
 
-There are some cases where the type can't be infered right away in which case the thing gets typed as `undefined`. This usually gets resolved eventually, and if it doesn't, the compiler should throw an error. 
+There are some cases where the type can't be infered right away in which case the thing in question gets typed as `undefined`. This usually gets resolved eventually, and if it doesn't, the compiler should throw an error. 
 
 Sometimes with FFI, we don't really know nor care what the actual type to a pointer is. We just know that it's a pointer to something. In that case, we can type it as `^undefined`. This pointer type should always be immutable&mdash;i.e. no `^mu undefined`&mdash;and dereferencing it will throw a compile-time error. 
 
