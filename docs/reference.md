@@ -80,7 +80,16 @@ end              -- Ends both blocks.
 
 (do
     expr
+    expr
 end)             -- Required here since the block is in parentheses.
+
+(--              -- Error if uncommented.
+(expr; expr)     -- This is a syntax error since you can't have semi-colons inside a parenthetical expression.
+--)
+
+(do
+    expr; expr   -- However, this is okay because it's inside of an inline-block expression.
+end)
 ```
 
 The difference on whether a block keyword starts a block or is inlined is based on the presence of a new-line immediately after it&mdash;ignoring comments and trailing spaces.
@@ -98,7 +107,7 @@ All subsequent expressions within a block should have the same indentation. If a
 
 ## Operators
 
-The philosophy of Mu is that symbols should be easy to understand and that generally keywords are preferred over symbols. Most symbols are consistent with their contextual meaning, for example `*` relates to math, `!` relates to exceptions, `&` relates to tuples, etc.. There's also a common pattern where repeating an operator is a more advanced version of that operator, for example: `+` addition vs `++` concatenation, `*` multiplication vs `**` exponentiation, `/` division vs `//` floor division, and `%` truncated division modulo (the remainder) vs `%%` floor division modulo (binding to a range). Mu will check any combination of symbols greedily until the next space or word, so for example `++` would be different from `+ +`. Spaces are required between multiple symbolic operators, much like how spaces are required between words. Symbol characters include any ASCII character that isn't alphanumeric, whitespace, or quotation marks, or brackets&mdash;in other words these symbols: `~!@#$%^&*-+=|\:;'",<.>/?`. 
+The philosophy of Mu is that symbols should be easy to understand and that generally keywords are preferred over symbols. Most symbols are consistent with their contextual meaning, for example `*` relates to math, `!` relates to exceptions, `&` relates to tuples, etc.. There's also a common pattern where repeating an operator is a more advanced version of that operator, for example: `+` addition vs `++` concatenation, `*` multiplication vs `**` exponentiation, `/` division vs `//` floor division, and `%` standard modulo vs `%%` floor division modulo. Mu will check any combination of symbols greedily until the next space or word, so for example `++` would be different from `+ +`. Spaces are required between multiple symbolic operators, much like how spaces are required between words. Symbol characters include any ASCII character that isn't alphanumeric, whitespace, quotation marks, delimiters, or brackets&mdash;in other words these symbols: `~!@#$%^&*-+=|\:<.>/?`.
 
 **Algebra:**
 
@@ -233,7 +242,9 @@ if x == 0 then
 
 #### Mutability (`mu`)
 
-Mutable variables are declared with `mu type`. Setting it will change the value instead of shadowing it. The type of value when mutating it should match its original type.
+Mutable variables are marked with the keyword `mu`. This was chosen since mutability is a common practice in programming much like functions are&mdash;which is why functions also get their own two letter keyword `fn`. (See [Function Declarations](#Function-Declarations).) The general rule of thumb in Mu is that *patterns scale with complexity*&mdash;simple things like declaring a variable or function use short patterns, more complex things use bigger patterns.
+
+Declare a mutable variable with `mu type`. Setting it will change the value instead of shadowing it. The type of value when mutating it should match its original type.
 
 ```mu
 x: mu int = 0
@@ -274,30 +285,30 @@ Assigning to the variable for the rest of the scope and any sub-scopes will muta
 ```mu
 x: mu int
 do
-  x = 1
+    x = 1
 print("{x}")   -- 1
 cantSetX() =
-  x = 2
+    x = 2
 cantSetX()
 print("{x}")   -- still 1
 ```
 
-Since using `=` on a mutable variable mutates it, there's no way to create an immutable variable with the same name until you go out of scope. If you need to make a variable with the same name as a mutable variable, you can use the keyword `shadow`. This will reclaim any variable name in that scope. You can then redeclare it inside that scope without affecting the previous reference. After `shadow`, the variable is treated as if it were `undefined` until it's been set. 
+Since using `=` on a mutable variable mutates it, there's no way to create an immutable variable with the same name until you go out of scope. If you need to make a variable with the same name as a mutable variable, you can use `= undefined`. This will reclaim any variable name in that scope. You can then redeclare it inside that scope without affecting the previous reference. 
 
 ```mu
 mu x = 0
-do               -- Create a new child scope.
-    x = 1        -- Mutates `x` instead of making a new variable.
-    shadow x     -- Shadow `x` in this scope.
-    x = 2        -- Define new `x` without affecting the old `x`.
-    print("{x}") -- 2
-                 -- Exit scope, `x` is back to the old one.
-print("{x}")     -- 1
-                 -- That's because `x` was mutated once.
-shadow x         -- Forget about `x` for the rest of the scope.
-                 -- `x` is undefined here.
-x = 3            -- `x` is now defined.
-print("{x}")     -- 3
+do                -- Create a new child scope.
+    x = 1         -- Mutates `x` instead of making a new variable.
+    x = undefined -- Shadow `x` in this scope.
+    x = 2         -- Define new `x` without affecting the old `x`.
+    print("{x}")  -- 2
+                  -- Exit scope, `x` is back to the old one.
+print("{x}")      -- 1
+                  -- That's because `x` was mutated once.
+x = undefined     -- Forget about `x` for the rest of the scope.
+                  -- `x` is undefined here.
+x = 3             -- `x` is now defined.
+print("{x}")      -- 3
 ```
 
 #### References (`ref`/`ref mu`)
@@ -687,33 +698,6 @@ hello = "Hello, {world}!"
 helloEscaped = "Hello, \{world}!"
 ```
 
-You can also write multi-line strings in the following way:
-
-1. Omit the closing quotation mark.
-2. Add a quotation mark on the next line.
-3. A line with a closing quotation ends the string.
-
-Left padding spaces within the string will start after the starting quotation mark `"` on each line. If the next line starts with anything other than a `"` before the string is closed, then it's a syntax error. Each starting `"` needs to be at the same indentation. Whitespace before the `"` is not insterted into the string.
-
-```mu
-myStr =
-    "Hello.
-    "This string has multiple lines.
-    "  This line will start with 2 spaces in the string.
-    "This is the last line because of the closing quote."
-```
-
-You can also use the conventional triple quote (`"""`) like in Python. Note that leading whitespace is preserved in the string. Everything between the quotes is part of the string. 
-
-```mu
-do
-    myStr = """
-      This is all one string.
-  and this.
-     All spaces between the quotes are preserved.
-    """
-```
-
 Subsequent string literals will automatically concatenate, and the `++` operator can be used to concatenate non-literal strings.
 
 ```mu
@@ -722,6 +706,44 @@ str2 = " is broken"
 str3 = str1 ++ str2 ++ " into multiple parts."
 print(str3)
 -- Prints "This string is broken up into multiple parts."
+```
+
+You can also write multi-line strings. A common issue in programming languages is how to fix the issue of leading whitespace in a multi-line string. Mu uses significant whitespace, so unintenting the string wouldn't work. We don't want all the leading whitespace to be in the string, but how to we solve this? You can write a multi-line string in Mu in the following way:
+
+1. Start with 3 quotation marks `"""` + a new-line.
+2. Start each line with a single quotation mark `"`.
+3. Close with 3 qutation marks `"""` on the last line.
+
+Whitespace before the starting quotation mark `"` on each line will be ignored. If the next line starts with anything other than a `"` before the string is closed, then it's a syntax error. Each starting `"` needs to be at the same indentation. Whitespace before the `"` is not insterted into the string.
+
+```mu
+myStr =
+    """
+    "Hello.
+    "This string has multiple lines.
+    "  This line will start with 2 spaces in the string.
+    "
+    "The lines above and below this are empty.
+    "
+    "It's also fine to have """ in the string because it's not on a new line.
+    "This is the last line because of the closing quotation marks.
+    """
+```
+
+You can write a raw string with `''...''` (two apostrophes). Athough apostrophes `'` are used for chars, an empty char isn't possible since the default char is written `'\0'` (null character). When you write `''`, every character after it (including whitespace and intentation) is in the string until the closing `''`. Escaping with backslashes `\` and insertion with curly braces `{}` are ignored.
+
+```mu
+rawString = ''It's okay to put an apostrophe (') in the string.''
+filePath = ''C:\files\on\windows.txt''
+template = ''Insert here -> {{variable}}''
+bigDocument = ''
+    This
+   is
+  all
+  in
+   a
+    string
+''
 ```
 
 #### Arrays
@@ -1079,7 +1101,7 @@ isThirteen(x) =
 
 #### `yield`
 
-Exits out of a function with an `iter` type. The return value of the function must be of type `iter T` where T is the yield type. The actual return value in the function body is discarded, and using `return _` in a function that returns an `iter T` is illegal. Use of `yield` will infer the return type as `iter T`. 
+Exits out of a function with an `iter` type. The return value of the function must be of type `iter T` where T is the yield type. When you have `yield` in your function, the actual return value in the function body is discarded, and using `return _` in it is a compile-time error. Use of `yield` will infer the return type as `iter T`. 
 
 ```mu
 count(n: int): iter int =
@@ -1135,6 +1157,17 @@ curryAddWithOne = curryAdd3(1)
 addOneMore = curryAddWithOne(1)
 next = addOneMore(1)    -- 1+1+1 = 3
 ```
+
+You can think of `param` as being a shorthand for `return fn`, unless in an iterator function then it's short for `yeild fn`. Everything after `param` is the body of the next function.
+
+```mu
+curryAdd3(a: int): fn(int): fn(int): int =
+    return fn(b) =
+        return fn(c) =
+            a + b + c
+```
+
+When mixing `await`+`yield`+`param`, the return-type can get quite complicated. It's sometimes recommended to either split it up into smaller functions or let the return-type be inferred rather than writing it out manually.
 
 ---
 
@@ -1470,7 +1503,7 @@ increment(b)   -- T is inferred as bool which has no implementation, compile-tim
 
 ## Functional Analytics
 
-As explained in this document, functions are split between pure and impure. A pure type can always converge to an impure type, so only pure functions are distinguished with the keyword `pure` in their type where necessary. When inside a function marked as `@pure` though, all functions inside it also become pure.
+As explained in this document, functions are split between pure and impure. A pure type can always converge to an impure type, so only pure functions are distinguished with the `@pure` in their type where necessary. When inside a function marked as `@pure` though, all functions inside it also become pure.
 
 Pure functions always have the same input that results in the same output, but this is not guaranteed for impure functions. Mu will allow you to analyze and modify pure functions similar to how a mathematician would analyze an algebraic formula, allowing you to do things like get the derivative or integral of a function.
 
@@ -1556,7 +1589,7 @@ Mu is multi-paradigm: different functions, structs, or modules can use different
 
 ## Keywords
 
-There are 58 keywords in total:
+There are 56 keywords in total:
 
 * `and`
 * `as`
@@ -1588,14 +1621,12 @@ There are 58 keywords in total:
 * `match`
 * `mod`
 * `mu`
-* `none`
 * `not`
 * `out`
 * `opt`
 * `or`
 * `pass`
 * `param`
-* `pure`
 * `raise`
 * `ref`
 * `return`
