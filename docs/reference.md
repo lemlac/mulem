@@ -283,7 +283,7 @@ cantSetX()
 print("{x}")   -- still 1
 ```
 
-Since using `=` on a mutable variable mutates it, there's no way to create an immutable variable with the same name until you go out of scope. If you need to make a variable with the same name as a mutable variable, you can use `unset`. This will reclaim any variable name in that scope. You can then redeclare it inside that scope without affecting the previous reference. 
+Since using `=` on a mutable variable mutates it, there's no way to create an immutable variable with the same name until you go out of scope. In other languages, you can say `var _ = _` or `let _ = _` to declare a new variable in scope, but Mu abandoned this pattern for the simpler `_ = _` one. In order to redeclare a immutable variable after it's been declared as mutable, you'll need to use `unset` first. This will release the name within the current scope, allowing you to redeclare it without affecting the original variable. Once you exit the scope, the original variable is accessible again as normal. This works the same as declaring it with `var` or `let` in other languages. 
 
 ```mu
 mu x = 0
@@ -300,6 +300,8 @@ unset x           -- Forget about `x` for the rest of the scope.
 x = 3             -- `x` is now set.
 print("{x}")      -- 3
 ```
+
+In situations like these, it would be recommended simply to use a different variable name that doesn't conflict, but this gives you the same options that other languages have. 
 
 #### References (`ref`/`ref mu`)
 
@@ -423,7 +425,7 @@ What each modifier means changes the functionality and the function's purity:
 | `ref` | Passes reference, immutable in the function. |
 | `ref mu` | Passes reference, mutable in the function |
 
-Another type of parameter is `out`. This is like `ref mu` but is treated as `undefined` at the start of the function. Use it to set a variable that hasn't been set yet. The parameter must not be `undefined` in any branch within the function. This ensures that the variable is set. 
+Another type of parameter is `out`. This is like `ref mu` but is treated as `unset` at the start of the function. Use it to set a variable that hasn't been set yet. The parameter must not be `unset` in any branch within the function. This ensures that the variable is set. 
 
 ```mu
 setInt(out i) =
@@ -459,18 +461,22 @@ cannotChangeX(2) -- prints 2
 print("{x}")     -- prints 1
 ```
 
-To capture a mutable variable, you must redeclare it in the function with `capture _`. 
+To capture a mutable variable, you must redeclare it in the function with `capture _`. You can capture multiple variables at once with commas `,`. 
 
 ```mu
 mu count = 0
+mu squared = 1
+mu cubed = 1
 addCount() =
-    capture count
+    capture count, squared, cubed
     count += 1
+    squared = count * count
+    cubed = squared * count
 
 addCount()
 addCount()
 addCount()
-print("{count}") -- 3
+print("{count}, {squared}, {cubed}") -- 3, 9, 27
 ```
 
 #### Lambda Functions
@@ -995,7 +1001,7 @@ Controls the iteration of any loop type mentioned. `break` exits out of the loop
 Wraps a value in a option type. You can use `?` to unwrap multiple option types within an expression. If one `?` returns `None`, then the whole expression stops and returns `None`.
 
 ```mu
-x = opt f(a?) ?? "fallback"     -- x is "fallback" if a is none.
+x = (opt f(a?))?? "fallback"     -- x is "fallback" if a is none.
 
 addStuff(a, b) = opt
     a = getSomething(a)?
