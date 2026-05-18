@@ -316,11 +316,6 @@ xRef = 1
 print("x is {x}")   -- "x is 1"
 ```
 
-Note that `ref x = y` is not the same as `x = ref y`. 
-
-* `ref x = y` = declare a variable `x` that points to the same memory address as `y`, `x` is type `ref typeof y`
-* `x = ref y` = declare/set a pointer `x` to now point to `y`, `x` is type `^typeof y`
-
 See [Pointers](#Pointers) for more details.
 
 #### Destructuring
@@ -663,7 +658,7 @@ print("{y}")     -- 1.0
 
 #### Strings
 
-Strings can be formatted with curly braces (`{expr}`) in the string. Use a backslash to write a literal opening curly brace (`\{`).
+Strings can be formatted with curly braces (`{expr}`) in the string. Use a backslash to write a literal opening curly brace (`\{`). Note that string insertion and named tuples both use curly braces. This shouldn't be an issue though since they're used in different contexts. 
 
 ```mu
 name = "world"  
@@ -677,13 +672,14 @@ You can also write multi-line strings in the following way:
 2. Add a quotation mark on the next line.
 3. A line with a closing quotation ends the string.
 
-Indentation within the string will start after the starting quotation mark on each line. If the next line starts with anything other than a quotation mark before the string is closed, then it's a syntax error. Whitespace is ignored in the string until the first `"` on each line.
+Left padding spaces within the string will start after the starting quotation mark `"` on each line. If the next line starts with anything other than a `"` before the string is closed, then it's a syntax error. Each starting `"` needs to be at the same indentation. Whitespace before the `"` is not insterted into the string.
 
 ```mu
 myStr =
     "Hello.
     "This string has multiple lines.
-    "But this is the last line."
+    "  This line will start with 2 spaces in the string.
+    "This is the last line because of the closing quote."
 ```
 
 You can also use the conventional triple quote (`"""`) like in Python. Note that leading whitespace is preserved in the string. Everything between the quotes is part of the string. 
@@ -693,7 +689,7 @@ do
     myStr = """
       This is all one string.
   and this.
-     Indentation doesn't matter inside the string.
+     All spaces between the quotes are preserved.
     """
 ```
 
@@ -703,7 +699,8 @@ Subsequent string literals will automatically concatenate, and the `++` operator
 str1 = "This" " string"
 str2 = " is broken"
 str3 = str1 ++ str2 ++ " into multiple parts."
-print(str3)         -- "This string is broken up into multiple parts."
+print(str3)
+-- Prints "This string is broken up into multiple parts."
 ```
 
 #### Arrays
@@ -733,20 +730,20 @@ To make chaining accesses easier, there's a special rule for square brackets: an
 oneItem = matrix[#2][#1]   -- 3rd row, 2nd column, value 10
 ```
 
-There are special rules for handling how items are delimited in an array. If any of these rules don't apply, one should put the item in parentheses like `(a+b)`.
+Sometimes in systems programming, we need to write out large arrays. To make this easier and more cost effective, arrays are delimited using spaces rather than commas or semi-colons. There are special rules for handling how items are delimited in an array. If any of these rules don't apply, one should put the item in parentheses like `(a+b)`.
 
-1. Constants; `1`, `'a'`, `"string"`, etc.
+1. Constants: `1`, `'a'`, `"string"`, etc.
 2. Variable names: `x`, `PI`, etc.
-3. Accessing with `.` or `?.`: `a.b?.c`
+3. Accessing with `.`, `^.`, or `?.`: `a.b^.c?.d`
 4. Function calls: `f(foo)` &mdash; no space between the function name and the parameter.
 5. Square bracket expressions: `arr[#1]` &mdash; likewise, no space between the name and square bracket.
 6. Prefix/postfix operators: `++a`, `x?`, etc.
-7. A combination of the above: `++x.list[#0].add(1, 2)?`
-8. Sub-bracket expressions like arrays and tuples.
+7. Any combination of the above: `++x.list[#0].add(1, 2)?`
+8. Sub-bracket expressions like arrays (`[]`) and tuples (`()`/`{}`).
 
 For any item in an array, spaces must not be omitted outside of brackets (`()`/`[]`/`{}`). Inside brackets, whitespace is ignored for the parent array. 
 
-Operators that aren't space properly will throw a syntax error.
+Operators that aren't spaced properly will throw a syntax error.
 
 ```mu
 [a -b]  -- OK. Array of `a` and negative `b`.
@@ -766,11 +763,11 @@ b = [0 ++a 4]    -- == [0 1 2 3 4]
 
 #### Pointers
 
-Although most things can be achieved without manual manipulation of pointers, some low level code requires it. Pointers are marked with a caret (`^`) before the type, and dereferencing them uses the same symbol. More carets mark how many times you need to dereference it: `^^type` = double pointer, `^^^type` = triple pointer, etc.. Get the reference to a variable with `ref`. Pointers are immutable by default, so mutating them isn't allowed.
+Although most things can be achieved without manual manipulation of pointers, some low level code requires it. Pointers are marked with a caret (`^`) before the type, and dereferencing them uses the same symbol. More carets mark how many times you need to dereference it: `^^type` = double pointer, `^^^type` = triple pointer, etc.. Get the reference to a variable with `@`. Pointers are immutable by default, so mutating them isn't allowed.
 
 ```mu
 x: int = 0
-xPtr: ^int = ref x
+xPtr: ^int = @x
 ```
 
 Note that shadowing a pointer's reference doesn't update the pointer. How the program handles the old reference is up to the memory model. It some cases, it may have already been dropped. (See [Memory Models](#Memory-Models).)
@@ -785,7 +782,7 @@ Pointers can also be treated as numbers. The resulted type is `^undefined` by de
 
 ```mu
 x = 0
-p = ref x
+p = @x
 next = (^int)(p + 1)
 print("next: {^next)}")   -- This will probably crash.
 prev = (^int)(p - 1)
@@ -796,14 +793,14 @@ Mutable pointers are marked with `^mu type`. The reference must also be a mutabl
 
 ```mu
 x: mu int = 0
-xPtr: ^mu int = ref x
+xPtr: ^mu int = @x
 xPtr ^= 1
 print("{x}")     -- 1
 
 y = 2
-ptr: mu ^int = ref x
+ptr: mu ^int = @x
 print("{^ptr}")  -- 1
-ptr = ref y
+ptr = @y
 print("{^ptr}")  -- 2
 ```
 
