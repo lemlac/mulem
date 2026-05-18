@@ -232,7 +232,7 @@ if x == 0 then
 
 #### Mutability (`mu`)
 
-Mutable variables are marked with the keyword `mu`. This was chosen since mutability is a common practice in programming much like functions are&mdash;which is why functions also get their own two letter keyword `fn`. (See [Function Declarations](#Function-Declarations).) The general rule of thumb in Mu is that *patterns scale with complexity*&mdash;simple things like declaring a variable or function use short patterns, more complex things use bigger patterns.
+Mutable variables are marked with the keyword `mu`, the main star of the language. Just as Go has its `go` keyword, Mu has `mu`. This was chosen since mutability is a common practice in programming much like functions are&mdash;which is why functions also get their own two letter keyword `fn`. (See [Function Declarations](#Function-Declarations).) The general rule of thumb in Mu is that *patterns scale with complexity*&mdash;simple things like declaring a variable or function use short patterns, more complex things use bigger patterns.
 
 Declare a mutable variable with `mu type`. Setting it will change the value instead of shadowing it. The type of value when mutating it should match its original type.
 
@@ -256,10 +256,10 @@ doSomething()
 x = 1
 ```
 
-Not defining a mutable variable implies `= undefined` after it which means it cannot be used until it's been set. The exception is passing undefined variables to the `out` parameters of functions. (See [Function Declarations](#Function-Declarations).)
+Not setting a mutable variable implies `= unset` after it which means it cannot be used until it's been set. The exception is passing unset variables to the `out` parameters of functions. (See [Function Declarations](#Function-Declarations).)
 
 ```mu
-x: mu int = undefined
+x: mu int = unset
 -- `x` cannot be used here.
 (--
 doSomething(x)   -- This is an error.
@@ -283,21 +283,21 @@ cantSetX()
 print("{x}")   -- still 1
 ```
 
-Since using `=` on a mutable variable mutates it, there's no way to create an immutable variable with the same name until you go out of scope. If you need to make a variable with the same name as a mutable variable, you can use `= undefined`. This will reclaim any variable name in that scope. You can then redeclare it inside that scope without affecting the previous reference. 
+Since using `=` on a mutable variable mutates it, there's no way to create an immutable variable with the same name until you go out of scope. If you need to make a variable with the same name as a mutable variable, you can use `unset`. This will reclaim any variable name in that scope. You can then redeclare it inside that scope without affecting the previous reference. 
 
 ```mu
 mu x = 0
 do                -- Create a new child scope.
     x = 1         -- Mutates `x` instead of making a new variable.
-    x = undefined -- Shadow `x` in this scope.
+    unset x       -- Frees the name `x` in this scope.
     x = 2         -- Define new `x` without affecting the old `x`.
     print("{x}")  -- 2
                   -- Exit scope, `x` is back to the old one.
 print("{x}")      -- 1
                   -- That's because `x` was mutated once.
-x = undefined     -- Forget about `x` for the rest of the scope.
-                  -- `x` is undefined here.
-x = 3             -- `x` is now defined.
+unset x           -- Forget about `x` for the rest of the scope.
+                  -- `x` is unset here.
+x = 3             -- `x` is now set.
 print("{x}")      -- 3
 ```
 
@@ -1531,7 +1531,7 @@ increment(b)   -- T is inferred as bool which has no implementation, compile-tim
 
 ## Importing and Modules
 
-Use `import _` to import something, optionally giving the import an alias with `as`. You can either import a single export such as `import a.b.c` or multiple at once using destructuring rules `imoprt a.b{c, d}`. (See [Destructuring](#Destructuring).) All imports must be implicitly declared&mdash;no `import a.b.*`. This helps prevent naming conflicts and track where things have been defined.
+Use `import _` to import something, optionally giving the import an alias with `as`. You can either import a single export such as `import a.b.c` or multiple at once using destructuring rules `import a.b{c, d}`. (See [Destructuring](#Destructuring).) All imports must be implicitly declared&mdash;no `import a.b.*`. This helps prevent naming conflicts and track where things have been defined.
 
 The most common import will likely be the `print` function, which will be defined somewhere in a standard library.
 
@@ -1569,6 +1569,8 @@ import std.mem{memory, Count, ARC, _}
 @memory(Count(ARC))
 mod moduleThatUsesReferenceCounting
 ```
+
+How this is implemented is outside of the scope of this document. That will be saved for when it's time to make a standard library for Mu.
 
 ---
 
@@ -1626,7 +1628,6 @@ There are 55 keywords in total:
 * `ref`
 * `return`
 * `self`
-* `shadow`
 * `sizeof`
 * `str`
 * `struct`
@@ -1634,8 +1635,9 @@ There are 55 keywords in total:
 * `try`
 * `type`
 * `typeof`
-* `undefined`
 * `uint`
+* `undefined`
+* `unset`
 * `until`
 * `virt`
 * `void`
