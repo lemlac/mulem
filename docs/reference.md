@@ -107,7 +107,9 @@ The philosophy of Mu is that symbols should be easy to understand and that gener
 - `- rhs` &mdash; sign-flip
 - `lhs * rhs` &mdash; multiplication
 - `lhs / rhs` &mdash; division
-- `lhs % rhs` &mdash; modulo
+- `lhs // rhs` &mdash; floored division (rounded down)
+- `lhs % rhs` &mdash; remainder modulo (sign matches `lhs`)
+- `lhs %% rhs` &mdash; trancation modulo (sign matches `rhs`)
 - `lhs ** rhs` &mdash; exponential
 
 **Comparison:**
@@ -124,6 +126,15 @@ The philosophy of Mu is that symbols should be easy to understand and that gener
 - `lhs and rhs` &mdash; false if any are false
 - `lhs or rhs` &mdash; true if any are true
 - `not rhs` &mdash; inverts a boolean
+
+**Bitwise:**
+
+- `lhs ~& rhs` &mdash; bitwise AND
+- `lhs ~| rhs` &mdash; bitwise OR
+- `lhs ~ rhs` &mdash; bitwise XOR
+- `~ rhs` &mdash; bitwise NOT
+- `lhs << rhs` &mdash; bitshift left
+- `lhs >> rhs` &mdash; bitshift right
 
 **Arrays:**
 
@@ -142,10 +153,10 @@ The philosophy of Mu is that symbols should be easy to understand and that gener
 
 **Pointers:**
 
-- `^ rhs` &mdash; dereferencing a pointer
 - `ref rhs` &mdash; getting the pointer to a variable
+- `lhs ^` &mdash; dereferencing a pointer
 - `lhs ^. rhs` &mdash; access a member of a pointer (same as `(^lhs).rhs`)
-- `lhs ^= rhs` &mdash; set the value of the variable that a pointer is referencing
+- `lhs ^= rhs` &mdash; set the value of the slot in memory that a pointer is referencing
 
 *Pointer chaining* &mdash; for any `^` operator, you can add `^` to repeatedly dereference a pointer. 
 
@@ -159,16 +170,24 @@ The philosophy of Mu is that symbols should be easy to understand and that gener
 
 - `lhs !` &mdash; returns the result value if it's not an exception, otherwise propagate to the nearest `try` keyword (see [`try` block](#try--except))
 
-Some operators also allow an equal sign after it to set a variable based on its previous value. The left-hand side must be a defined variable. If it's immutable, then this is the same as shadowing it. If it's mutable, then the value is mutated. All of these are void statements, i.e. they return nothing and should only be used in an expression by themselves.
+Some operators also allow an equal sign after it to set a variable based on its previous value. The left-hand side must be an already defined variable. If it's immutable, then this is the same as shadowing it. If it's mutable, then the value is mutated. All of these are void statements, i.e. they return nothing and should only be used in an expression by themselves.
 
-- `lhs += rhs` -> `lhs = lhs + rhs` = increment
-- `lhs -= rhs` -> `lhs = lhs - rhs` = decrement
-- `lhs *= rhs` -> `lhs = lhs * rhs` = self-multiply
-- `lhs /= rhs` -> `lhs = lhs / rhs` = self-divide
-- `lhs **= rhs` -> `lhs = lhs ** rhs` = self-exponential 
-- `lhs ++= rhs` -> `lhs = lhs ++ rhs` = append to an array (not allowed if `lhs` is a fixed length array)
-- `lhs &= rhs` -> `lhs = lhs & rhs` = append a tuple to another tuple (not allowed for mutable variables since it creates a new type)
-- `lhs ??= rhs` -> `lhs = lhs ?? rhs` = set a default value to an option type
+- `lhs += rhs` &mdash; `lhs = lhs + rhs` &mdash; increment
+- `lhs -= rhs` &mdash; `lhs = lhs - rhs` &mdash; decrement
+- `lhs *= rhs` &mdash; `lhs = lhs * rhs` &mdash; multiplication assignment
+- `lhs /= rhs` &mdash; `lhs = lhs / rhs` &mdash; division assignment
+- `lhs //= rhs` &mdash; `lhs = lhs // rhs` &mdash; floor division assignment
+- `lhs %= rhs` &mdash; `lhs = lhs % rhs` &mdash; remainder assignment
+- `lhs %%= rhs` &mdash; `lhs = lhs % rhs` &mdash; truncation assignment (binds `lhs` to a range in `0..rhs`)
+- `lhs **= rhs` &mdash; `lhs = lhs ** rhs` &mdash; exponential assigment
+- `lhs ~&= rhs` &mdash; `lhs = lhs ~& rhs` &mdash; bitwise-*AND* assignment
+- `lhs ~|= rhs` &mdash; `lhs = lhs ~| rhs` &mdash; bitwise-*OR* assignment
+- `lhs ~= rhs` &mdash; `lhs = lhs ~ rhs` &mdash; bitwise-*XOR* assignment
+- `lhs <<= rhs` &mdash; `lhs = lhs << rhs` &mdash; bitshift left assignment
+- `lhs >>= rhs` &mdash; `lhs = lhs >> rhs` &mdash; bitshift right assignment
+- `lhs ++= rhs` &mdash; `lhs = lhs ++ rhs` &mdash; append to an array (not allowed if `lhs` is a fixed length array)
+- `lhs &= rhs` &mdash; `lhs = lhs & rhs` &mdash; append a tuple to another tuple (not allowed for mutable variables since it creates a new type)
+- `lhs ??= rhs` &mdash; `lhs = lhs ?? rhs` &mdash; set a default value to an option type
 
 ## Basic Bindings
 
@@ -989,17 +1008,12 @@ doSomething(x: str?) = try opt
     doSomethingElse(x)!
 ```
 
-#### `with`
+Result types flatten similarly to option types. The rules go as follows:
 
-Automatically cleans up certain objects. Use `as` to use the object within a scope.
+- For every `raise` or `!` in a `try` block, an exception is added to the exception sum type of the result.
+- For every `except` after the `try` block, an exception is removed from the exception sum type of the result.
 
-```mu
-try
-    with file.open("a.txt")! as f, file.open("b.txt")! as g then
-        g.write(f.read()!)!
-except _ then
-    pass       -- Ignore all errors
-```
+When all exceptions have been handled, the result is `type!void` which automatically converges to just `type`.
 
 #### `raise`
 
@@ -1080,17 +1094,6 @@ curryAdd3(a: int): fn(int): fn(int): int =
 curryAddWithOne = curryAdd3(1)
 addOneMore = curryAddWithOne(1)
 next = addOneMore(1)    -- 1+1+1 = 3
-```
-
-### Closing Multiple Blocks with `end`
-
-Multiple blocks can be closed at once with `end`. This can help with readability.
-
-```mu
-if file1.endswith(".txt") and file2.endswith(".txt") then
-    with file.open(file1)! as f, file.open(file2)! as g then
-        g.write(f.read()!)!
-end -- Closes both `if` and `with`.
 ```
 
 ---
@@ -1513,7 +1516,7 @@ Mu is multi-paradigm: different functions, structs, or modules can use different
 
 ## Keywords
 
-There are 62 keywords in total:
+There are 61 keywords in total:
 
 * `and`
 * `as`
@@ -1573,7 +1576,6 @@ There are 62 keywords in total:
 * `until`
 * `virt`
 * `void`
-* `with`
 * `where`
 * `while`
 * `yield`
