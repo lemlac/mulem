@@ -386,7 +386,7 @@ callFn(g, 0)     -- Error if uncommented.
 Things not allowed in `@pure` functions:
 
 * Calling impure functions.
-* Having a mutable reference parameter `ref mu`.
+* Having a mutable reference parameter `ref mu` or `^mu`.
 * Capturing a variable with `capture`.
 
 #### Mutable / Reference parameters
