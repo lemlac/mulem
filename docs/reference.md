@@ -151,13 +151,13 @@ The philosophy of Mu is that symbols should be easy to understand and that gener
 
 **Options:**
 
-- `lhs ?` &mdash; returns the some value if it's not `none`, otherwise propagate to the nearest `some` keyword (see [`some` block](#some))
-- `lhs ?. rhs` &mdash; gets a method or member of an optional type if it has something, otherwise return `none`
-- `lhs ?? rhs` &mdash; fallback to another value if the left side is `none`.
+- `lhs ?` &mdash; returns the `Some` value if it's not `None`, otherwise propagate to the nearest `opt` keyword (see [`opt` block](#opt))
+- `lhs ?. rhs` &mdash; gets a method or member of an optional type if it has something, otherwise return `None`
+- `lhs ?? rhs` &mdash; fallback to another value if the left side is `None`.
 
 **Results**
 
-- `lhs !` &mdash; returns the ok value if it's not an exception, otherwise propagate to the nearest `try` keyword (see [`try` block](#try--except))
+- `lhs !` &mdash; returns the result value if it's not an exception, otherwise propagate to the nearest `try` keyword (see [`try` block](#try--except))
 
 Some operators also allow an equal sign after it to set a variable based on its previous value. The left-hand side must be a defined variable. If it's immutable, then this is the same as shadowing it. If it's mutable, then the value is mutated. All of these are void statements, i.e. they return nothing and should only be used in an expression by themselves.
 
@@ -399,7 +399,7 @@ callFn(g, 0)     -- Error if uncommented.
 Things not allowed in `@pure` functions:
 
 * Calling impure functions.
-* Having a mutable reference parameter `ref mu` or `^mu`.
+* Having a mutable reference parameter: `ref mu`, `^mu`, or `out`.
 * Capturing a variable with `capture`.
 
 #### Mutable / Reference parameters
@@ -422,6 +422,24 @@ What each modifier means changes the functionality and the function's purity:
 | `mu` | Copies value, mutable within the function. | Yes, but can't be captured to another function or passed by a mutable reference. |
 | `ref` | Passes reference, immutable in the function. | Yes. |
 | `ref mu` | Passes reference, mutable in the function | No. |
+
+Another type of parameter is `out`. This is like `ref mu` but is treated as `undefined` at the start of the function. Use it to set a variable that hasn't been set yet.
+
+```mu
+setInt(out i) =
+  i = 3
+
+x: mu int
+setInt(x)
+print("{x}")    -- 3
+```
+
+This works for mutable variables, but what if you wanted to make an immutable variable using `out`? You can do this by using `out` again while calling a function to declare it as an immutable variable in the current scope. 
+
+```mu
+setInt(out n)
+print("{n}")    -- 3
+```
 
 #### Capturing (`capture`)
 
@@ -499,9 +517,9 @@ Named parameters can be defined in their own object and then passed in with the 
 Options :: { enabled: bool }
 doThing(key: str) & Options as options =
     if options.enabled then
-        some callApi(str)
+        Some(callApi(str))
     else
-        none
+        None
 
 options = Options(enabled: true)
 
@@ -556,7 +574,7 @@ Some built-in types include `int`, `float`, `bool`, `char`, and `str`.
 ```mu
 myInt: int = 1234
 myFloat: float = 12.34
-myBool: bool = true
+myBool: bool = True
 myChar: char = 'a'
 myStr: str = "Hello"
 ```
@@ -573,7 +591,7 @@ You can also get the default value of any type with the keyword `default`. The t
 ```mu
 x = default int    -- 0
 x = default float  -- 0.0
-x = default bool   -- false
+x = default bool   -- False
 x = default char   -- '\0'
 x = default str    -- ""
 ```
@@ -882,6 +900,13 @@ while cond then
     body
 ```
 
+You can also do `while case` just like with `if case`.
+
+```mu
+while case Some(x) = nextValue() then
+    print("value is {x}")
+```
+
 #### `loop` / `until`
 
 Repeats a block of code until `break` is called.
@@ -904,14 +929,14 @@ until cond
 
 Controls the iteration of any loop type mentioned. `break` exits out of the loop, and `continue` skips to the next iteration.
 
-#### `some`
+#### `opt`
 
-Wraps a value in a option type. You can use `?` to unwrap multiple option types within an expression. If one `?` returns `none`, then the whole expression stops and returns `none`.
+Wraps a value in a option type. You can use `?` to unwrap multiple option types within an expression. If one `?` returns `None`, then the whole expression stops and returns `None`.
 
 ```mu
-x = some f(a?) ?? "fallback"     -- x is "fallback" if a is none.
+x = opt f(a?) ?? "fallback"     -- x is "fallback" if a is none.
 
-addStuff(a, b) = some
+addStuff(a, b) = opt
     a = getSomething(a)?
     b = getSomething(b)?
     a + b
@@ -919,8 +944,8 @@ addStuff(a, b) = some
 
 Option types automatically flatten in the following manner:
 
-- `some some _` = `some _`
-- `some none` = `none`
+- `Some(Some(_))` = `Some(_)`
+- `Some(None)` = `None`
 
 #### `try` / `except`
 
@@ -956,10 +981,10 @@ riskyFunction() = try
     doSomething2()!
 ```
 
-You can combine `try` and `some` together to use both at the same time.
+You can combine `try` and `opt` together to use both at the same time.
 
 ```mu
-doSomething(x: str?) = try some
+doSomething(x: str?) = try opt
     x = x?
     doSomethingElse(x)!
 ```
@@ -1087,7 +1112,7 @@ end -- Closes both `if` and `with`.
 
 ## Abstract Bindings (`::`)
 
-Variable and functions primarily use the equals sign (`=`) and are for storing actual data within a program, but there's another type of binding used for abstract values for the compiler to know about such as constants, inline-functions, types, and procedures (another function type). This type of declaration is constant; in other words, they cannot be mutated or shadowed. However, depending on what it is, subsequent `::` of the same name will modify its definition. 
+Variable and functions primarily use the equals sign (`=`) and are for storing actual data within a program, but there's another type of binding used for abstract values for the compiler to know about such as constants, types, inline-functions, and generics. This type of declaration is constant; in other words, they cannot be mutated or shadowed. However, depending on what it is, subsequent `::` of the same name will modify its definition. 
 
 ### Constants
 
@@ -1158,97 +1183,6 @@ It also means the shorthand `(0, 1, x: 2)` isn't really special syntax. It's the
 
 Opaque types such as primitives and enums coerce into a tuple of one, so creating a product type of them creates a positional tuple, e.g. `int & float & char` becomes `(int, float, char)`. Structs convert to named tuples unless declared with an `@opaque` decorator, in which case they behave like opaque types. The `void` type coerces to an empty tuple `()`, and combining empty tuples produces an empty tuple `() & () == ()`. The same is true for empty named tuples `{} & {} == {}`. This also means that empty positional tuples and empty named tuples are equivalent `() == {}`. `void` itself is treated as an equivalent of these types: `void == ()` and `void == {}`.
 
-<!--
-### Procedures (`proc`)
-
-Another type of `::` declaration is a `proc`, short for procedure. Unlike normal functions which can be pure, procs are always impure but don't return anything by default. Instead, you use `out` parameters to get a return value. The keyword `then` is used to divide the parameters from the function body. Parameters can either be indented like `struct` or `enum` or declared in parentheses. Captured mutable variables need to be redeclared with the `capture` keyword. This helps make sure that the proc is actually capturing a variable instead of declaring a new variable.
-
-```mu
-sayHi :: proc () then print("Hi!")
-
-sayHello :: proc (name: str) then
-    print("Hello, {name}!")
-
-count: mu int = 0
-myProc :: proc
-    a: int
-    b: int
-    result: out int
-then
-    capture count
-    count += 1
-    result = a + b + count
-
-sum: mu int
-myProc(1, 2, sum)
-```
-
-You can also use `out` when calling a proc to declare an out parameter and input it at the same time. This is useful if you want an immutable binding without making a mutable variable first.
-
-```mu
-myProc(1, 2, out sum)
-doSomethingWith(sum)
-```
-
-#### Parameter Bindings
-
-There are different kinds of bindings for a proc's parameters.
-
-1. One-way input binding (default) &mdash; the value is copied.
-2. One-way output binding (`out`) &mdash; the value will be discarded and set to a new value within the scope.
-3. One-way input binding with `ref` &mdash; the value is passed by reference but not changed.
-4. Two-way binding (`ref`+`mu`) &mdash; the value is passed by reference and may be altered.
-
-```mu
-normalize_in_place :: proc
-    v: ref mu Vector2
-then
-    normalized = normalize(v)
-    v.x = normalized.x
-    v.y = normalized.y
-
-mu mutable_v = Vector2(x: 5.0, y: 12.0)
-normalize_in_place(mutable_v)
-```
-
-#### `proc` + return value
-
-`proc` can have a return value like basic functions. Unlike basic functions, they have the same rules as `proc` but include capturing and mutating referenced variables. There can only be one `out` type, and it must be the last parameter; however, the out parameter does not need a name. If it doesn't have a name, it gets set by passing a value after `return` or the value of the last evaluated expression in the function body.
-
-```mu
--- Named out parameter
-addAndCount :: proc
-    a: int
-    b: int
-    result: out int
-then
-    capture count
-    count += 1
-    result = a + b + count
-
--- Nameless out parameter
-addAndCount :: proc
-    a: int
-    b: int
-    out int
-then
-    capture count
-    count += 1
-    return a + b + count
-```
-
-This can be called like a function or like a void `proc` when you pass an out variable at the end.
-
-```mu
--- Function style: out parameter is the return value
-sum = addAndCount(1, 2)
-
--- Proc style: out parameter passed explicitly
-addAndCount(1, 2, out sum)
-addAndCount(1, 2, sum)    -- if sum is mutable
-```
--->
-
 ### Structures (`struct`)
 
 Structs are product types&mdash;or in other words&mdash;plain data containers. They cannot extend other structs, but can inherit members of other structs (see [Inheritance and Visibility](#Inheritance-and-Visibility)).
@@ -1296,7 +1230,7 @@ MyException :: except
 
 ### Virtual Types (`virt`)
 
-A `virt` is an abstract interface &mdash; a named contract with no data. It is equivalent to a trait or interface in other languages. Each member is a function, also called a **method**. Methods that have a parameter named `self` at the beginning will be called as methods on the instance of that type, i.e. `instance.method(...)`. This is equivalent to saying `(typeof instance).method(instance, ...)`. `self` is inferred to be type of `Self` which represents the current type implementing this virt. All methods should be basic/lambda functions, no `proc`s. 
+A `virt` is an abstract interface &mdash; a named contract with no data. It is equivalent to a trait or interface in other languages. Each member is a function, also called a **method**. Methods that have a parameter named `self` at the beginning will be called as methods on the instance of that type, i.e. `instance.method(...)`. This is equivalent to saying `(typeof instance).method(instance, ...)`. `self` is inferred to be type of `Self` which represents the current type implementing this virt. 
 
 ```mu
 MyVirtual :: virt
@@ -1358,12 +1292,12 @@ When you inherit, you don't just pick out some members. The entire super type is
 All members of a type are public by default. When making a subtype, inherited members become private to the subtype unless explicitly redeclared with `inherit`. This encourages separating public and private data into distinct types rather than using access modifiers.
 
 ```mu
-PrivateType :: struct
+PrivateFields :: struct
     val: int
     secret: int
 
-PublicType :: struct
-    inherit val from PrivateType  -- redeclared &mdash; remains public in MyOtherClass
+PublicFields :: struct
+    inherit val from PrivateFields     -- Redeclared, val is `public` and `secret` is private
     other: int
 ```
 
@@ -1464,42 +1398,38 @@ Generics will automatically generate code based on their parameters, but you can
 
 ```mu
 -- Forces every type to have its own implementation
-increment T :: proc
-    c: ref mu T
-    out T
-then
+increment T :: fn(c: ref mu T): void =
     undefined
 
+Counter :: struct
+    value: int
+
 -- Specialized for Counter
-increment Counter :: proc
-    c: ref mu Counter
-    out int
-then
+increment Counter :: fn(c: ref mu Counter): void =
     c.value += 1
-    c.value
 
 -- Specialized for float
-increment float :: proc
-    c: ref mu float
-    out float
-then
+increment float :: fn(c: ref mu float): void =
     c += 1.0
-    c
+
+c = Counter(value: 2)
+f = 3.0
+b = true
+
+increment(c)   -- T is inferred as Counter
+increment(f)   -- T is inferred as float
+(--
+increment(b)   -- T is inferred as bool which has no implementation, compile-time error
+--)
 ```
 
 ---
 
-## Function Types
+## Functional Analytics
 
-As explained in this document, they are 2 function types: basic/lambda and `proc`. Both basic and lambda have the same type signatures and are treated the same, so we'll call them both lambda functions. However, lambda functions are split between pure and impure. A pure type can always converge to an impure type, so only pure functions are distinguished with the keyword `pure` in their type where necessary. When inside a function marked as `@pure` though, all functions inside it also become pure.
+As explained in this document, functions are split between pure and impure. A pure type can always converge to an impure type, so only pure functions are distinguished with the keyword `pure` in their type where necessary. When inside a function marked as `@pure` though, all functions inside it also become pure.
 
-| Form | Type Signature | Pure | Void | Call style |
-|:--|:--|:--|:--|:--|
-| basic | `fn(param): type` | Sometimes | No | `f(param)` *--> result* |
-| `@pure` | `pure fn(param): type` | Always | No | `f(param)` *--> result* |
-| `proc` | `proc(param[, out type])` | Never | Optional | `f(param, out result)`*--> void* **or** `f(param)` *--> result* |
-
-`proc`s are designed to be low-level and imperative, while lambdas are designed to be high-level and used both as functions and as values themselves. Pure functions always have the same input that results in the same output, but this is not guaranteed for impure functions. Mu will allow you to analyze and modify pure functions similar to how a mathematician would analyze an algebraic formula, allowing you to do things like get the derivative or integral of a function.
+Pure functions always have the same input that results in the same output, but this is not guaranteed for impure functions. Mu will allow you to analyze and modify pure functions similar to how a mathematician would analyze an algebraic formula, allowing you to do things like get the derivative or integral of a function.
 
 ```mu
 f(x) = x * x + 2.0 * x + 1.0
@@ -1536,6 +1466,14 @@ This is a work in progress though. The methods for defining how a programmer wou
 ## Importing and Modules
 
 Use `import _ from _` to import something. You can give the import an alias with `as`. All imports must be implicitly declared&mdash;no "import *". This helps prevent naming conflicts and track where things are defined.
+
+This most common import will likely be the `print` function, which will defined somewhere in a standard library.
+
+```mu
+import print from std      -- This is just an example and not final.
+
+print("Hello, world!")
+```
 
 Modules are named with the keyword `mod` near the top before anything is defined. This is the name you'll use after `from` when importing. 
 
@@ -1575,7 +1513,7 @@ Mu is multi-paradigm: different functions, structs, or modules can use different
 
 ## Keywords
 
-There are 64 keywords in total:
+There are 62 keywords in total:
 
 * `and`
 * `as`
@@ -1611,11 +1549,11 @@ There are 64 keywords in total:
 * `new`
 * `none`
 * `not`
-* `or`
 * `out`
+* `opt`
+* `or`
 * `pass`
 * `param`
-* `proc`
 * `pure`
 * `raise`
 * `ref`
@@ -1623,7 +1561,6 @@ There are 64 keywords in total:
 * `self`/`Self`
 * `shadow`
 * `sizeof`
-* `some`
 * `str`
 * `struct`
 * `then`
