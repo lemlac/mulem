@@ -746,6 +746,17 @@ ptr = ref y
 print("{^ptr}")  -- 2
 ```
 
+Memory can be allocated using `new` and deallocated using `delete`. You will need to check if the pointer succeeded by unwrapping it.
+
+```mu
+Thing :: {a: int, b: int}
+some
+    thing = new Thing(a: 1, b: 2)
+    value = thing?                -- Dereference or exit block if it's null
+    print("{value}")
+    delete thing
+```
+
 This will need more testing to figure out the best way handle pointers. Consider this a work in progress.
 
 #### Undefined Type
@@ -1573,7 +1584,7 @@ Mu is multi-paradigm: different functions, structs, or modules can use different
 
 ## Keywords
 
-There are 69 keywords in total:
+There are 71 keywords in total:
 
 * `and`
 * `as`
@@ -1591,6 +1602,7 @@ There are 69 keywords in total:
 * `const`
 * `continue`
 * `default`
+* `delete`
 * `do`
 * `else`
 * `end`
@@ -1612,6 +1624,7 @@ There are 69 keywords in total:
 * `match`
 * `mod`
 * `mu`
+* `new`
 * `none`
 * `not`
 * `or`
