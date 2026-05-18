@@ -1650,4 +1650,4 @@ There are 56 keywords in total:
 
 ---
 
-*This document captures the current state of the Mu design. The language is still evolving; future revisions will cover modules, async/concurrency, operator overloading, and full Python interop.*
+*This document captures the current state of the Mu design. The language is still evolving.*
