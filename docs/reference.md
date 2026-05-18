@@ -246,6 +246,20 @@ x = 1
 -- `x` can be used now.
 ```
 
+If you need to make a variable with the same name as a mutable variable, you can use the keyword `local`. This will shadow any variable in that scope. You can then redeclare it inside that scope without affecting the previous reference. 
+
+```mu
+mu x = 0
+do
+    local x      -- Shadow x in this scope.
+    x = 1
+print("{x}")     -- 0
+
+local x          -- Forget about x for the rest of the scope.
+x = 2
+print("{x}")     -- 2
+```
+
 #### References (`ref`/`ref mu`)
 
 A reference type points to the same spot in memory as another variable. It's like a lightweight version of a pointer. (See [Pointers](#Pointers).) Both sides of the equation must be variables, i.e. no references that point to a constant. References are immutable by default unless declared with `ref mu`. The syntax follows the same pattern as `mu`:
@@ -1548,7 +1562,7 @@ Mu is multi-paradigm: different functions, structs, or modules can use different
 
 ## Keywords
 
-There are 68 keywords in total:
+There are 69 keywords in total:
 
 * `and`
 * `as`
@@ -1583,6 +1597,7 @@ There are 68 keywords in total:
 * `in`
 * `int`
 * `iter`
+* `local`
 * `loop`
 * `match`
 * `mod`
