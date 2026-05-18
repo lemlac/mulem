@@ -1187,7 +1187,19 @@ curryAdd3(a: int): fn(int): fn(int): int =
             a + b + c
 ```
 
-When mixing `await`+`yield`+`param`, the return-type can get quite complicated. It's sometimes recommended to either split it up into smaller functions or let the return-type be inferred rather than writing it out manually.
+When mixing `await`+`yield`+`param`, the return-type can get quite complicated. 
+
+| `await` | `yeild` | `param` | Return Type | 
+|:-:|:-:|:-:|:--|
+| ✅ | ⬜ | ⬜ | `async T` |
+| ⬜ | ✅ | ⬜ | `iter T` |
+| ⬜ | ⬜ | ✅ | `fn(_): T` |
+| ✅ | ✅ | ⬜ | `iter async T` |
+| ✅ | ⬜ | ✅ | `async (fn(_): async T)` |
+| ⬜ | ✅ | ✅ | `iter (fn(_): iter T)` |
+| ✅ | ✅ | ✅ | `iter async (fn(_): iter async T)` |
+
+When you have to write out a lot, it could be a sign that you need to rethink things over. It's recommended to either split tasks apart into smaller functions or let the return-type be inferred rather than writing it out by hand.
 
 ---
 
