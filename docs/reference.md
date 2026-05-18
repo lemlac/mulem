@@ -36,7 +36,7 @@ comment.
 --)
 ```
 
-A Mu program consists of a list of **expressions** separated by new-lines or inlined with semi-colons (`;`). Trailing semi-colons are not allowed, so if you have a `;`, you must have an expression after it. 
+A Mu program consists of a list of **expressions** separated by new-lines or inlined with semi-colons (`;`). New-lines and semi-colons are interchangeable and treated the same. 
 
 ```mu
 expr
@@ -64,35 +64,29 @@ do
     expr
 ```
 
-You can optionally use `end` to end a block. This will end all blocks of the same indentation or more. If a block is inside of another expression and not by itself, then the closing `end` is required and must be at the same indentation as the opening part of the block.
+Words and symbols that can start a block are:
+
+- `do`
+- `try`
+- `then`
+- `=`
+
+Indentation marks the end of the block. If a block is inside of another expression and not by itself, then the closing `end` is required and must be at the same indentation as the opening part of the block.
 
 ```mu
-do
-    do
-        expr
-    end          -- Ends inner block.
-end              -- Ends outer blocks.
 
 do
     do
         expr
-end              -- Ends both blocks.
+                 -- Ends both blocks.
 
 (do
-    expr
-    expr
+    do
+        expr
 end)             -- Required here since the block is in parentheses.
-
-(--              -- Error if uncommented.
-(expr; expr)     -- This is a syntax error since you can't have semi-colons inside a parenthetical expression.
---)
-
-(do
-    expr; expr   -- However, this is okay because it's inside of an inline-block expression.
-end)
 ```
 
-The difference on whether a block keyword starts a block or is inlined is based on the presence of a new-line immediately after it&mdash;ignoring comments and trailing spaces.
+The difference on whether a block keyword starts a block or is inlined is based on the presence of a new-line after it ignoring comments and trailing spaces.
 
 ```mu
 do expr         -- Inline block.
@@ -1005,11 +999,6 @@ Wraps a value in a option type. You can use `?` to unwrap multiple option types 
 
 ```mu
 x = (opt f(a?))?? "fallback"     -- x is "fallback" if a is none.
-
-addStuff(a, b) = opt
-    a = getSomething(a)?
-    b = getSomething(b)?
-    a + b
 ```
 
 If a function returns an option type, then use of the `?` is allowed with `opt`. Using an `?` inside a function will automatically infer the return type as an option. The return will be automatically wrapped in `Some(_)`.
@@ -1052,14 +1041,6 @@ except e then
 --)
 ```
 
-If `except` is missing entirely, then it wraps the last expression in a result. If any exceptions are raised, then the whole result is an error.
-
-```mu
-riskyFunction() = try
-    doSomething1()!
-    doSomething2()!
-```
-
 If a function returns a result type `type!`, then it can also use the `!` like in a `try` block. Use of a `!` in a function automatically infers a result type as the return.
 
 ```mu
@@ -1069,15 +1050,10 @@ riskyFunction(a: Int): Int! =
     c
 ```
 
-You can combine `try` and `opt` together to use both at the same time. The return type is `type?!` (an **option result type**).
+You can combine `?` and `!` together when the return type is `type?!` (an **option result type**).
 
 ```mu
--- With a `try opt` block:
-doSomething(x: Str?) = try opt
-    x = x?
-    doSomethingElse(x)!
-
--- Or with type notation:
+-- With type notation:
 doSomething(x: Str?): Str?! =
     x = x?
     doSomethingElse(x)!
@@ -1102,6 +1078,8 @@ Passes an error type within a `try` block
 ```mu
 try
     raise MyError("error message")
+except e then
+    print("{e}")
 ```
 
 `raise` can also be used outside of a `try` block to return out of the function with an exception value. The function must return a result type `type!`. If an except type is also declared `type!except`, then the type passed to `raise` must match.
@@ -1553,7 +1531,7 @@ How this is implemented is outside of the scope of this document. That will be s
 
 ## Keywords
 
-There are 46 keywords in total:
+There are 47 keywords in total:
 
 * `and`
 * `as`
@@ -1574,6 +1552,7 @@ There are 46 keywords in total:
 * `impl`
 * `import`
 * `in`
+* `let`
 * `loop`
 * `match`
 * `mod`
