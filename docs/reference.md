@@ -158,7 +158,7 @@ The philosophy of Mu is that symbols should be easy to understand and that gener
 
 **Results**
 
-- `lhs !` &mdash; returns the ok value if it's not an exception, otherwise propagate to the nearest `try` keyword (see [`try` block](#try-except))
+- `lhs !` &mdash; returns the ok value if it's not an exception, otherwise propagate to the nearest `try` keyword (see [`try` block](#try--except))
 
 Some operators also allow an equal sign after it to set a variable based on its previous value. The left-hand side must be a defined variable. If it's immutable, then this is the same as shadowing it. If it's mutable, then the value is mutated. All of these are void statements, i.e. they return nothing and should only be used in an expression by themselves.
 
@@ -201,7 +201,7 @@ i = i + 1     -- Sets new `i` based on old `i`
 i += 1        -- Same as above
 ```
 
-Using the single equal-sign is a void statement, so using it within an expression and not on its own is a syntax error. This helps prevent the common bug of using `=` when you meant `==`. For inline binding, use `let ... then` or `as`. (See [Inline binding](#Inline-binding-let-and-as).)
+Using the single equal-sign is a void statement, so using it within an expression and not on its own is a syntax error. This helps prevent the common bug of using `=` when you meant `==`. For inline binding, use `let _ then` or `as`. (See [Inline binding](#Inline-binding-let-and-as).)
 
 ```mu
 (-- Error:
