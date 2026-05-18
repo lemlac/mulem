@@ -58,26 +58,26 @@ Some keywords can start a block. A **block** wraps multiple expressions into one
 
 ```mu
 do
-	expr
-	expr
+    expr
+    expr
 ```
 
 You can optionally use `end` to end a block. This will end all blocks of the same indentation or more. If a block is inside of another expression and not by itself, then the closing `end` is required and must be at the same indentation as the opening part of the block.
 
 ```mu
 do
-	do
-		expr
-	end          -- Ends inner block.
+    do
+        expr
+    end          -- Ends inner block.
 end              -- Ends outer blocks.
 
 do
-	do
-		expr
+    do
+        expr
 end              -- Ends both blocks.
 
 (do
-	expr
+    expr
 end)             -- Required here since the block is in parentheses.
 ```
 
@@ -87,7 +87,7 @@ The difference on whether a block keyword starts a block or is inlined is based 
 do expr         -- Inline block.
 
 do              -- New line here, so start a block.
-	expr        -- Next line should be one or more indentations higher.
+    expr        -- Next line should be one or more indentations higher.
 
 expr            -- Unindenting exits the block.
 ```
@@ -206,11 +206,11 @@ Using the single equal-sign is a void statement, so using it within an expressio
 ```mu
 (-- Error:
 if x = 0 then
-	print("x is 0")
+    print("x is 0")
 --)
 -- Do this instead:
 if x == 0 then
-	print("x is 0")
+    print("x is 0")
 ```
 
 #### Mutability (`mu`)
@@ -345,9 +345,9 @@ add3(a, b, c,) = a + b + c
 
 add3(1, 2, 3,)   -- This is okay.
 add(
-	1,
-	2,
-	3,           -- Useful if you list arguments in a block.
+    1,
+    2,
+    3,           -- Useful if you list arguments in a block.
 )
 (--
 add3(,1,2, ,3,,) -- This is not okay.
@@ -387,9 +387,9 @@ f(x) = x*x + 2*x + 1
 -- Impure because `capture` is used:
 mu a = 0
 g(x) =
-	capture a
-	a += 1
-	x + a
+    capture a
+    a += 1
+    x + a
 
 callFn(f, 0)     -- Allowed.
 (--
@@ -409,7 +409,7 @@ Function parameters can be declared like variables. Likewise, you can modify the
 
 ```mu
 increment(x: ref mu int) =
-	x += 1
+    x += 1
 
 y = 0
 increment(y)
@@ -435,8 +435,8 @@ addFromX(y) = x + y
 addFromX2(y, z) = addFromX(y) + z
 
 cannotChangeX(newX) =
-	x = newX
-	print("{x}")
+    x = newX
+    print("{x}")
 
 cannotChangeX(2) -- prints 2
 print("{x}")     -- prints 1
@@ -447,8 +447,8 @@ To capture a mutable variable, you must redeclare it in the function with `captu
 ```mu
 mu count = 0
 addCount() =
-	capture count
-	count += 1
+    capture count
+    count += 1
 
 addCount()
 addCount()
@@ -476,10 +476,10 @@ A name is optional. Adding a name creates an immutable reference of the function
 
 ```mu
 doThing(fn callback(val) =
-	if val > 0 then
-		callback(val - 1)
-	else
-		print("done")
+    if val > 0 then
+        callback(val - 1)
+    else
+        print("done")
 end)
 ```
 
@@ -489,7 +489,7 @@ You can declare a named parameter with `&` and a named tuple after it before the
 
 ```mu
 add() & { a: int, b: int }: int =
-	a + b
+    a + b
 
 add(a: 1, b: 2)
 ```
@@ -499,10 +499,10 @@ Named parameters can be defined in their own object and then passed in with the 
 ```mu
 Options :: { enabled: bool }
 doThing(key: str) & Options as options =
-	if options.enabled then
-		some callApi(str)
-	else
-		none
+    if options.enabled then
+        some callApi(str)
+    else
+        none
 
 options = Options(enabled: true)
 
@@ -533,7 +533,7 @@ sum = let (x = 1, y = 2) then x + y
 ```mu
 val: mu Choice
 if get() as val >< Target then
-	raise NotTarget(val)
+    raise NotTarget(val)
 -- `val` is a `Target` here.
 ```
 
@@ -583,8 +583,8 @@ x = default str    -- ""
 
 ```mu
 doSomething(): int =
-	-- TODO: Implement this function.
-	default
+    -- TODO: Implement this function.
+    default
 ```
 
 You can also get the size of any type with the keyword `sizeof`. It returns a constant `uint` (unsigned integer) with the number of bytes of memory that type requires. The exact sizes of some types like `int` or `float` might vary, but you can rely on `char` and `bool` being 1 byte each. There's also the `void` type which represents no data.
@@ -655,7 +655,7 @@ Matrices are defined with `|` at the start of each row. Each row must have the s
 matrix = [
     |  1  2  3  4
     |  5  6  7  8
-	|  9 10 11 12
+    |  9 10 11 12
     | 13 14 15 16
 ]
 ```
@@ -783,7 +783,7 @@ The keyword `pass` can be put into any body to leave it empty. This might result
 
 ```mu
 keyword [subject then]
-	pass
+    pass
 ```
 
 #### `undefined`
@@ -792,7 +792,7 @@ This marks that something should not be used. If the compiler detects that a cod
 
 ```mu
 unusedFn() =
-	undefined
+    undefined
 
 -- `unusedFn` cannot be used.
 ```
@@ -847,9 +847,9 @@ This combines `match` and `if` into one expression. Useful if you just want to h
 
 ```mu
 if case Pattern(x) = value then
-	print("value is {x}")
+    print("value is {x}")
 else
-	print("value doesn't match")
+    print("value doesn't match")
 ```
 
 #### `for` / `in`
@@ -868,7 +868,7 @@ For an async iterator or an array of async types, you can use `for await` to aut
 
 ```mu
 for await x in asyncIter() then
-	print("{x}")
+    print("{x}")
 ```
 
 #### `while`
@@ -886,8 +886,8 @@ Repeats a block of code until `break` is called.
 
 ```mu
 loop
-	print("I'm looping!")
-	break
+    print("I'm looping!")
+    break
 ```
 
 Add `until` after a `loop` block to create a condition that will break the loop. Unlike `while`, this will break when the condition is true, analogous to `if cond then break`. The loop will run at least once before checking the condition.
@@ -910,9 +910,9 @@ Wraps a value in a option type. You can use `?` to unwrap multiple option types 
 x = some f(a?) ?? "fallback"     -- x is "fallback" if a is none.
 
 addStuff(a, b) = some
-	a = getSomething(a)?
-	b = getSomething(b)?
-	a + b
+    a = getSomething(a)?
+    b = getSomething(b)?
+    a + b
 ```
 
 Option types automatically flatten in the following manner:
@@ -937,12 +937,12 @@ Pattern matching works in the `except` clause like in `case`. If a pattern is mi
 
 ```mu
 try
-	risky()!
+    risky()!
 except Exception(e) then
-	print("Exception {e}")
+    print("Exception {e}")
 (-- implied:
 except e then
-	raise e
+    raise e
 --)
 ```
 
@@ -950,16 +950,16 @@ If `except` is missing entirely, then it wraps the last expression in a result. 
 
 ```mu
 riskyFunction() = try
-	doSomething1()!
-	doSomething2()!
+    doSomething1()!
+    doSomething2()!
 ```
 
 You can combine `try` and `some` together to use both at the same time.
 
 ```mu
 doSomething(x: str?) = try some
-	x = x?
-	doSomethingElse(x)!
+    x = x?
+    doSomethingElse(x)!
 ```
 
 #### `with`
@@ -968,8 +968,8 @@ Automatically cleans up certain objects. Use `as` to use the object within a sco
 
 ```mu
 try
-	with file.open("a.txt")! as f, file.open("b.txt")! as g then
-	    g.write(f.read()!)!
+    with file.open("a.txt")! as f, file.open("b.txt")! as g then
+        g.write(f.read()!)!
 except _ then
     pass       -- Ignore all errors
 ```
@@ -980,7 +980,7 @@ Passes an error type within a `try` block
 
 ```mu
 try
-	raise MyError("error message")
+    raise MyError("error message")
 ```
 
 `raise` can also be used outside of a `try` block to return out of the function with an exception value. The function must return a result type `type!`. If an except type is also declared `type!except`, then the type passed to `raise` must match.
@@ -991,9 +991,9 @@ Exits out of a function. If a value is after it, that value is the return value,
 
 ```mu
 isThirteen(x) =
-	if x == 13 then
-		return true  -- Exits the function and returns true.
-	false            -- Returns false.
+    if x == 13 then
+        return true  -- Exits the function and returns true.
+    false            -- Returns false.
 ```
 
 #### `yield`
@@ -1002,8 +1002,8 @@ Exits out of a function with an `iter` type. The return value of the function mu
 
 ```mu
 count(n: int): iter int =
-	for i in 0..n then
-		yield i
+    for i in 0..n then
+        yield i
 ```
 
 #### `await`
@@ -1012,24 +1012,24 @@ Exits out of a function with an `async` type. The return type of the function mu
 
 ```mu
 asyncFn(a, b): async int =
-	a = await fetch(a)
-	b = await fetch(b)
-	a + b
+    a = await fetch(a)
+    b = await fetch(b)
+    a + b
 ```
 
 Both `yield` and `await` can be used together in an `iter async T` type. Use `for await` to iterate through it.
 
 ```mu
 asyncIterFn(n): iter async int =
-	for i in 0..n then
-		val = await fetch(i)
-		yield val
+    for i in 0..n then
+        val = await fetch(i)
+        yield val
 
 asyncCollect(n): async int# =
-	ret: mu int# = []
-	for await x in asyncIterFn(n) then
-		ret ++= x
-	ret
+    ret: mu int# = []
+    for await x in asyncIterFn(n) then
+        ret ++= x
+    ret
 ```
 
 #### `param ()`
@@ -1038,17 +1038,17 @@ Exits out of a function with another function. The variables in parentheses beco
 
 ```mu
 curryAdd(a: int): fn(int): int =
-	param (b: int)
-	a + b
+    param (b: int)
+    a + b
 
 addOne = curryAdd(1)
 afterOne = addOne(1)   -- ==2
 afterTwo = addOne(2)   -- ==3
 
 curryAdd3(a: int): fn(int): fn(int): int =
-	param (b)    -- Type already known based on return type.
-	param (c)
-	a + b + c
+    param (b)    -- Type already known based on return type.
+    param (c)
+    a + b + c
 
 curryAddWithOne = curryAdd3(1)
 addOneMore = curryAddWithOne(1)
@@ -1166,7 +1166,7 @@ Another type of `::` declaration is a `proc`, short for procedure. Unlike normal
 sayHi :: proc () then print("Hi!")
 
 sayHello :: proc (name: str) then
-	print("Hello, {name}!")
+    print("Hello, {name}!")
 
 count: mu int = 0
 myProc :: proc
@@ -1382,9 +1382,9 @@ You can also have multi-line macros similar to functions. You need to create a b
 
 ```mu
 doSomethingComplicated x :: do
-	x = x + 1
-	x = x / 2
-	x * x
+    x = x + 1
+    x = x / 2
+    x * x
 
 value = doSomethingComplicated 3
 ```
@@ -1393,9 +1393,9 @@ This is the same as this:
 
 ```mu
 value = (do
-	x = (3) + 1
-	x = x / 2
-	x * x
+    x = (3) + 1
+    x = x / 2
+    x * x
 end)
 ```
 
@@ -1405,8 +1405,8 @@ You can also pass a type back to make generic types and functions.
 
 ```mu
 Option T :: enum
-	Some(T)
-	None
+    Some(T)
+    None
 
 Some T :: fn(x: T) = (Option T).Some(x)
 
@@ -1444,16 +1444,16 @@ This is used to define what each parameter's type is for an abstract function. I
 
 ```mu
 List T N :: where
-	T: type       -- `type` refers to any literal type, i.e. not a value
-	N: int        -- A constant `int` that must be known at compile time
+    T: type       -- `type` refers to any literal type, i.e. not a value
+    N: int        -- A constant `int` that must be known at compile time
 
 List T N :: struct
-	data: T#N
+    data: T#N
 
 List T N :: impl
-	init() =
-		data: T#N = [++(for _ in 0..N then default)]
-		Self(data: data)
+    init() =
+        data: T#N = [++(for _ in 0..N then default)]
+        Self(data: data)
 ```
 
 ### Manual Implementation
