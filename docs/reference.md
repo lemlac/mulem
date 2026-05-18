@@ -352,7 +352,7 @@ thing = Thing(x: 1, y: 2)
 
 ### Function Declarations
 
-Functions are declared with parentheses before the equals sign. This kind of function is pure by default but becomes impure when using certain features (explained below). The type of the parameters can be either explicitly typed or inferred based on usage.
+Functions are declared with parentheses before the equals sign. The type of the parameters can be either explicitly typed or inferred based on usage.
 
 ```mu
 add(a: int, b: int): int = a + b
@@ -404,43 +404,6 @@ action = sub
 print("1 - 1 = {action(1, 1)}")  -- 0
 ```
 
-#### Pure Functions
-
-Functions can either be pure or impure. This affects whether they can be analyzed or not. (See [Functional Analytics](#Functional-Analytics).) To enforce purity, you can add the decorator `@pure` before the function.
-
-```mu
-@pure
-f(x) = x*x + 2*x + 1
-```
-
-Purity is passed down to all functions within a function. So if you pass another function to a pure function, then it also must be pure. 
-
-```mu
-@pure
-callFn(f, x) = f(x)
-
--- Pure by default:
-f(x) = x*x + 2*x + 1
-
--- Impure because `capture` is used:
-mu a = 0
-g(x) =
-    capture a
-    a += 1
-    x + a
-
-callFn(f, 0)     -- Allowed.
-(--
-callFn(g, 0)     -- Error if uncommented.
---)
-```
-
-Things not allowed in `@pure` functions:
-
-* Calling impure functions.
-* Having a mutable reference parameter: `ref mu`, `^mu`, or `out`.
-* Capturing a variable with `capture`.
-
 #### Mutable / Reference parameters
 
 Function parameters can be declared like variables. Likewise, you can modify their mutability and referenceness the same way.
@@ -455,14 +418,14 @@ increment(y)
 
 What each modifier means changes the functionality and the function's purity:
 
-| Modifiers | What it does | Allowed in `@pure` |
-|:--|:--|:--|
-| *nothing* | Copies value, immutable in the function. | Yes. |
-| `mu` | Copies value, mutable within the function. | Yes, but can't be captured to another function or passed by a mutable reference. |
-| `ref` | Passes reference, immutable in the function. | Yes. |
-| `ref mu` | Passes reference, mutable in the function | No. |
+| Modifiers | What it does |
+|:--|:--|
+| *nothing* | Copies value, immutable in the function. |
+| `mu` | Copies value, mutable within the function. |
+| `ref` | Passes reference, immutable in the function. |
+| `ref mu` | Passes reference, mutable in the function |
 
-Another type of parameter is `out`. This is like `ref mu` but is treated as `undefined` at the start of the function. Use it to set a variable that hasn't been set yet.
+Another type of parameter is `out`. This is like `ref mu` but is treated as `undefined` at the start of the function. Use it to set a variable that hasn't been set yet. The parameter must not be `undefined` in any branch within the function. This ensures that the variable is set. 
 
 ```mu
 setInt(out i) =
@@ -498,7 +461,7 @@ cannotChangeX(2) -- prints 2
 print("{x}")     -- prints 1
 ```
 
-To capture a mutable variable, you must redeclare it in the function with `capture _`. Note that this is not allowed within a function declared with `@pure`. 
+To capture a mutable variable, you must redeclare it in the function with `capture _`. 
 
 ```mu
 mu count = 0
@@ -1546,44 +1509,6 @@ increment(f)   -- T is inferred as float
 increment(b)   -- T is inferred as bool which has no implementation, compile-time error
 --)
 ```
-
----
-
-## Functional Analytics
-
-As explained in this document, functions are split between pure and impure. A pure type can always converge to an impure type, so only pure functions are distinguished with the `@pure` in their type where necessary. When inside a function marked as `@pure` though, all functions inside it also become pure.
-
-Pure functions always have the same input that results in the same output, but this is not guaranteed for impure functions. Mu will allow you to analyze and modify pure functions similar to how a mathematician would analyze an algebraic formula, allowing you to do things like get the derivative or integral of a function.
-
-```mu
-f(x) = x * x + 2.0 * x + 1.0
-
-df = derivative(f)        -- fn(x) = 2.0 * x + 2.0
-integral_f = integral(f)  -- fn(x) = x^3/3 + x^2 + x
-```
-
-Since Mu's pure functions map directly to these algebraic forms, the compiler can walk the AST and apply these rules symbolically, producing a new lambda rather than a numerical approximation. This is exact, unlike finite difference methods.
-
-This can go further than just calculus though.
-
-```mu
--- Simplification
-simplified = simplify(fn(x) = x * 1.0 + 0.0)  -- fn(x) = x
-
--- Partial application analysis  
-add(x, y) = x + y
-addOne = partial(add, 1)   -- fn(y) = 1 + y
-
--- Composition
-g(x)= x + 1.0
-h(x)= x * 2.0
-gh = compose(g, h)   -- fn(x) = (x + 1.0) * 2.0
-
--- Solving (within decidable cases)
-roots = solve(f)   -- returns values where f(x) == 0
-```
-
-This is a work in progress though. The methods for defining how a programmer would be able to analyze a lambda function within the Mu language are yet to be determined.
 
 ---
 
