@@ -98,7 +98,7 @@ All subsequent expressions within a block should have the same indentation. If a
 
 ## Operators
 
-The philosophy of Mu is that symbols should be easy to understand and that generally keywords are preferred over symbols. Most symbols are consistent with their contextual meaning, for example `*` relates to math, `!` relates to exceptions, `&` relates to tuples, etc.. Mu will check any combination of symbols greedily until the next space or word, so for example `++` would be different from `+ +`. Spaces are required between multiple symbolic operators, much like how spaces are required between words. Symbol characters include any ASCII character that isn't alphanumeric, whitespace, or quotation marks, or brackets&mdash;in other words these symbols: `~!@#$%^&*-+=|\:;'",<.>/?`. 
+The philosophy of Mu is that symbols should be easy to understand and that generally keywords are preferred over symbols. Most symbols are consistent with their contextual meaning, for example `*` relates to math, `!` relates to exceptions, `&` relates to tuples, etc.. There's also a common pattern where repeating an operator is a more advanced version of that operator, for example: `+` addition vs `++` concatenation, `*` multiplication vs `**` exponentiation, `/` division vs `//` floor division, and `%` truncated division modulo (the remainder) vs `%%` floor division modulo (binding to a range). Mu will check any combination of symbols greedily until the next space or word, so for example `++` would be different from `+ +`. Spaces are required between multiple symbolic operators, much like how spaces are required between words. Symbol characters include any ASCII character that isn't alphanumeric, whitespace, or quotation marks, or brackets&mdash;in other words these symbols: `~!@#$%^&*-+=|\:;'",<.>/?`. 
 
 **Algebra:**
 
@@ -108,8 +108,8 @@ The philosophy of Mu is that symbols should be easy to understand and that gener
 - `lhs * rhs` &mdash; multiplication
 - `lhs / rhs` &mdash; division
 - `lhs // rhs` &mdash; floored division (rounded down)
-- `lhs % rhs` &mdash; remainder modulo (sign matches `lhs`)
-- `lhs %% rhs` &mdash; trancation modulo (sign matches `rhs`)
+- `lhs % rhs` &mdash; modulo (sign matches `lhs`)
+- `lhs %% rhs` &mdash; floor division modulo (sign matches `rhs`)
 - `lhs ** rhs` &mdash; exponential
 
 **Comparison:**
@@ -140,7 +140,7 @@ The philosophy of Mu is that symbols should be easy to understand and that gener
 
 - `# rhs` &mdash; returns the length of an array
 - `lhs # rhs` &mdash; get an item at an index (starting at 0)
-- `lhs #- rhs` &mdash; get an item from the end of an array (same as `lhs # (lhs# - rhs)`
+- `lhs #- rhs` &mdash; get an item from the end of an array (same as `lhs#(#lhs-rhs)`
 - `lhs ++ rhs` &mdash; concatenation or appendation, always returns a new array
 - `++ rhs` &mdash; spread an array or iterator into an array or positional tuple
 - `lhs .. rhs` &mdash; creates an iterator that starts at the left value and ends just before the right value (exclusive)
@@ -153,7 +153,7 @@ The philosophy of Mu is that symbols should be easy to understand and that gener
 
 **Pointers:**
 
-- `ref rhs` &mdash; getting the pointer to a variable
+- `@ rhs` &mdash; getting the pointer to a variable
 - `lhs ^` &mdash; dereferencing a pointer
 - `lhs ^. rhs` &mdash; access a member of a pointer (same as `(^lhs).rhs`)
 - `lhs ^= rhs` &mdash; set the value of the slot in memory that a pointer is referencing
@@ -177,8 +177,8 @@ Some operators also allow an equal sign after it to set a variable based on its 
 - `lhs *= rhs` &mdash; `lhs = lhs * rhs` &mdash; multiplication assignment
 - `lhs /= rhs` &mdash; `lhs = lhs / rhs` &mdash; division assignment
 - `lhs //= rhs` &mdash; `lhs = lhs // rhs` &mdash; floor division assignment
-- `lhs %= rhs` &mdash; `lhs = lhs % rhs` &mdash; remainder assignment
-- `lhs %%= rhs` &mdash; `lhs = lhs % rhs` &mdash; truncation assignment (binds `lhs` to a range in `0..rhs`)
+- `lhs %= rhs` &mdash; `lhs = lhs % rhs` &mdash; modulo assignment
+- `lhs %%= rhs` &mdash; `lhs = lhs %% rhs` &mdash; floor division modulo assignment (binds `lhs` to a range in `0..rhs`)
 - `lhs **= rhs` &mdash; `lhs = lhs ** rhs` &mdash; exponential assigment
 - `lhs ~&= rhs` &mdash; `lhs = lhs ~& rhs` &mdash; bitwise-*AND* assignment
 - `lhs ~|= rhs` &mdash; `lhs = lhs ~| rhs` &mdash; bitwise-*OR* assignment
@@ -255,27 +255,49 @@ doSomething()
 x = 1
 ```
 
-Not defining a mutable variable implies `= undefined` after it which means it cannot be used until it's been set.
+Not defining a mutable variable implies `= undefined` after it which means it cannot be used until it's been set. The exception is passing undefined variables to the `out` parameters of functions. (See [Function Declarations](#Function-Declarations).)
 
 ```mu
 x: mu int = undefined
 -- `x` cannot be used here.
+(--
+doSomething(x)   -- This is an error.
+--)
+
 x = 1
 -- `x` can be used now.
+doSomething(x)   -- This is okay.
 ```
 
-If you need to make a variable with the same name as a mutable variable, you can use the keyword `shadow`. This will shadow any variable in that scope. You can then redeclare it inside that scope without affecting the previous reference. 
+Assigning to the variable for the rest of the scope and any sub-scopes will mutate the variable. The exception to this is functions which always set a new variable unless its been explicitly captured. (See [Capturing](#Capturing-capture).)
+
+```mu
+x: mu int
+do
+  x = 1
+print("{x}")   -- 1
+cantSetX() =
+  x = 2
+cantSetX()
+print("{x}")   -- still 1
+```
+
+Since using `=` on a mutable variable mutates it, there's no way to create an immutable variable with the same name until you go out of scope. If you need to make a variable with the same name as a mutable variable, you can use the keyword `shadow`. This will reclaim any variable name in that scope. You can then redeclare it inside that scope without affecting the previous reference. After `shadow`, the variable is treated as if it were `undefined` until it's been set. 
 
 ```mu
 mu x = 0
-do
-    shadow x      -- Shadow x in this scope.
-    x = 1
-print("{x}")     -- 0
-
-shadow x          -- Forget about x for the rest of the scope.
-x = 2
-print("{x}")     -- 2
+do               -- Create a new child scope.
+    x = 1        -- Mutates `x` instead of making a new variable.
+    shadow x     -- Shadow `x` in this scope.
+    x = 2        -- Define new `x` without affecting the old `x`.
+    print("{x}") -- 2
+                 -- Exit scope, `x` is back to the old one.
+print("{x}")     -- 1
+                 -- That's because `x` was mutated once.
+shadow x         -- Forget about `x` for the rest of the scope.
+                 -- `x` is undefined here.
+x = 3            -- `x` is now defined.
+print("{x}")     -- 3
 ```
 
 #### References (`ref`/`ref mu`)
@@ -1516,7 +1538,7 @@ Mu is multi-paradigm: different functions, structs, or modules can use different
 
 ## Keywords
 
-There are 61 keywords in total:
+There are 59 keywords in total:
 
 * `and`
 * `as`
@@ -1527,7 +1549,6 @@ There are 61 keywords in total:
 * `char`
 * `continue`
 * `default`
-* `delete`
 * `do`
 * `else`
 * `end`
@@ -1549,7 +1570,6 @@ There are 61 keywords in total:
 * `match`
 * `mod`
 * `mu`
-* `new`
 * `none`
 * `not`
 * `out`
