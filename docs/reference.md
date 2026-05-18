@@ -132,8 +132,8 @@ The philosophy of Mu is that symbols should be easy to understand and that gener
 
 **Arrays:**
 
+- `# rhs` &mdash; returns the length of an array
 - `lhs # rhs` &mdash; get an item at an index (starting at 0)
-- `lhs #` &mdash; returns the length of an array
 - `lhs #- rhs` &mdash; get an item from the end of an array (same as `lhs # (lhs# - rhs)`
 - `lhs ++ rhs` &mdash; concatenation or appendation, always returns a new array
 - `++ rhs` &mdash; spread an array or iterator into an array or positional tuple
@@ -148,7 +148,12 @@ The philosophy of Mu is that symbols should be easy to understand and that gener
 **Pointers:**
 
 - `^ rhs` &mdash; dereferencing a pointer
+- `lhs ^?` &mdash; safe dereference, will switch to nearest `some` keyword if null.
 - `ref rhs` &mdash; getting the pointer to a variable
+- `lhs ^. rhs` &mdash; access a member of a pointer (same as `(^lhs).rhs`)
+- `lhs ^?. rhs` &mdash; safe access a member of a pointer, returns `none` if its null.
+
+*Pointer chaining* &mdash; for any `^` operator, you can add `^` to repeatedly dereference a pointer. 
 
 **Options:**
 
@@ -646,6 +651,7 @@ Arrays are declared with the hash symbol (`#`). A number after the hash makes it
 
 ```mu
 list: float#4 = [1 2 3 4]
+print("length of list: {#list}")
 compressedList = [(list#0 + list#1) (list#3 + list#4)]
 ```
 
@@ -714,7 +720,7 @@ print("{^xPtr}")  -- 0, because it's still referencing the old x.
 -- This might lead to a crash.
 ```
 
-Pointers can be treated as option types to safely dereference them.
+Pointers can be safely dereferenced with the `^?` operator. This works like the `?` for options.
 
 ```mu
 some print("{xPtr?}")   -- Treat pointer as an option type, returns none if it's been dropped.
@@ -726,9 +732,9 @@ Pointers can also be treated as numbers. Dereferencing them may lead to unexpect
 x = 0
 p = ref x
 next = p + 1
-print("next: {some str(next?) ?? "null"}")
+print("next: {some str(next^?) ?? "null"}")
 prev = p - 1
-print("prev: {some str(prev?) ?? "null"}")
+print("prev: {some str(prev^?) ?? "null"}")
 ```
 
 Mutable pointers are marked with `^mu type`. The reference must also be a mutable type. Although it's pointing to a mutable variable, the actual pointer variable is immutable. You would need another `mu` to change the pointer, marked as `mu ^type` or `mu ^mu type`.
@@ -752,7 +758,7 @@ Memory can be allocated using `new` and deallocated using `delete`. You will nee
 Thing :: {a: int, b: int}
 some
     thing = new Thing(a: 1, b: 2)
-    value = thing?                -- Dereference or exit block if it's null
+    value = thing^?                -- Dereference or exit block if it's null
     print("{value}")
     delete thing
 ```
