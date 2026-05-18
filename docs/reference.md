@@ -526,7 +526,7 @@ You can define a function within an expression with the keyword `fn` in the patt
 
 ```mu
 map(array, func) = [++(for x in array then func(x))]
-array0 = [1 2 3 4]
+array0 = [1, 2, 3, 4]
 array1 = map(array0, fn(x) = x + 1)
 array2 = map(array0, fn(x) =
     if x < 2 then
@@ -748,32 +748,49 @@ bigDocument = ''
 
 #### Arrays
 
-Arrays are declared with the hash symbol (`#`). A number after the hash makes it a fixed length array. Arrays are fixed length by default, but this mainly matters for mutable arrays since immutable arrays can be shadowed with different type. Items in an array are separated with whitespace with special rules (explained below). The hash symbol is also used for accessing an array.
+Array types are declared with the hash symbol (`#`). A number after the hash makes it a fixed length array. Arrays are fixed length by default; however, immutable arrays can be shadowed with different type, so this only matters for mutable arrays. Items are separated with commas (`,`). The hash symbol is also used for accessing an array.
 
 ```mu
-list: float#4 = [1 2 3 4]
+list: float#4 = [1, 2, 3, 4]
 print("length of list: {#list}")
-compressedList = [(list#0 + list#1) (list#2 + list#3)]
-```
-
-Matrices are defined with `|` at the start of each row. Each row must have the same number of columns. 
-
-```mu
-matrix = [
-    |  1  2  3  4
-    |  5  6  7  8
-    |  9 10 11 12
-    | 13 14 15 16
-]
+compressedList = [list#0 + list#1, list#2 + list#3]
+doubleArray = [[1, 2], [3, 4]]
 ```
 
 To make chaining accesses easier, there's a special rule for square brackets: any operator `op` can be expressed with `a[op b]` which is the same as `((a) op (b))`. This can be used together with the index operator `#` to get an item from a matrix or multi-dimensional array.
 
 ```mu
-oneItem = matrix[#2][#1]   -- 3rd row, 2nd column, value 10
+item = doubleArray[#1][#0]  -- 2nd row, 1st column
+print("{item}")             -- 3
 ```
 
-Sometimes in systems programming, we need to write out large arrays. To make this easier and more cost effective, arrays are delimited using spaces rather than commas or semi-colons. There are special rules for handling how items are delimited in an array. If any of these rules don't apply, one should put the item in parentheses like `(a+b)`.
+One common operator is `++` which spreads an array into another array.
+
+```mu
+a = [1, 2, 3]
+b = [0, ++a, 4]    -- == [0, 1, 2, 3, 4]
+```
+
+#### Whitespace-Delimited Arrays and Matrices (optional)
+
+Sometimes in systems programming, we need to write out large arrays. To make this easier and more cost effective, arrays can optionally be delimited with whitespace by putting a vertical pipe `|` immediately inside the brackets like this `[| |]`.
+
+```mu
+list = [|1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25|]
+```
+
+Matrices use a `|` at the start of each row. Each row must have the same number of columns. You could put rows in square brackets `[...]` instead, but this way will automatically enforce that each row has the same number of columns.
+
+```mu
+matrix = [|
+  |  1  2  3  4
+  |  5  6  7  8
+  |  9 10 11 12
+  | 13 14 15 16
+|]
+```
+
+There are special rules for handling how items are delimited in a whitespace array or matrix. If any of these rules don't apply, one should put the item in parentheses like `(a+b)`.
 
 1. Constants: `1`, `'a'`, `"string"`, etc.
 2. Variable names: `x`, `PI`, etc.
@@ -789,19 +806,14 @@ For any item in an array, spaces must not be omitted outside of brackets (`()`/`
 Operators that aren't spaced properly will throw a syntax error.
 
 ```mu
-[a -b]  -- OK. Array of `a` and negative `b`.
-(--     -- Errors:
-[a-b]   -- No spaces.
-[a - b] -- Too many spaces.
-[a- b]  -- `-` isn't a postfix operator.
+[|a -b|]     -- OK, array of `a` and negative `b`.
+[|a (-b)|]   -- Also fine.
+[|(x + 1)|]  -- This works because `(x + 1)` is in parentheses.
+(--          -- Errors:
+[|a-b|]      -- No spaces.
+[|a - b|]    -- Too many spaces.
+[|a- b|]     -- `-` isn't a postfix operator.
 --)
-```
-
-One common operator is `++` which spreads an array into another array.
-
-```mu
-a = [1 2 3]
-b = [0 ++a 4]    -- == [0 1 2 3 4]
 ```
 
 #### Pointers
@@ -1204,7 +1216,7 @@ You can also bind a function to a constant. When calling it, it would be the sam
 IDENTITY :: fn(x) = x
 addOne :: fn(x) = x + 1
 value = addOne(2)               -- Same as (fn(x) = x + 1)(2), result is 3.
-array = map([1 2 3 4], addOne)
+array = map([1, 2, 3, 4], addOne)
 ```
 
 ### Aliases
