@@ -1119,85 +1119,39 @@ isThirteen(x) =
 
 #### `yield`
 
-Exits out of a function with an `iter` type. The return value of the function must be of type `iter T` where T is the yield type. When you have `yield` in your function, the actual return value in the function body is discarded, and using `return _` in it is a compile-time error. Use of `yield` will infer the return type as `iter T`. 
+Exits out of a function with an `Iter` type. The return value of the function must be of type `Iter T` where T is the yield type. When you have `yield` in your function, the actual return value in the function body is discarded, and using `return _` in it is a compile-time error. Use of `yield` will infer the return type as `Iter T`. 
 
 ```mu
-count(n: Int): iter Int =
+count(n: Int): Iter Int =
     for i in 0..n then
         yield i
 ```
 
 #### `await`
 
-Exits out of a function with an `async` type. The return type of the function must be of type `async T` where T is the type that the async will return in the end. The return value of the async instance is determined the same way as a non-async function. Use of `await` will infer the return type as `async T`. 
+Exits out of a function with an `Async` type. The return type of the function must be of type `Async T` where T is the type that the async will return in the end. The return value of the async instance is determined the same way as a non-async function. Use of `await` will infer the return type as `Async T`. 
 
 ```mu
-asyncFn(a, b): async Int =
+asyncFn(a, b): Async Int =
     a = await fetch(a)
     b = await fetch(b)
     a + b
 ```
 
-Both `yield` and `await` can be used together in an `iter async T` type. Use `for await` to iterate through it.
+Both `yield` and `await` can be used together in an `Iter Async T` type. Use `for await` to iterate through it.
 
 ```mu
-asyncIterFn(n): iter async Int =
+asyncIterFn(n): Iter Async Int =
     for i in 0..n then
         val = await fetch(i)
         yield val
 
-asyncCollect(n): async Int# =
+asyncCollect(n): Async Int# =
     ret: mu Int# = []
     for await x in asyncIterFn(n) then
         ret ++= x
     ret
 ```
-
-#### `param ()`
-
-Exits out of a function with another function. The variables in parentheses become the parameter of the return function. The return function continues where `param` left off. Use of `param` will infer the return type as a function automatically. Using multiple `param` in a function returns a function at each `param`. 
-
-```mu
-curryAdd(a: Int): fn(Int): Int =
-    param (b: Int)
-    a + b
-
-addOne = curryAdd(1)
-afterOne = addOne(1)   -- ==2
-afterTwo = addOne(2)   -- ==3
-
-curryAdd3(a: Int): fn(Int): fn(Int): Int =
-    param (b)    -- Type already known based on return type.
-    param (c)
-    a + b + c
-
-curryAddWithOne = curryAdd3(1)
-addOneMore = curryAddWithOne(1)
-next = addOneMore(1)    -- 1+1+1 = 3
-```
-
-You can think of `param` as being a shorthand for `return fn`, unless in an iterator function then it's short for `yeild fn`. Everything after `param` is the body of the next function.
-
-```mu
-curryAdd3(a: Int): fn(Int): fn(Int): Int =
-    return fn(b) =
-        return fn(c) =
-            a + b + c
-```
-
-When mixing `await`+`yield`+`param`, the return-type can get quite complicated. 
-
-| `await` | `yeild` | `param` | Return Type | 
-|:-:|:-:|:-:|:--|
-| ✅ | ⬜ | ⬜ | `async T` |
-| ⬜ | ✅ | ⬜ | `iter T` |
-| ⬜ | ⬜ | ✅ | `fn(_): T` |
-| ✅ | ✅ | ⬜ | `iter async T` |
-| ✅ | ⬜ | ✅ | `async (fn(_): async T)` |
-| ⬜ | ✅ | ✅ | `iter (fn(_): iter T)` |
-| ✅ | ✅ | ✅ | `iter async (fn(_): iter async T)` |
-
-When you have to write out a lot, it could be a sign that you need to rethink things over. It's recommended to either split tasks apart into smaller functions or let the return-type be inferred rather than writing it out by hand.
 
 ---
 
@@ -1591,7 +1545,7 @@ How this is implemented is outside of the scope of this document. That will be s
 - **Patterns scale with complexity** &mdash; simple things like declaring a variable or function use short patterns, more complex things use bigger patterns.
 - **Performance on demand** &mdash; start with GC; change to a lower level memory model where necessary.
 - **Explicit but ergonomic** &mdash; `!` for errors, attributes for memory models, same keywords used between inline and block expressions.
-- **Accountability** &mdash; `import`, `inherit`, and `capture` require variables to be listed out to know where they're coming from; no glob-like imports.
+- **Trace and auditability** &mdash; `import`, `inherit`, and `capture` require variables to be listed out to know where they're coming from; no glob-like imports.
 - **Unified concepts** &mdash; `capture` for scope capture; `inherit` for member visibility; `::` for all top-level definitions.
 - **Python-developer friendly** &mdash; gradual typing, familiar control flow, no second language or FFI layer required.
 
@@ -1599,11 +1553,10 @@ How this is implemented is outside of the scope of this document. That will be s
 
 ## Keywords
 
-There are 49 keywords in total:
+There are 46 keywords in total:
 
 * `and`
 * `as`
-* `async`
 * `await`
 * `capture`
 * `case`
@@ -1621,7 +1574,6 @@ There are 49 keywords in total:
 * `impl`
 * `import`
 * `in`
-* `iter`
 * `loop`
 * `match`
 * `mod`
@@ -1631,7 +1583,6 @@ There are 49 keywords in total:
 * `opt`
 * `or`
 * `pass`
-* `param`
 * `raise`
 * `ref`
 * `return`
