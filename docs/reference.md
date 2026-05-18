@@ -720,6 +720,17 @@ Pointers can be treated as option types to safely dereference them.
 some print("{xPtr?}")   -- Treat pointer as an option type, returns none if it's been dropped.
 ```
 
+Pointers can also be treated as numbers. Dereferencing them may lead to unexpected behavior, so causion is needed.
+
+```mu
+x = 0
+p = ref x
+next = p + 1
+print("next: {some str(next?) ?? "null"}")
+prev = p - 1
+print("prev: {some str(prev?) ?? "null"}")
+```
+
 Mutable pointers are marked with `^mu type`. The reference must also be a mutable type. Although it's pointing to a mutable variable, the actual pointer variable is immutable. You would need another `mu` to change the pointer, marked as `mu ^type` or `mu ^mu type`.
 
 ```mu
