@@ -726,15 +726,26 @@ a = [1, 2, 3]
 b = [0, ++a, 4]    -- == [0, 1, 2, 3, 4]
 ```
 
-#### Whitespace-Delimited Arrays and Matrices (optional)
+#### Advanced Arrays and Matrices (optional)
 
-Sometimes in systems programming, we need to write out large arrays. To make this easier and more cost effective, arrays can optionally be delimited with whitespace by putting a vertical pipe `|` immediately inside the brackets like this `[| |]`.
+Sometimes in systems programming, we need to write out large arrays. To make this easier and more cost effective, arrays can optionally be delimited with whitespace by putting a vertical pipe `|` immediately inside the brackets like this `[| |]`. Simple arrays don't need this&mdash;this is an advanced way to for writing out arrays that's optional.
 
 ```mu
-list: int#26 = [|1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25|]
+list: int#26 = [| 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 |]
 ```
 
-Matrices are defined by putting a newline after the `[` and then a `|` at the start of each row. Each row must have the same number of columns. Do this will automatically enforce that each row has the same number of columns.
+Matrices can be defined as arrays of arrays.
+
+```mu
+matrix: int#4#4 = [
+  [  1,  2,  3,  4 ],  -- 1st row
+  [  5,  6,  7,  8 ],  -- 2nd row
+  [  9, 10, 11, 12 ],  -- 3rd row
+  [ 13, 14, 15, 16 ],  -- 4th row
+]
+```
+
+Matrices can also be defined using whitespace like with `[| |]`-type arrays. To do so, put a newline after the `[` and then a `|` at the start of each row. Each row must have the same number of columns.
 
 ```mu
 matrix: int#4#4 = [
@@ -760,29 +771,27 @@ matrix4D: int#2#2#2#2 = [
 ]
 ```
 
-There are special rules for handling how items are delimited in a whitespace array or matrix. If any of these rules don't apply, one should put the item in parentheses like `(a+b)`.
+There are special rules for handling how items are delimited in a whitespace-delimited array or matrix. If any of these rules don't apply, one should put the item in parentheses like `(a+b)` or be in a sub-bracket expression like a named tuple `{}` or another array `[]`.
 
-1. Constants: `1`, `'a'`, `"string"`, etc.
-2. Variable names: `x`, `PI`, etc.
-3. Accessing with `.`, `^.`, or `?.`: `a.b^.c?.d`
-4. Function calls: `f(foo)` &mdash; no space between the function name and the parameter.
-5. Square bracket expressions: `arr[#1]` &mdash; likewise, no space between the name and square bracket.
-6. Prefix/postfix operators: `++a`, `x?`, etc.
-7. Any combination of the above: `++x.list[#0].add(1, 2)?`
-8. Sub-bracket expressions like arrays (`[]`) and tuples (`()`/`{}`).
+1. Constants or variable names: `1`, `'a'`, `"string"`, `x`, etc.
+2. Accessors such as:
+  a. dot accessing `.`, `^.`, or `?.`: `a.b^.c?.d`
+  b. function calls: `f(foo)`
+  c. square bracket expressions: `arr[#1]`
+3. Prefix/postfix operators: `++a`, `x?`, etc.
 
-For any item in an array, spaces must not be omitted outside of brackets (`()`/`[]`/`{}`). Inside brackets, whitespace is ignored for the parent array. 
+Or any combination of these rules: `++x.list[#0].add(1, 2)?`. For any item in an array, spaces must not be omitted outside of brackets (`()`/`[]`/`{}`). Inside brackets, whitespace is ignored for the parent array. 
 
 Operators that aren't spaced properly will throw a syntax error.
 
 ```mu
-[|a -b|]     -- OK, array of `a` and negative `b`.
-[|a (-b)|]   -- Also fine.
-[|(x + 1)|]  -- This works because `(x + 1)` is in parentheses.
-(--          -- Errors:
-[|a-b|]      -- No spaces.
-[|a - b|]    -- Too many spaces.
-[|a- b|]     -- `-` isn't a postfix operator.
+[| a -b |]     -- OK, array of `a` and negative `b`.
+[| a (-b) |]   -- Also fine.
+[| (x + 1) |]  -- This works because `(x + 1)` is in parentheses.
+(--            -- Errors:
+[| a-b |]      -- No spaces.
+[| a - b |]    -- Too many spaces.
+[| a- b |]     -- `-` isn't a postfix operator.
 --)
 ```
 
@@ -1446,7 +1455,7 @@ maybeInt = SomeInt(1)
 maybeInt = (Some int)(1)
 ```
 
-The same rules as item delimitation in arrays apply to abstract functions as well except postfix/prefix operators aren't allowed since they could get confused for infix operators. (See [Arrays](#Arrays).) Arguments must be constants or variables since parentheses would get confused for a function call. You can store an expression inside a constant and pass that instead. 
+The same rules as item delimitation in whitespace arrays (`[| |]`, see [Advanced Arrays](#Advanced-Arrays-and-Matrices-optional)) apply to abstract functions as well with the exclusion of postfix/prefix operators since they could get confused for infix operators. Arguments must be constants or variables since parentheses would get confused for a function call. You can store an expression inside a constant and pass that instead. 
 
 ```mu
 ARG1 :: 1 + 2
