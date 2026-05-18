@@ -1358,7 +1358,7 @@ MyEnum :: impl MyVirtual
 
 ## Inheritance and Visibility
 
-Even though structs cannot be extended the usual way, they can inherit from other structs using the `inherit` keyword. This works similar to importing. It marks members that map to members of another struct, making conversion possible. 
+Even though structs cannot be extended the usual way, they can inherit from other structs using the `inherit` keyword. This works similar to importing. It marks members that map to members of another struct, making conversion possible. It follows the same convention for pattern matching as destructuring. (See [Destructuring](#Destructuring).)
 
 ```mu
 Vector2 :: struct
@@ -1366,7 +1366,7 @@ Vector2 :: struct
     y: float
 
 Vector3 :: struct
-    inherit x, y from Vector2
+    inherit Vector2{x, y}
     z: float
 
 v3 = Vector3(x: 1.0, y: 2.0, z: 3.0)
@@ -1377,7 +1377,7 @@ print("{radius2d(v3)}") -- This works because Vector3 inherits from Vector2.
 
 When you inherit, you don't just pick out some members. The entire super type is inherited, but only some members are visible. 
 
-All members of a type are public by default. When making a subtype, inherited members become private to the subtype unless explicitly redeclared with `inherit`. This encourages separating public and private data into distinct types rather than using access modifiers.
+All members of a type are public by default. When making a subtype, inherited members become private to the subtype unless explicitly redeclared with `inherit`. This encourages separating public and private data into distinct types rather than using access modifiers. If you only inherit some fields but not all, you must put a `_` at the end of the tuple list to mark that not all members are inheritted. 
 
 ```mu
 PrivateFields :: struct
@@ -1385,7 +1385,7 @@ PrivateFields :: struct
     secret: int
 
 PublicFields :: struct
-    inherit val from PrivateFields     -- Redeclared, val is `public` and `secret` is private
+    inherit PrivateFields{val, _}     -- Redeclared, val is `public` and `secret` is private
     other: int
 ```
 
@@ -1553,38 +1553,44 @@ This is a work in progress though. The methods for defining how a programmer wou
 
 ## Importing and Modules
 
-Use `import _ from _` to import something. You can give the import an alias with `as`. All imports must be implicitly declared&mdash;no "import *". This helps prevent naming conflicts and track where things are defined.
+Use `import _` to import something. You can give the import an alias with `as`. You can either import a single export `import a.b.c` or multiple at once using destructuring `imoprt a.b{c, d}`. (See [Destructuring](#Destructuring).) All imports must be implicitly declared&mdash;no `import a.b.*`. This helps prevent naming conflicts and track where things have been defined.
 
-This most common import will likely be the `print` function, which will defined somewhere in a standard library.
+The most common import will likely be the `print` function, which will be defined somewhere in a standard library.
 
 ```mu
-import print from std      -- This is just an example and not final.
+import std.print     -- This is just an example and not final.
 
 print("Hello, world!")
 ```
 
-Modules are named with the keyword `mod` near the top before anything is defined. This is the name you'll use after `from` when importing. 
+Modules are named with the keyword `mod` near the top before anything is defined. This is the name you'll use importing. 
 
 ```mu
-import thing from somewhere
+import somewhere{thing}
 
 mod myModule
 
 addThing(x) = x + thing
 ```
 
-Modules define how memory is handled with the `@memory` decorator. By default, modules use a garbage collector. Some options include `Collect(GC)` (default),  `Count(ARC)` (reference counting), `Borrow` (borrow checking), and `Manual`. `GC` and `ARC` represent the standard garbage collector and reference counter respectively, but others can be defined and used instead.
+In this example, you would import `addThing` like this:
 
 ```mu
-import memory, Count, ARC from std.mem
-
-@memory(Count(ARC))
-mod moduleThatUsesReferenceCounting
+import myModule.addThing
 ```
 
 ### Memory Models
 
 Mu is multi-paradigm: different functions, structs, or modules can use different memory strategies in the same program. The model is controlled per-module via decorators. Boundary crossing between models follows FFI-like rules &mdash; automatic marshalling where possible, explicit escapes otherwise.
+
+Modules define how memory is handled with the `@memory` decorator. By default, modules use a garbage collector. Some options include `Collect(GC)` (default),  `Count(ARC)` (reference counting), `Borrow` (borrow checking), and `Manual`. `GC` and `ARC` represent the standard garbage collector and reference counter respectively, but others can be defined and used instead.
+
+```mu
+import std.mem{memory, Count, ARC, _}
+
+@memory(Count(ARC))
+mod moduleThatUsesReferenceCounting
+```
 
 ---
 
@@ -1601,7 +1607,7 @@ Mu is multi-paradigm: different functions, structs, or modules can use different
 
 ## Keywords
 
-There are 56 keywords in total:
+There are 55 keywords in total:
 
 * `and`
 * `as`
@@ -1621,7 +1627,6 @@ There are 56 keywords in total:
 * `float`
 * `fn`
 * `for`
-* `from`
 * `if`
 * `inherit`
 * `impl`
