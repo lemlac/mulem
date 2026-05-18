@@ -246,16 +246,16 @@ x = 1
 -- `x` can be used now.
 ```
 
-If you need to make a variable with the same name as a mutable variable, you can use the keyword `local`. This will shadow any variable in that scope. You can then redeclare it inside that scope without affecting the previous reference. 
+If you need to make a variable with the same name as a mutable variable, you can use the keyword `shadow`. This will shadow any variable in that scope. You can then redeclare it inside that scope without affecting the previous reference. 
 
 ```mu
 mu x = 0
 do
-    local x      -- Shadow x in this scope.
+    shadow x      -- Shadow x in this scope.
     x = 1
 print("{x}")     -- 0
 
-local x          -- Forget about x for the rest of the scope.
+shadow x          -- Forget about x for the rest of the scope.
 x = 2
 print("{x}")     -- 2
 ```
@@ -1608,7 +1608,6 @@ There are 69 keywords in total:
 * `in`
 * `int`
 * `iter`
-* `local`
 * `loop`
 * `match`
 * `mod`
@@ -1625,6 +1624,7 @@ There are 69 keywords in total:
 * `ref`
 * `return`
 * `self`/`Self`
+* `shadow`
 * `sizeof`
 * `some`
 * `str`
