@@ -731,7 +731,7 @@ Arrays are declared with the hash symbol (`#`). A number after the hash makes it
 ```mu
 list: float#4 = [1 2 3 4]
 print("length of list: {#list}")
-compressedList = [(list#0 + list#1) (list#3 + list#4)]
+compressedList = [(list#0 + list#1) (list#2 + list#3)]
 ```
 
 Matrices are defined with `|` at the start of each row. Each row must have the same number of columns. 
