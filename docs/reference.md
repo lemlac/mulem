@@ -74,9 +74,13 @@ then:
                  -- Ends both blocks.
 
 (then:
+    expr
+end)             -- Required here since the block is in parentheses.
+
+(then:
     then:
         expr
-end)             -- Required here since the block is in parentheses.
+end)             -- Use only one `end` to end to whole block.
 ```
 
 Some keywords can be inlined or blocked based on whether they use a `:` or not. 
@@ -389,7 +393,7 @@ Function parameters can be declared like variables. Likewise, you can modify the
 increment(x: ref mu Int) =
     x += 1
 
-y = 0
+mu y = 0
 increment(y)
 ```
 
@@ -424,7 +428,7 @@ print("{n}")    -- 3
 
 Immutable variables can be captured without an issue. If you try to set it within a function, it will get shadowed within the scope of the function. This also includes other functions which are also immutable by default.
 
-For better safety, functions don't capture mutable variables by default. Instead, any variable set inside a function is treated as a new variable. This help prevent accidently mutating a variable that you didn't mean to and encorage functional programming practices.
+For better safety, functions don't capture mutable variables by default. Instead, any variable set inside a function is treated as a new variable. This help prevent accidently mutating a variable that you didn't mean to and encourage functional programming practices.
 
 ```mu
 x = 1
@@ -502,7 +506,7 @@ Named parameters can be defined in their own object and then passed in with the 
 Options :: { enabled: Bool }
 doThing(key: Str) & Options as options =
     if options.enabled:
-        Some(callApi(Str))
+        Some(callApi(key))
     else:
         None
 
@@ -644,10 +648,10 @@ str1 = "This" " string"
 str2 = " is broken"
 str3 = str1 ++ str2 ++ " into multiple parts."
 print(str3)
--- Prints "This string is broken up into multiple parts."
+-- Prints "This string is broken into multiple parts."
 ```
 
-You can also write multi-line strings with `"""`. A common issue in programming languages is how to fix the issue of leading whitespace in a multi-line string. Mulang uses significant whitespace, so unintenting the string wouldn't work. We don't want all the leading whitespace to be in the string, but how to we solve this? Whitespace is trimmed based on the positions of the last `"""`. Anything before it is automatically trimmed. Buch like blocks, having too little indentation is a syntax error inside multi-line strings. This helps keeps things readable and concisitant and solves the whitespace issue inside string.
+You can also write multi-line strings with `"""`. A common issue in programming languages is how to fix the issue of leading whitespace in a multi-line string. Mulang uses significant whitespace, so unintenting the string wouldn't work. We don't want all the leading whitespace to be in the string, but how do we solve this? Whitespace is trimmed based on the positions of the last `"""`. Anything before it is automatically trimmed. Much like blocks, having too little indentation is a syntax error inside multi-line strings. This helps keep things readable and consistent and solves the whitespace issue inside strings.
 
 ```mu
 myStr =
@@ -660,12 +664,12 @@ myStr =
 
     One quotation mark is fine (").
     Two quotation marks are fine too ("").
-    But three qutation marks like \""" need to be escaped.
+    But three quotation marks like \""" need to be escaped.
     This is the last line because of the closing quotation marks below it.
     """
 ```
 
-You can write a raw string with `''...''` (two apostrophes). Athough apostrophes `'` are used for chars, an empty Char isn't possible since the default Char is written `'\0'` (null character). This is a common practice in programming languages where `"` mark formattable strings and `'` mark raw strings, so this should be easy to understand for anyone. When you write `''`, every character after it (including whitespace and intentation) is in the string until the closing `''`. Escaping with backslashes `\` and insertion with curly braces `{}` are ignored.
+You can write a raw string with `''...''` (two apostrophes). Although apostrophes `'` are used for chars, an empty Char isn't possible since the default Char is written `'\0'` (null character). This is a common practice in programming languages where `"` mark formattable strings and `'` mark raw strings, so this should be easy to understand for anyone. When you write `''`, every character after it (including whitespace and intentation) is in the string until the closing `''`. Escaping with backslashes `\` and insertion with curly braces `{}` are ignored.
 
 ```mu
 rawString = ''It's okay to put an apostrophe (') in the string.''
@@ -683,11 +687,11 @@ bigDocument = ''
 
 > What if you have a raw string with two apostrophes in a row inside it?
 
-That's an edge case not worth persuing. The double apostrophes `''` syntax isn't perfect, but it's at least something. For anything more complicated, it's likely better to save the string to a document and open it as a file, which will be handled by a seperate library and lies outside the scope of this document.
+That's an edge case not worth persuing. The double apostrophes `''` syntax isn't perfect, but it's at least something. For anything more complicated, it's likely better to save the string to a document and open it as a file, which will be handled by a separate library and lies outside the scope of this document.
 
 #### Arrays
 
-Array types are declared with the hash symbol (`#`). This was chosen because the `#` is commonly used for numbers in English. For example, `#1` is read as `number 1`. A number after the `#` makes it a fixed length array `type#N`. Arrays are fixed length by default for better performance. Items are separated with commas (`,`). The hash symbol is also used for accessing an array, giving a clear visible mirror between the two. Other languages use `[]` for indexing, but that has another meaning in Mulang which is explained in the proceeding example.
+Array types are declared with the hash symbol (`#`). This was chosen because the `#` is commonly used for numbers in English. For example, `#1` is read as `number 1`. A number after the `#` makes it a fixed length array `type#N`. Arrays statically sized when written as `type#N`; `type#` is the dynamic form. Items are separated with commas (`,`). The hash symbol is also used for accessing an array, giving a clear visible mirror between the two. Other languages use `[]` for indexing, but that has another meaning in Mulang which is explained in the proceeding example.
 
 ```mu
 list: Int#4 = [1, 2, 3, 4]
@@ -734,9 +738,9 @@ Pointers can also be treated as numbers. The resulted type is `^unknown` by defa
 x = 0
 p = @x
 next = ^Int(p + 1)
-print("next: {^next}")   -- This will probably crash.
+print("next: {next^}")   -- This will probably crash.
 prev = ^Int(p - 1)
-print("prev: {^prev}")   -- This will probably crash too.
+print("prev: {prev^}")   -- This will probably crash too.
 ```
 
 Mutable pointers are marked with `^mu type`. The reference must also be a mutable type. Although it's pointing to a mutable variable, the actual pointer variable itself is immutable. You would need another `mu` before the caret to change the pointer, marked as `mu ^type` or `mu ^mu type`.
@@ -749,9 +753,9 @@ print("{x}")     -- "1", x was mutated
 
 y = 2
 ptr: mu ^Int = @x
-print("{^ptr}")  -- "1", points to x
+print("{ptr^}")  -- "1", points to x
 ptr = @y
-print("{^ptr}")  -- "2", points to y
+print("{ptr^}")  -- "2", points to y
 ```
 
 Consider this a work in progress. This will need more testing to figure out the best way to handle pointers. Some featues like memory allocation and safe pointers will probably be implemented through a standard library. 
@@ -760,11 +764,14 @@ Consider this a work in progress. This will need more testing to figure out the 
 
 There are some cases where the type can't be infered right away in which case the thing in question gets typed as `unknown`. This usually gets resolved eventually, and if it doesn't, the compiler should throw an error. 
 
-Sometimes with FFI, we don't really know nor care what the actual type to a pointer is. We just know that it's a pointer to something. In that case, we can type it as `^unknown`. This pointer type should always be immutable&mdash;i.e. no `^mu unknown`&mdash;and dereferencing it will throw a compile-time error. 
+Sometimes with FFI, we don't really know nor care what the actual type to a pointer is. We just know that it's a pointer to something. In that case, we can type it as `^unknown`. This pointer type is always immutable&mdash;i.e. no `^mu unknown`&mdash;and dereferencing it will throw a compile-time error. 
 
 ```mu
 result: ^unknown = ExternalLib.getSomething()
-ExternalLib.doSomethingWith(result)
+(--
+result ^= 64                          -- This is forbidden.
+--)
+ExternalLib.doSomethingWith(result)   -- This is how you're supposed to use it.
 ```
 
 ---
@@ -834,7 +841,7 @@ else:
 
 #### `match` / `case`
 
-Enum/exception branching. Exhaustive by default. `case _` for the default case. The indentation of each `case` must be the same as the starting `match`, ending any debate on whether `case` should be indented or not&mdash;Mulang is opinionated after all. This is done not only to save indentation but also to stay consistant. Because `match _` doesn't use `:` or `then`, it logically shouldn't indent the next line.
+Enum/exception branching. Exhaustive by default. `case _` for the default case. The indentation of each `case` must be the same as the starting `match`, ending any debate on whether `case` should be indented or not&mdash;Mulang is opinionated after all. This is done not only to save indentation but also to stay consistent. Because `match _` doesn't use `:` or `then`, it logically shouldn't indent the next line.
 
 The patterns match to the type of enum passed to `match`, so you only need to reference the members of that type in each `case` block.
 
@@ -1172,16 +1179,16 @@ Structs are transparent. They can be destructured like named arrays. Use `@opaqu
 
 ```mu
 TransparentThing :: struct
-    a: int
-    b: int
+    a: Int
+    b: Int
 
 {a, b} = TransparentThing(a: 1, b: 2)
 print("a: {a}, b: {b}")
 
 @opaque
 OpaqueThing :: struct
-    a: int
-    b: int
+    a: Int
+    b: Int
 
 o = OpaqueThing(a: 1, b: 2)
 print("a: {o.a}, b: {o.b}")
@@ -1232,8 +1239,8 @@ Methods and trait implementations are added separately with `impl`. Much like `p
 ```mu
 MyStruct :: impl
     staticValue = 1234
-    init(x: Int, y: Int): Self =
-        MyStruct(x: x, y: y)
+    init(name: Str, value: Int): Self =
+        MyStruct(name: name, value: value)
 
 print("{MyStruct.staticValue}")
 ```
@@ -1356,10 +1363,10 @@ max a b :: if a > b then a else b
 min a b :: if a < b then a else b
 print("{ max.(0, 1) }")           -- "1"
 print("{ min.(0, 1) }")           -- "0"
-print("{ MAX.(1+2, 3+4) }")       -- "7"
+print("{ max.(1+2, 3+4) }")       -- "7"
 
 maxAdd a b :: if a > b then fn(c) = a + c else fn(c) = b + c
-print("{ ( maxAdd.(f(0), g(0))(1) }")
+print("{ maxAdd.( f(0), g(0) ) (1) }")
 ```
 
 ### Where Block
