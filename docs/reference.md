@@ -47,7 +47,7 @@ expr; expr
 
 Almost everything is an expression. Some statements can be either inline or block depending on the presence of a new-line. When mixing the two (i.e. a block statement within an inline statement), the `end` keyword is required to exit block mode and return to inline mode. The last statement evaluated in a block is its value. 
 
-To split one expression into multiple lines, you must wrap it in parentheses. The indentation inside the parentheses doesn't matter as long as it's the same as or greater than the opening parenthesis. Semi-colons (`;`) are a syntax error inside parentheses unless inside a block expression within the parentheses.
+To split one expression into multiple lines, you must wrap it in parentheses. The indentation inside the parentheses doesn't matter as long as it's the same as or greater than the opening parenthesis. 
 
 ```
 (word1
@@ -56,7 +56,7 @@ To split one expression into multiple lines, you must wrap it in parentheses. Th
       word4)
 ```
 
-Adding a newline and indentations after a `:` or `=` starts a block. A **block** wraps multiple expressions into one. The last expression evaluated in a block becomes its value. The most basic block type is `then` which runs a block only once.
+Adding a newline and indentations after a `:` or `=` starts a block. A **block** wraps multiple expressions into one. The last expression evaluated in a block becomes its value. You can use `then:` to create a block. `then` is a scoped block with no condition; it always runs exactly once. (See [`then`](#then).)
 
 ```
 then:
@@ -433,7 +433,7 @@ print("{n}")    -- Prints "3"
 
 Immutable variables can be captured without an issue. If you try to set it within a function, it will get shadowed within the scope of the function. This also includes other functions which are also immutable by default.
 
-For better safety, functions don't capture mutable variables by default. Instead, any variable set inside a function is treated as a new variable. This help prevent accidently mutating a variable that you didn't mean to and encourage functional programming practices.
+For better safety, functions don't capture mutable variables by default. Instead, any variable set inside a function is treated as a new variable. This helps prevent accidentally mutating a variable that you didn't mean to and encourage functional programming practices.
 
 ```
 x = 1
@@ -508,16 +508,17 @@ add(a: 1, b: 2)
 Named parameters can be defined in their own object and then passed in with the `&` operator as well. The named parameters in the function can also be collected into a single variable using `as`. 
 
 ```
-Options :: { enabled: Bool }
-doThing(key: Str) & Options as options =
-    if options.enabled:
+Settings :: { enabled: Bool }
+doThing(key: Str) & Settings as settings =
+    if settings.enabled:
         Some(callApi(key))
     else:
         None
 
-options = Options(enabled: true)
+settings = Settings(enabled: True)
 
-doThing("foo", &options)   -- Spreads `options` into the arguments.
+doThing("foo", &settings)      -- Spreads `settings` into the arguments.
+doThing("foo", enabled: True)  -- Or passed as a named parameter.
 ```
 
 See [Tuples](#Tuples) for more details on the `&` operator.
@@ -591,7 +592,7 @@ x = default Char   -- == '\0'
 x = default Str    -- == ""
 ```
 
-`default` can also infer the type. This can be useful in certain situations, like if you want to leave a function that returns somethng empty so that you can implement it later.
+`default` can also infer the type. This can be useful in certain situations, like if you want to leave a function that returns something empty so that you can implement it later.
 
 ```
 implementLater(): Int = default
@@ -654,7 +655,7 @@ print(str3)
 -- Prints "This string is broken into multiple parts."
 ```
 
-You can also write multi-line strings with `"""`. A common issue in programming languages is how to fix the issue of leading whitespace in a multi-line string. Mulang uses significant whitespace, so unintenting the string wouldn't work. We don't want all the leading whitespace to be in the string, but how do we solve this? Whitespace is trimmed based on the positions of the last `"""`. Anything before it is automatically trimmed. Much like blocks, having too little indentation is a syntax error inside multi-line strings. This helps keep things readable and consistent and solves the whitespace issue inside strings.
+You can also write multi-line strings with `"""`. A common issue in programming languages is how to fix the issue of leading whitespace in a multi-line string. Mulang uses significant whitespace, so unindenting the string wouldn't work. We don't want all the leading whitespace to be in the string, but how do we solve this? Whitespace is trimmed based on the positions of the last `"""`. Anything before it is automatically trimmed. Much like blocks, having too little indentation is a syntax error inside multi-line strings. This helps keep things readable and consistent and solves the whitespace issue inside strings.
 
 ```
 myStr =
@@ -672,7 +673,7 @@ myStr =
     """
 ```
 
-You can write a raw string with `''...''` (two apostrophes). Although apostrophes `'` are used for chars, an empty Char isn't possible since the default Char is written `'\0'` (null character). This is a common practice in programming languages where `"` mark formattable strings and `'` mark raw strings, so this should be easy to understand for anyone. When you write `''`, every character after it (including whitespace and intentation) is in the string until the closing `''`. Escaping with backslashes `\` and insertion with curly braces `{}` are ignored.
+You can write a raw string with `''...''` (two apostrophes). Although apostrophes `'` are used for chars, an empty Char isn't possible since the default Char is written `'\0'` (null character). This is a common practice in programming languages where `"` mark formattable strings and `'` mark raw strings, so this should be easy to understand for anyone. When you write `''`, every character after it (including whitespace and indentation) is in the string until the closing `''`. Escaping with backslashes `\` and insertion with curly braces `{}` are ignored.
 
 ```
 rawString = ''It's okay to put an apostrophe (') in the string.''
@@ -690,11 +691,11 @@ bigDocument = ''
 
 > What if you have a raw string with two apostrophes in a row inside it?
 
-That's an edge case not worth persuing. The double apostrophes `''` syntax isn't perfect, but it's at least something. For anything more complicated, it's likely better to save the string to a document and open it as a file, which will be handled by a separate library and lies outside the scope of this document.
+That's an edge case not worth pursuing. The double apostrophes `''` syntax isn't perfect, but it's at least something. For anything more complicated, it's likely better to save the string to a document and open it as a file, which will be handled by a separate library and lies outside the scope of this document.
 
 #### Arrays
 
-Array types are declared with the hash symbol (`#`). This was chosen because the `#` is commonly used for numbers in English. For example, `#1` is read as `number 1`. A number after the `#` makes it a fixed length array `type#N`. Arrays statically sized when written as `type#N`; `type#` is the dynamic form. Items are separated with commas (`,`). The hash symbol is also used for accessing an array, giving a clear visible mirror between the two. Other languages use `[]` for indexing, but that has another meaning in Mulang which is explained in the proceeding example.
+Array types are declared with the hash symbol (`#`). This was chosen because the `#` is commonly used for numbers in English. For example, `#1` is read as `number 1`. A number after the `#` makes it a fixed length array `type#N`. Arrays are statically sized when written as `type#N`; `type#` is the dynamic form. Items are separated with commas (`,`). The hash symbol is also used for accessing an array, giving a clear visible mirror between the two. Other languages use `[]` for indexing, but that has another meaning in Mulang which is explained in the subsequent example.
 
 ```
 list: Int#4 = [1, 2, 3, 4]
@@ -761,11 +762,11 @@ ptr = @y
 print("{ptr^}")  -- Prints "2", points to y
 ```
 
-Consider this a work in progress. This will need more testing to figure out the best way to handle pointers. Some featues like memory allocation and safe pointers will probably be implemented through a standard library. 
+Consider this a work in progress. This will need more testing to figure out the best way to handle pointers. Some features like memory allocation and safe pointers will probably be implemented through a standard library. 
 
 #### Unknown Type
 
-There are some cases where the type can't be infered right away in which case the thing in question gets typed as `Unknown`. This is an internal type for the compiler to use when it doesn't know what something is, such as a variable that is defined later in the program. The compiler will try to resolve it, and if it doesn't, it will throw an error. 
+There are some cases where the type can't be inferred right away in which case the thing in question gets typed as `Unknown`. This is an internal type for the compiler to use when it doesn't know what something is, such as a variable that is defined later in the program. The compiler will try to resolve it, and if it doesn't, it will throw an error. 
 
 Sometimes with FFI, we don't really know nor care what the actual type to a pointer is. We just know that it's a pointer to something. In that case, we can type it as `^Unknown`. This pointer type is always immutable&mdash;i.e. no `^mu Unknown`&mdash;and dereferencing it will throw a compile-time error. 
 
@@ -1294,7 +1295,7 @@ To implement a prototype onto another type, you add the proto's name after `impl
 ```
 MyStruct :: impl MyPrototype
     speak(self) =
-        "I am a MyStruct \{ x={self.x}, y={self.y} }"
+        "I am a MyStruct \{ name={self.name}, value={self.value} }"
 
 MyEnum :: impl MyPrototype
     speak(self) =
