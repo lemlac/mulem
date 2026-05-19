@@ -1492,7 +1492,7 @@ How this is implemented is outside of the scope of this document. That will be s
 
 ## Keywords
 
-There are 47 keywords in total:
+There are 46 keywords in total:
 
 * `and`
 * `as`
@@ -1527,7 +1527,7 @@ There are 47 keywords in total:
 * `raise`
 * `ref`
 * `return`
-* `self`/`Self`
+* `self`
 * `sizeof`
 * `struct`
 * `then`
@@ -1541,6 +1541,8 @@ There are 47 keywords in total:
 * `where`
 * `while`
 * `yield`
+
+*NOTE: `Self` is a variable and not a keyword.*
 
 ---
 
