@@ -266,6 +266,8 @@ x = 1
 doSomething(x)   -- This is okay.
 ```
 
+See [`undefined`](#undefined) for more detials about what it means and it's uses.
+
 Assigning to the variable for the rest of the scope and any sub-scopes will mutate the variable. The exception to this is functions which always set a new variable unless its been explicitly captured. (See [Capturing](#Capturing-capture).)
 
 ```
@@ -400,7 +402,7 @@ mu y = 0
 increment(y)
 ```
 
-What each modifier means changes the functionality and the function's purity:
+What each modifier means changes the functionality:
 
 | Modifiers | What it does |
 |:--|:--|
@@ -467,7 +469,7 @@ print("{count}, {squared}, {cubed}") -- Prints "3, 9, 27"
 
 #### Lambda Functions
 
-You can define a function within an expression with the keyword `fn` in the pattern `fn(_) = _`. This is useful for passing functions to other functions. If the lambda function has multiple lines, it must terminate with `end`. As mentioned before, the purity of the lambda must match the function that it's being passed to.
+You can define a function within an expression with the keyword `fn` in the pattern `fn(_) = _`. This is useful for passing functions to other functions. If the lambda function has multiple lines, it must terminate with `end`.
 
 ```
 map(array, func) = [++for x in array then func(x)]
@@ -733,7 +735,7 @@ print("{xPtr^}")  -- Prints "0", because it's still referencing the old x.
 -- This might lead to a crash.
 ```
 
-Pointers can also be treated as numbers. The resulted type is `^unknown` by default which means it can't be dereferenced unless it's been casted to a known pointer type. Use `^type(_)` to cast a pointer to a different type. Although pointer arithmetic is possible, it's not recommended because it can easily lead to crashes. This should be reserved for low-level code. 
+Pointers can also be treated as numbers. The resulted type is `^Unknown` by default which means it can't be dereferenced unless it's been casted to a known pointer type. Use `^type(_)` to cast a pointer to a different type. Although pointer arithmetic is possible, it's not recommended because it can easily lead to crashes. This should be reserved for low-level code. 
 
 ```
 x = 0
@@ -763,12 +765,12 @@ Consider this a work in progress. This will need more testing to figure out the 
 
 #### Unknown Type
 
-There are some cases where the type can't be infered right away in which case the thing in question gets typed as `unknown`. This usually gets resolved eventually, and if it doesn't, the compiler should throw an error. 
+There are some cases where the type can't be infered right away in which case the thing in question gets typed as `Unknown`. This is an internal type for the compiler to use when it doesn't know what something is, such as a variable that is defined later in the program. The compiler will try to resolve it, and if it doesn't, it will throw an error. 
 
-Sometimes with FFI, we don't really know nor care what the actual type to a pointer is. We just know that it's a pointer to something. In that case, we can type it as `^unknown`. This pointer type is always immutable&mdash;i.e. no `^mu unknown`&mdash;and dereferencing it will throw a compile-time error. 
+Sometimes with FFI, we don't really know nor care what the actual type to a pointer is. We just know that it's a pointer to something. In that case, we can type it as `^Unknown`. This pointer type is always immutable&mdash;i.e. no `^mu Unknown`&mdash;and dereferencing it will throw a compile-time error. 
 
 ```
-result: ^unknown = ExternalLib.getSomething()
+result: ^Unknown = ExternalLib.getSomething()
 (--
 result ^= 64                          -- This is forbidden.
 --)
@@ -806,13 +808,14 @@ keyword[ subject]:
 
 #### `undefined`
 
-This marks that something should not be used. If the compiler detects that a code is using an `undefined` somewhere, it throws an error.
+This marks that something should not be used. If the compiler detects that a code is using an `undefined` somewhere, it throws an error. `undefined` itself is a special keyword and not a variable. It's a way to tell the compiler that this should not be used because it would lead to undefined behavior. 
 
 ```
-unusedFn() =
-    undefined
+unsetVariable: mu Int = undefined
 
--- `unusedFn` cannot be used.
+unusedFn() = undefined
+
+-- `unsetVariable` and `unusedFn` cannot be used.
 ```
 
 #### `then`
@@ -860,6 +863,24 @@ case Third{val}:
 -- Inline form
 message = (match e case OpenError { filename } then "Open error: {filename}" case _ then "Unknown error")
 ```
+
+Don't ask if this is allowed because the answer is **NO**:
+
+```
+(--
+-- This is a syntax error:
+match self
+    case First:
+        print("First")
+    case Second(x):
+        print("Second({x})")
+    case Third{val}:
+        print("Third \{ val={val} }")
+-- Too much indentation on each `case` block.
+--)
+```
+
+If you don't like that, use a different programming language.
 
 #### `if case`
 
@@ -1404,7 +1425,7 @@ List T N :: impl
 
 ### Manual Implementation
 
-Generics will automatically generate code based on their parameters, but you can also implement them by hand using pattern matching. If you only want to use the manual implementations for a generic function, you can set its body to `undefined`. This creates a virtual function that can be overloaded later. If you use a function that is defined as `undefined`, it will throw a compile-time error.
+Generics will automatically generate code based on their parameters, but you can also implement them by hand using pattern matching. If you only want to use the manual implementations for a generic function, you can set its body to `undefined`. This creates a virtual function that can be overloaded later. If you use a function that is defined as `undefined`, it will throw a compile-time error. (See [`undefined`](#undefined) for more detials.)
 
 ```
 -- Forces every type to have its own implementation
@@ -1535,14 +1556,13 @@ How this is implemented is outside of the scope of this document. That will be s
 39. `type`
 40. `typeof`
 41. `undefined`
-42. `unknown`
-43. `until`
-44. `void`
-45. `where`
-46. `while`
-47. `yield`
+42. `until`
+43. `void`
+44. `where`
+45. `while`
+46. `yield`
 
-*NOTE: `Self` (uppercase) is a variable and not a keyword, not to be confused with `self` (lowercase) which is used to signify a method can be used on an instance of a type.*
+*NOTE: `Self` (uppercase) is a variable and not a keyword, not to be confused with `self` (lowercase) which is a keyword used to signify a method can be used on an instance of a type. See [Implementation](#Implementing-impl).*
 
 ---
 
