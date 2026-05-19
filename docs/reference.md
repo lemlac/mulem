@@ -103,7 +103,7 @@ All subsequent expressions within a block should have the same indentation. If a
 
 ## Operators
 
-The philosophy of Mulang is that symbols should be easy to understand and that generally keywords are preferred over symbols. Most symbols are consistent with their contextual meaning, for example `*` and `/` relate to math, `~` relates to bitwise operators, `!` relates to exceptions, `&` relates to tuples, etc.. There's also a common pattern where repeating an operator gets you a more advanced version of that operator, for example: `+` addition vs `++` concatenation, `*` multiplication vs `**` exponentiation, `/` division vs `//` floor division, and `%` standard modulo vs `%%` floor division modulo. Mulang will check any combination of symbols greedily until the next space or word, so for example `++` would be different from `+ +`. Spaces are required between multiple symbolic operators, much like how spaces are required between words. Symbol characters include any ASCII character that isn't alphanumeric, whitespace, quotation marks, delimiters, or brackets&mdash;in other words these symbols: `~!@#$%^&*-+=|\:<.>/?`.
+The philosophy of Mulang is that symbols should be easy to understand and that generally keywords are preferred over symbols. Most symbols are consistent with their contextual meaning, for example `*` and `/` relate to math, `~` relates to bitwise operators, `!` relates to exceptions, `&` relates to tuples, etc.. There's also a common pattern where repeating an operator gets you a more advanced version of that operator, for example: `+` addition vs `++` concatenation, `*` multiplication vs `**` exponentiation, `/` division vs `//` floor division, and `%` standard modulo vs `%%` floor division modulo. Mulang will check any combination of symbols greedily until the next space or word, so for example `++` would be different from `+ +`. Spaces are required between multiple symbolic operators, much like how spaces are required between words. Symbol characters include any ASCII character that isn't alphanumeric, whitespace, quotation marks, delimiters, or brackets&mdash;in other words these symbols: `~!@#$%^&*-+=|\:<.>/?`. There may be operator overloading in the future, so even if an operator could be broken into smaller parts, it's considered a unique operator even if it has no meaning. Because of that, long sequences of operators need to be broken up into their separate symbols. From example `a+++b`, the compiler will see `+++` as one operator instead of as `++` and `+`. You would need to say `a++ +b` to make sure it's clear that it's 2 operators and not one. This not only helps the parser but also helps the coder when reading the code. There are exceptions to this rule: `--` is **always** a comment no matter what, and `^` can be chained for pointer dereferencing.
 
 **Algebra:**
 
@@ -140,6 +140,8 @@ The philosophy of Mulang is that symbols should be easy to understand and that g
 - `~ rhs` &mdash; bitwise NOT
 - `lhs << rhs` &mdash; bitshift left
 - `lhs >> rhs` &mdash; bitshift right
+
+*NOTE: The `~` in `~and` and `~or` cannot have a space after it. They are joined together.*
 
 **Arrays:**
 
@@ -266,7 +268,7 @@ x = 1
 doSomething(x)   -- This is okay.
 ```
 
-See [`undefined`](#undefined) for more detials about what it means and it's uses.
+See [`undefined`](#undefined) for more details about what it means and its uses.
 
 Assigning to the variable for the rest of the scope and any sub-scopes will mutate the variable. The exception to this is functions which always set a new variable unless its been explicitly captured. (See [Capturing](#Capturing-capture).)
 
@@ -671,6 +673,23 @@ myStr =
     But three quotation marks like \""" need to be escaped.
     This is the last line because of the closing quotation marks below it.
     """
+
+print(myStr)
+```
+
+What it will print:
+
+```
+Hello.
+This string has multiple lines.
+  This line will start with 2 spaces in the string.
+
+The lines above and below this are empty.
+
+One quotation mark is fine (").
+Two quotation marks are fine too ("").
+But three quotation marks like """ need to be escaped.
+This is the last line because of the closing quotation marks below it.
 ```
 
 You can write a raw string with `''...''` (two apostrophes). Although apostrophes `'` are used for chars, an empty Char isn't possible since the default Char is written `'\0'` (null character). This is a common practice in programming languages where `"` mark formattable strings and `'` mark raw strings, so this should be easy to understand for anyone. When you write `''`, every character after it (including whitespace and indentation) is in the string until the closing `''`. Escaping with backslashes `\` and insertion with curly braces `{}` are ignored.
@@ -749,6 +768,13 @@ print("prev: {prev^}")   -- This will probably crash too.
 
 Mutable pointers are marked with `^mu type`. The reference must also be a mutable type. Although it's pointing to a mutable variable, the actual pointer variable itself is immutable. You would need another `mu` before the caret to change the pointer, marked as `mu ^type` or `mu ^mu type`.
 
+| Pointer Type | Meaning | Can mutate target? | Can point to something else? |
+|:--|:--|:-:|:-:|
+| `^T` | immutable pointer to immutable T | ☐ | ☐ |
+| `^mu T` | immutable pointer to mutable T | ☑ | ☐ |
+| `mu ^T` | mutable pointer to immutable T (pointer can change, target cannot) | ☐ | ☑ |
+| `mu ^mu T` | mutable pointer to mutable T | ☑ | ☑ |
+
 ```
 x: mu Int = 0
 xPtr: ^mu Int = @x
@@ -762,7 +788,7 @@ ptr = @y
 print("{ptr^}")  -- Prints "2", points to y
 ```
 
-Consider this a work in progress. This will need more testing to figure out the best way to handle pointers. Some features like memory allocation and safe pointers will probably be implemented through a standard library. 
+Consider this a work in progress and subject to change. This will need more testing to figure out the best way to handle pointers. Some features like memory allocation and safe pointers will probably be implemented through a standard library. 
 
 #### Unknown Type
 
@@ -809,7 +835,7 @@ keyword[ subject]:
 
 #### `undefined`
 
-This marks that something should not be used. If the compiler detects that a code is using an `undefined` somewhere, it throws an error. `undefined` itself is a special keyword and not a variable. It's a way to tell the compiler that this should not be used because it would lead to undefined behavior. 
+This marks that something should not be used. If the compiler detects that a code is using an `undefined` somewhere, it throws an error. `undefined` itself is a special keyword and not a variable. It's a way to tell the compiler that this should not be used because it would lead to undefined behavior. The compiler will perform definite‑assignment analysis for `out` and `undefined` and reject any path where a use might see `undefined`.
 
 ```
 unsetVariable: mu Int = undefined
@@ -903,7 +929,7 @@ for x in list:
     print("{x}")
 ```
 
-If inlined, it returns an iterator which will lazily execute when spread with `++` or passed into another `for _ in` loop. 
+If inlined, it returns an iterator `Iter T` which is lazily executed. It won't activate until it's collected in an array with `++` or passed into another `for _ in` loop. 
 
 ```
 iterator = for x in list then x * 2
@@ -1220,7 +1246,7 @@ Instantiate a struct by calling it like a function. Each member is treated as a 
 myObject = MyStruct(name: "Foobar", value: 1)
 ```
 
-Structs are transparent. They can be destructured like named arrays. Use `@opaque` if you need to disable this. That will treat the struct type as an opaque type. This will also prevent it from being inheritted with `inherit` since that relies on destructuring. (See [Inheritance and Visibility](Inheritance-and-Visibility).) *Inheriting from any opaque type is a compile time error.*
+Structs are transparent. They can be destructured like named arrays. Use `@opaque` if you need to disable this. That will treat the struct type as an opaque type. This will also prevent it from being inherited with `inherit` since that relies on destructuring. (See [Inheritance and Visibility](Inheritance-and-Visibility).) *Inheriting from any opaque type is a compile time error.*
 
 ```
 TransparentThing :: struct
@@ -1310,7 +1336,7 @@ MyEnum :: impl MyPrototype
 
 ## Inheritance and Visibility
 
-Even though structs cannot be extended the usual way, they can inherit from other structs using the `inherit` keyword. This works similar to importing. It marks members that map to members of another struct, making conversion possible. It follows the same convention for pattern matching as destructuring. (See [Destructuring](#Destructuring).) The struct being inheritted must not be `@opaque` our else it's a compile-time error. 
+Even though structs cannot be extended the usual way, they can inherit from other structs using the `inherit` keyword. This works similar to importing. It marks members that map to members of another struct, making conversion possible. It follows the same convention for pattern matching as destructuring. (See [Destructuring](#Destructuring).) The struct being inherited must not be `@opaque` or else it's a compile-time error. 
 
 ```
 Vector2 :: struct
@@ -1329,7 +1355,7 @@ print("{radius2d(v3)}") -- This works because Vector3 inherits from Vector2.
 
 When you inherit, you don't just pick out some members. The entire parent struct is resides in the child struct in memory, but only some members are visible. 
 
-All members of a type are public by default. When making a subtype, inherited members become private to the subtype unless explicitly redeclared with `inherit`. This encourages separating public and private data into distinct types rather than using access modifiers. If you only inherit some fields but not all, you must put a `_` at the end of the tuple list to mark that not all members are inheritted. 
+All members of a type are public by default. When making a subtype, inherited members become private to the subtype unless explicitly redeclared with `inherit`. This encourages separating public and private data into distinct types rather than using access modifiers. If you only inherit some fields but not all, you must put a `_` at the end of the tuple list to mark that not all members are inherited. 
 
 ```
 PrivateFields :: struct
@@ -1418,7 +1444,7 @@ print("{ maxAdd.( f(0), g(0) ) (1) }")
 
 ### Where Block
 
-This is used to define what each parameter's type is for an abstract function. It must be the first definition, and any subsequent definitions should have patterns that match the where clause. 
+This is used to define what each parameter's type is for an abstract function. It must be the first definition, and any subsequent definitions should have patterns that match the where clause. On common pattern is simply `type` which indicates that a parameter is any literal type. 
 
 ```
 List T N :: where
@@ -1436,7 +1462,7 @@ List T N :: impl
 
 ### Manual Implementation
 
-Generics will automatically generate code based on their parameters, but you can also implement them by hand using pattern matching. If you only want to use the manual implementations for a generic function, you can set its body to `undefined`. This creates a virtual function that can be overloaded later. If you use a function that is defined as `undefined`, it will throw a compile-time error. (See [`undefined`](#undefined) for more detials.)
+Generics will automatically generate code based on their parameters, but you can also implement them by hand using pattern matching. If you only want to use the manual implementations for a generic function, you can set its body to `undefined`. This creates a virtual function that can be overloaded later. If you use a function that is defined as `undefined`, it will throw a compile-time error. (See [`undefined`](#undefined) for more details.)
 
 ```
 -- Forces every type to have its own implementation
