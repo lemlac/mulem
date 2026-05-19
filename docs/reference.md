@@ -234,7 +234,7 @@ Some operators also allow an equal sign after it to set a variable based on its 
 - `lhs >>= rhs` &mdash; `lhs = lhs >> rhs` &mdash; bitshift right assignment
 - `lhs ++= rhs` &mdash; `lhs = lhs ++ rhs` &mdash; append to an array (not allowed if `lhs` is a fixed length array)
 
-All assignment operators *(except for `as`)* are **void.** This is intentional to prevent bugs and difficult to read code. It's recommend to put all assignment statements on their own seperate lines for clarity. 
+All assignment operators *(except for `as`)* are **void.** This is intentional to prevent bugs and difficult to read code. It's recommend to put all assignment statements on their own separate lines for clarity. 
 
 ### Order of Operations
 
@@ -637,11 +637,11 @@ Multiple variables can also be declared in a `let () in` expression separated by
 sum = let (x = 1, y = 2) in x + y
 ```
 
-The reason `let () in` uses parentheses is so that it won't get confused for the `in` operator on the right-hand side of the equals sign. This makes it sematically clear where the declarations begin and end&mdash;between the parentheses `()`.
+The reason `let () in` uses parentheses is so that it won't get confused for the `in` operator on the right-hand side of the equals sign. This makes it semantically clear where the declarations begin and end&mdash;between the parentheses `()`.
 
 ```
 a = [1, 2, 3]
-b = let (x = 1 in a, y = 2 in a, z = 4 in a) in [x, y z]
+b = let (x = 1 in a, y = 2 in a, z = 4 in a) in [x, y, z]
 ```
 
 `as` sets a value within an expression as a variable within a block's scope. It returns the value of the left-hand side. Unlike `let`, it follows the same rules as `=` for shadowing/mutating. Note that this is slightly different from but consistent with the `as` that's used for aliasing. *`as` the operator* is only used in **expressions**; meanwhile, *`as` for aliases* is only used in **patterns.** *For information on how patterns work, see [Destructuring](#Destructuring).*
@@ -666,7 +666,7 @@ Notation:
 - **Options**: `type?`
 - **Results**: `type!` or `type!E` where `E` is an exception type
 - **Arrays**: `type#` or `type#N` where `N` is the length
-- **Multi-dimensional Arrays**: `type##`, an extra `#` for each dimension, each dimension can be fixed or dyanmic: `type#N#`, `type##N`, `type#N#N`, `type#N##`, etc.
+- **Multi-dimensional Arrays**: `type##`, an extra `#` for each dimension, each dimension can be fixed or dynamic: `type#N#`, `type##N`, `type#N#N`, `type#N##`, etc.
 - **Inferred**: omit the annotation entirely
 
 ### Built-in Types
@@ -1310,7 +1310,7 @@ asyncCollect(n): Async Int# =
 
 #### `defer`
 
-Runs after a function done. For iterator functions, this is when the iterator was broken or exausted. For asynchronous functions, this is when the asynchronous type is resolved or rejected. Each `defer` statement go in reverse order: *first-in last-out*. It can be one line `defer _` or a block `defer:`. Generally though it's just one line such as `defer cleanUp()`. 
+Runs after a function done. For iterator functions, this is when the iterator was broken or exhausted. For asynchronous functions, this is when the asynchronous type is resolved or rejected. Each `defer` statement go in reverse order: *first-in last-out*. It can be one line `defer _` or a block `defer:`. Generally though it's just one line such as `defer cleanUp()`. 
 
 ```
 deferPrint() =
