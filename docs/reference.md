@@ -1193,6 +1193,16 @@ Opaque types such as primitives and enums coerce into a tuple of one, so creatin
 
 Combining empty tuples produces an empty tuple `() & () == ()`. The same is true for empty named tuples `{} & {} == {}`. This also means that empty positional tuples and empty named tuples are equivalent `() == {}`. Both tuples have zero dimensions in both positional and named components; therefore they are equivalent. Saying `() & {} & ()` or `{} & ()` and any combination of empty tuples all produce an empty tuple. If you think about it, this makes sense. They all represent nothing, like a cup that can holds 0mL of water. If you stacked a bunch of 0mL cups, you would still not be able to hold any water in it. Is it even a cup then? That's why empty tuples are treated as `void`, which verbally represents nothing, because they're all nothing. Therefore `void == () == {}`. The 3 types are all the same. 
 
+This also means that a void function and a function that returns an empty tuple are the same.
+
+```
+voidFn(): void = ()
+voidFn(): () = ()
+voidFn(): {} = ()
+```
+
+We say that a void function returns nothing. Well, that's what an empty tuple is: *nothing*. So there isn't any issue here. Maybe in other languages there would be in an issue, but not in Mulang. 
+
 ### Structures (`struct`)
 
 Structs are product types&mdash;or in other words&mdash;plain data containers. They cannot extend other structs, but can inherit members of other structs (see [Inheritance and Visibility](#Inheritance-and-Visibility)).
