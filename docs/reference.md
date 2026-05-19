@@ -272,27 +272,13 @@ cantSetX()
 print("{x}")   -- still 1, cantSetX didn't change it
 ```
 
-#### Rebinding (`let`)
-
-Since using `=` on a mutable variable mutates it, there's no way to create an immutable variable with the same name until you go out of scope. In other languages, you can say `let _ = _` to declare a new variable in scope, but Mulang abandoned this pattern for the simpler `_ = _` one. In order to create a fresh binding to any variable name, you can use the pattern `let _`. Note that there's no equals sign after the variable name. This is to distinguish it from the `let () in` pattern. (See [Inline Binding](#Inline-binding-let-in-and-as).) This is the same as declaring a new variable in scope, allowing you to shadow it without affecting the original variable. Once you exit the scope, the original variable is accessible again as normal. You can also use commas to declare multiple variables at once like `let a, b, c`. The variable names do not have to be already defined. 
+Since using `=` on a mutable variable mutates it, there's no way to create an immutable variable with the same name until you go out of scope. In other languages, you can say `let _ = _` to declare a new variable in scope, but Mulang abandoned this pattern for the simpler `_ = _` one. It's recommended to create a new variable name if you want to make a mutable variable immutable.
 
 ```mu
 mu x = 0
-then:             -- Create a new child scope.
-    x = 1         -- Mutates `x` instead of making a new variable.
-    let x         -- Frees the name `x` in this scope.
-    x = 2         -- Define new `x` without affecting the old `x`.
-    print("{x}")  -- 2
-                  -- Exit scope, `x` is back to the old one.
-print("{x}")      -- 1
-                  -- That's because `x` was mutated once.
-let x             -- Forget about `x` for the rest of the scope.
-                  -- `x` is undefined here.
-x = 3             -- `x` is now defined.
-print("{x}")      -- 3
+then:
+    shadowX = x
 ```
-
-Note that this is an escape hatch, not a common pattern. Other keywords like `unset`, `shadow`, `fresh`, `freeze`, `rebind`, etc. would not work because they are all too ambiguous for this use case. This is the most semantic way of solving this rare issue. 
 
 #### References (`ref`/`ref mu`)
 
@@ -701,91 +687,28 @@ That's an edge case not worth persuing. The double apostrophes `''` syntax isn't
 
 #### Arrays
 
-Array types are declared with the hash symbol (`#`). This was chosen because the `#` is commonly used for numbers in English. For example, `#1` is read as `number 1`.
-
-A number after the `#` makes it a fixed length array `type#N`. Arrays are fixed length by default; however, immutable arrays can be shadowed with different type, so this only matters for mutable arrays. Items are separated with commas (`,`).
-
-The hash symbol is also used for accessing an array, giving a clear visible mirror between the two. Other languages use `[]` for indexing, but that is reserved for a nother meaning in Mulang which is explained below.
+Array types are declared with the hash symbol (`#`). This was chosen because the `#` is commonly used for numbers in English. For example, `#1` is read as `number 1`. A number after the `#` makes it a fixed length array `type#N`. Arrays are fixed length by default for better performance. Items are separated with commas (`,`). The hash symbol is also used for accessing an array, giving a clear visible mirror between the two. Other languages use `[]` for indexing, but that has another meaning in Mulang which is explained in the proceeding example.
 
 ```mu
-list: Float#4 = [1, 2, 3, 4]
+list: Int#4 = [1, 2, 3, 4]
 print("length of list: {len(list)}")
 compressedList = [list#0 + list#1, list#2 + list#3]
-doubleArray = [[1, 2], [3, 4]]
+doubleArray: Int#2#2 = [[1, 2], [3, 4]]
 ```
 
-To make chaining accesses easier, there's a special rule for square brackets: any operator `op` can be expressed with `a[op b]` which is the same as `((a) op (b))`. This can be used together with the index operator `#` to get an item from a matrix or multi-dimensional array.
+To make chaining accesses easier, there's a special rule for square brackets: any operator `op` can be expressed with `a[op b]` which is the same as `((a) op (b))`. This can be used together with the index operator `#` to get an item from a matrix or multi-dimensional array. This helps keep the visual association of `#` for arrays and leaves room for `[]` for other possible uses in the future.
 
 ```mu
 item = doubleArray[#1][#0]  -- 2nd row, 1st column
-print("{item}")             -- 3
+print("{item}")             -- "3"
 ```
 
-One common operator is `++` which spreads an array into another array.
+One other common operator with arrays is `++` which spreads an array into another array. This was chosen because it's also used for concatenation, giving the two operations an obvious connection. Some languages use `...`, but this visually conflicts with the range `..` operator. `++` visually does the job better without any issues.
 
 ```mu
 a = [1, 2, 3]
 b = [0, ++a, 4]    -- == [0, 1, 2, 3, 4]
-```
-
-#### Advanced Arrays and Matrices (optional)
-
-Sometimes in systems programming, we need to write out large arrays. To make this easier and more cost effective, arrays can optionally be delimited with whitespace by putting a vertical pipe `|` immediately inside the brackets like this `[| |]`. Simple arrays don't need this&mdash;this is an advanced way to for writing out arrays that's optional.
-
-```mu
-list: Int#26 = [| 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 |]
-```
-
-**Matrix** is another name for an array of arrays, or 2D array. They can be defined by putting an array in each item inside another array. Continuing this pattern adds additional **dimensions** to the matrix. For every dimension a matrix has, you add a hash `#` to its type.
-
-```mu
-matrix: Int#4#4 = [
-  [  1,  2,  3,  4 ],  -- 1st row
-  [  5,  6,  7,  8 ],  -- 2nd row
-  [  9, 10, 11, 12 ],  -- 3rd row
-  [ 13, 14, 15, 16 ],  -- 4th row
-] -- This matrix is 2D.
-```
-
-Matrices can also be defined using whitespace like with `[| |]`-type arrays. To do so, put a newline after the `[` and then a `|` at the start of each row. Each row must have the same number of columns.
-
-```mu
-matrix: Int#4#4 = [
-  |  1  2  3  4   -- 1st row
-  |  5  6  7  8   -- 2nd row
-  |  9 10 11 12   -- 3rd row
-  | 13 14 15 16   -- 4th row
-] -- This matrix is also 2D.
-```
-
-You can increase the number of dimensions by adding an additional ` |` for each dimension. The lengths of arrays in matching dimensions must be consistent. 
-
-```mu
-matrix4D: Int#2#2#2#2 = [
-  | | |  1  2    -- (0, 0, 0)
-      |  3  4    -- (0, 0, 1)
-    | |  5  6    -- (0, 1, 0)
-      |  7  8    -- (0, 1, 1)
-  | | |  9 10    -- (1, 0, 0)
-      | 11 12    -- (1, 0, 1)
-    | | 13 14    -- (1, 1, 0)
-      | 15 16    -- (1, 1, 1)
-] -- This matrix is 4D.
-```
-
-There are special rules for handling how items are delimited in a whitespace-delimited array/matrix. If any of these rules don't apply, one should put the item in parentheses like `(a+b)`.
-
-1. Constants or variable names: `1`, `'a'`, `"string"`, `x`, etc.
-2. Dot accessors `.`, `^.`, or `?.`: `a.b^.c?.d`
-3. Sub-bracket expression like a tuples `()`/`{}` or sub-arrays `[]`.
-
-For any item in a whitespace-delimited array/matrix, spaces must not be omitted outside of brackets (`()`/`[]`/`{}`). Inside brackets, whitespace is ignored for the parent array. 
-
-Operators that aren't spaced properly will throw a syntax error.
-
-```mu
-[| a (-b) |]   -- OK, array of `a` and negative `b`.
-[| (x + 1) |]  -- This works because `(x + 1)` is in parentheses.
+c = a ++ b         -- == [1, 2, 3, 0, 1, 2, 3, 4]
 ```
 
 #### Pointers
@@ -801,11 +724,11 @@ Note that shadowing a pointer's reference doesn't update the pointer. How the pr
 
 ```mu
 x = 1
-print("{^xPtr}")  -- 0, because it's still referencing the old x.
+print("{^xPtr}")  -- "0", because it's still referencing the old x.
 -- This might lead to a crash.
 ```
 
-Pointers can also be treated as numbers. The resulted type is `^unknown` by default which means it can't be dereferenced unless it's been casted to a known pointer type. Use `^type(_)` to cast a pointer to a different type. 
+Pointers can also be treated as numbers. The resulted type is `^unknown` by default which means it can't be dereferenced unless it's been casted to a known pointer type. Use `^type(_)` to cast a pointer to a different type. Although pointer arithmetic is possible, it's not recommended because it can easily lead to crashes. This should be reserved for low-level code. 
 
 ```mu
 x = 0
@@ -822,13 +745,13 @@ Mutable pointers are marked with `^mu type`. The reference must also be a mutabl
 x: mu Int = 0
 xPtr: ^mu Int = @x
 xPtr ^= 1
-print("{x}")     -- 1
+print("{x}")     -- "1", x was mutated
 
 y = 2
 ptr: mu ^Int = @x
-print("{^ptr}")  -- 1
+print("{^ptr}")  -- "1", points to x
 ptr = @y
-print("{^ptr}")  -- 2
+print("{^ptr}")  -- "2", points to y
 ```
 
 Consider this a work in progress. This will need more testing to figure out the best way to handle pointers. Some featues like memory allocation and safe pointers will probably be implemented through a standard library. 
@@ -892,8 +815,8 @@ Marks a block of code with its own scope that runs only once.
 x = 0
 then:
    x = 1
-   print("{x}")  -- 1, `x` inside the `then` block
-print("{x}")     -- 0, `x` outside the `then` block
+   print("{x}")  -- "1", `x` inside the `then` block
+print("{x}")     -- "0", `x` outside the `then` block
 ```
 
 #### `if` / `else`
@@ -1375,11 +1298,11 @@ Adding a parameter before the double colon (`::`) turns it into a **meta functio
 Analogous to constant values, you can define an inline function or macro by adding a parameter before the double colons and writing an expression after it. Like constants, they don't output a value in memory when compiled, useful for collecting repeated code. Unlike constant functions, they cannot be passed to another function. They are only for inserting an expression. Each parameter is a variable within the expression, so you don't need to wrap them in parentheses `()` like with C macros. 
 
 ```mu
-MAX a b :: if a > b then a else b
-MIN a b :: if a < b then a else b
+max a b :: if a > b then a else b
+min a b :: if a < b then a else b
 ```
 
-You can also have multi-line macros similar to functions. Each meta function creates a new scope. Defining variables that could bleed into the surrounding scope is not allowed. The last expression is the return value.
+You can also have multi-line macros similar to functions. Each meta function creates a new scope. Defining variables that could bleed into the surrounding scope is not allowed. The last expression is the return value. Call it like a function using `.()`. 
 
 ```mu
 doSomethingComplicated x ::
@@ -1387,17 +1310,16 @@ doSomethingComplicated x ::
     x = x / 2
     x * x
 
-value = doSomethingComplicated 3
+value = doSomethingComplicated.(3)
 ```
 
 This is the same as this:
 
 ```mu
-value = (::
+value =
     x = (3) + 1
     x = x / 2
     x * x
-end)
 ```
 
 The compiler will read the body of the macro and understand where to insert its parameters, so if a parameter gets shadowed, then it will no longer insert it for the rest of that scope. 
@@ -1409,43 +1331,35 @@ Option T :: enum
     Some(T)
     None
 
-Some T :: fn(x: T) = (Option T).Some(x)
+Some T :: fn(x: T) = Option.(T).Some(x)
 
 maybeInt = Some(1)
 ```
 
-Type parameters can be omitted at the call site if they can be fully inferred from the value arguments, in which case the call uses parentheses like a regular function. It can also be called explicitly by either making an alias for it or putting the abstract function in parentheses first and then calling it.
+Type parameters can be omitted at the call site if they can be fully inferred from the value arguments, in which case the call uses parentheses like a regular function. It can also be called explicitly by making an alias for it.
 
 ```mu
 SomeInt :: Some Int
 maybeInt = SomeInt(1)
+```
 
--- Or in one line:
-maybeInt = (Some Int)(1)
--- Or like this:
+When used as a type, only spaces are needed to delimit arguments just like how it's written when being defined. This is the recommend way of writing meta functions. Sometimes you need to call them in an expression instead of as type notation. In that cause, you need to use `.()` to call it like you would for a normal function. This is awkward in most cases, so it's recommended to use type inference instead. 
+
+```mu
 maybeInt = Some.(Int)(1)
 ```
 
-Arguments must be constants or variables and accessors since parentheses would get confused for a function call. You can store an expression inside a constant and pass that instead. 
+Some more examples using the `.()` notation:
 
 ```mu
-ARG1 :: 1 + 2
-ARG2 :: 3 + 4
-print("{ MAX ARG1 ARG2 }")
-```
+max a b :: if a > b then a else b
+min a b :: if a < b then a else b
+print("{ max.(0, 1) }")           -- "1"
+print("{ min.(0, 1) }")           -- "0"
+print("{ MAX.(1+2, 3+4) }")       -- "7"
 
-Arguments can also be function calls. If a meta function itself returns a regular function, the meta function call should be enclosed in parentheses.
-
-```mu
-MAXADD a b :: if a > b then fn(c) = a + c else fn(c) = b + c
-print("{ ( MAXADD f(0) g(0) )(1) }")
-```
-
-The alternative option is to use the pattern `.()` to call meta functions in a conventional way. This removes any ambiguity that whitespace delimited arguments would have. You can use commas in the parameter like you would with a normal function. 
-
-```mu
-print("{ MAX.(1+2, 3+4) }")
-print("{ MAXADD.(f(0), g(0))(1) }")
+maxAdd a b :: if a > b then fn(c) = a + c else fn(c) = b + c
+print("{ ( maxAdd.(f(0), g(0))(1) }")
 ```
 
 ### Where Block
