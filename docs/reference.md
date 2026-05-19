@@ -56,10 +56,10 @@ To split one expression into multiple lines, you must wrap it in parentheses. Th
       word4)
 ```
 
-Adding a newline and indentations after a `:` or `=` starts a block. A **block** wraps multiple expressions into one. The last expression evaluated in a block becomes its value. The most basic block type is `::` which runs a block only once.
+Adding a newline and indentations after a `:` or `=` starts a block. A **block** wraps multiple expressions into one. The last expression evaluated in a block becomes its value. The most basic block type is `then` which runs a block only once.
 
 ```mu
-::
+then:
     expr
     expr
 ```
@@ -68,13 +68,13 @@ Indentation marks the end of the block. If a block is inside of another expressi
 
 ```mu
 
-::
-    ::
+then:
+    then:
         expr
                  -- Ends both blocks.
 
-(::
-    ::
+(then:
+    then:
         expr
 end)             -- Required here since the block is in parentheses.
 ```
@@ -263,7 +263,7 @@ Assigning to the variable for the rest of the scope and any sub-scopes will muta
 
 ```mu
 x: mu Int = 0
-::
+then:
     x = 1
 print("{x}")   -- 1, x was mutated
 cantSetX() =
@@ -278,7 +278,7 @@ Since using `=` on a mutable variable mutates it, there's no way to create an im
 
 ```mu
 mu x = 0
-::                -- Create a new child scope.
+then:             -- Create a new child scope.
     x = 1         -- Mutates `x` instead of making a new variable.
     let x         -- Frees the name `x` in this scope.
     x = 2         -- Define new `x` without affecting the old `x`.
@@ -647,8 +647,8 @@ Strings can be formatted with curly braces (`{expr}`) in the string. Use a backs
 
 ```mu
 name = "world"  
-hello = "Hello, {world}!"
-helloEscaped = "Hello, \{world}!"
+hello = "Hello, {name}!"
+helloEscaped = "Hello, \{name}!"
 ```
 
 Subsequent string literals will automatically concatenate, and the `++` operator can be used to concatenate non-literal strings.
@@ -701,7 +701,11 @@ bigDocument = ''
 
 #### Arrays
 
-Array types are declared with the hash symbol (`#`). A number after the hash makes it a fixed length array. Arrays are fixed length by default; however, immutable arrays can be shadowed with different type, so this only matters for mutable arrays. Items are separated with commas (`,`). The hash symbol is also used for accessing an array.
+Array types are declared with the hash symbol (`#`). This was chosen because the `#` is commonly used for numbers in English. For example, `#1` is read as `number 1`.
+
+A number after the `#` makes it a fixed length array `type#N`. Arrays are fixed length by default; however, immutable arrays can be shadowed with different type, so this only matters for mutable arrays. Items are separated with commas (`,`).
+
+The hash symbol is also used for accessing an array, giving a clear visible mirror between the two. Other languages use `[]` for indexing, but that is reserved for a nother meaning in Mu which is explained below.
 
 ```mu
 list: Float#4 = [1, 2, 3, 4]
@@ -880,16 +884,16 @@ unusedFn() =
 -- `unusedFn` cannot be used.
 ```
 
-#### `::`
+#### `then`
 
 Marks a block of code with its own scope that runs only once.
 
 ```mu
 x = 0
-::
+then:
    x = 1
-   print("{x}")  -- 1, `x` inside the `::` block
-print("{x}")     -- 0, `x` outside the `::` block
+   print("{x}")  -- 1, `x` inside the `then` block
+print("{x}")     -- 0, `x` outside the `then` block
 ```
 
 #### `if` / `else`
