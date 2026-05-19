@@ -1025,7 +1025,7 @@ until cond
 `loop`/`until` is arguably a better choice than `do`/`while` because it's more descriptive of what it's doing. *"Loop until this is true."* You can visually see that the condition is true after the `loop`/`until` block is finished, whereas you would need to invert the condition in your head for a `do`/`while` loop. It acts as a blockade to wait until a certain condition is true.
 
 ```
-mu: i = 0
+mu i = 0
 loop:
     i += 1
 until i >= 10
