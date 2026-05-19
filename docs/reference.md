@@ -84,7 +84,7 @@ end)             -- Required here since the block is in parentheses.
 end)             -- Use only one `end` to end to whole block.
 ```
 
-You probably think "Don't you need another `end` for the inner block?" No, and this is intentional. Mulang uses signficant whitepsace, so only indentation matters. The exception to this is inside an expression such a between parentheses. Then you need some way to exit out of the block, and `end` is the answer to that. That's the signal to make the switch from block mode back to inline mode. 
+You probably think "Don't you need another `end` for the inner block?" No, and this is intentional. Mulang uses significant whitespace, so only indentation matters. The exception to this is inside an expression such a between parentheses. Then you need some way to exit out of the block, and `end` is the answer to that. That's the signal to make the switch from block mode back to inline mode. 
 
 Some keywords can be inlined or blocked based on whether they use a `:` or not. 
 
@@ -114,7 +114,7 @@ The philosophy of Mulang is that symbols should be easy to understand and that g
 - `lhs / rhs` &mdash; division
 - `lhs // rhs` &mdash; floored division (rounded down)
 - `lhs % rhs` &mdash; modulo (sign matches `lhs`)
-- `lhs %% rhs` &mdash; floor division modulo (sign matches `rhs`)
+- `lhs %% rhs` &mdash; floor division modulo (sign matches `rhs`, result is between `[0, rhs)` if `rhs` is positive or `(rhs, 0]` if `rhs` is negative)
 - `lhs ** rhs` &mdash; exponential
 
 **Comparison:**
@@ -272,11 +272,11 @@ Assigning to the variable for the rest of the scope and any sub-scopes will muta
 x: mu Int = 0
 then:
     x = 1
-print("{x}")   -- 1, x was mutated
+print("{x}")   -- Prints "1", x was mutated
 cantSetX() =
     x = 2
 cantSetX()
-print("{x}")   -- still 1, cantSetX didn't change it
+print("{x}")   -- Prints "1" again, cantSetX didn't change it
 ```
 
 Since using `=` on a mutable variable mutates it, there's no way to create an immutable variable with the same name until you go out of scope. In other languages, you can say `let _ = _` to declare a new variable in scope, but Mulang abandoned this pattern for the simpler `_ = _` one. It's recommended to create a new variable name if you want to make a mutable variable immutable.
@@ -300,7 +300,7 @@ A reference type points to the same spot in memory as another variable. It's lik
 mu x = 0
 ref mu xRef = x
 xRef = 1
-print("x is {x}")   -- "x is 1"
+print("x is {x}")   -- Prints "x is 1"
 ```
 
 See [Pointers](#Pointers) for more details.
@@ -383,9 +383,9 @@ action: mu fn(Int, Int): Int
 add(a, b) = a + b
 sub(a, b) = a - b
 action = add
-print("1 + 1 = {action(1, 1)}")  -- 2
+print("1 + 1 = {action(1, 1)}")  -- Prints "2"
 action = sub
-print("1 - 1 = {action(1, 1)}")  -- 0
+print("1 - 1 = {action(1, 1)}")  -- Prints "0"
 ```
 
 #### Mutable / Reference parameters
@@ -417,14 +417,14 @@ setInt(out i) =
 
 x: mu Int
 setInt(x)
-print("{x}")    -- 3
+print("{x}")    -- Prints "3"
 ```
 
 This works for mutable variables, but what if you wanted to make an immutable variable using `out`? You can do this by using `out` again while calling a function to declare it as an immutable variable in the current scope. 
 
 ```mu
-setInt(out n)
-print("{n}")    -- 3
+setInt(out n)   -- Declare a new variable `n` that gets set by `setInt`.
+print("{n}")    -- Prints "3"
 ```
 
 #### Capturing (`capture`)
@@ -443,8 +443,8 @@ cannotChangeX(newX) =
     x = newX
     print("{x}")
 
-cannotChangeX(2) -- prints 2
-print("{x}")     -- prints 1
+cannotChangeX(2) -- Prints "2"
+print("{x}")     -- Prints "1"
 ```
 
 To capture a mutable variable, you must redeclare it in the function with `capture _`. This helps make it easy to see which functions can mutate other variables and which don't. You can capture multiple variables at once with commas `,`. Each captured variable must be listed. This follows the same practice as `import` and `inherit` where all words in a given context are listed out clearly so that there are no accident name collisions or hidden gotchas.
@@ -462,7 +462,7 @@ addCount() =
 addCount()
 addCount()
 addCount()
-print("{count}, {squared}, {cubed}") -- 3, 9, 27
+print("{count}, {squared}, {cubed}") -- Prints "3, 9, 27"
 ```
 
 #### Lambda Functions
@@ -582,27 +582,25 @@ y: typeof x = 1    -- Ensures that x and y have the same type.
 You can also get the default value of any type with the keyword `default`. The type needs to have a default value defined which is yet to be determined how, but they're already defined for basic types.
 
 ```mu
-x = default Int    -- 0
-x = default Float  -- 0.0
-x = default Bool   -- False
-x = default Char   -- '\0'
-x = default Str    -- ""
+x = default Int    -- == 0
+x = default Float  -- == 0.0
+x = default Bool   -- == False
+x = default Char   -- == '\0'
+x = default Str    -- == ""
 ```
 
 `default` can also infer the type. This can be useful in certain situations, like if you want to leave a function that returns somethng empty so that you can implement it later.
 
 ```mu
-doSomething(): Int =
-    -- TODO: Implement this function.
-    default
+implementLater(): Int = default
 ```
 
 You can also get the size of any type with the keyword `sizeof`. It returns a constant `Uint` (unsigned integer) with the number of bytes of memory that type requires. The exact sizes of some types like `Int` or `Float` might vary, but you can rely on `Char` and `Bool` being 1 byte each. There's also the `void` type which represents no data.
 
 ```mu
-sizeOfBool = sizeof Bool   -- 1
-sizeOfChar = sizeof Char   -- 1
-sizeOfVoid = sizeof void   -- 0
+sizeOfBool = sizeof Bool   -- == 1
+sizeOfChar = sizeof Char   -- == 1
+sizeOfVoid = sizeof void   -- == 0
 ```
 
 You can call a type as a function to convert types into other types if conversion is possible. 
@@ -610,7 +608,7 @@ You can call a type as a function to convert types into other types if conversio
 ```mu
 x = 1
 y = Float(x)
-print("{y}")     -- 1.0
+print("{y}")     -- Prints "1.0"
 ```
 
 #### Booleans
@@ -706,8 +704,8 @@ doubleArray: Int#2#2 = [[1, 2], [3, 4]]
 To make chaining accesses easier, there's a special rule for square brackets: any operator `op` can be expressed with `a[op b]` which is the same as `((a) op (b))`. This can be used together with the index operator `#` to get an item from a matrix or multi-dimensional array. This helps keep the visual association of `#` for arrays and leaves room for `[]` for other possible uses in the future.
 
 ```mu
-item = doubleArray[#1][#0]  -- 2nd row, 1st column
-print("{item}")             -- "3"
+item = doubleArray[#1][#0]  -- The 2nd row, 1st column
+print("{item}")             -- Prints "3"
 ```
 
 One other common operator with arrays is `++` which spreads an array into another array. This was chosen because it's also used for concatenation, giving the two operations an obvious connection. Some languages use `...`, but this visually conflicts with the range `..` operator. `++` visually does the job better without any issues.
@@ -731,7 +729,7 @@ Note that shadowing a pointer's reference doesn't update the pointer. How the pr
 
 ```mu
 x = 1
-print("{xPtr^}")  -- "0", because it's still referencing the old x.
+print("{xPtr^}")  -- Prints "0", because it's still referencing the old x.
 -- This might lead to a crash.
 ```
 
@@ -752,13 +750,13 @@ Mutable pointers are marked with `^mu type`. The reference must also be a mutabl
 x: mu Int = 0
 xPtr: ^mu Int = @x
 xPtr ^= 1
-print("{x}")     -- "1", x was mutated
+print("{x}")     -- Prints "1", x was mutated
 
 y = 2
 ptr: mu ^Int = @x
-print("{ptr^}")  -- "1", points to x
+print("{ptr^}")  -- Prints "1", points to x
 ptr = @y
-print("{ptr^}")  -- "2", points to y
+print("{ptr^}")  -- Prints "2", points to y
 ```
 
 Consider this a work in progress. This will need more testing to figure out the best way to handle pointers. Some featues like memory allocation and safe pointers will probably be implemented through a standard library. 
@@ -825,8 +823,8 @@ Marks a block of code with its own scope that runs only once.
 x = 0
 then:
    x = 1
-   print("{x}")  -- "1", `x` inside the `then` block
-print("{x}")     -- "0", `x` outside the `then` block
+   print("{x}")  -- Prints "1", `x` inside the `then` block
+print("{x}")     -- Prints "0", `x` outside the `then` block
 ```
 
 #### `if` / `else`
@@ -921,13 +919,15 @@ loop:
     break
 ```
 
-Add `until` after a `loop` block to create a condition that will break the loop. Unlike `while`, this will break when the condition is `True`, analogous to `if cond then break`. The loop will run at least once before checking the condition.
+Add `until` after a `loop` block to create a condition that will break the loop. Unlike `while`, this will break when the condition is `True`, analogous to `if cond then break`. This would be a `do while-not` loop in other languages. The reason it doesn't use `while` is because that would start another block, so `until` was chosen instead. This makes it clear that `loop` and `until` are semantically connected since `until` is only used with `loop`.
 
 ```mu
 loop:
     body
 until cond
 ```
+
+The loop will run at least once before checking the condition.
 
 #### `break` / `continue`
 
@@ -954,6 +954,11 @@ Option types automatically flatten in the following manner:
 
 - `Some(Some(_))` = `Some(_)`
 - `Some(None)` = `None`
+
+This is true even for deeply nested options:
+
+- `Some(Some(Some(Some(Some(_)))))` = `Some(_)`
+- `Some(Some(Some(Some(Some(Some(Some(Some(None))))))))` = `None`
 
 #### `try` / `except`
 
@@ -1027,6 +1032,7 @@ isThirteen(x) =
 Return out of the function with an exception value. The function must return a result type `type!`. If an except type is also declared `type!except`, then the type passed to `raise` must match.
 
 ```mu
+-- `type!` is inferred:
 alwaysFail() =
     raise MyError("error message")
 
@@ -1091,7 +1097,7 @@ asyncCollect(n): Async Int# =
 
 ## Meta Bindings (`::`)
 
-Variable and functions primarily use the equals sign (`=`) and are for storing actual data within a program, but there's another type of binding used for abstract values for the compiler to know about such as constants, types, inline-functions, and generics. This type of declaration is constant; in other words, they cannot be mutated or shadowed. However, depending on what it is, subsequent `::` of the same name will modify its definition. 
+Variable and functions primarily use the equals sign (`=`) and are for storing actual data within a program, but there's another type of binding used for abstract values for the compiler to know about such as constants, types, inline-functions, and generics. This type of declaration is **constant**; in other words, they cannot be **mutated** or **shadowed**. Depending on what it is, subsequent `::` of the same name will modify its definition. The most common is `:: impl` with adds methods and static variables to a meta binding. 
 
 ### Constants
 
@@ -1160,7 +1166,9 @@ This makes the algebra quite principled. The only cases where order matters are 
 
 It also means the shorthand `(0, 1, x: 2)` isn't really special syntax. It's the natural representation of a tuple that has both dimensions populated, which any `&` expression across the two types would produce anyway.
 
-Opaque types such as primitives and enums coerce into a tuple of one, so creating a product type of them creates a positional tuple, e.g. `Int & Float & Char` becomes `(Int, Float, Char)`. Structs convert to named tuples unless declared with an `@opaque` decorator, in which case they behave like opaque types. The `void` type coerces to an empty tuple `()`, and combining empty tuples produces an empty tuple `() & () == ()`. The same is true for empty named tuples `{} & {} == {}`. This also means that empty positional tuples and empty named tuples are equivalent `() == {}`. `void` itself is treated as an equivalent of these types: `void == ()` and `void == {}`.
+Opaque types such as primitives and enums coerce into a tuple of one, so creating a product type of them creates a positional tuple, e.g. `Int & Float & Char` becomes `(Int, Float, Char)`. Structs convert to named tuples unless declared with an `@opaque` decorator, in which case they behave like opaque types. The `void` type coerces to an empty tuple `()`.
+
+Combining empty tuples produces an empty tuple `() & () == ()`. The same is true for empty named tuples `{} & {} == {}`. This also means that empty positional tuples and empty named tuples are equivalent `() == {}`. Both tuples have zero dimensions in both positional and named components; therefore they are equivalent. Saying `() & {} & ()` or `{} & ()` and any combination of empty tuples all produce an empty tuple. If you think about it, this makes sense. They all represent nothing, like a cup that can holds 0mL of water. If you stacked a bunch of 0mL cups, you would still not be able to hold any water in it. Is it even a cup then? That's why empty tuples are treated as `void`, which verbally represents nothing, because they're all nothing. Therefore `void == () == {}`. The 3 types are all the same. 
 
 ### Structures (`struct`)
 
@@ -1178,7 +1186,7 @@ Instantiate a struct by calling it like a function. Each member is treated as a 
 myObject = MyStruct(name: "Foobar", value: 1)
 ```
 
-Structs are transparent. They can be destructured like named arrays. Use `@opaque` if you need to disable this. That will treat the struct type as an opaque type. This will also prevent it from being inheritted with `inherit` since that relies on destructuring. (See [Inheritance and Visibility](Inheritance-and-Visibility).)
+Structs are transparent. They can be destructured like named arrays. Use `@opaque` if you need to disable this. That will treat the struct type as an opaque type. This will also prevent it from being inheritted with `inherit` since that relies on destructuring. (See [Inheritance and Visibility](Inheritance-and-Visibility).) *Inheriting from any opaque type is a compile time error.*
 
 ```mu
 TransparentThing :: struct
@@ -1268,7 +1276,7 @@ MyEnum :: impl MyPrototype
 
 ## Inheritance and Visibility
 
-Even though structs cannot be extended the usual way, they can inherit from other structs using the `inherit` keyword. This works similar to importing. It marks members that map to members of another struct, making conversion possible. It follows the same convention for pattern matching as destructuring. (See [Destructuring](#Destructuring).)
+Even though structs cannot be extended the usual way, they can inherit from other structs using the `inherit` keyword. This works similar to importing. It marks members that map to members of another struct, making conversion possible. It follows the same convention for pattern matching as destructuring. (See [Destructuring](#Destructuring).) The struct being inheritted must not be `@opaque` our else it's a compile-time error. 
 
 ```mu
 Vector2 :: struct
@@ -1285,7 +1293,7 @@ radius2d(v: Vector2) = sqrt(v.x*v.x+v.y*v.y)
 print("{radius2d(v3)}") -- This works because Vector3 inherits from Vector2.
 ```
 
-When you inherit, you don't just pick out some members. The entire super type is inherited, but only some members are visible. 
+When you inherit, you don't just pick out some members. The entire parent struct is resides in the child struct in memory, but only some members are visible. 
 
 All members of a type are public by default. When making a subtype, inherited members become private to the subtype unless explicitly redeclared with `inherit`. This encourages separating public and private data into distinct types rather than using access modifiers. If you only inherit some fields but not all, you must put a `_` at the end of the tuple list to mark that not all members are inheritted. 
 
@@ -1364,9 +1372,9 @@ Some more examples using the `.()` notation:
 ```mu
 max a b :: if a > b then a else b
 min a b :: if a < b then a else b
-print("{ max.(0, 1) }")           -- "1"
-print("{ min.(0, 1) }")           -- "0"
-print("{ max.(1+2, 3+4) }")       -- "7"
+print("{ max.(0, 1) }")           -- Prints "1"
+print("{ min.(0, 1) }")           -- Prints "0"
+print("{ max.(1+2, 3+4) }")       -- Prints "7"
 
 f(x) = x * x
 g(x) = x + 2
@@ -1427,7 +1435,7 @@ increment(b)   -- T is inferred as Bool which has no implementation, compile-tim
 
 ## Importing and Modules
 
-Use `import _` to import something, optionally giving the import an alias with `as`. You can either import a single export such as `import a.b.c` or multiple at once using destructuring rules `import a.b{c, d}`. (See [Destructuring](#Destructuring).) All imports must be **explicitly** declared&mdash;no `import a.b.*`. This helps prevent naming conflicts and track where things have been defined.
+Use `import _` to import something, optionally giving the import an alias with `as`. You can either import a single export such as `import a.b.c` or multiple at once using destructuring rules `import a.b{c, d}`. (See [Destructuring](#Destructuring).) Note that there is no `.` before the `{`. This follows the same convention as destructuring with tuples. All imports must be **explicitly** declared&mdash;no `import a.b.*`. This helps prevent naming conflicts and track where things have been defined.
 
 The most common import will likely be the `print` function, which will be defined somewhere in a standard library.
 
@@ -1484,7 +1492,7 @@ How this is implemented is outside of the scope of this document. That will be s
 
 ## Keywords
 
-There are 48 keywords in total:
+There are 47 keywords in total:
 
 * `and`
 * `as`
