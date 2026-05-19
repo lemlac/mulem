@@ -155,7 +155,7 @@ The philosophy of Mulang is that symbols should be easy to understand and that g
 
 - `@ rhs` &mdash; getting the pointer to a variable
 - `lhs ^` &mdash; dereferencing a pointer
-- `lhs ^. rhs` &mdash; access a member of a pointer (same as `(^lhs).rhs`)
+- `lhs ^. rhs` &mdash; access a member of a pointer (same as `(lhs^).rhs`)
 - `lhs ^= rhs` &mdash; set the value of the slot in memory that a pointer is referencing
 
 *Pointer chaining* &mdash; for any `^` operator, you can add `^` to repeatedly dereference a pointer. 
@@ -373,7 +373,7 @@ add3(,1,2, ,3,,) -- This is not okay.
 -- Uncommenting would get an error. --)
 ```
 
-Functions can also be declared with `fn` to be set later. This type is a **function pointer.** It lets you treat functions are variables.
+Functions can also be declared with `fn` to be set later. This type is a **function pointer.** It lets you treat functions as variables.
 
 ```mu
 action: mu fn(Int, Int): Int
@@ -519,7 +519,7 @@ See [Tuples](#Tuples) for more details on the `&` operator.
 
 ### Inline Binding (`let () in` and `as`)
 
-You can also bind variables within an expression using `let () in` and `as`. `let () in` is used for a single expression, where as `as` binds for the rest of the scope.
+You can also bind variables within an expression using `let () in` and `as`. `let () in` is used for a single expression, whereas `as` binds for the rest of the scope.
 
 ```mu
 squared = let (x = getSomething()) in x * x
@@ -728,7 +728,7 @@ Note that shadowing a pointer's reference doesn't update the pointer. How the pr
 
 ```mu
 x = 1
-print("{^xPtr}")  -- "0", because it's still referencing the old x.
+print("{xPtr^}")  -- "0", because it's still referencing the old x.
 -- This might lead to a crash.
 ```
 
@@ -852,7 +852,7 @@ case First:
 case Second(x):
     print("Second({x})")
 case Third{val}:
-    print("Third {{ val={val} }}")
+    print("Third \{ val={val} }")
 
 -- Inline form
 message = (match e case OpenError { filename } then "Open error: {filename}" case _ then "Unknown error")
@@ -1250,7 +1250,7 @@ To implement a prototype onto another type, you add the proto's name after `impl
 ```mu
 MyStruct :: impl MyPrototype
     speak(self) =
-        "I am a MyStruct {{ x={self.x}, y={self.y} }}"
+        "I am a MyStruct \{ x={self.x}, y={self.y} }"
 
 MyEnum :: impl MyPrototype
     speak(self) =
@@ -1260,7 +1260,7 @@ MyEnum :: impl MyPrototype
         case Second(x) then
             "I am a MyEnum of Second({x})"
         case Third{val} then
-            "I am a MyEnum of Third {{ val={val} }}"
+            "I am a MyEnum of Third \{ val={val} }"
 ```
 
 ## Inheritance and Visibility
@@ -1365,6 +1365,8 @@ print("{ max.(0, 1) }")           -- "1"
 print("{ min.(0, 1) }")           -- "0"
 print("{ max.(1+2, 3+4) }")       -- "7"
 
+f(x) = x * x
+g(x) = x + 2
 maxAdd a b :: if a > b then fn(c) = a + c else fn(c) = b + c
 print("{ maxAdd.( f(0), g(0) ) (1) }")
 ```
@@ -1422,7 +1424,7 @@ increment(b)   -- T is inferred as Bool which has no implementation, compile-tim
 
 ## Importing and Modules
 
-Use `import _` to import something, optionally giving the import an alias with `as`. You can either import a single export such as `import a.b.c` or multiple at once using destructuring rules `import a.b{c, d}`. (See [Destructuring](#Destructuring).) All imports must be implicitly declared&mdash;no `import a.b.*`. This helps prevent naming conflicts and track where things have been defined.
+Use `import _` to import something, optionally giving the import an alias with `as`. You can either import a single export such as `import a.b.c` or multiple at once using destructuring rules `import a.b{c, d}`. (See [Destructuring](#Destructuring).) All imports must be **explicitly** declared&mdash;no `import a.b.*`. This helps prevent naming conflicts and track where things have been defined.
 
 The most common import will likely be the `print` function, which will be defined somewhere in a standard library.
 
@@ -1479,7 +1481,7 @@ How this is implemented is outside of the scope of this document. That will be s
 
 ## Keywords
 
-There are 47 keywords in total:
+There are 48 keywords in total:
 
 * `and`
 * `as`
@@ -1496,9 +1498,9 @@ There are 47 keywords in total:
 * `fn`
 * `for`
 * `if`
-* `inherit`
 * `impl`
 * `import`
+* `inherit`
 * `in`
 * `let`
 * `loop`
@@ -1506,9 +1508,9 @@ There are 47 keywords in total:
 * `mod`
 * `mu`
 * `not`
-* `out`
 * `opt`
 * `or`
+* `out`
 * `pass`
 * `proto`
 * `raise`
