@@ -1589,6 +1589,7 @@ There are 47 keywords in total:
 * `opt`
 * `or`
 * `pass`
+* `proto`
 * `raise`
 * `ref`
 * `return`
@@ -1602,7 +1603,6 @@ There are 47 keywords in total:
 * `undefined`
 * `unknown`
 * `until`
-* `proto`
 * `void`
 * `where`
 * `while`
