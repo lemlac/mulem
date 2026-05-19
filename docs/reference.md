@@ -47,7 +47,7 @@ expr; expr
 
 Almost everything is an expression. Some statements can be either inline or block depending on the presence of a new-line. When mixing the two (i.e. a block statement within an inline statement), the `end` keyword is required to exit block mode and return to inline mode. The last statement evaluated in a block is its value. 
 
-To split one expression into multiple lines, you must wrap it in parentheses. The indentation inside the parentheses doesn't matter as long as it's the same as or greater than the opening parenthesis. Semi-colons (`;`) are a syntax error inside parantheses unless inside a block expression within the parentheses.
+To split one expression into multiple lines, you must wrap it in parentheses. The indentation inside the parentheses doesn't matter as long as it's the same as or greater than the opening parenthesis. Semi-colons (`;`) are a syntax error inside parentheses unless inside a block expression within the parentheses.
 
 ```mu
 (word1
@@ -79,7 +79,7 @@ then:
 end)             -- Required here since the block is in parentheses.
 ```
 
-Some keywords can be inlined or blocked based on wether they use a `:` or not. 
+Some keywords can be inlined or blocked based on whether they use a `:` or not. 
 
 ```mu
 if x then "True" else "False"  -- Inline expression.
@@ -174,7 +174,7 @@ Some operators also allow an equal sign after it to set a variable based on its 
 - `lhs /= rhs` &mdash; `lhs = lhs / rhs` &mdash; division assignment
 - `lhs //= rhs` &mdash; `lhs = lhs // rhs` &mdash; floor division assignment
 - `lhs %= rhs` &mdash; `lhs = lhs % rhs` &mdash; modulo assignment
-- `lhs %%= rhs` &mdash; `lhs = lhs %% rhs` &mdash; floor division modulo assignment (binds `lhs` to a range in `0..rhs`)
+- `lhs %%= rhs` &mdash; `lhs = lhs %% rhs` &mdash; floor division modulo assignment (binds `lhs` to a range in `[0, rhs)` if `rhs` is positive or `(rhs, 0]` if `rhs` is negative)
 - `lhs ++= rhs` &mdash; `lhs = lhs ++ rhs` &mdash; append to an array (not allowed if `lhs` is a fixed length array)
 
 ## Basic Bindings
@@ -292,7 +292,7 @@ x = 3             -- `x` is now defined.
 print("{x}")      -- 3
 ```
 
-Note that this is an escape hatch, not a common pattern.
+Note that this is an escape hatch, not a common pattern. Other keywords like `unset`, `shadow`, `fresh`, `freeze`, `rebind`, etc. would not work because they are all too ambiguous for this use case. This is the most semantic way of solving this rare issue. 
 
 #### References (`ref`/`ref mu`)
 
@@ -538,7 +538,7 @@ while next() as val != None:
     print("{val}")
 ```
 
-Multiple variables can be declared in a `let () in` expression seperated by commas.
+Multiple variables can be declared in a `let () in` expression separated by commas.
 
 ```mu
 sum = let (x = 1, y = 2) in x + y
@@ -665,7 +665,7 @@ You can also write multi-line strings. A common issue in programming languages i
 
 1. Start with 3 quotation marks `"""` + a new-line.
 2. Start each line with a single quotation mark `"`.
-3. Close with 3 qutation marks `"""` on the last line.
+3. Close with 3 quotation marks `"""` on the last line.
 
 Whitespace before the starting quotation mark `"` on each line will be ignored. If the next line starts with anything other than a `"` before the string is closed, then it's a syntax error. Each starting `"` needs to be at the same indentation. Whitespace before the `"` is not insterted into the string.
 
@@ -736,7 +736,7 @@ Sometimes in systems programming, we need to write out large arrays. To make thi
 list: Int#26 = [| 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 |]
 ```
 
-**Matrix** is another name for an array of arrays, or 2D array. They can be defined by putting an array in each item inside another array. Continuing this pattern adds aditional **dimensions** to the matrix. For every dimension a matrix has, you add a hash `#` to its type.
+**Matrix** is another name for an array of arrays, or 2D array. They can be defined by putting an array in each item inside another array. Continuing this pattern adds additional **dimensions** to the matrix. For every dimension a matrix has, you add a hash `#` to its type.
 
 ```mu
 matrix: Int#4#4 = [
@@ -758,7 +758,7 @@ matrix: Int#4#4 = [
 ] -- This matrix is also 2D.
 ```
 
-You can increase the number of dimensions by adding an aditional ` |` for each dimension. The lengths of arrays in matching dimensions must be consistent. 
+You can increase the number of dimensions by adding an additional ` |` for each dimension. The lengths of arrays in matching dimensions must be consistent. 
 
 ```mu
 matrix4D: Int#2#2#2#2 = [
@@ -862,7 +862,7 @@ keyword subject then expr
 keyword expr
 ```
 
-The presence of `:` signifies if a keyword is in block mode or inline mode. `then` is used to seperate a subject and expression when a keyword block is inlined. 
+The presence of `:` signifies if a keyword is in block mode or inline mode. `then` is used to separate a subject and expression when a keyword block is inlined. 
 
 #### `pass`
 
@@ -911,7 +911,7 @@ else:
 
 #### `match` / `case`
 
-Enum/exception branching. Exhaustive by default. `case _` for the default case. The indentation of each `case` must be the same as the starting `match`, ending any depate on whether `case` should be indented or not&mdash;Mu is opinionated after all. This is done not only to save indentation but also to stay consistant. Because `match _` doesn't use `:` or `then`, it logically shouldn't indent the next line.
+Enum/exception branching. Exhaustive by default. `case _` for the default case. The indentation of each `case` must be the same as the starting `match`, ending any debate on whether `case` should be indented or not&mdash;Mu is opinionated after all. This is done not only to save indentation but also to stay consistant. Because `match _` doesn't use `:` or `then`, it logically shouldn't indent the next line.
 
 The patterns match to the type of enum passed to `match`, so you only need to reference the members of that type in each `case` block.
 
@@ -941,14 +941,18 @@ else:
 
 #### `for` / `in`
 
-Iterates through an array or iterator. If inlined, it returns an iterator which will execute when spread with `++` or passed into another `for _ in` loop. 
+Iterates through an array or iterator.
+
+```mu
+for x in list:
+    print("{x}")
+```
+
+If inlined, it returns an iterator which will lazily execute when spread with `++` or passed into another `for _ in` loop. 
 
 ```mu
 iterator = for x in list then x * 2
 list = [++iterator]
-
-for x in list:
-    print("{x}")
 ```
 
 For an async iterator or an array of async types, you can use `for await` to automatically wait for each item in sequential order. (See [`await`](#await).)
@@ -1074,19 +1078,6 @@ Result types flatten similarly to option types. The rules go as follows:
 
 When all exceptions have been handled, the result is `type!void` which automatically converges to just `type`.
 
-#### `raise`
-
-Passes an error type within a `try` block
-
-```mu
-try:
-    raise MyError("error message")
-except e:
-    print("{e}")
-```
-
-`raise` can also be used outside of a `try` block to return out of the function with an exception value. The function must return a result type `type!`. If an except type is also declared `type!except`, then the type passed to `raise` must match.
-
 #### `return`
 
 Exits out of a function. If a value is after it, that value is the return value, otherwise it's `void`. This must match the return type of the function. Last-line evaluation is still enabled by default.
@@ -1096,6 +1087,20 @@ isThirteen(x) =
     if x == 13:
         return True  -- Exits the function and returns true.
     False            -- Returns false.
+```
+
+#### `raise`
+
+Return out of the function with an exception value. The function must return a result type `type!`. If an except type is also declared `type!except`, then the type passed to `raise` must match.
+
+```mu
+alwaysFail() =
+    raise MyError("error message")
+
+try:
+    alwaysFail()!
+except e:
+    print("{e}")
 ```
 
 #### `yield`
@@ -1119,7 +1124,7 @@ asyncFn(a, b): Async Int =
     a + b
 ```
 
-Both `yield` and `await` can be used together in an `Iter Async T` type. Use `for await` to iterate through it.
+Both `yield` and `await` can be used together in an `Iter Async T` type. As the type suggests, each yield is of type `Async T`. Use `for await` to wait for each async value to resolve in sequential order.
 
 ```mu
 asyncIterFn(n): Iter Async Int =
@@ -1240,6 +1245,25 @@ Instantiate a struct by calling it like a function. Each member is treated as a 
 myObject = MyStruct(name: "Foobar", value: 1)
 ```
 
+Structs are transparent. They can be destructured like named arrays. Use `@opaque` if you need to disable this. That will treat the struct type as an opaque type. This will also prevent it from being inheritted with `inherit` since that relies on destructuring. (See [Inheritance and Visibility](Inheritance-and-Visibility).)
+
+```mu
+TransparentThing :: struct
+    a: int
+    b: int
+
+{a, b} = TransparentThing(a: 1, b: 2)
+print("a: {a}, b: {b}")
+
+@opaque
+OpaqueThing :: struct
+    a: int
+    b: int
+
+o = OpaqueThing(a: 1, b: 2)
+print("a: {o.a}, b: {o.b}")
+```
+
 ### Enumerables (`enum`)
 
 Enums are sum types. They define a closed set of variants. Variants may carry data turning them into a tagged union.
@@ -1269,7 +1293,7 @@ MyException :: except
     DivideByZero(Int)
 ```
 
-### Pototypes (`proto`)
+### Prototypes (`proto`)
 
 A `proto` is an abstract interface &mdash; a named contract with no data. It is equivalent to a `virtual class` (C++), `trait` (Rust), or `interface` (Java, TypeScript, etc.) in other languages. Each member is a function, also called a **method**. Methods that have a parameter named `self` at the beginning will be called as methods on the instance of that type, i.e. `instance.method(...)`. This is equivalent to saying `(typeof instance).method(instance, ...)`. `self` is inferred to be type of `Self` which represents the current type implementing this proto. 
 
@@ -1410,7 +1434,7 @@ ARG2 :: 3 + 4
 print("{ MAX ARG1 ARG2 }")
 ```
 
-Arguments can also be function calls. If a meta function itself returns a regular function, the meta function call should be enclosed in parantheses.
+Arguments can also be function calls. If a meta function itself returns a regular function, the meta function call should be enclosed in parentheses.
 
 ```mu
 MAXADD a b :: if a > b then fn(c) = a + c else fn(c) = b + c
@@ -1534,11 +1558,12 @@ How this is implemented is outside of the scope of this document. That will be s
 
 ## Keywords
 
-There are 46 keywords in total:
+There are 47 keywords in total:
 
 * `and`
 * `as`
 * `await`
+* `break`
 * `capture`
 * `case`
 * `continue`
@@ -1567,7 +1592,7 @@ There are 46 keywords in total:
 * `raise`
 * `ref`
 * `return`
-* `self`
+* `self`/`Self`
 * `sizeof`
 * `struct`
 * `then`
