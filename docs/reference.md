@@ -103,7 +103,7 @@ All subsequent expressions within a block should have the same indentation. If a
 
 ## Operators
 
-The philosophy of Mulang is that symbols should be easy to understand and that generally keywords are preferred over symbols. Most symbols are consistent with their contextual meaning, for example `*` and `/` relate to math, `~` relates to bitwise operators, `!` relates to exceptions, `&` relates to tuples, etc.. There's also a common pattern where repeating an operator gets you a more advanced version of that operator, for example: `+` addition vs `++` concatenation, `*` multiplication vs `**` exponentiation, `/` division vs `//` floor division, and `%` standard modulo vs `%%` floor division modulo. Mulang will check any combination of symbols greedily until the next space or word except for the reserved comment token (`--`), so for example `++` would be different from `+ +`. Spaces are required between multiple symbolic operators, much like how spaces are required between words. Symbol characters include any ASCII character that isn't alphanumeric, whitespace, quotation marks, delimiters, or brackets&mdash;in other words these symbols: `~!@#$%^&*-+=|\:<.>/?`. There may be operator overloading in the future, so even if an operator could be broken into smaller parts, it's considered a unique operator even if it has no meaning. Because of that, long sequences of operators need to be broken up into their separate symbols. From example `a+++b`, the compiler will see `+++` as one operator instead of as `++` and `+`. You would need to say `a++ +b` to make sure it's clear that it's 2 operators and not one. This not only helps the parser but also helps the coder when reading the code. There are exceptions to this rule: `--` is **always** a comment no matter what, and `^` can be chained for pointer dereferencing.
+The philosophy of Mulang is that symbols should be easy to understand and that generally keywords are preferred over symbols. Most symbols are consistent with their contextual meaning, for example `*` and `/` relate to math, `~` relates to bitwise operators, `!` relates to exceptions, `&` relates to tuples, etc.. There's also a common pattern where repeating an operator gets you a more advanced version of that operator, for example: `+` addition vs `++` concatenation, `*` multiplication vs `**` exponentiation, `/` division vs `//` floor division, and `%` standard modulo vs `%%` floor division modulo. Mulang will check any combination of symbols greedily until the next space or word except for the reserved comment token (`--`), so for example `++` would be different from `+ +`. Spaces are required between multiple symbolic operators, much like how spaces are required between words. Symbol characters include any ASCII character that isn't alphanumeric, whitespace, quotation marks, delimiters, or brackets&mdash;in other words these symbols: `~!@#$%^&*-+=|\:<.>/?`. There may be operator overloading in the future, so even if an operator could be broken into smaller parts, it's considered a unique operator even if it has no meaning. Because of that, long sequences of operators need to be broken up into their separate symbols. From example `a???b`, the compiler will see `???` as one operator instead of as `?` and `??`. You would need to put at least one space here `a? ??b` to make sure it's clear that it's 2 operators and not one. This not only helps the parser but also helps the coder when reading the code. The exception to this rule is `--` which is **always** a comment no matter what.
 
 **Algebra:**
 
@@ -134,14 +134,12 @@ The philosophy of Mulang is that symbols should be easy to understand and that g
 
 **Bitwise:**
 
-- `lhs ~and rhs` &mdash; bitwise AND
-- `lhs ~or rhs` &mdash; bitwise OR
-- `lhs ~ rhs` &mdash; bitwise XOR
-- `~ rhs` &mdash; bitwise NOT
+- `lhs ~& rhs` &mdash; bitwise `AND`
+- `lhs ~| rhs` &mdash; bitwise `OR`
+- `lhs ~ rhs` &mdash; bitwise `XOR`
+- `~ rhs` &mdash; bitwise `NOT`
 - `lhs << rhs` &mdash; bitshift left
 - `lhs >> rhs` &mdash; bitshift right
-
-*NOTE: The `~` in `~and` and `~or` cannot have a space after it. They are joined together.*
 
 **Arrays:**
 
@@ -156,15 +154,6 @@ The philosophy of Mulang is that symbols should be easy to understand and that g
 - `lhs & rhs` &mdash; combine two tuples into one
 - `& rhs` &mdash; spread a tuple into another tuple
 
-**Pointers:**
-
-- `@ rhs` &mdash; getting the pointer to a variable
-- `lhs ^` &mdash; dereferencing a pointer
-- `lhs ^. rhs` &mdash; access a member of a pointer (same as `(lhs^).rhs`)
-- `lhs ^= rhs` &mdash; set the value of the slot in memory that a pointer is referencing
-
-*Pointer chaining* &mdash; for any `^` operator, you can add `^` to repeatedly dereference a pointer. 
-
 **Options:**
 
 - `lhs ?` &mdash; returns the `Some` value if it's not `None`, otherwise propagate to the nearest `opt` keyword (see [`opt` block](#opt))
@@ -175,6 +164,8 @@ The philosophy of Mulang is that symbols should be easy to understand and that g
 
 - `lhs !` &mdash; returns the result value if it's not an exception, otherwise propagate to the nearest `try` keyword (see [`try` block](#try--except))
 
+**Infix operator** are operators who have both an `lhs` and `rhs`. For any infix operator `op`, you can write it as `lhs[op rhs]`. This is shorthand for writing `((lhs) op (rhs))`. This is primarily used for [arrays](#Arrays), but has many potential uses which can be explored in the future. 
+
 Some operators also allow an equal sign after it to set a variable based on its previous value. The left-hand side must be an already defined variable. If it's immutable, then this is the same as shadowing it. If it's mutable, then the value is mutated. All of these are void statements, i.e. they return nothing and should only be used in an expression by themselves.
 
 - `lhs += rhs` &mdash; `lhs = lhs + rhs` &mdash; increment
@@ -184,6 +175,11 @@ Some operators also allow an equal sign after it to set a variable based on its 
 - `lhs //= rhs` &mdash; `lhs = lhs // rhs` &mdash; floor division assignment
 - `lhs %= rhs` &mdash; `lhs = lhs % rhs` &mdash; modulo assignment
 - `lhs %%= rhs` &mdash; `lhs = lhs %% rhs` &mdash; floor division modulo assignment (binds `lhs` to a range in `[0, rhs)` if `rhs` is positive or `(rhs, 0]` if `rhs` is negative)
+- `lhs ~&= rhs` &mdash; `lhs = lhs ~& rhs` &mdash; bitwise `AND` assignment
+- `lhs ~|= rhs` &mdash; `lhs = lhs ~| rhs` &mdash; bitwise `OR` assignment
+- `lhs ~= rhs` &mdash; `lhs = lhs ~ rhs` &mdash; bitwise `XOR` assignment
+- `lhs <<= rhs` &mdash; `lhs = lhs << rhs` &mdash; bitshift left assignment
+- `lhs >>= rhs` &mdash; `lhs = lhs >> rhs` &mdash; bitshift right assignment
 - `lhs ++= rhs` &mdash; `lhs = lhs ++ rhs` &mdash; append to an array (not allowed if `lhs` is a fixed length array)
 
 ## Basic Bindings
@@ -307,8 +303,6 @@ xRef = 1
 print("x is {x}")   -- Prints "x is 1"
 ```
 
-See [Pointers](#Pointers) for more details.
-
 #### Destructuring
 
 Tuples can be split into separate variables. Use parentheses (`()`) for positional tuples and curly braces (`{}`) for named tuples. If a tuple is mixed, split each on the left side with `&` like `() & {}` or `{} & ()`. This is to avoid confliction between the different uses of `:`, type notation on the left of the equal sign and key-value pairing on the right of the equal sign. Use `as` to create an alias for named tuples with type notation going after the alias name. See [Tuples](#Tuples) for more information.
@@ -380,7 +374,7 @@ add3(,1,2, ,3,,) -- This is not okay.
 -- Uncommenting would get an error. --)
 ```
 
-Functions can also be declared with `fn` to be set later. This type is a **function pointer.** It lets you treat functions as variables.
+Functions can also be declared with `fn` to be set later. This type is a **function pointer.** It lets you treat functions as values.
 
 ```
 action: mu fn(Int, Int): Int
@@ -555,18 +549,19 @@ if get() as val != Target:
 
 ## Types
 
+Notation:
+
 - **Basic**: `name: type`
-- **Function**: `fn(type, type): type`
-- **Option**: `type?`
-- **Result**: `type!` or `type!error`
-- **Arrays**: `type#` or `type#number`
-- **Multi-dimensional Array**: `type##` (an extra `#` for each dimension)
-- **Pointers**: `^type`
+- **Functions**: `fn(type, type): type`
+- **Options**: `type?`
+- **Results**: `type!` or `type!E` where `E` is an exception type
+- **Arrays**: `type#` or `type#N` where `N` is the length
+- **Multi-dimensional Arrays**: `type##` (an extra `#` for each dimension)
 - **Inferred**: omit the annotation entirely
 
 ### Built-in Types
 
-Some built-in types include `Int`, `Uint`, `Float`, `Bool`, `Char`, and `Str`. 
+Some built-in types include `Int`, `Uint`, `Float`, `Bool`, `Char`, `Str`, and `Ptr`. 
 
 ```
 myInt: Int = -1234
@@ -575,6 +570,7 @@ myFloat: Float = 12.34
 myBool: Bool = True
 myChar: Char = 'a'
 myStr: Str = "Hello"
+myPtr: Ptr = ExternalLib.getSomething()
 ```
 
 You can get the type of any variable with the `typeof` keyword.
@@ -592,6 +588,7 @@ x = default Float  -- == 0.0
 x = default Bool   -- == False
 x = default Char   -- == '\0'
 x = default Str    -- == ""
+x = default Ptr    -- == Null
 ```
 
 `default` can also infer the type. This can be useful in certain situations, like if you want to leave a function that returns something empty so that you can implement it later.
@@ -600,12 +597,13 @@ x = default Str    -- == ""
 implementLater(): Int = default
 ```
 
-You can also get the size of any type with the keyword `sizeof`. It returns a constant `Uint` (unsigned integer) with the number of bytes of memory that type requires. The exact sizes of some types like `Int` or `Float` might vary, but you can rely on `Char` and `Bool` being 1 byte each. There's also the `void` type which represents no data.
+You can also get the size of any type with the keyword `sizeof`. It returns a constant `Uint` (unsigned integer) with the number of bytes of memory that type requires. The exact sizes of some types like `Int` or `Float` might vary, but you can rely on `Char` and `Bool` being 1 byte each. There's also the `Void` type which represents no data. `Ptr` depends on the pointer size of the system. 
 
 ```
 sizeOfBool = sizeof Bool   -- == 1
 sizeOfChar = sizeof Char   -- == 1
-sizeOfVoid = sizeof void   -- == 0
+sizeOfVoid = sizeof Void   -- == 0
+sizeOfPtr  = sizeof Ptr    -- == 3 or 4
 ```
 
 You can call a type as a function to convert types into other types if conversion is possible. 
@@ -710,7 +708,7 @@ bigDocument = ''
 
 > What if you have a raw string with two apostrophes in a row inside it?
 
-That's an edge case not worth pursuing. The double apostrophes `''` syntax isn't perfect, but it's at least something. For anything more complicated, it's likely better to save the string to a document and open it as a file, which will be handled by a separate library and lies outside the scope of this document.
+That's an edge case not worth pursuing. The double apostrophes `''` syntax isn't perfect, but it's at least something. For anything more complicated, it's better to save the string in a document and open it as a file, which will be handled by a separate library and lies outside the scope of this document.
 
 #### Arrays
 
@@ -740,69 +738,32 @@ c = a ++ b         -- == [1, 2, 3, 0, 1, 2, 3, 4]
 
 #### Pointers
 
-Although most things can be achieved without manual manipulation of pointers, some low level code requires it. Pointers are marked with a caret (`^`) before the type, and dereferencing them uses the same symbol. More carets mark how many times you need to dereference it: `^^type` = double pointer, `^^^type` = triple pointer, etc.. Get the reference to a variable with `@`. Pointers are immutable by default, so mutating them isn't allowed.
+Although most things can be achieved without manual manipulation of pointers, some low level code requires it. Raw pointers use the type `Ptr`. This represents an opaque pointer where the type it represents is unknown. It's ideal for FFI where you need to pass a pointer a around and let an external library handle it. 
 
 ```
-x: Int = 0
-xPtr: ^Int = @x
+result: Ptr = ExternalLib.getSomething()
+ExternalLib.doSomethingWith(result)
 ```
 
-Note that shadowing a pointer's reference doesn't update the pointer. How the program handles the old reference is up to the memory model. It some cases, it may have already been dropped. (See [Memory Models](#Memory-Models).)
+You can manually check if the pointer is `Null` and give a help error message in scripts.
 
 ```
-x = 1
-print("{xPtr^}")  -- Prints "0", because it's still referencing the old x.
--- This might lead to a crash.
+result: Ptr = ExternalLib.getSomething()
+if result == Null:
+    print("No result found")
+    raise NotFound
 ```
 
-Pointer arithmetic is allowed but always unsafe and may cause undefined behavior. The resulted type is `^Unknown` by default which means it can't be dereferenced unless it's been casted to a known pointer type. Use `^type()` to cast a pointer to a different type. Although pointer arithmetic is possible, it's not recommended because it can easily lead to crashes. This should be reserved for low-level code. 
+A standard library will be made to safely handle pointer dereferencing and do pointer arithmatic, but that is outside the scope of this document. Here is an example of how it might work:
 
 ```
-x = 0
-p = @x
-next = ^Int(p + 1)
-print("next: {next^}")   -- This will probably crash.
-prev = ^Int(p - 1)
-print("prev: {prev^}")   -- This will probably crash too.
+mu x = 0             -- Create a local mutable variable.
+xPtr = getMuPtr(x)?  -- Map `Null` to a option type, branch if it's `None`, return `Some(Ptr)` if it's not and unwrap it with `?`.
+xPtr.set(1)!         -- Safely set the pointer and branch if there's an error.
+print("{x}")         -- "1", the pointer successfully mutated `x`.
 ```
 
-Mutable pointers are marked with `^mu type`. The reference must also be a mutable type. Although it's pointing to a mutable variable, the actual pointer variable itself is immutable. You would need another `mu` before the caret to change the pointer, marked as `mu ^type` or `mu ^mu type`.
-
-| Pointer Type | Meaning | Can mutate target? | Can point to something else? |
-|:--|:--|:-:|:-:|
-| `^T` | immutable pointer to immutable T | ☐ | ☐ |
-| `^mu T` | immutable pointer to mutable T | ☑ | ☐ |
-| `mu ^T` | mutable pointer to immutable T (pointer can change, target cannot) | ☐ | ☑ |
-| `mu ^mu T` | mutable pointer to mutable T | ☑ | ☑ |
-
-```
-x: mu Int = 0
-xPtr: ^mu Int = @x
-xPtr ^= 1
-print("{x}")     -- Prints "1", x was mutated
-
-y = 2
-ptr: mu ^Int = @x
-print("{ptr^}")  -- Prints "1", points to x
-ptr = @y
-print("{ptr^}")  -- Prints "2", points to y
-```
-
-Consider this a work in progress and subject to change. This will need more testing to figure out the best way to handle pointers. Some features like memory allocation and safe pointers will probably be implemented through a standard library. 
-
-#### Unknown Type
-
-There are some cases where the type can't be inferred right away in which case the thing in question gets typed as `Unknown`. This is an internal type for the compiler to use when it doesn't know what something is, such as a variable that is defined later in the program. The compiler will try to resolve it, and if it doesn't, it will throw an error. 
-
-Sometimes with FFI, we don't really know nor care what the actual type to a pointer is. We just know that it's a pointer to something. In that case, we can type it as `^Unknown`. This pointer type is always immutable&mdash;i.e. no `^mu Unknown`&mdash;and dereferencing it will throw a compile-time error. 
-
-```
-result: ^Unknown = ExternalLib.getSomething()
-(--
-result ^= 64                          -- This is forbidden.
---)
-ExternalLib.doSomethingWith(result)   -- This is how you're supposed to use it.
-```
+Please know that this is only an example and is subject to change. Some more testing is required to figure out the best way to handle pointers. Consider this a work in progress.
 
 ---
 
@@ -826,7 +787,7 @@ The presence of `:` signifies if a keyword is in block mode or inline mode. `the
 
 #### `pass`
 
-The keyword `pass` can be put into any body to leave it empty. This might result in a compile-time error when the block is expected to return a value. 
+The keyword `pass` can be put into any block to leave it empty. Not indenting after a block is considered a syntax error, so this is required in certain circumstances. However, this might result in a compile-time error when the block is expected to return a value. A function with `pass` in its body infers a return type of `Void`. 
 
 ```
 keyword[ subject]:
@@ -1064,11 +1025,11 @@ Result types flatten similarly to option types. The rules go as follows:
 - For every `raise` or `!` in a `try` block, an exception is added to the exception sum type of the result.
 - For every `except` after the `try` block, an exception is removed from the exception sum type of the result.
 
-When all exceptions have been handled, the result is `type!void` which automatically converges to just `type`.
+When all exceptions have been handled, the result is `type!Void` which automatically converges to just `type`.
 
 #### `return`
 
-Exits out of a function. If a value is after it, that value is the return value, otherwise it's `void`. This must match the return type of the function. Last-line evaluation is still enabled by default.
+Exits out of a function. If a value is after it, that value is the return value, otherwise it's `Void`. This must match the return type of the function. Last-line evaluation is still enabled by default.
 
 ```
 isThirteen(x) =
@@ -1216,14 +1177,14 @@ This makes the algebra quite principled. The only cases where order matters are 
 
 It also means the shorthand `(0, 1, x: 2)` isn't really special syntax. It's the natural representation of a tuple that has both dimensions populated, which any `&` expression across the two types would produce anyway.
 
-Opaque types such as primitives and enums coerce into a tuple of one, so creating a product type of them creates a positional tuple, e.g. `Int & Float & Char` becomes `(Int, Float, Char)`. Structs convert to named tuples unless declared with an `@opaque` decorator, in which case they behave like opaque types. The `void` type coerces to an empty tuple `()`.
+Opaque types such as primitives and enums coerce into a tuple of one, so creating a product type of them creates a positional tuple, e.g. `Int & Float & Char` becomes `(Int, Float, Char)`. Structs convert to named tuples unless declared with an `@opaque` decorator, in which case they behave like opaque types. The `Void` type coerces to an empty tuple `()`.
 
-Combining empty tuples produces an empty tuple `() & () == ()`. The same is true for empty named tuples `{} & {} == {}`. This also means that empty positional tuples and empty named tuples are equivalent `() == {}`. Both tuples have zero dimensions in both positional and named components; therefore they are equivalent. Saying `() & {} & ()` or `{} & ()` and any combination of empty tuples all produce an empty tuple. If you think about it, this makes sense. They all represent nothing, like a cup that can holds 0mL of water. If you stacked a bunch of 0mL cups, you would still not be able to hold any water in it. Is it even a cup then? That's why empty tuples are treated as `void`, which verbally represents nothing, because they're all nothing. Therefore `void == () == {}`. The 3 types are all the same. 
+Combining empty tuples produces an empty tuple `() & () == ()`. The same is true for empty named tuples `{} & {} == {}`. This also means that empty positional tuples and empty named tuples are equivalent `() == {}`. Both tuples have zero dimensions in both positional and named components; therefore they are equivalent. Saying `() & {} & ()` or `{} & ()` and any combination of empty tuples all produce an empty tuple. If you think about it, this makes sense. They all represent nothing, like a cup that can holds 0mL of water. If you stacked a bunch of 0mL cups, you would still not be able to hold any water in it. Is it even a cup then? That's why empty tuples are treated as `Void`, which verbally represents nothing, because they're all nothing. Therefore `Void == () == {}`. The 3 types are all the same. 
 
 This also means that a void function and a function that returns an empty tuple are the same. *Empty positional tuples, empty named tuples, and void are fully interchangeable at the type level.*
 
 ```
-voidFn(): void = ()
+voidFn(): Void = ()
 voidFn(): () = ()
 voidFn(): {} = ()
 ```
@@ -1466,18 +1427,18 @@ Generics will automatically generate code based on their parameters, but you can
 
 ```
 -- Forces every type to have its own implementation
-increment T :: fn(c: ref mu T): void =
+increment T :: fn(c: ref mu T): Void =
     undefined
 
 Counter :: struct
     value: Int
 
 -- Specialized for Counter
-increment Counter :: fn(c: ref mu Counter): void =
+increment Counter :: fn(c: ref mu Counter): Void =
     c.value += 1
 
 -- Specialized for Float
-increment Float :: fn(c: ref mu Float): void =
+increment Float :: fn(c: ref mu Float): Void =
     c += 1.0
 
 c = Counter(value: 2)
@@ -1594,10 +1555,9 @@ How this is implemented is outside of the scope of this document. That will be s
 41. `typeof`
 42. `undefined`
 43. `until`
-44. `void`
-45. `where`
-46. `while`
-47. `yield`
+44. `where`
+45. `while`
+46. `yield`
 
 *NOTE: `Self` (uppercase) is a variable and not a keyword, not to be confused with `self` (lowercase) which is a keyword used to signify a method can be used on an instance of a type. See [Implementation](#Implementing-impl).*
 
