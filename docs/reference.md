@@ -164,7 +164,11 @@ The philosophy of Mulang is that symbols should be easy to understand and that g
 
 - `lhs !` &mdash; returns the result value if it's not an exception, otherwise propagate to the nearest `try` keyword (see [`try` block](#try--except))
 
-**Infix operator** are operators who have both an `lhs` and `rhs`. For any infix operator `op`, you can write it as `lhs[op rhs]`. This is shorthand for writing `((lhs) op (rhs))`. This is primarily used for [arrays](#Arrays), but has many potential uses which can be explored in the future. 
+**Setting**
+
+- `lhs as rhs` &mdash; inline for `=` but inverted (variable goes on the right), but has the same rules: shadows the variable `rhs` if immutable or mutates it if mutable; returns the value of `lhs`
+
+**Infix operator** are operators who have both an `lhs` and `rhs`. For any infix operator `op`, you can write it as `lhs[op rhs]`. This is shorthand for writing `((lhs) op (rhs))`. This is primarily used for arrays, but has many potential uses which can be explored in the future. See [Arrays](#Arrays) for more details on how to use `[]`.
 
 Some operators also allow an equal sign after it to set a variable based on its previous value. The left-hand side must be an already defined variable. If it's immutable, then this is the same as shadowing it. If it's mutable, then the value is mutated. All of these are void statements, i.e. they return nothing and should only be used in an expression by themselves.
 
@@ -181,6 +185,8 @@ Some operators also allow an equal sign after it to set a variable based on its 
 - `lhs <<= rhs` &mdash; `lhs = lhs << rhs` &mdash; bitshift left assignment
 - `lhs >>= rhs` &mdash; `lhs = lhs >> rhs` &mdash; bitshift right assignment
 - `lhs ++= rhs` &mdash; `lhs = lhs ++ rhs` &mdash; append to an array (not allowed if `lhs` is a fixed length array)
+
+If you want to inline these operators, you can use `as` instead for example `(i + 1) as i`. This is not recommend because it could be a source of confusion and bugs. Instead it's recommend to put all assignment statements on their own seperate lines for clarity. 
 
 ## Basic Bindings
 
@@ -227,6 +233,8 @@ if x == 0:
 #### Mutability (`mu`)
 
 Mutable variables are marked with the keyword `mu`, the main star of the language. Just as Go has its `go` keyword, Mulang has `mu`. This was chosen since mutability is a common practice in programming much like functions are&mdash;which is why functions also get their own two letter keyword `fn`. (See [Function Declarations](#Function-Declarations).) The general rule of thumb in Mulang is that *patterns scale with complexity*&mdash;simple things like declaring a variable or function use short patterns, more complex things use bigger patterns.
+
+You might think the choice of `mu` as a keyword&mdash;which is the same name as the language itself&mdash;will be a potential source of confusion. However, Go doesn't have this problem with its `go` keyword. When searching or discussing about *Mu*, it sometimes preferable to write it as *Mulang* for clarity, just as other languages can have "lang" at the end of their names such as *Go* -> *Golang* or *D* -> *Dlang*.
 
 Declare a mutable variable with `mu type`. Setting it will change the value instead of shadowing it. The type of value when mutating it should match its original type.
 
@@ -490,6 +498,13 @@ doThing(fn callback(val) =
 end)
 ```
 
+The same keyword for creating functions is also used for function type notation. If this seems confusing, just remember where the context is: if it's being used as a type, it means a *function pointer type*; if it's being used as a value, it's a *lambda function*.
+
+```
+action: mu fn(int, int): int    -- Declaring a variable with a function type.
+action = fn(a, b) = a + b       -- Passing a function to the variable as a value.
+```
+
 #### Named Parameters (`&`)
 
 You can declare a named parameter with `&` and a named tuple after it before the `:` or `=`. The named members are marked in curly brackets (`{}`). Parentheses mark a **positional tuple**, and curly braces mark a **named tuple**. (See [Tuples](#Tuples).) Named tuples can be destructored so that their members become variables in the scope. 
@@ -597,13 +612,25 @@ x = default Ptr    -- == Null
 implementLater(): Int = default
 ```
 
+There will be an API for defining the default value of custom types, but that is outside the scope of this document. Here is an example of what that might look like:
+
+```
+MyType :: struct
+    value: Int
+
+MyType :: impl Default               -- Impliment the Default proto
+    getDefault() = MyType(value: 0)  -- Default value for this type
+```
+
+*This API is subject to change.*
+
 You can also get the size of any type with the keyword `sizeof`. It returns a constant `Uint` (unsigned integer) with the number of bytes of memory that type requires. The exact sizes of some types like `Int` or `Float` might vary, but you can rely on `Char` and `Bool` being 1 byte each. There's also the `Void` type which represents no data. `Ptr` depends on the pointer size of the system. 
 
 ```
 sizeOfBool = sizeof Bool   -- == 1
 sizeOfChar = sizeof Char   -- == 1
 sizeOfVoid = sizeof Void   -- == 0
-sizeOfPtr  = sizeof Ptr    -- == 3 or 4
+sizeOfPtr  = sizeof Ptr    -- == 4 or 8
 ```
 
 You can call a type as a function to convert types into other types if conversion is possible. 
@@ -706,9 +733,7 @@ bigDocument = ''
 ''
 ```
 
-> What if you have a raw string with two apostrophes in a row inside it?
-
-That's an edge case not worth pursuing. The double apostrophes `''` syntax isn't perfect, but it's at least something. For anything more complicated, it's better to save the string in a document and open it as a file, which will be handled by a separate library and lies outside the scope of this document.
+*Note: raw strings containing `''` are not supported; use a file or escaping instead.* The double apostrophes `''` syntax isn't perfect, but it's at least something. For anything more complicated, it's better to save the string in a document and open it as a file, which will be handled by a separate library and lies outside the scope of this document.
 
 #### Arrays
 
@@ -726,6 +751,13 @@ To make chaining accesses easier, there's a special rule for square brackets: an
 ```
 item = doubleArray[#1][#0]  -- The 2nd row, 1st column
 print("{item}")             -- Prints "3"
+```
+
+You can also chain multiple `[]` calls into one segmented by commas `,`. An operator needs to be after each comma such as `#`.
+
+```
+item = doubleArray[#1,#0]  -- The 2nd row, 1st column
+print("{item}")            -- Prints "3"
 ```
 
 One other common operator with arrays is `++` which spreads an array into another array. This was chosen because it's also used for concatenation, giving the two operations an obvious connection. Some languages use `...`, but this visually conflicts with the range `..` operator. `++` visually does the job better without any issues.
@@ -835,9 +867,9 @@ else:
 
 #### `match` / `case`
 
-Enum/exception branching. Exhaustive by default. `case _` for the default case. The indentation of each `case` must be the same as the starting `match`, ending any debate on whether `case` should be indented or not&mdash;Mulang is opinionated after all. This is done not only to save indentation but also to stay consistent. Because `match _` doesn't use `:` or `then`, it logically shouldn't indent the next line.
+Enum/exception branching. Exhaustive by default. `case _` for the default case. The indentation of each `case` must be the same as the starting `match`, ending any debate on whether `case` should be indented or not&mdash;Mulang is opinionated after all. This is done not only to save indentation but also to stay consistent. Note that `match _` doesn't use `:` or `then`, so it logically shouldn't indent the next line. This is an intentional choice. You can think of `match` as not being a block at all but a marker to start a series of blocks that all start with `case`. `match` requires there to be at least one `case` after it or it's a syntax error. As mentioned, all branches must be exhasted, or there must be a default case with `case _` at the end. 
 
-The patterns match to the type of enum passed to `match`, so you only need to reference the members of that type in each `case` block.
+The patterns map to the type passed in after `match`, so you only need to reference the members of that type in each `case` block.
 
 ```
 match self
@@ -946,13 +978,13 @@ Controls the iteration of any loop type mentioned. `break` exits out of the loop
 
 #### `opt`
 
-Wraps a value in a option type. You can use `?` to unwrap multiple option types within an expression. If one `?` returns `None`, then the whole expression stops and returns `None`.
+Wraps a single expression in a option type. You can use `?` to unwrap multiple option types within an expression. If one `?` returns `None`, then the whole expression stops and returns `None`.
 
 ```
 x = (opt f(a?))?? "fallback"     -- x is "fallback" if a is none.
 ```
 
-If a function returns an option type, then use of the `?` is allowed with `opt`. Using an `?` inside a function will automatically infer the return type as an option. The return will be automatically wrapped in `Some(_)`.
+If a function returns an option type, then use of the `?` is allowed without `opt`. Using an `?` inside a function will automatically infer the return type as an option. The return will be automatically wrapped in `Some(_)`.
 
 ```
 addStuff(a: Int, b: Int): Int? =
@@ -1191,7 +1223,11 @@ voidFn(): {} = ()
 
 We say that a void function returns nothing. Well, that's what an empty tuple is: *nothing*. So there isn't any issue here. Maybe in other languages there would be in an issue, but not in Mulang. 
 
-### Structures (`struct`)
+### Definition Blocks
+
+Some keywords after `::` start a **definition block.** They can only be used in `::` definitions. These are special blocks used for abstract data such as types and static variables. Inside any definition block, the word `Self` is a self-reference to the abstract data that's being defined. 
+
+#### Structures (`struct`)
 
 Structs are product types&mdash;or in other words&mdash;plain data containers. They cannot extend other structs, but can inherit members of other structs (see [Inheritance and Visibility](#Inheritance-and-Visibility)).
 
@@ -1226,7 +1262,7 @@ o = OpaqueThing(a: 1, b: 2)
 print("a: {o.a}, b: {o.b}")
 ```
 
-### Enumerables (`enum`)
+#### Enumerables (`enum`)
 
 Enums are sum types. They define a closed set of variants. Variants may carry data turning them into a tagged union.
 
@@ -1245,7 +1281,7 @@ b = MyEnum.Second(2)
 c = MyEnum.Third(val: 3)
 ```
 
-### Exceptions (`except`)
+#### Exceptions (`except`)
 
 Exceptions are similar to enums but used for error handling. See "Error Handling" for more details. Instantiation works the same as enums.
 
@@ -1255,16 +1291,16 @@ MyException :: except
     DivideByZero(Int)
 ```
 
-### Prototypes (`proto`)
+#### Prototypes (`proto`)
 
-A `proto` is an abstract interface &mdash; a named contract with no data. It is equivalent to a `virtual class` (C++), `trait` (Rust), or `interface` (Java, TypeScript, etc.) in other languages. Each member is a function, also called a **method**. Methods that have a parameter named `self` at the beginning will be called as methods on the instance of that type, i.e. `instance.method(...)`. This is equivalent to saying `(typeof instance).method(instance, ...)`. `self` is inferred to be type of `Self` which represents the current type implementing this proto. 
+A `proto` is an abstract interface &mdash; a named contract with no data. It is equivalent to a `virtual class` (C++), `trait` (Rust), or `interface` (Java, TypeScript, etc.) in other languages. Each member is a function, also called a **method**. Methods that have a parameter named `self` at the beginning will be called as methods on the instance of that type, i.e. `self.method(...)`. This is equivalent to saying `(typeof self).method(self, ...)` or `Self.method(self, ...)`. The type of `self` is `Self` which represents the current type implementing this proto. 
 
 ```
 MyPrototype :: proto
     speak(self): Str
 ```
 
-### Implementing (`impl`)
+#### Implementing (`impl`)
 
 Methods and trait implementations are added separately with `impl`. Much like `proto`, `self` refers to the current instance and `Self` refers to the current type. You can also add static values that are attached to the type itself. Use `.` to access static values and methods like with structs.
 
@@ -1277,7 +1313,7 @@ MyStruct :: impl
 print("{MyStruct.staticValue}")
 ```
 
-To implement a prototype onto another type, you add the proto's name after `impl`:
+To implement a prototype onto another type, you add the proto's name after `impl`. Each implementation gets their own `impl` block. 
 
 ```
 MyStruct :: impl MyPrototype
@@ -1295,7 +1331,7 @@ MyEnum :: impl MyPrototype
             "I am a MyEnum of Third \{ val={val} }"
 ```
 
-## Inheritance and Visibility
+### Inheritance and Visibility
 
 Even though structs cannot be extended the usual way, they can inherit from other structs using the `inherit` keyword. This works similar to importing. It marks members that map to members of another struct, making conversion possible. It follows the same convention for pattern matching as destructuring. (See [Destructuring](#Destructuring).) The struct being inherited must not be `@opaque` or else it's a compile-time error. 
 
@@ -1314,7 +1350,7 @@ radius2d(v: Vector2) = sqrt(v.x*v.x+v.y*v.y)
 print("{radius2d(v3)}") -- This works because Vector3 inherits from Vector2.
 ```
 
-When you inherit, you don't just pick out some members. The entire parent struct is resides in the child struct in memory, but only some members are visible. 
+When you inherit, you don't just pick out some members. The entire parent struct is exists in the child struct in memory, but only some members are visible. 
 
 All members of a type are public by default. When making a subtype, inherited members become private to the subtype unless explicitly redeclared with `inherit`. This encourages separating public and private data into distinct types rather than using access modifiers. If you only inherit some fields but not all, you must put a `_` at the end of the tuple list to mark that not all members are inherited. 
 
@@ -1499,6 +1535,18 @@ How this is implemented is outside of the scope of this document. That will be s
 
 ---
 
+## Decorators
+
+There have been a few examples of decorators in this document such as `@opaque` and `@memory`. These are compile-time functions that communicate to the compiler directly and can alter the behavior of things. The API for defining your own decorators is not set in stone yet. More information on them will be available in the future. The syntax for adding decorators goes like this:
+
+```
+@decorator1      -- No arguments.
+@decorator2(arg) -- With arguments.
+expr             -- Modifies whatever this expression is.
+```
+
+---
+
 ## Design Philosophy
 
 - **Readability first** &mdash; Python-like syntax with significant whitespace and opinionated formatting.
@@ -1525,41 +1573,41 @@ How this is implemented is outside of the scope of this document. That will be s
 10. `end`
 11. `enum`
 12. `except`
-14. `fn`
-15. `for`
-16. `if`
-17. `impl`
-18. `import`
-19. `inherit`
-20. `in`
-21. `let`
-22. `loop`
-23. `match`
-24. `mod`
-25. `mu`
-26. `not`
-27. `opt`
-28. `or`
-29. `out`
-30. `pass`
-31. `proto`
-32. `raise`
-33. `ref`
-34. `return`
-35. `self`
-36. `sizeof`
-37. `struct`
-38. `then`
-39. `try`
-40. `type`
-41. `typeof`
-42. `undefined`
-43. `until`
-44. `where`
-45. `while`
-46. `yield`
+13. `fn`
+14. `for`
+15. `if`
+16. `impl`
+17. `import`
+18. `inherit`
+19. `in`
+20. `let`
+21. `loop`
+22. `match`
+23. `mod`
+24. `mu`
+25. `not`
+26. `opt`
+27. `or`
+28. `out`
+29. `pass`
+30. `proto`
+31. `raise`
+32. `ref`
+33. `return`
+34. `self`
+35. `sizeof`
+36. `struct`
+37. `then`
+38. `try`
+39. `type`
+40. `typeof`
+41. `undefined`
+42. `until`
+43. `where`
+44. `while`
+45. `yield`
 
-*NOTE: `Self` (uppercase) is a variable and not a keyword, not to be confused with `self` (lowercase) which is a keyword used to signify a method can be used on an instance of a type. See [Implementation](#Implementing-impl).*
+*NOTE: Types and values such as `Int`, `Void`, `True`, `False`, `Some`, `None`, `Null`, etc. are not considered keywords. `Self` (uppercase) is a type/value and not a keyword, not to be confused with `self` (lowercase) which is a keyword used to signify a method can be used on an instance of a type. See [Implementation](#Implementing-impl).*
 
 ---
 
