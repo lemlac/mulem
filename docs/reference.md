@@ -56,10 +56,10 @@ To split one expression into multiple lines, you must wrap it in parentheses. Th
       word4)
 ```
 
-Adding a newline and indentations after a `:` or `=` starts a block. A **block** wraps multiple expressions into one. The last expression evaluated in a block becomes its value. You can use `then:` to create a block. `then` is a scoped block with no condition; it always runs exactly once. (See [`then`](#then).)
+Adding a newline and indentations after a `:` or `=` starts a block. A **block** wraps multiple expressions into one. The last expression evaluated in a block becomes its value. For this demonstration, we'll use `block:` to represent any block-type. *(See [Control Flow](#Control-Flow) for more details about different types of block expressions.)*
 
 ```
-then:
+block:
     expr
     expr
 ```
@@ -68,25 +68,55 @@ Indentation marks the end of the block. If a block is inside of another expressi
 
 ```
 
-then:
-    then:
+block:
+    block:
         expr
                  -- Ends both blocks.
 
-(then:
+(block:
     expr
 end)             -- Required here since the block is in parentheses.
 
-(then:           -- This starts a block, so indentation is significant.
-    then:        -- This starts another block inside that block.
+(block:          -- This starts a block, so indentation is significant.
+    block:       -- This starts another block inside that block.
         expr     -- Inside the second block.
     expr         -- Unindent to escape the second block.
 end)             -- Use only one `end` to end to whole block.
+
+-- Another example with more nested blocks (see below for how this works):
+(block:
+    block:
+        block:
+            block:
+                expr
+end) 
 ```
 
-You probably think "Don't you need another `end` for the inner block?" No, and this is intentional. Mulang uses significant whitespace, so only indentation matters. The exception to this is inside an expression such a between parentheses. Then you need some way to exit out of the block, and `end` is the answer to that. That's the signal to make the switch from block mode back to inline mode. `end` always closes the nearest open block that cannot be closed by indentation.
+You probably think *"Don't you need another `end` for each inner blocks?"* No, and this is intentional. Mulang uses significant whitespace, so only indentation matters. While this saves a lot from typing so many `end` or closing curly braces `}`, this can also makes it difficult to write expressive code at times. *What if you wanted to pass an inline function to another function?* In Python, you might define the function within a function like this:
 
-Some keywords can be inlined or blocked based on whether they use a `:` or not. 
+```py
+def doThing():
+    def callback(result):
+        if result > 0:
+            print(f"Success! {result}")
+        else:
+            print(f"Failure! {result}")
+    apiFetch(callback)
+```
+
+But you can't inline the function directly like you can in other languages. You need some way to exit out of the block, and `end` is the answer to that. That's the signal to make the switch from block mode back to inline mode. **`end` always closes the nearest open block that cannot be closed by indentation.**
+
+```
+doThing() =
+    apiFetch(fn(result) =
+        if result > 0:
+            print("Success! {result}")
+        else:
+            print("Failure! {result}")
+    end)
+```
+
+Some keywords can be inlined or blocked based on whether they use a `:` not. If a block has a *subject* component, then the `:` goes after the subject in block mode and is swapped for the keyword `then` in inline mode. *(See [Control Flow](#Control-Flow) for more details.)*
 
 ```
 if x then "True" else "False"  -- Inline expression.
@@ -134,12 +164,14 @@ The philosophy of Mulang is that symbols should be easy to understand and that g
 
 **Bitwise:**
 
-- `lhs ~& rhs` &mdash; bitwise `AND`
-- `lhs ~| rhs` &mdash; bitwise `OR`
-- `lhs ~ rhs` &mdash; bitwise `XOR`
-- `~ rhs` &mdash; bitwise `NOT`
+- `lhs %& rhs` &mdash; bitwise `AND`
+- `lhs %| rhs` &mdash; bitwise `OR`
+- `lhs %^ rhs` &mdash; bitwise `XOR`
+- `%~ rhs` &mdash; bitwise `NOT`
 - `lhs << rhs` &mdash; bitshift left
 - `lhs >> rhs` &mdash; bitshift right
+
+*NOTE: `%` is reused for bitwise operators to keep with the pattern of `%` as symbol for computer-related math. Most people don't learn about the modulo operator `%` unless they learn computer science. Therefore, it makes sense to associate it with other computer-related math operations as well. You may think that this is overloading the meaning of `%`, but the trade-off is that this makes it semantically clear that when you see `%`, some kind of computer-science related math is going on. In general, bitwise operations are only used for very low-level programming, so this will not be something that new users have to worry about.*
 
 **Arrays:**
 
@@ -148,6 +180,7 @@ The philosophy of Mulang is that symbols should be easy to understand and that g
 - `++ rhs` &mdash; spread an array or iterator into an array or positional tuple
 - `lhs .. rhs` &mdash; creates an iterator that starts at the left value and ends just before the right value (exclusive)
 - `lhs ..= rhs` &mdash; creates an iterator that starts at the left value and ends with the right value (inclusive)
+- `lhs in rhs` &mdash; checks if an item exists in an array, returns a boolean
 
 **Tuples:**
 
@@ -166,7 +199,7 @@ The philosophy of Mulang is that symbols should be easy to understand and that g
 
 **Setting**
 
-- `lhs as rhs` &mdash; inline for `=` but inverted (variable goes on the right), but has the same rules: shadows the variable `rhs` if immutable or mutates it if mutable; returns the value of `lhs`
+- `lhs as rhs` &mdash; inline for `=` but returns the assigned value instead of being void; the operands are inverted (variable goes on the right), but has the same rules: shadows the variable `rhs` if immutable or mutates it if mutable; returns the value of `lhs` (See [Inline Binding](#Inline-Binding-let-in-as).)
 
 **Infix operator** are operators who have both an `lhs` and `rhs`. For any infix operator `op`, you can write it as `lhs[op rhs]`. This is shorthand for writing `((lhs) op (rhs))`. This is primarily used for arrays, but has many potential uses which can be explored in the future. See [Arrays](#Arrays) for more details on how to use `[]`.
 
@@ -179,9 +212,9 @@ Some operators also allow an equal sign after it to set a variable based on its 
 - `lhs //= rhs` &mdash; `lhs = lhs // rhs` &mdash; floor division assignment
 - `lhs %= rhs` &mdash; `lhs = lhs % rhs` &mdash; modulo assignment
 - `lhs %%= rhs` &mdash; `lhs = lhs %% rhs` &mdash; floor division modulo assignment (binds `lhs` to a range in `[0, rhs)` if `rhs` is positive or `(rhs, 0]` if `rhs` is negative)
-- `lhs ~&= rhs` &mdash; `lhs = lhs ~& rhs` &mdash; bitwise `AND` assignment
-- `lhs ~|= rhs` &mdash; `lhs = lhs ~| rhs` &mdash; bitwise `OR` assignment
-- `lhs ~= rhs` &mdash; `lhs = lhs ~ rhs` &mdash; bitwise `XOR` assignment
+- `lhs %&= rhs` &mdash; `lhs = lhs %& rhs` &mdash; bitwise `AND` assignment
+- `lhs %|= rhs` &mdash; `lhs = lhs %| rhs` &mdash; bitwise `OR` assignment
+- `lhs %^= rhs` &mdash; `lhs = lhs %^ rhs` &mdash; bitwise `XOR` assignment
 - `lhs <<= rhs` &mdash; `lhs = lhs << rhs` &mdash; bitshift left assignment
 - `lhs >>= rhs` &mdash; `lhs = lhs >> rhs` &mdash; bitshift right assignment
 - `lhs ++= rhs` &mdash; `lhs = lhs ++ rhs` &mdash; append to an array (not allowed if `lhs` is a fixed length array)
@@ -278,7 +311,7 @@ See [`undefined`](#undefined) for more details about what it means and its uses.
 
 ```
 x: mu Int = 0
-then:
+block:
     x = 1
 print("{x}")   -- Prints "1", x was mutated
 cantSetX() =
@@ -291,13 +324,13 @@ Since using `=` on a mutable variable mutates it, there's no way to create an im
 
 ```
 mu x = 0
-then:
+block:
     shadowX = x
 ```
 
 #### References (`ref`/`ref mu`)
 
-A reference type points to the same spot in memory as another variable. It's like a lightweight version of a pointer. (See [Pointers](#Pointers).) The right hand side has be something stored in memory, i.e. not a constant. References are immutable by default unless declared with `ref mu`. The syntax follows the same pattern as `mu`:
+A reference type points to the same spot in memory as another variable. It's like a lightweight version of a pointer. (See [Pointers](#Pointers).) Lifetimes are inferred via borrow-checking when the memory model is set to `Borrow`. (See [Memory Models](#Memory-Models).) The right hand side has be something stored in memory, i.e. not a constant. References are immutable by default unless declared with `ref mu`. The syntax follows the same pattern as `mu`:
 
 * `x: ref T = y` = Immutable reference with explicit type.
 * `ref x = y` = Immutable reference with inferred type.
@@ -545,6 +578,13 @@ while next() as val != None:
     print("{val}")
 ```
 
+The reason `let () in` uses parentheses is so that it won't get confused for the `in` operator on the right-hand side of the equals sign. This makes it sematically clear where the assignments begin and end&mdash;between the parentheses `()`.
+
+```
+a = [1, 2, 3]
+b = let (x = 1 in a, y = 2 in a, z = 4 in a) in [x, y z]
+```
+
 Multiple variables can be declared in a `let () in` expression separated by commas.
 
 ```
@@ -571,7 +611,7 @@ Notation:
 - **Options**: `type?`
 - **Results**: `type!` or `type!E` where `E` is an exception type
 - **Arrays**: `type#` or `type#N` where `N` is the length
-- **Multi-dimensional Arrays**: `type##` (an extra `#` for each dimension)
+- **Multi-dimensional Arrays**: `type##`, an extra `#` for each dimension, each dimension can be fixed or dyanmic: `type#N#`, `type##N`, `type#N#N`, `type#N##`, etc.
 - **Inferred**: omit the annotation entirely
 
 ### Built-in Types
@@ -618,7 +658,7 @@ There will be an API for defining the default value of custom types, but that is
 MyType :: struct
     value: Int
 
-MyType :: impl Default               -- Impliment the Default proto
+MyType :: impl Default               -- Implement the Default proto
     getDefault() = MyType(value: 0)  -- Default value for this type
 ```
 
@@ -822,7 +862,7 @@ The presence of `:` signifies if a keyword is in block mode or inline mode. `the
 The keyword `pass` can be put into any block to leave it empty. Not indenting after a block is considered a syntax error, so this is required in certain circumstances. However, this might result in a compile-time error when the block is expected to return a value. A function with `pass` in its body infers a return type of `Void`. 
 
 ```
-keyword[ subject]:
+block:
     pass
 ```
 
@@ -837,20 +877,6 @@ unusedFn() = undefined
 
 -- `unsetVariable` and `unusedFn` cannot be used.
 ```
-
-#### `then`
-
-Marks a block of code with its own scope that runs only once.
-
-```
-x = 0            -- Immutable variable `x`
-then:            -- New scope
-   x = 1         -- New immutable variable `x`
-   print("{x}")  -- Prints "1", because it's the `x` inside the `then` block
-print("{x}")     -- Prints "0", because it's the `x` outside the `then` block
-```
-
-See [Mutability](`#Mutability-mu) for more information about mutating variables.
 
 #### `if` / `else`
 
@@ -869,8 +895,6 @@ else:
 
 Enum/exception branching. Exhaustive by default. `case _` for the default case. The indentation of each `case` must be the same as the starting `match`, ending any debate on whether `case` should be indented or not&mdash;Mulang is opinionated after all. This is done not only to save indentation but also to stay consistent. Note that `match _` doesn't use `:` or `then`, so it logically shouldn't indent the next line. This is an intentional choice. You can think of `match` as not being a block at all but a marker to start a series of blocks that all start with `case`. `match` requires there to be at least one `case` after it or it's a syntax error. As mentioned, all branches must be exhasted, or there must be a default case with `case _` at the end. 
 
-The patterns map to the type passed in after `match`, so you only need to reference the members of that type in each `case` block.
-
 ```
 match self
 case First:
@@ -884,23 +908,7 @@ case Third{val}:
 message = (match e case OpenError { filename } then "Open error: {filename}" case _ then "Unknown error")
 ```
 
-Don't ask if this is allowed because the answer is **NO**:
-
-```
-(--
--- This is a syntax error:
-match self
-    case First:
-        print("First")
-    case Second(x):
-        print("Second({x})")
-    case Third{val}:
-        print("Third \{ val={val} }")
--- Too much indentation on each `case` block.
---)
-```
-
-If you don't like that, use a different programming language.
+The patterns map to the type passed in after `match`, so you only need to reference the members of that type in each `case` block.
 
 #### `if case`
 
@@ -918,8 +926,8 @@ else:
 Iterates through an array or iterator.
 
 ```
-for x in list:
-    print("{x}")
+for pattern in expr:
+    body
 ```
 
 If inlined, it returns an iterator `Iter T` which is lazily executed. It won't activate until it's collected in an array with `++` or passed into another `for _ in` loop. 
@@ -929,11 +937,54 @@ iterator = for x in list then x * 2
 list = [++iterator]
 ```
 
+Unlike `let () in`, you don't need parentheses around the item name in `for x in list` because the lexer expects a pattern after `for` and then an expression after `in` and then followed by a `:` or `then`. 
+
+The items can also be destructured. (See [Destructuring](#Destructuring).)
+
+```
+listOfTuples = [(1, '2', "three"), (4, '5', "six")]
+
+for (x, y, z) in listOfTuples:
+    print("{x}, {y}, {z}")
+```
+
 For an async iterator or an array of async types, you can use `for await` to automatically wait for each item in sequential order. (See [`await`](#await).)
 
 ```
 for await x in asyncIter():
     print("{x}")
+```
+
+#### `for case`
+
+Use `for case` to only iterate on enums that match a given pattern. This is the same as wrapping the body in an `if case` block. This only works for block-level `for` expressions. For inline, you need to use an `if case` or `match` so that the inputed iterator maps 1-to-1 with the outputed iterator.
+
+```
+for case Some(x) in iterGet():
+    print("{x}")
+
+-- That's the same as this:
+for o in iterGet():
+    if case Some(x) = o:
+        print("{x}")
+    else:
+        continue
+
+inlineForCase = (for o in iterGet() then if case Some(x) = o then x else default)
+```
+
+You can combine `for await` and `for case` into `for await case`. This will resolve each asynchronous instance and only run the body of the loop if the case matches, skipping any where the case doesn't match. 
+
+```
+for await case Some(x) in asyncIterGet():
+    print("{x}")
+
+-- Short for this:
+for await o in asyncIterGet():
+    if case Some(x) = o:
+        print("{x}")
+    else:
+        continue
 ```
 
 #### `while`
@@ -962,19 +1013,28 @@ loop:
     break
 ```
 
-Add `until` after a `loop` block to create a condition that will break the loop. Unlike `while`, this will break when the condition is `True`, analogous to `if cond then break`. This would be a `do while-not` loop in other languages. The reason it doesn't use `while` is because that would start another block, so `until` was chosen instead. This makes it clear that `loop` and `until` are semantically connected since `until` is only used with `loop`.
+Add `until` after a `loop` block to create a condition that will break the loop. Unlike `while`, this will break when the condition is `True`, analogous to `if cond then break`. This would be a `do {} while (!C);` loop in other languages. The reason it doesn't use `while` is because that would start another block, so `until` was chosen instead. This makes it clear that `loop` and `until` are semantically connected since `until` is only used with `loop`.
 
 ```
 loop:
     body
 until cond
+-- The loop will run at least once before checking the condition.
 ```
 
-The loop will run at least once before checking the condition.
+`loop`/`until` is arguably a better choice than `do`/`while` because it's more descriptive of what it's doing. *"Loop until this is true."* You can visually see that the condition is true after the `loop`/`until` block is finished, whereas you would need to invert the condition in your head for a `do`/`while` loop. It acts as a blockade to wait until a certain condition is true.
+
+```
+mu: i = 0
+loop:
+    i += 1
+until i >= 10
+-- i is >=10 at this point
+```
 
 #### `break` / `continue`
 
-Controls the iteration of any loop type mentioned. `break` exits out of the loop, and `continue` skips to the next iteration.
+Controls the iteration of any loop type mentioned. `break` exits out of the loop, and `continue` skips to the next iteration. This is only allowed in block-level loops. Inlined `for` loops are not allowed to skip iterations. This keeps the mapping between iterators 1-to-1. 
 
 #### `opt`
 
@@ -1002,6 +1062,12 @@ This is true even for deeply nested options:
 
 - `Some(Some(Some(Some(Some(_)))))` = `Some(_)`
 - `Some(Some(Some(Some(Some(Some(Some(Some(None))))))))` = `None`
+
+*You say that...*
+
+> Implicit `Some(_)` wrapping + auto-flattening could silently swallow bugs!
+
+If a function returns `Int?` and you accidentally return a plain `Int` (auto-wrapped to `Some(Int)`) or a `Some(Some(Int))` (flattened to `Some(Int)`), both are silently correct. That's ergonomic, but the edge case where you want a Some(None) &mdash; representing *"I got a result, and the result is absent"* &mdash; is permanently destroyed by the flattening rule. This a deliberate design decision to make unwrapping option types easier without have to write repeated `????` or `.unwrap().unwrap().unwrap().unwrap()` like in other languages. One of Mulang's core mottos is that *patterns scale with complexity.* It's simpiler to flatten option types than to worry about rewrapping them. 
 
 #### `try` / `except`
 
@@ -1097,7 +1163,7 @@ count(n: Int): Iter Int =
 
 #### `await`
 
-Exits out of a function with an `Async` type. The return type of the function must be of type `Async T` where T is the type that the async will return in the end. The return value of the async instance is determined the same way as a non-async function. Use of `await` will infer the return type as `Async T`. 
+Exits out of a function with an `Async` type. The return type of the function must be of type `Async T` where T is the type that the asynchronous value will resolve in the end. The return value of the asynchronous instance is determined the same way as a non-asynchronous function. Use of `await` will infer the return type as `Async T`. 
 
 ```
 asyncFn(a, b): Async Int =
@@ -1119,6 +1185,33 @@ asyncCollect(n): Async Int# =
     for await x in asyncIterFn(n):
         ret ++= x
     ret
+```
+
+#### `defer`
+
+Runs after a function done. For iterator functions, this is when the iterator was broken or exausted. For asynchronous functions, this is when the asynchronous type is resolved or rejected. Each `defer` statement go in reverse order: *first-in last-out*. It can be one line `defer _` or a block `defer:`. Generally though it's just one line such as `defer cleanUp()`. 
+
+```
+deferPrint() =
+    defer print("Last")
+    print("First")
+    defer print("Second to last")
+    print("Second")
+    defer print("Middle")
+    print("Done")
+
+deferPrint()
+```
+
+Prints:
+
+```
+First
+Second
+Done
+Middle
+Second to last
+Last
 ```
 
 ---
@@ -1209,7 +1302,7 @@ This makes the algebra quite principled. The only cases where order matters are 
 
 It also means the shorthand `(0, 1, x: 2)` isn't really special syntax. It's the natural representation of a tuple that has both dimensions populated, which any `&` expression across the two types would produce anyway.
 
-Opaque types such as primitives and enums coerce into a tuple of one, so creating a product type of them creates a positional tuple, e.g. `Int & Float & Char` becomes `(Int, Float, Char)`. Structs convert to named tuples unless declared with an `@opaque` decorator, in which case they behave like opaque types. The `Void` type coerces to an empty tuple `()`.
+Opaque types such as primitives and enums coerce into a tuple of one, so creating a product type of them creates a positional tuple, e.g. `Int & Float & Char` becomes `(Int, Float, Char)`. Structs convert to named tuples unless declared with an `@opaque` decorator, in which case they behave like opaque types. The `Void` type coerces to an empty tuple `()`. (See [Decorators](#Decorators) for more informations on available decorators.)
 
 Combining empty tuples produces an empty tuple `() & () == ()`. The same is true for empty named tuples `{} & {} == {}`. This also means that empty positional tuples and empty named tuples are equivalent `() == {}`. Both tuples have zero dimensions in both positional and named components; therefore they are equivalent. Saying `() & {} & ()` or `{} & ()` and any combination of empty tuples all produce an empty tuple. If you think about it, this makes sense. They all represent nothing, like a cup that can holds 0mL of water. If you stacked a bunch of 0mL cups, you would still not be able to hold any water in it. Is it even a cup then? That's why empty tuples are treated as `Void`, which verbally represents nothing, because they're all nothing. Therefore `Void == () == {}`. The 3 types are all the same. 
 
@@ -1243,7 +1336,7 @@ Instantiate a struct by calling it like a function. Each member is treated as a 
 myObject = MyStruct(name: "Foobar", value: 1)
 ```
 
-Structs are transparent. They can be destructured like named arrays. Use `@opaque` if you need to disable this. That will treat the struct type as an opaque type. This will also prevent it from being inherited with `inherit` since that relies on destructuring. (See [Inheritance and Visibility](Inheritance-and-Visibility).) *Inheriting from any opaque type is a compile time error.*
+Structs are transparent. They can be destructured like named arrays. Use `@opaque` if you need to disable this. That will treat the struct type as an opaque type. This will also prevent it from being inherited with `inherit` since that relies on destructuring. *Inheriting from any opaque type is a compile time error.* *(See [Inheritance and Visibility](Inheritance-and-Visibility).)*
 
 ```
 TransparentThing :: struct
@@ -1261,6 +1354,8 @@ OpaqueThing :: struct
 o = OpaqueThing(a: 1, b: 2)
 print("a: {o.a}, b: {o.b}")
 ```
+
+*(See [Decorators](#Decorators) for more informations on available decorators.)*
 
 #### Enumerables (`enum`)
 
@@ -1333,7 +1428,7 @@ MyEnum :: impl MyPrototype
 
 ### Inheritance and Visibility
 
-Even though structs cannot be extended the usual way, they can inherit from other structs using the `inherit` keyword. This works similar to importing. It marks members that map to members of another struct, making conversion possible. It follows the same convention for pattern matching as destructuring. (See [Destructuring](#Destructuring).) The struct being inherited must not be `@opaque` or else it's a compile-time error. 
+Even though structs cannot be extended the usual way, they can inherit from other structs using the `inherit` keyword. This works similar to importing. It marks members that map to members of another struct, making conversion possible. It follows the same convention for pattern matching as destructuring. (See [Destructuring](#Destructuring).) The struct being inherited must not be `@opaque` or else it's a compile-time error. *(See [Decorators](#Decorators) for more informations on available decorators.)*
 
 ```
 Vector2 :: struct
@@ -1402,7 +1497,7 @@ The compiler will read the body of the macro and understand where to insert its 
 You can also pass a type back to make generic types and functions.
 
 ```
-Option T :: enum
+Option T :: enum     -- Note that this is not the actual defintion for an option type `type?`. This is just a user-defined enum that uses the same pattern.
     Some(T)
     None
 
@@ -1439,9 +1534,11 @@ maxAdd a b :: if a > b then fn(c) = a + c else fn(c) = b + c
 print("{ maxAdd.( f(0), g(0) ) (1) }")
 ```
 
+The syntax `.()` was chosen so that generic type inferrence will take precedence. `max(a, b)` means to *call the instantiated function that `max` returns with inferred types* where as `max.(a, b)` means to *call the abstract function `max` with these exact values.* This also makes it easy to distinguish actual function calls from macros/inlining.
+
 ### Where Block
 
-This is used to define what each parameter's type is for an abstract function. It must be the first definition, and any subsequent definitions should have patterns that match the where clause. On common pattern is simply `type` which indicates that a parameter is any literal type. 
+This is not required for all meta functions but is useful for defining what patterns each parameter is expected to be. It must be the first definition, and any subsequent definitions should have patterns that match the where clause. One common pattern is simply `type` which indicates that a parameter is any literal type. 
 
 ```
 List T N :: where
@@ -1522,7 +1619,7 @@ import myModule.addThing
 
 Mulang is multi-paradigm: different functions, structs, or modules can use different memory strategies in the same program. The model is controlled per-module via decorators. Boundary crossing between models follows FFI-like rules &mdash; automatic marshalling where possible, explicit escapes otherwise.
 
-Modules define how memory is handled with the `@memory` decorator. By default, modules use a garbage collector. Some options include `Collect(GC)` (default),  `Count(ARC)` (reference counting), `Borrow` (borrow checking), and `Manual`. `GC` and `ARC` represent the standard garbage collector and reference counter respectively, but others can be defined and used instead.
+Modules define how memory is handled with the `@memory` decorator. *(See [Decorators](#Decorators) for more informations on available decorators.)* By default, modules use a garbage collector. Some options include `Collect(GC)` (default),  `Count(ARC)` (reference counting), `Borrow` (borrow checking), and `Manual`. `GC` and `ARC` represent the standard garbage collector and reference counter respectively, but others can be defined and used instead.
 
 ```
 import std.mem{memory, Count, ARC, _}
@@ -1543,6 +1640,19 @@ There have been a few examples of decorators in this document such as `@opaque` 
 @decorator1      -- No arguments.
 @decorator2(arg) -- With arguments.
 expr             -- Modifies whatever this expression is.
+```
+
+Decorators can be stacked and will run in reverse order. *Closest decorator to the expression runs, then the next one above that, then the next one, etc.*
+
+Built-in decorators so far include `@opaque` and `@memory`. More will be added in the future.
+
+```
+@memory(Manual) -- Changes what memory model a module uses, default is `Collect(GC)` the garbage collector.
+mod myModule
+
+@opaque         -- Marks a type as opaque, it can't be spread or destructured.
+Thing :: struct
+    value: int
 ```
 
 ---
@@ -1569,43 +1679,44 @@ expr             -- Modifies whatever this expression is.
 6. `case`
 7. `continue`
 8. `default`
-9. `else`
-10. `end`
-11. `enum`
-12. `except`
-13. `fn`
-14. `for`
-15. `if`
-16. `impl`
-17. `import`
-18. `inherit`
-19. `in`
-20. `let`
-21. `loop`
-22. `match`
-23. `mod`
-24. `mu`
-25. `not`
-26. `opt`
-27. `or`
-28. `out`
-29. `pass`
-30. `proto`
-31. `raise`
-32. `ref`
-33. `return`
-34. `self`
-35. `sizeof`
-36. `struct`
-37. `then`
-38. `try`
-39. `type`
-40. `typeof`
-41. `undefined`
-42. `until`
-43. `where`
-44. `while`
-45. `yield`
+9. `defer`
+10. `else`
+11. `end`
+12. `enum`
+13. `except`
+14. `fn`
+15. `for`
+16. `if`
+17. `impl`
+18. `import`
+19. `inherit`
+20. `in`
+21. `let`
+22. `loop`
+23. `match`
+24. `mod`
+25. `mu`
+26. `not`
+27. `opt`
+28. `or`
+29. `out`
+30. `pass`
+31. `proto`
+32. `raise`
+33. `ref`
+34. `return`
+35. `self`
+36. `sizeof`
+37. `struct`
+38. `then`
+39. `try`
+40. `type`
+41. `typeof`
+42. `undefined`
+43. `until`
+44. `where`
+45. `while`
+46. `yield`
 
 *NOTE: Types and values such as `Int`, `Void`, `True`, `False`, `Some`, `None`, `Null`, etc. are not considered keywords. `Self` (uppercase) is a type/value and not a keyword, not to be confused with `self` (lowercase) which is a keyword used to signify a method can be used on an instance of a type. See [Implementation](#Implementing-impl).*
 
