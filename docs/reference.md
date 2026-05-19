@@ -133,7 +133,8 @@ All subsequent expressions within a block should have the same indentation. If a
 
 ## Operators
 
-The philosophy of Mulang is that symbols should be easy to understand and that generally keywords are preferred over symbols. Most symbols are consistent with their contextual meaning, for example `*` and `/` relate to math, `~` relates to bitwise operators, `!` relates to exceptions, `&` relates to tuples, etc.. There's also a common pattern where repeating an operator gets you a more advanced version of that operator, for example: `+` addition vs `++` concatenation, `*` multiplication vs `**` exponentiation, `/` division vs `//` floor division, and `%` standard modulo vs `%%` floor division modulo. Mulang will check any combination of symbols greedily until the next space or word except for the reserved comment token (`--`), so for example `++` would be different from `+ +`. Spaces are required between multiple symbolic operators, much like how spaces are required between words. Symbol characters include any ASCII character that isn't alphanumeric, whitespace, quotation marks, delimiters, or brackets&mdash;in other words these symbols: `~!@#$%^&*-+=|\:<.>/?`. There may be operator overloading in the future, so even if an operator could be broken into smaller parts, it's considered a unique operator even if it has no meaning. Because of that, long sequences of operators need to be broken up into their separate symbols. From example `a???b`, the compiler will see `???` as one operator instead of as `?` and `??`. You would need to put at least one space here `a? ??b` to make sure it's clear that it's 2 operators and not one. This not only helps the parser but also helps the coder when reading the code. The exception to this rule is `--` which is **always** a comment no matter what.
+The philosophy of Mulang is that symbols should be easy to understand and that generally keywords are preferred over symbols. Most 
+, for example `*` and `/` relate to math, `~` relates to bitwise operators, `!` relates to exceptions, `&` relates to tuples, etc.. There's also a common pattern where repeating an operator gets you a more advanced version of that operator, for example: `+` addition vs `++` concatenation, `*` multiplication vs `**` exponentiation, `/` division vs `//` floor division, and `%` standard modulo vs `%%` floor division modulo. Mulang will check any combination of symbols greedily until the next space or word except for the reserved comment token (`--`), so for example `++` would be different from `+ +`. Spaces are required between multiple symbolic operators, much like how spaces are required between words. Symbol characters include any ASCII character that isn't alphanumeric, whitespace, quotation marks, delimiters, or brackets&mdash;in other words these symbols: `~!@#$%^&*-+=|\:<.>/?`. There may be operator overloading in the future, so even if an operator could be broken into smaller parts, it's considered a unique operator even if it has no meaning. Because of that, long sequences of operators need to be broken up into their separate symbols. From example `a???b`, the compiler will see `???` as one operator instead of as `?` and `??`. You would need to put at least one space here `a? ??b` to make sure it's clear that it's 2 operators and not one. This not only helps the parser but also helps the coder when reading the code. The exception to this rule is `--` which is **always** a comment no matter what.
 
 **Algebra:**
 
@@ -372,6 +373,10 @@ Thing :: {x: Int, y: Int}
 thing = Thing(x: 1, y: 2)
 &Thing{x, y} = thing       -- Split thing into its components.
 ```
+
+*A comment on the choice of `&`...*
+
+You might think that the ampersand (`&`) is overloaded, but it harkens back to the rule that *symbols are consistent with their contextual meaning*. In this case, `&` by itself is always a symbol related to tuples. Some languages like OCaml use an asterisk (`*`) for product types, which is an obvious choice since the name *product types* implies multiplication. However, `*` is always related to arithmatics in Mulang and not tuples. Using `*` would break this consistancy. That's why `&` is chosen for tuple-related operations.
 
 ### Function Declarations
 
@@ -893,22 +898,25 @@ else:
 
 #### `match` / `case`
 
-Enum/exception branching. Exhaustive by default. `case _` for the default case. The indentation of each `case` must be the same as the starting `match`, ending any debate on whether `case` should be indented or not&mdash;Mulang is opinionated after all. This is done not only to save indentation but also to stay consistent. Note that `match _` doesn't use `:` or `then`, so it logically shouldn't indent the next line. This is an intentional choice. You can think of `match` as not being a block at all but a marker to start a series of blocks that all start with `case`. `match` requires there to be at least one `case` after it or it's a syntax error. As mentioned, all branches must be exhasted, or there must be a default case with `case _` at the end. 
+Enum/exception branching. Exhaustive by default. `case _` for the default case. The indentation of each `case` must be the same as the starting `match`, ending any debate on whether `case` should be indented or not&mdash;Mulang is opinionated after all. This is done not only to save indentation but also to stay consistent. Note that `match _` doesn't use `:` or `then`, so it logically shouldn't indent the next line. This is an intentional choice. `match` itself doesn't start a block. You can think of `match` as not being a block at all but a marker to start a series of blocks that all start with `case`. `match` requires there to be at least one `case` after it or it's a syntax error. As mentioned, all branches must be exhasted, or there must be a default case with `case _` at the end. 
 
 ```
-match self
-case First:
-    print("First")
-case Second(x):
-    print("Second({x})")
+match self               -- No `:`. No indentation next line.
+case First:              -- Each case is at the same indentation.
+    print("First")       -- Each case marks a new block.
+case Second(x):          -- ...
+    print("Second({x})") -- ...
 case Third{val}:
     print("Third \{ val={val} }")
+                         -- All choices were exhausted, so no `case _:` is necessary.
 
--- Inline form
+-- Inline form:
 message = (match e case OpenError { filename } then "Open error: {filename}" case _ then "Unknown error")
 ```
 
 The patterns map to the type passed in after `match`, so you only need to reference the members of that type in each `case` block.
+
+Note that in other languages, the choice on whether the case within a `match` or `switch` statement should be indented or not is left up to the choice of the programmer. Mulang abandons this freedom for an opinionated format. This keeps code consistent both logically and semantically. 
 
 #### `if case`
 
@@ -1428,7 +1436,7 @@ MyEnum :: impl MyPrototype
 
 ### Inheritance and Visibility
 
-Even though structs cannot be extended the usual way, they can inherit from other structs using the `inherit` keyword. This works similar to importing. It marks members that map to members of another struct, making conversion possible. It follows the same convention for pattern matching as destructuring. (See [Destructuring](#Destructuring).) The struct being inherited must not be `@opaque` or else it's a compile-time error. *(See [Decorators](#Decorators) for more informations on available decorators.)*
+Even though structs cannot be extended the usual way, they can **inherit** from other structs using the `inherit` keyword. This works similar to **importing.** It marks members that map to members of another struct, making conversion possible. It follows the same convention for pattern matching as destructuring. (See [Destructuring](#Destructuring).) The struct being inherited must not be `@opaque` or else it's a compile-time error. *(See [Decorators](#Decorators) for more informations on available decorators.)*
 
 ```
 Vector2 :: struct
@@ -1599,7 +1607,7 @@ import std.print     -- This is just an example and not final.
 print("Hello, world!")
 ```
 
-Modules are named with the keyword `mod` near the top before anything is defined. This is the name you'll use when importing your module. 
+Modules are named with the keyword `mod` near the top before anything is defined. This is the name you'll use when importing your module. **There can only be one `mod` declaration per file.** Multiple `mod` declarations is a syntax error.  
 
 ```
 import somewhere{thing}
@@ -1628,7 +1636,7 @@ import std.mem{memory, Count, ARC, _}
 mod moduleThatUsesReferenceCounting
 ```
 
-How this is implemented is outside of the scope of this document. That will be saved for when it's time to make a standard library for Mulang.
+How this is implemented is outside of the scope of this document. That will be saved for when it's time to make a standard library for Mulang. For now, Mulang will focus on only implementing the garbage collector which will work in both interpretted and compiled mode.
 
 ---
 
@@ -1654,6 +1662,17 @@ mod myModule
 Thing :: struct
     value: int
 ```
+
+Some other ideas for built-in decorators include:
+
+- `@local` &mdash; locks a symbol to only be used within its module.
+- `@static` &mdash; make a variable global but only available within the scope that it was defined in.
+- `@inline` &mdash; marks that a regular function should inline itself like a meta function.
+- `@pure` &mdash; enforces pure function programming practices: *no `ref mu`, no `capture`, no `out`, etc.*
+- `@safe` &mdash; enforces borrow-checking at compile time for this function.
+- `@override` &mdash; marks that a previously implemented method will be overridden.
+
+This is a work in progress though. How these decorators are implemented and their API are subject to change.
 
 ---
 
