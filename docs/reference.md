@@ -13,7 +13,7 @@ This document will focus on the language itself. Some features may come in a sta
 ## Lexical Conventions
 
 - **Indentation**: Significant whitespace (4 spaces recommended). 
-- **Statements**: Each statement is divided by new lines. Semi-colons (;) can also be used, but there must be another statement after it&mdash;i.e. no trailing semi-colons. Keyword `end` has a special meaning to end a block.
+- **Statements**: Each statement is divided by new lines. Semi-colons (;) can also be used. Keyword `end` has a special meaning to end a block, but only when the block is inlined.
 - **Comments**: Double dash (`--`) to end-of-line. Block comments start with `(--` and end with `--)`.
 - **String literals**: `"..."` with interpolation with `{expr}` inside. To write a literal curly brace (`{`), escape it with a backslash `\{`. 
 
@@ -77,11 +77,14 @@ then:
     expr
 end)             -- Required here since the block is in parentheses.
 
-(then:
-    then:
-        expr
+(then:           -- This starts a block, so indentation is significant.
+    then:        -- This starts another block inside that block.
+        expr     -- Inside the second block.
+    expr         -- Unindent to escape the second block.
 end)             -- Use only one `end` to end to whole block.
 ```
+
+You probably think "Don't you need another `end` for the inner block?" No, and this is intentional. Mulang uses signficant whitepsace, so only indentation matters. The exception to this is inside an expression such a between parentheses. Then you need some way to exit out of the block, and `end` is the answer to that. That's the signal to make the switch from block mode back to inline mode. 
 
 Some keywords can be inlined or blocked based on whether they use a `:` or not. 
 
