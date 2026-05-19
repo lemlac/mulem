@@ -21,7 +21,7 @@ This document will focus on the language itself. Some features may come in a sta
 
 Comments are made with double dash `--`.
 
-```mu
+```
 -- Comment until new line.
 
 (--
@@ -38,7 +38,7 @@ comment.
 
 A Mu program consists of a list of **expressions** separated by new-lines or inlined with semi-colons (`;`). New-lines and semi-colons are interchangeable and treated the same. 
 
-```mu
+```
 expr
 expr
 
@@ -49,7 +49,7 @@ Almost everything is an expression. Some statements can be either inline or bloc
 
 To split one expression into multiple lines, you must wrap it in parentheses. The indentation inside the parentheses doesn't matter as long as it's the same as or greater than the opening parenthesis. Semi-colons (`;`) are a syntax error inside parentheses unless inside a block expression within the parentheses.
 
-```mu
+```
 (word1
     word2
    word3
@@ -58,7 +58,7 @@ To split one expression into multiple lines, you must wrap it in parentheses. Th
 
 Adding a newline and indentations after a `:` or `=` starts a block. A **block** wraps multiple expressions into one. The last expression evaluated in a block becomes its value. The most basic block type is `then` which runs a block only once.
 
-```mu
+```
 then:
     expr
     expr
@@ -66,7 +66,7 @@ then:
 
 Indentation marks the end of the block. If a block is inside of another expression and not by itself, then the closing `end` is required and must be at the same indentation as the opening part of the block.
 
-```mu
+```
 
 then:
     then:
@@ -88,7 +88,7 @@ You probably think "Don't you need another `end` for the inner block?" No, and t
 
 Some keywords can be inlined or blocked based on whether they use a `:` or not. 
 
-```mu
+```
 if x then "True" else "False"  -- Inline expression.
 
 if x:           -- `:` + new line here, so start a block.
@@ -192,14 +192,14 @@ There are two types of bindings: basic `=` and meta `::`. See [Meta Bindings](#M
 
 Variables are declared with just the equals sign (`=`). Type is inferred, but can be declared with a colon (`:`).
 
-```mu
+```
 a = 1
 b: Int = 1
 ```
 
 Variables are immutable, but setting it again shadows it.
 
-```mu
+```
 a = 1
 a = 2
 a = 3
@@ -208,7 +208,7 @@ a = "hello"   -- The type of a shadowed variable doesn't have to match.
 
 You can also shadow a variable using its previous value.
 
-```mu
+```
 i = 0
 i = i + 1     -- Sets new `i` based on old `i`
 i += 1        -- Same as above
@@ -216,7 +216,7 @@ i += 1        -- Same as above
 
 Using the single equal-sign is a void statement, so using it within an expression and not on its own is a syntax error. This helps prevent the common bug of using `=` when you meant `==`. For inline binding, use `let () in` or `as`. (See [Inline Binding](#Inline-binding-let-in-and-as).)
 
-```mu
+```
 (-- Error:
 if x = 0:
     print("x is 0")
@@ -232,21 +232,21 @@ Mutable variables are marked with the keyword `mu`, the main star of the languag
 
 Declare a mutable variable with `mu type`. Setting it will change the value instead of shadowing it. The type of value when mutating it should match its original type.
 
-```mu
+```
 x: mu Int = 0
 x = 1          -- `x` is mutated
 ```
 
 You can also infer the type with `mu _ = _`:
 
-```mu
+```
 mu x = 0
 x = 1
 ```
 
 Or declare the type and set it later:
 
-```mu
+```
 x: mu Int
 doSomething()
 x = 1
@@ -254,7 +254,7 @@ x = 1
 
 Not setting a mutable variable implies `= undefined` after it which means it cannot be used until it's been set. The exception is passing undefined variables to the `out` parameters of functions. (See [Function Declarations](#Function-Declarations).)
 
-```mu
+```
 x: mu Int = undefined
 -- `x` cannot be used here.
 (--
@@ -268,7 +268,7 @@ doSomething(x)   -- This is okay.
 
 Assigning to the variable for the rest of the scope and any sub-scopes will mutate the variable. The exception to this is functions which always set a new variable unless its been explicitly captured. (See [Capturing](#Capturing-capture).)
 
-```mu
+```
 x: mu Int = 0
 then:
     x = 1
@@ -281,7 +281,7 @@ print("{x}")   -- Prints "1" again, cantSetX didn't change it
 
 Since using `=` on a mutable variable mutates it, there's no way to create an immutable variable with the same name until you go out of scope. In other languages, you can say `let _ = _` to declare a new variable in scope, but Mulang abandoned this pattern for the simpler `_ = _` one. It's recommended to create a new variable name if you want to make a mutable variable immutable.
 
-```mu
+```
 mu x = 0
 then:
     shadowX = x
@@ -296,7 +296,7 @@ A reference type points to the same spot in memory as another variable. It's lik
 * `x: ref mu T = y` = Mutable reference with explicit type.
 * `ref mu x = y` = Mutable reference with inferred type. 
 
-```mu
+```
 mu x = 0
 ref mu xRef = x
 xRef = 1
@@ -309,7 +309,7 @@ See [Pointers](#Pointers) for more details.
 
 Tuples can be split into separate variables. Use parentheses (`()`) for positional tuples and curly braces (`{}`) for named tuples. If a tuple is mixed, split each on the left side with `&` like `() & {}` or `{} & ()`. This is to avoid confliction between the different uses of `:`, type notation on the left of the equal sign and key-value pairing on the right of the equal sign. Use `as` to create an alias for named tuples with type notation going after the alias name. See [Tuples](#Tuples) for more information.
 
-```mu
+```
 (a, b) = (0, 1)               -- Basic position destructuring.
 (a: Int, b: Int) = (0, 1)     -- Type notation.
 {x} = {x: 2}                  -- Named destructuring.
@@ -322,13 +322,13 @@ Tuples can be split into separate variables. Use parentheses (`()`) for position
 
 All components of a tuple should be referenced on the left. Use `_` to explicitly skip components. Also put `_` at the end of a named tuple to skip other keys.
 
-```mu
+```
 (_, b, _) & {x, _} = (0, 1, 2, x: 3, y: 4)
 ```
 
 When destructuring a type that isn't anonymous, the type can optionally be put before the parentheses/braces, otherwise it's automatically inferred. An ampersand (`&`) should be placed at the start of the expression so it won't be confused for a function declaration (see next section). This guarantees that you are destructuring based on the correct type. This follows the same schema as pattern matching in `match`/`case` and `try`/`except`. (See [Control Flow](#Control-Flow).)
 
-```mu
+```
 Thing :: {x: Int, y: Int}
 thing = Thing(x: 1, y: 2)
 &Thing{x, y} = thing       -- Split thing into its components.
@@ -338,7 +338,7 @@ thing = Thing(x: 1, y: 2)
 
 Functions are declared with parentheses before the equals sign. The type of the parameters can be either explicitly typed or inferred based on usage.
 
-```mu
+```
 add(a: Int, b: Int): Int = a + b
 -- Or inferred:
 add(a, b) = a + b
@@ -348,7 +348,7 @@ result = add(1, 2)
 
 Functions can have multiple lines. The last line evaluated is the return value.
 
-```mu
+```
 fib(n) = 
     if n < 1:
         0
@@ -360,7 +360,7 @@ fib(n) =
 
 Trailing commas are ignored, but leading commas and double commas are considered a syntax error. 
 
-```mu
+```
 add3(a, b, c) = a + b + c
 -- Also okay:
 add3(a, b, c,) = a + b + c
@@ -378,7 +378,7 @@ add3(,1,2, ,3,,) -- This is not okay.
 
 Functions can also be declared with `fn` to be set later. This type is a **function pointer.** It lets you treat functions as variables.
 
-```mu
+```
 action: mu fn(Int, Int): Int
 add(a, b) = a + b
 sub(a, b) = a - b
@@ -392,7 +392,7 @@ print("1 - 1 = {action(1, 1)}")  -- Prints "0"
 
 Function parameters can be declared like variables. Likewise, you can modify their mutability and referenceness the same way.
 
-```mu
+```
 increment(x: ref mu Int) =
     x += 1
 
@@ -411,7 +411,7 @@ What each modifier means changes the functionality and the function's purity:
 
 Another type of parameter is `out`. This is like `ref mu` but is treated as `undefined` at the start of the function. Use it to set a variable that hasn't been set yet. The parameter must not be `undefined` in any branch within the function. This means either setting it within the function or passing it to another function with an `out` parameter. This ensures that the variable is set after the function has been called. 
 
-```mu
+```
 setInt(out i) =
   i = 3
 
@@ -422,7 +422,7 @@ print("{x}")    -- Prints "3"
 
 This works for mutable variables, but what if you wanted to make an immutable variable using `out`? You can do this by using `out` again while calling a function to declare it as an immutable variable in the current scope. 
 
-```mu
+```
 setInt(out n)   -- Declare a new variable `n` that gets set by `setInt`.
 print("{n}")    -- Prints "3"
 ```
@@ -433,7 +433,7 @@ Immutable variables can be captured without an issue. If you try to set it withi
 
 For better safety, functions don't capture mutable variables by default. Instead, any variable set inside a function is treated as a new variable. This help prevent accidently mutating a variable that you didn't mean to and encourage functional programming practices.
 
-```mu
+```
 x = 1
 
 addFromX(y) = x + y
@@ -449,7 +449,7 @@ print("{x}")     -- Prints "1"
 
 To capture a mutable variable, you must redeclare it in the function with `capture _`. This helps make it easy to see which functions can mutate other variables and which don't. You can capture multiple variables at once with commas `,`. Each captured variable must be listed. This follows the same practice as `import` and `inherit` where all words in a given context are listed out clearly so that there are no accident name collisions or hidden gotchas.
 
-```mu
+```
 mu count = 0
 mu squared = 1
 mu cubed = 1
@@ -469,7 +469,7 @@ print("{count}, {squared}, {cubed}") -- Prints "3, 9, 27"
 
 You can define a function within an expression with the keyword `fn` in the pattern `fn(_) = _`. This is useful for passing functions to other functions. If the lambda function has multiple lines, it must terminate with `end`. As mentioned before, the purity of the lambda must match the function that it's being passed to.
 
-```mu
+```
 map(array, func) = [++for x in array then func(x)]
 array0 = [1, 2, 3, 4]
 array1 = map(array0, fn(x) = x + 1)
@@ -483,7 +483,7 @@ end)
 
 A name is optional. Adding a name creates an immutable reference of the function itself.
 
-```mu
+```
 doThing(fn callback(val) =
     if val > 0:
         callback(val - 1)
@@ -496,7 +496,7 @@ end)
 
 You can declare a named parameter with `&` and a named tuple after it before the `:` or `=`. The named members are marked in curly brackets (`{}`). Parentheses mark a **positional tuple**, and curly braces mark a **named tuple**. (See [Tuples](#Tuples).) Named tuples can be destructored so that their members become variables in the scope. 
 
-```mu
+```
 add() & { a: Int, b: Int }: Int =
     a + b
 
@@ -505,7 +505,7 @@ add(a: 1, b: 2)
 
 Named parameters can be defined in their own object and then passed in with the `&` operator as well. The named parameters in the function can also be collected into a single variable using `as`. 
 
-```mu
+```
 Options :: { enabled: Bool }
 doThing(key: Str) & Options as options =
     if options.enabled:
@@ -524,7 +524,7 @@ See [Tuples](#Tuples) for more details on the `&` operator.
 
 You can also bind variables within an expression using `let () in` and `as`. `let () in` is used for a single expression, whereas `as` binds for the rest of the scope.
 
-```mu
+```
 squared = let (x = getSomething()) in x * x
 
 while next() as val != None:
@@ -533,13 +533,13 @@ while next() as val != None:
 
 Multiple variables can be declared in a `let () in` expression separated by commas.
 
-```mu
+```
 sum = let (x = 1, y = 2) in x + y
 ```
 
 `as` has the same rules as `=` but returns the value in the expression instead of being void. This means that it can also mutate a mutable variable.
 
-```mu
+```
 val: mu Choice
 if get() as val != Target:
     raise NotTarget(val)
@@ -563,7 +563,7 @@ if get() as val != Target:
 
 Some built-in types include `Int`, `Uint`, `Float`, `Bool`, `Char`, and `Str`. 
 
-```mu
+```
 myInt: Int = -1234
 myInt: Uint = 5678
 myFloat: Float = 12.34
@@ -574,14 +574,14 @@ myStr: Str = "Hello"
 
 You can get the type of any variable with the `typeof` keyword.
 
-```mu
+```
 x = 0
 y: typeof x = 1    -- Ensures that x and y have the same type.
 ```
 
 You can also get the default value of any type with the keyword `default`. The type needs to have a default value defined which is yet to be determined how, but they're already defined for basic types.
 
-```mu
+```
 x = default Int    -- == 0
 x = default Float  -- == 0.0
 x = default Bool   -- == False
@@ -591,13 +591,13 @@ x = default Str    -- == ""
 
 `default` can also infer the type. This can be useful in certain situations, like if you want to leave a function that returns somethng empty so that you can implement it later.
 
-```mu
+```
 implementLater(): Int = default
 ```
 
 You can also get the size of any type with the keyword `sizeof`. It returns a constant `Uint` (unsigned integer) with the number of bytes of memory that type requires. The exact sizes of some types like `Int` or `Float` might vary, but you can rely on `Char` and `Bool` being 1 byte each. There's also the `void` type which represents no data.
 
-```mu
+```
 sizeOfBool = sizeof Bool   -- == 1
 sizeOfChar = sizeof Char   -- == 1
 sizeOfVoid = sizeof void   -- == 0
@@ -605,7 +605,7 @@ sizeOfVoid = sizeof void   -- == 0
 
 You can call a type as a function to convert types into other types if conversion is possible. 
 
-```mu
+```
 x = 1
 y = Float(x)
 print("{y}")     -- Prints "1.0"
@@ -615,7 +615,7 @@ print("{y}")     -- Prints "1.0"
 
 `Bool` is an enum type with its only members being `False` and `True`. This means you can also pattern match with a Bool, although it's recommended to use `if`/`else` instead.
 
-```mu
+```
 match value
 case True:
     print("It's true!")
@@ -625,7 +625,7 @@ case False:
 
 That's the same as this.
 
-```mu
+```
 if value:
     print("It's true!")
 else:
@@ -636,7 +636,7 @@ else:
 
 Strings can be formatted with curly braces (`{expr}`) in the string. Use a backslash to write a literal opening curly brace (`\{`). Note that string insertion and named tuples both use curly braces. This shouldn't be an issue though since they're used in different contexts. 
 
-```mu
+```
 name = "world"  
 hello = "Hello, {name}!"
 helloEscaped = "Hello, \{name}!"
@@ -644,7 +644,7 @@ helloEscaped = "Hello, \{name}!"
 
 Subsequent string literals will automatically concatenate, and the `++` operator can be used to concatenate non-literal strings.
 
-```mu
+```
 str1 = "This" " string"
 str2 = " is broken"
 str3 = str1 ++ str2 ++ " into multiple parts."
@@ -654,7 +654,7 @@ print(str3)
 
 You can also write multi-line strings with `"""`. A common issue in programming languages is how to fix the issue of leading whitespace in a multi-line string. Mulang uses significant whitespace, so unintenting the string wouldn't work. We don't want all the leading whitespace to be in the string, but how do we solve this? Whitespace is trimmed based on the positions of the last `"""`. Anything before it is automatically trimmed. Much like blocks, having too little indentation is a syntax error inside multi-line strings. This helps keep things readable and consistent and solves the whitespace issue inside strings.
 
-```mu
+```
 myStr =
     """
     Hello.
@@ -672,7 +672,7 @@ myStr =
 
 You can write a raw string with `''...''` (two apostrophes). Although apostrophes `'` are used for chars, an empty Char isn't possible since the default Char is written `'\0'` (null character). This is a common practice in programming languages where `"` mark formattable strings and `'` mark raw strings, so this should be easy to understand for anyone. When you write `''`, every character after it (including whitespace and intentation) is in the string until the closing `''`. Escaping with backslashes `\` and insertion with curly braces `{}` are ignored.
 
-```mu
+```
 rawString = ''It's okay to put an apostrophe (') in the string.''
 filePath = ''C:\files\on\windows.txt''
 template = ''Insert here -> {{variable}}''
@@ -694,7 +694,7 @@ That's an edge case not worth persuing. The double apostrophes `''` syntax isn't
 
 Array types are declared with the hash symbol (`#`). This was chosen because the `#` is commonly used for numbers in English. For example, `#1` is read as `number 1`. A number after the `#` makes it a fixed length array `type#N`. Arrays statically sized when written as `type#N`; `type#` is the dynamic form. Items are separated with commas (`,`). The hash symbol is also used for accessing an array, giving a clear visible mirror between the two. Other languages use `[]` for indexing, but that has another meaning in Mulang which is explained in the proceeding example.
 
-```mu
+```
 list: Int#4 = [1, 2, 3, 4]
 print("length of list: {len(list)}")
 compressedList = [list#0 + list#1, list#2 + list#3]
@@ -703,14 +703,14 @@ doubleArray: Int#2#2 = [[1, 2], [3, 4]]
 
 To make chaining accesses easier, there's a special rule for square brackets: any operator `op` can be expressed with `a[op b]` which is the same as `((a) op (b))`. This can be used together with the index operator `#` to get an item from a matrix or multi-dimensional array. This helps keep the visual association of `#` for arrays and leaves room for `[]` for other possible uses in the future.
 
-```mu
+```
 item = doubleArray[#1][#0]  -- The 2nd row, 1st column
 print("{item}")             -- Prints "3"
 ```
 
 One other common operator with arrays is `++` which spreads an array into another array. This was chosen because it's also used for concatenation, giving the two operations an obvious connection. Some languages use `...`, but this visually conflicts with the range `..` operator. `++` visually does the job better without any issues.
 
-```mu
+```
 a = [1, 2, 3]
 b = [0, ++a, 4]    -- == [0, 1, 2, 3, 4]
 c = a ++ b         -- == [1, 2, 3, 0, 1, 2, 3, 4]
@@ -720,14 +720,14 @@ c = a ++ b         -- == [1, 2, 3, 0, 1, 2, 3, 4]
 
 Although most things can be achieved without manual manipulation of pointers, some low level code requires it. Pointers are marked with a caret (`^`) before the type, and dereferencing them uses the same symbol. More carets mark how many times you need to dereference it: `^^type` = double pointer, `^^^type` = triple pointer, etc.. Get the reference to a variable with `@`. Pointers are immutable by default, so mutating them isn't allowed.
 
-```mu
+```
 x: Int = 0
 xPtr: ^Int = @x
 ```
 
 Note that shadowing a pointer's reference doesn't update the pointer. How the program handles the old reference is up to the memory model. It some cases, it may have already been dropped. (See [Memory Models](#Memory-Models).)
 
-```mu
+```
 x = 1
 print("{xPtr^}")  -- Prints "0", because it's still referencing the old x.
 -- This might lead to a crash.
@@ -735,7 +735,7 @@ print("{xPtr^}")  -- Prints "0", because it's still referencing the old x.
 
 Pointers can also be treated as numbers. The resulted type is `^unknown` by default which means it can't be dereferenced unless it's been casted to a known pointer type. Use `^type(_)` to cast a pointer to a different type. Although pointer arithmetic is possible, it's not recommended because it can easily lead to crashes. This should be reserved for low-level code. 
 
-```mu
+```
 x = 0
 p = @x
 next = ^Int(p + 1)
@@ -746,7 +746,7 @@ print("prev: {prev^}")   -- This will probably crash too.
 
 Mutable pointers are marked with `^mu type`. The reference must also be a mutable type. Although it's pointing to a mutable variable, the actual pointer variable itself is immutable. You would need another `mu` before the caret to change the pointer, marked as `mu ^type` or `mu ^mu type`.
 
-```mu
+```
 x: mu Int = 0
 xPtr: ^mu Int = @x
 xPtr ^= 1
@@ -767,7 +767,7 @@ There are some cases where the type can't be infered right away in which case th
 
 Sometimes with FFI, we don't really know nor care what the actual type to a pointer is. We just know that it's a pointer to something. In that case, we can type it as `^unknown`. This pointer type is always immutable&mdash;i.e. no `^mu unknown`&mdash;and dereferencing it will throw a compile-time error. 
 
-```mu
+```
 result: ^unknown = ExternalLib.getSomething()
 (--
 result ^= 64                          -- This is forbidden.
@@ -781,7 +781,7 @@ ExternalLib.doSomethingWith(result)   -- This is how you're supposed to use it.
 
 All branching constructs share the same block / inline pattern:
 
-```mu
+```
 -- Block form
 keyword subject:
     body
@@ -799,7 +799,7 @@ The presence of `:` signifies if a keyword is in block mode or inline mode. `the
 
 The keyword `pass` can be put into any body to leave it empty. This might result in a compile-time error when the block is expected to return a value. 
 
-```mu
+```
 keyword[ subject]:
     pass
 ```
@@ -808,7 +808,7 @@ keyword[ subject]:
 
 This marks that something should not be used. If the compiler detects that a code is using an `undefined` somewhere, it throws an error.
 
-```mu
+```
 unusedFn() =
     undefined
 
@@ -819,7 +819,7 @@ unusedFn() =
 
 Marks a block of code with its own scope that runs only once.
 
-```mu
+```
 x = 0            -- Immutable variable `x`
 then:            -- New scope
    x = 1         -- New immutable variable `x`
@@ -833,7 +833,7 @@ See [Mutability](`#Mutability-mu) for more information about mutating variables.
 
 Basic boolean branching.
 
-```mu
+```
 x = if x > 0 then x else -x
 
 if x > 0:
@@ -848,7 +848,7 @@ Enum/exception branching. Exhaustive by default. `case _` for the default case. 
 
 The patterns match to the type of enum passed to `match`, so you only need to reference the members of that type in each `case` block.
 
-```mu
+```
 match self
 case First:
     print("First")
@@ -865,7 +865,7 @@ message = (match e case OpenError { filename } then "Open error: {filename}" cas
 
 This combines `match` and `if` into one expression. Useful if you just want to handle a single case.
 
-```mu
+```
 if case Pattern(x) = value:
     print("value is {x}")
 else:
@@ -876,21 +876,21 @@ else:
 
 Iterates through an array or iterator.
 
-```mu
+```
 for x in list:
     print("{x}")
 ```
 
 If inlined, it returns an iterator which will lazily execute when spread with `++` or passed into another `for _ in` loop. 
 
-```mu
+```
 iterator = for x in list then x * 2
 list = [++iterator]
 ```
 
 For an async iterator or an array of async types, you can use `for await` to automatically wait for each item in sequential order. (See [`await`](#await).)
 
-```mu
+```
 for await x in asyncIter():
     print("{x}")
 ```
@@ -899,14 +899,14 @@ for await x in asyncIter():
 
 Repeats a block of code until the condition is `True`.
 
-```mu
+```
 while cond:
     body
 ```
 
 You can also do `while case` just like with `if case`.
 
-```mu
+```
 while case Some(x) = nextValue():
     print("value is {x}")
 ```
@@ -915,7 +915,7 @@ while case Some(x) = nextValue():
 
 Repeats a block of code until `break` is called.
 
-```mu
+```
 loop:
     print("I'm looping!")
     break
@@ -923,7 +923,7 @@ loop:
 
 Add `until` after a `loop` block to create a condition that will break the loop. Unlike `while`, this will break when the condition is `True`, analogous to `if cond then break`. This would be a `do while-not` loop in other languages. The reason it doesn't use `while` is because that would start another block, so `until` was chosen instead. This makes it clear that `loop` and `until` are semantically connected since `until` is only used with `loop`.
 
-```mu
+```
 loop:
     body
 until cond
@@ -939,13 +939,13 @@ Controls the iteration of any loop type mentioned. `break` exits out of the loop
 
 Wraps a value in a option type. You can use `?` to unwrap multiple option types within an expression. If one `?` returns `None`, then the whole expression stops and returns `None`.
 
-```mu
+```
 x = (opt f(a?))?? "fallback"     -- x is "fallback" if a is none.
 ```
 
 If a function returns an option type, then use of the `?` is allowed with `opt`. Using an `?` inside a function will automatically infer the return type as an option. The return will be automatically wrapped in `Some(_)`.
 
-```mu
+```
 addStuff(a: Int, b: Int): Int? =
     a = getSomething(a)?
     b = getSomething(b)?
@@ -966,7 +966,7 @@ This is true even for deeply nested options:
 
 Result types are unwrapped with an exclamation mark (`!`) within a try block.
 
-```mu
+```
 safeResult = try divide(1, 0)! except _ then 0.0
 
 try:
@@ -977,7 +977,7 @@ except e:
 
 Pattern matching works in the `except` clause like in `case`. If a pattern is missing, the exception is raised to the next block above it. The type of exception in the last `except e then` block is all the possible exceptions minus the caught exceptions. 
 
-```mu
+```
 try:
     risky()!
 except Exception(e):
@@ -990,7 +990,7 @@ except e:
 
 If a function returns a result type `type!`, then it can also use the `!` like in a `try` block. Use of a `!` in a function automatically infers a result type as the return.
 
-```mu
+```
 riskyFunction(a: Int): Int! =
     b = doSomething1(a)!
     c = doSomething2(b)!
@@ -999,7 +999,7 @@ riskyFunction(a: Int): Int! =
 
 You can combine `?` and `!` together when the return type is `type?!` (an **option result type**).
 
-```mu
+```
 -- With type notation:
 doSomething(x: Str?): Str?! =
     x = x?
@@ -1022,7 +1022,7 @@ When all exceptions have been handled, the result is `type!void` which automatic
 
 Exits out of a function. If a value is after it, that value is the return value, otherwise it's `void`. This must match the return type of the function. Last-line evaluation is still enabled by default.
 
-```mu
+```
 isThirteen(x) =
     if x == 13:
         return True  -- Exits the function and returns true.
@@ -1033,7 +1033,7 @@ isThirteen(x) =
 
 Return out of the function with an exception value. The function must return a result type `type!`. If an except type is also declared `type!except`, then the type passed to `raise` must match.
 
-```mu
+```
 -- `type!` is inferred:
 alwaysFail() =
     raise MyError("error message")
@@ -1048,7 +1048,7 @@ except e:
 
 Exits out of a function with an `Iter` type. The return value of the function must be of type `Iter T` where T is the yield type. When you have `yield` in your function, the actual return value in the function body is discarded, and using `return _` in it is a compile-time error. Use of `yield` will infer the return type as `Iter T`. 
 
-```mu
+```
 count(n: Int): Iter Int =
     for i in 0..n:
         yield i
@@ -1058,7 +1058,7 @@ count(n: Int): Iter Int =
 
 Exits out of a function with an `Async` type. The return type of the function must be of type `Async T` where T is the type that the async will return in the end. The return value of the async instance is determined the same way as a non-async function. Use of `await` will infer the return type as `Async T`. 
 
-```mu
+```
 asyncFn(a, b): Async Int =
     a = await fetch(a)
     b = await fetch(b)
@@ -1067,7 +1067,7 @@ asyncFn(a, b): Async Int =
 
 Both `yield` and `await` can be used together in an `Iter Async T` type. As the type suggests, each yield is of type `Async T`. Use `for await` to wait for each async value to resolve in sequential order.
 
-```mu
+```
 asyncIterFn(n): Iter Async Int =
     for i in 0..n:
         val = await fetch(i)
@@ -1105,13 +1105,13 @@ Variable and functions primarily use the equals sign (`=`) and are for storing a
 
 Putting a constant value after `::` creates a constant. This holds an unchangeable value that must be known at compile time. Explicit typing isn't necessary since it cannot be changed.
 
-```mu
+```
 PI :: 3.1415926535
 ```
 
 You can also bind a function to a constant. When calling it, it would be the same as defining it inline and then calling. This can be useful if you need to pass a function multiple times but don't want it to be outputted when compiled.
 
-```mu
+```
 IDENTITY :: fn(x) = x
 addOne :: fn(x) = x + 1
 value = addOne(2)               -- Same as (fn(x) = x + 1)(2), result is 3.
@@ -1122,7 +1122,7 @@ array = map([1, 2, 3, 4], addOne)
 
 Assigning a type after `::` creates an alias
 
-```mu
+```
 numberType :: Int
 ```
 
@@ -1130,7 +1130,7 @@ This alias is unique to the scope. Modifying it only affects the alias and not t
 
 You can also create aliases for basic product types or sum types.
 
-```mu
+```
 tuple        ::  Int , Float , Char                    -- Also called a "positional tuple".
 alsoTuple    :: (Int , Float , Char)                   -- Optional parentheses.
 namedTuple   :: {count: Int, scale: Float, code: Char} -- Position not guaranteed.
@@ -1149,7 +1149,7 @@ Product unions with the `&` operator can be used for both types and values. When
 
 You can think of it as every tuple always having both dimensions, just with most slots empty:
 
-```mu
+```
 (0, 1)           -- positional: (0, 1), named: {}
 {x: 2}           -- positional: (),     named: {x: 2}
 (0, 1) & {x: 2}  -- positional: (0, 1), named: {x: 2}
@@ -1176,7 +1176,7 @@ Combining empty tuples produces an empty tuple `() & () == ()`. The same is true
 
 Structs are product types&mdash;or in other words&mdash;plain data containers. They cannot extend other structs, but can inherit members of other structs (see [Inheritance and Visibility](#Inheritance-and-Visibility)).
 
-```mu
+```
 MyStruct :: struct
     name: Str
     value: Int
@@ -1184,13 +1184,13 @@ MyStruct :: struct
 
 Instantiate a struct by calling it like a function. Each member is treated as a named argument.
 
-```mu
+```
 myObject = MyStruct(name: "Foobar", value: 1)
 ```
 
 Structs are transparent. They can be destructured like named arrays. Use `@opaque` if you need to disable this. That will treat the struct type as an opaque type. This will also prevent it from being inheritted with `inherit` since that relies on destructuring. (See [Inheritance and Visibility](Inheritance-and-Visibility).) *Inheriting from any opaque type is a compile time error.*
 
-```mu
+```
 TransparentThing :: struct
     a: Int
     b: Int
@@ -1211,7 +1211,7 @@ print("a: {o.a}, b: {o.b}")
 
 Enums are sum types. They define a closed set of variants. Variants may carry data turning them into a tagged union.
 
-```mu
+```
 MyEnum :: enum
     First
     Second(Int)
@@ -1220,7 +1220,7 @@ MyEnum :: enum
 
 Like structs, instantiate by calling the member as a function unless it doesn't carry any data.
 
-```mu
+```
 a = MyEnum.First
 b = MyEnum.Second(2)
 c = MyEnum.Third(val: 3)
@@ -1230,7 +1230,7 @@ c = MyEnum.Third(val: 3)
 
 Exceptions are similar to enums but used for error handling. See "Error Handling" for more details. Instantiation works the same as enums.
 
-```mu
+```
 MyException :: except
     OutOfBounds
     DivideByZero(Int)
@@ -1240,7 +1240,7 @@ MyException :: except
 
 A `proto` is an abstract interface &mdash; a named contract with no data. It is equivalent to a `virtual class` (C++), `trait` (Rust), or `interface` (Java, TypeScript, etc.) in other languages. Each member is a function, also called a **method**. Methods that have a parameter named `self` at the beginning will be called as methods on the instance of that type, i.e. `instance.method(...)`. This is equivalent to saying `(typeof instance).method(instance, ...)`. `self` is inferred to be type of `Self` which represents the current type implementing this proto. 
 
-```mu
+```
 MyPrototype :: proto
     speak(self): Str
 ```
@@ -1249,7 +1249,7 @@ MyPrototype :: proto
 
 Methods and trait implementations are added separately with `impl`. Much like `proto`, `self` refers to the current instance and `Self` refers to the current type. You can also add static values that are attached to the type itself. Use `.` to access static values and methods like with structs.
 
-```mu
+```
 MyStruct :: impl
     staticValue = 1234
     init(name: Str, value: Int): Self =
@@ -1260,7 +1260,7 @@ print("{MyStruct.staticValue}")
 
 To implement a prototype onto another type, you add the proto's name after `impl`:
 
-```mu
+```
 MyStruct :: impl MyPrototype
     speak(self) =
         "I am a MyStruct \{ x={self.x}, y={self.y} }"
@@ -1280,7 +1280,7 @@ MyEnum :: impl MyPrototype
 
 Even though structs cannot be extended the usual way, they can inherit from other structs using the `inherit` keyword. This works similar to importing. It marks members that map to members of another struct, making conversion possible. It follows the same convention for pattern matching as destructuring. (See [Destructuring](#Destructuring).) The struct being inheritted must not be `@opaque` our else it's a compile-time error. 
 
-```mu
+```
 Vector2 :: struct
     x: Float
     y: Float
@@ -1299,7 +1299,7 @@ When you inherit, you don't just pick out some members. The entire parent struct
 
 All members of a type are public by default. When making a subtype, inherited members become private to the subtype unless explicitly redeclared with `inherit`. This encourages separating public and private data into distinct types rather than using access modifiers. If you only inherit some fields but not all, you must put a `_` at the end of the tuple list to mark that not all members are inheritted. 
 
-```mu
+```
 PrivateFields :: struct
     val: Int
     secret: Int
@@ -1317,14 +1317,14 @@ Adding a parameter before the double colon (`::`) turns it into a **meta functio
 
 Analogous to constant values, you can define an inline function or macro by adding a parameter before the double colons and writing an expression after it. Like constants, they don't output a value in memory when compiled, useful for collecting repeated code. Unlike constant functions, they cannot be passed to another function. They are only for inserting an expression. Each parameter is a variable within the expression, so you don't need to wrap them in parentheses `()` like with C macros. 
 
-```mu
+```
 max a b :: if a > b then a else b
 min a b :: if a < b then a else b
 ```
 
 You can also have multi-line macros similar to functions. Each meta function creates a new scope. Defining variables that could bleed into the surrounding scope is not allowed. The last expression is the return value. Call it like a function using `.()`. 
 
-```mu
+```
 doSomethingComplicated x ::
     x = x + 1
     x = x / 2
@@ -1335,7 +1335,7 @@ value = doSomethingComplicated.(3)
 
 This is the same as this:
 
-```mu
+```
 value =
     x = (3) + 1
     x = x / 2
@@ -1346,7 +1346,7 @@ The compiler will read the body of the macro and understand where to insert its 
 
 You can also pass a type back to make generic types and functions.
 
-```mu
+```
 Option T :: enum
     Some(T)
     None
@@ -1358,20 +1358,20 @@ maybeInt = Some(1)
 
 Type parameters can be omitted at the call site if they can be fully inferred from the value arguments, in which case the call uses parentheses like a regular function. It can also be called explicitly by making an alias for it.
 
-```mu
+```
 SomeInt :: Some Int
 maybeInt = SomeInt(1)
 ```
 
 When used as a type, only spaces are needed to delimit arguments just like how it's written when being defined. This is the recommend way of writing meta functions. Sometimes you need to call them in an expression instead of as type notation. In that cause, you need to use `.()` to call it like you would for a normal function. This is awkward in most cases, so it's recommended to use type inference instead. 
 
-```mu
+```
 maybeInt = Some.(Int)(1)
 ```
 
 Some more examples using the `.()` notation:
 
-```mu
+```
 max a b :: if a > b then a else b
 min a b :: if a < b then a else b
 print("{ max.(0, 1) }")           -- Prints "1"
@@ -1388,7 +1388,7 @@ print("{ maxAdd.( f(0), g(0) ) (1) }")
 
 This is used to define what each parameter's type is for an abstract function. It must be the first definition, and any subsequent definitions should have patterns that match the where clause. 
 
-```mu
+```
 List T N :: where
     T: type       -- `type` refers to any literal type, i.e. not a value
     N: Int        -- A constant `Int` that must be known at compile time
@@ -1406,7 +1406,7 @@ List T N :: impl
 
 Generics will automatically generate code based on their parameters, but you can also implement them by hand using pattern matching. If you only want to use the manual implementations for a generic function, you can set its body to `undefined`. This creates a virtual function that can be overloaded later. If you use a function that is defined as `undefined`, it will throw a compile-time error.
 
-```mu
+```
 -- Forces every type to have its own implementation
 increment T :: fn(c: ref mu T): void =
     undefined
@@ -1441,7 +1441,7 @@ Use `import _` to import something, optionally giving the import an alias with `
 
 The most common import will likely be the `print` function, which will be defined somewhere in a standard library.
 
-```mu
+```
 import std.print     -- This is just an example and not final.
 
 print("Hello, world!")
@@ -1449,7 +1449,7 @@ print("Hello, world!")
 
 Modules are named with the keyword `mod` near the top before anything is defined. This is the name you'll use when importing your module. 
 
-```mu
+```
 import somewhere{thing}
 
 mod myModule
@@ -1459,7 +1459,7 @@ addThing(x) = x + thing
 
 In this example, you would import `addThing` like this:
 
-```mu
+```
 import myModule.addThing
 ```
 
@@ -1469,7 +1469,7 @@ Mulang is multi-paradigm: different functions, structs, or modules can use diffe
 
 Modules define how memory is handled with the `@memory` decorator. By default, modules use a garbage collector. Some options include `Collect(GC)` (default),  `Count(ARC)` (reference counting), `Borrow` (borrow checking), and `Manual`. `GC` and `ARC` represent the standard garbage collector and reference counter respectively, but others can be defined and used instead.
 
-```mu
+```
 import std.mem{memory, Count, ARC, _}
 
 @memory(Count(ARC))
