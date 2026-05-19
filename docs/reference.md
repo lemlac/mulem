@@ -661,29 +661,25 @@ print(str3)
 -- Prints "This string is broken up into multiple parts."
 ```
 
-You can also write multi-line strings. A common issue in programming languages is how to fix the issue of leading whitespace in a multi-line string. Mulang uses significant whitespace, so unintenting the string wouldn't work. We don't want all the leading whitespace to be in the string, but how to we solve this? You can write a multi-line string in Mulang in the following way:
-
-1. Start with 3 quotation marks `"""` + a new-line.
-2. Start each line with a single quotation mark `"`.
-3. Close with 3 quotation marks `"""` on the last line.
-
-Whitespace before the starting quotation mark `"` on each line will be ignored. If the next line starts with anything other than a `"` before the string is closed, then it's a syntax error. Each starting `"` needs to be at the same indentation. Whitespace before the `"` is not insterted into the string.
+You can also write multi-line strings with `"""`. A common issue in programming languages is how to fix the issue of leading whitespace in a multi-line string. Mulang uses significant whitespace, so unintenting the string wouldn't work. We don't want all the leading whitespace to be in the string, but how to we solve this? Whitespace is trimmed based on the positions of the last `"""`. Anything before it is automatically trimmed. Buch like blocks, having too little indentation is a syntax error inside multi-line strings. This helps keeps things readable and concisitant and solves the whitespace issue inside string.
 
 ```mu
 myStr =
     """
-    "Hello.
-    "This string has multiple lines.
-    "  This line will start with 2 spaces in the string.
-    "
-    "The lines above and below this are empty.
-    "
-    "It's also fine to have """ in the string because it's not on a new line.
-    "This is the last line because of the closing quotation marks.
+    Hello.
+    This string has multiple lines.
+      This line will start with 2 spaces in the string.
+    
+    The lines above and below this are empty.
+
+    One quotation mark is fine (").
+    Two quotation marks are fine too ("").
+    But three qutation marks like \""" need to be escaped.
+    This is the last line because of the closing quotation marks below it.
     """
 ```
 
-You can write a raw string with `''...''` (two apostrophes). Athough apostrophes `'` are used for chars, an empty Char isn't possible since the default Char is written `'\0'` (null character). When you write `''`, every character after it (including whitespace and intentation) is in the string until the closing `''`. Escaping with backslashes `\` and insertion with curly braces `{}` are ignored.
+You can write a raw string with `''...''` (two apostrophes). Athough apostrophes `'` are used for chars, an empty Char isn't possible since the default Char is written `'\0'` (null character). This is a common practice in programming languages where `"` mark formattable strings and `'` mark raw strings, so this should be easy to understand for anyone. When you write `''`, every character after it (including whitespace and intentation) is in the string until the closing `''`. Escaping with backslashes `\` and insertion with curly braces `{}` are ignored.
 
 ```mu
 rawString = ''It's okay to put an apostrophe (') in the string.''
@@ -698,6 +694,10 @@ bigDocument = ''
     string
 ''
 ```
+
+> What if you have a raw string with two apostrophes in a row inside it?
+
+That's an edge case not worth persuing. The double apostrophes `''` syntax isn't perfect, but it's at least something. For anything more complicated, it's likely better to save the string to a document and open it as a file, which will be handled by a seperate library and lies outside the scope of this document.
 
 #### Arrays
 
