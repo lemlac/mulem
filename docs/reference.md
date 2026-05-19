@@ -820,12 +820,14 @@ unusedFn() =
 Marks a block of code with its own scope that runs only once.
 
 ```mu
-x = 0
-then:
-   x = 1
-   print("{x}")  -- Prints "1", `x` inside the `then` block
-print("{x}")     -- Prints "0", `x` outside the `then` block
+x = 0            -- Immutable variable `x`
+then:            -- New scope
+   x = 1         -- New immutable variable `x`
+   print("{x}")  -- Prints "1", because it's the `x` inside the `then` block
+print("{x}")     -- Prints "0", because it's the `x` outside the `then` block
 ```
+
+See [Mutability](`#Mutability-mu) for more information about mutating variables.
 
 #### `if` / `else`
 
@@ -1492,57 +1494,55 @@ How this is implemented is outside of the scope of this document. That will be s
 
 ## Keywords
 
-There are 46 keywords in total:
+1. `and`
+2. `as`
+3. `await`
+4. `break`
+5. `capture`
+6. `case`
+7. `continue`
+8. `default`
+9. `else`
+10. `end`
+11. `enum`
+12. `except`
+13. `fn`
+14. `for`
+15. `if`
+16. `impl`
+17. `import`
+18. `inherit`
+19. `in`
+20. `let`
+21. `loop`
+22. `match`
+23. `mod`
+24. `mu`
+25. `not`
+26. `opt`
+27. `or`
+28. `out`
+29. `pass`
+30. `proto`
+31. `raise`
+32. `ref`
+33. `return`
+34. `self`
+35. `sizeof`
+36. `struct`
+37. `then`
+38. `try`
+39. `type`
+40. `typeof`
+41. `undefined`
+42. `unknown`
+43. `until`
+44. `void`
+45. `where`
+46. `while`
+47. `yield`
 
-* `and`
-* `as`
-* `await`
-* `break`
-* `capture`
-* `case`
-* `continue`
-* `default`
-* `else`
-* `end`
-* `enum`
-* `except`
-* `fn`
-* `for`
-* `if`
-* `impl`
-* `import`
-* `inherit`
-* `in`
-* `let`
-* `loop`
-* `match`
-* `mod`
-* `mu`
-* `not`
-* `opt`
-* `or`
-* `out`
-* `pass`
-* `proto`
-* `raise`
-* `ref`
-* `return`
-* `self`
-* `sizeof`
-* `struct`
-* `then`
-* `try`
-* `type`
-* `typeof`
-* `undefined`
-* `unknown`
-* `until`
-* `void`
-* `where`
-* `while`
-* `yield`
-
-*NOTE: `Self` is a variable and not a keyword.*
+*NOTE: `Self` (uppercase) is a variable and not a keyword, not to be confused with `self` (lowercase) which is used to signify a method can be used on an instance of a type.*
 
 ---
 
