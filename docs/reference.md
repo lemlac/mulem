@@ -56,43 +56,38 @@ To split one expression into multiple lines, you must wrap it in parentheses. Th
       word4)
 ```
 
-Some keywords can start a block. A **block** wraps multiple expressions into one. The last expression evaluated in a block becomes its value. The most basic block type is `do` which runs a block only once.
+Adding a newline and indentations after a `:` or `=` starts a block. A **block** wraps multiple expressions into one. The last expression evaluated in a block becomes its value. The most basic block type is `::` which runs a block only once.
 
 ```mu
-do
+::
     expr
     expr
 ```
-
-Words and symbols that can start a block are:
-
-- `do`
-- `try`
-- `then`
-- `=`
 
 Indentation marks the end of the block. If a block is inside of another expression and not by itself, then the closing `end` is required and must be at the same indentation as the opening part of the block.
 
 ```mu
 
-do
-    do
+::
+    ::
         expr
                  -- Ends both blocks.
 
-(do
-    do
+(::
+    ::
         expr
 end)             -- Required here since the block is in parentheses.
 ```
 
-The difference on whether a block keyword starts a block or is inlined is based on the presence of a new-line after it ignoring comments and trailing spaces.
+Some keywords can be inlined or blocked based on wether they use a `:` or not. 
 
 ```mu
-do expr         -- Inline block.
+if x then "True" else "False"  -- Inline expression.
 
-do              -- New line here, so start a block.
+if x:           -- `:` + new line here, so start a block.
     expr        -- Next line should be one or more indentations higher.
+else:           -- Unindenting exits the block.
+    expr        -- This is a new block.
 
 expr            -- Unindenting exits the block.
 ```
@@ -212,15 +207,15 @@ i = i + 1     -- Sets new `i` based on old `i`
 i += 1        -- Same as above
 ```
 
-Using the single equal-sign is a void statement, so using it within an expression and not on its own is a syntax error. This helps prevent the common bug of using `=` when you meant `==`. For inline binding, use `let _ then` or `as`. (See [Inline binding](#Inline-binding-let-and-as).)
+Using the single equal-sign is a void statement, so using it within an expression and not on its own is a syntax error. This helps prevent the common bug of using `=` when you meant `==`. For inline binding, use `let () in` or `as`. (See [Inline Binding](#Inline-binding-let-in-and-as).)
 
 ```mu
 (-- Error:
-if x = 0 then
+if x = 0:
     print("x is 0")
 --)
 -- Do this instead:
-if x == 0 then
+if x == 0:
     print("x is 0")
 ```
 
@@ -267,23 +262,23 @@ doSomething(x)   -- This is okay.
 Assigning to the variable for the rest of the scope and any sub-scopes will mutate the variable. The exception to this is functions which always set a new variable unless its been explicitly captured. (See [Capturing](#Capturing-capture).)
 
 ```mu
-x: mu Int
-do
+x: mu Int = 0
+::
     x = 1
-print("{x}")   -- 1
+print("{x}")   -- 1, x was mutated
 cantSetX() =
     x = 2
 cantSetX()
-print("{x}")   -- still 1
+print("{x}")   -- still 1, cantSetX didn't change it
 ```
 
 #### Rebinding (`let`)
 
-Since using `=` on a mutable variable mutates it, there's no way to create an immutable variable with the same name until you go out of scope. In other languages, you can say `let _ = _` to declare a new variable in scope, but Mu abandoned this pattern for the simpler `_ = _` one. In order to create a fresh binding to any variable name, you can use the pattern `let _`. Note that there's no equals sign after the variable name. This is to distinguish it from the `let _ = _ then` pattern. (See [Inline Binding](#Inline-Binding).) This is the same as declaring a new variable in scope, allowing you to shadow it without affecting the original variable. Once you exit the scope, the original variable is accessible again as normal. You can also use commas to declare multiple variables at once like `let a, b, c`. The variable names do not have to be already defined. 
+Since using `=` on a mutable variable mutates it, there's no way to create an immutable variable with the same name until you go out of scope. In other languages, you can say `let _ = _` to declare a new variable in scope, but Mu abandoned this pattern for the simpler `_ = _` one. In order to create a fresh binding to any variable name, you can use the pattern `let _`. Note that there's no equals sign after the variable name. This is to distinguish it from the `let () in` pattern. (See [Inline Binding](#Inline-binding-let-in-and-as).) This is the same as declaring a new variable in scope, allowing you to shadow it without affecting the original variable. Once you exit the scope, the original variable is accessible again as normal. You can also use commas to declare multiple variables at once like `let a, b, c`. The variable names do not have to be already defined. 
 
 ```mu
 mu x = 0
-do                -- Create a new child scope.
+::                -- Create a new child scope.
     x = 1         -- Mutates `x` instead of making a new variable.
     let x         -- Frees the name `x` in this scope.
     x = 2         -- Define new `x` without affecting the old `x`.
@@ -296,6 +291,8 @@ let x             -- Forget about `x` for the rest of the scope.
 x = 3             -- `x` is now defined.
 print("{x}")      -- 3
 ```
+
+Note that this is an escape hatch, not a common pattern.
 
 #### References (`ref`/`ref mu`)
 
@@ -360,11 +357,11 @@ Functions can have multiple lines. The last line evaluated is the return value.
 
 ```mu
 fib(n) = 
-    if n < 1 then
+    if n < 1:
         0
-    else if n < 2 then
+    else if n < 2:
         1
-    else
+    else:
         fib(n - 1) + fib(n - 2)
 ```
 
@@ -464,8 +461,8 @@ mu count = 0
 mu squared = 1
 mu cubed = 1
 addCount() =
-    capture count as c, squared, cubed
-    c += 1
+    capture count, squared, cubed
+    count += 1
     squared = count * count
     cubed = squared * count
 
@@ -484,9 +481,9 @@ map(array, func) = [++for x in array then func(x)]
 array0 = [1, 2, 3, 4]
 array1 = map(array0, fn(x) = x + 1)
 array2 = map(array0, fn(x) =
-    if x < 2 then
+    if x < 2:
         x - 1
-    else
+    else:
         x + 2
 end)
 ```
@@ -495,9 +492,9 @@ A name is optional. Adding a name creates an immutable reference of the function
 
 ```mu
 doThing(fn callback(val) =
-    if val > 0 then
+    if val > 0:
         callback(val - 1)
-    else
+    else:
         print("done")
 end)
 ```
@@ -518,9 +515,9 @@ Named parameters can be defined in their own object and then passed in with the 
 ```mu
 Options :: { enabled: Bool }
 doThing(key: Str) & Options as options =
-    if options.enabled then
+    if options.enabled:
         Some(callApi(Str))
-    else
+    else:
         None
 
 options = Options(enabled: true)
@@ -530,28 +527,28 @@ doThing("foo", &options)   -- Spreads `options` into the arguments.
 
 See [Tuples](#Tuples) for more details on the `&` operator.
 
-### Inline binding (`let` and `as`)
+### Inline Binding (`let () in` and `as`)
 
-You can also bind variables within an expression using `let ... then` and `as`. `let` is used for a single expression, where as `as` binds for the rest of the scope.
+You can also bind variables within an expression using `let () in` and `as`. `let () in` is used for a single expression, where as `as` binds for the rest of the scope.
 
 ```mu
-squared = let x = getSomething() then x * x
+squared = let (x = getSomething()) in x * x
 
-while next() as val != None then
+while next() as val != None:
     print("{val}")
 ```
 
-If there are more than one variable after `let`, they need to be put into parentheses first.
+Multiple variables can be declared in a `let () in` expression seperated by commas.
 
 ```mu
-sum = let (x = 1, y = 2) then x + y
+sum = let (x = 1, y = 2) in x + y
 ```
 
 `as` has the same rules as `=` but returns the value in the expression instead of being void. This means that it can also mutate a mutable variable.
 
 ```mu
 val: mu Choice
-if get() as val != Target then
+if get() as val != Target:
     raise NotTarget(val)
 -- `val` is a `Target` here.
 ```
@@ -629,18 +626,18 @@ print("{y}")     -- 1.0
 
 ```mu
 match value
-case True then
+case True:
     print("It's true!")
-case False then
+case False:
     print("It's false!")
 ```
 
 That's the same as this.
 
 ```mu
-if value then
+if value:
     print("It's true!")
-else
+else:
     print("It's false!")
 ```
 
@@ -851,9 +848,9 @@ All branching constructs share the same block / inline pattern:
 
 ```mu
 -- Block form
-keyword subject then
+keyword subject:
     body
-keyword
+keyword:
     body
 
 -- Inline expression form
@@ -861,12 +858,14 @@ keyword subject then expr
 keyword expr
 ```
 
+The presence of `:` signifies if a keyword is in block mode or inline mode. `then` is used to seperate a subject and expression when a keyword block is inlined. 
+
 #### `pass`
 
 The keyword `pass` can be put into any body to leave it empty. This might result in a compile-time error when the block is expected to return a value. 
 
 ```mu
-keyword [subject then]
+keyword[ subject]:
     pass
 ```
 
@@ -881,16 +880,16 @@ unusedFn() =
 -- `unusedFn` cannot be used.
 ```
 
-#### `do`
+#### `::`
 
 Marks a block of code with its own scope that runs only once.
 
 ```mu
 x = 0
-do
+::
    x = 1
-   print("{x}")  -- 1
-print("{x}")     -- 0
+   print("{x}")  -- 1, `x` inside the `::` block
+print("{x}")     -- 0, `x` outside the `::` block
 ```
 
 #### `if` / `else`
@@ -900,29 +899,29 @@ Basic boolean branching.
 ```mu
 x = if x > 0 then x else -x
 
-if x > 0 then
+if x > 0:
     print("positive")
-else
+else:
     print("non-positive")
 ```
 
 #### `match` / `case`
 
-Enum/exception branching. Exhaustive by default. `case _ then` for the default case. The indentation of each `case` must be the same as the starting `match` unless it's inlined.
+Enum/exception branching. Exhaustive by default. `case _` for the default case. The indentation of each `case` must be the same as the starting `match`, ending any depate on whether `case` should be indented or not&mdash;Mu is opinionated after all. This is done not only to save indentation but also to stay consistant. Because `match _` doesn't use `:` or `then`, it logically shouldn't indent the next line.
+
+The patterns match to the type of enum passed to `match`, so you only need to reference the members of that type in each `case` block.
 
 ```mu
 match self
-case First then
+case First:
     print("First")
-case Second(x) then
+case Second(x):
     print("Second({x})")
-case Third{val} then
+case Third{val}:
     print("Third {{ val={val} }}")
 
--- Inline form (line breaks ignored inside parentheses)
-message = (match e
-    case file.OpenError { filename } then "Open error: {filename}"
-    case _ then "Unknown error")
+-- Inline form
+message = (match e case OpenError { filename } then "Open error: {filename}" case _ then "Unknown error")
 ```
 
 #### `if case`
@@ -930,9 +929,9 @@ message = (match e
 This combines `match` and `if` into one expression. Useful if you just want to handle a single case.
 
 ```mu
-if case Pattern(x) = value then
+if case Pattern(x) = value:
     print("value is {x}")
-else
+else:
     print("value doesn't match")
 ```
 
@@ -944,14 +943,14 @@ Iterates through an array or iterator. If inlined, it returns an iterator which 
 iterator = for x in list then x * 2
 list = [++iterator]
 
-for x in list then
+for x in list:
     print("{x}")
 ```
 
 For an async iterator or an array of async types, you can use `for await` to automatically wait for each item in sequential order. (See [`await`](#await).)
 
 ```mu
-for await x in asyncIter() then
+for await x in asyncIter():
     print("{x}")
 ```
 
@@ -960,14 +959,14 @@ for await x in asyncIter() then
 Repeats a block of code until the condition is `True`.
 
 ```mu
-while cond then
+while cond:
     body
 ```
 
 You can also do `while case` just like with `if case`.
 
 ```mu
-while case Some(x) = nextValue() then
+while case Some(x) = nextValue():
     print("value is {x}")
 ```
 
@@ -976,7 +975,7 @@ while case Some(x) = nextValue() then
 Repeats a block of code until `break` is called.
 
 ```mu
-loop
+loop:
     print("I'm looping!")
     break
 ```
@@ -984,7 +983,7 @@ loop
 Add `until` after a `loop` block to create a condition that will break the loop. Unlike `while`, this will break when the condition is `True`, analogous to `if cond then break`. The loop will run at least once before checking the condition.
 
 ```mu
-loop
+loop:
     body
 until cond
 ```
@@ -1022,21 +1021,21 @@ Result types are unwrapped with an exclamation mark (`!`) within a try block.
 ```mu
 safeResult = try divide(1, 0)! except _ then 0.0
 
-try
+try:
     risky()!
-except e then
+except e:
     print("{e}")
 ```
 
 Pattern matching works in the `except` clause like in `case`. If a pattern is missing, the exception is raised to the next block above it. The type of exception in the last `except e then` block is all the possible exceptions minus the caught exceptions. 
 
 ```mu
-try
+try:
     risky()!
-except Exception(e) then
+except Exception(e):
     print("Exception {e}")
 (-- implied:
-except e then
+except e:
     raise e
 --)
 ```
@@ -1076,9 +1075,9 @@ When all exceptions have been handled, the result is `type!void` which automatic
 Passes an error type within a `try` block
 
 ```mu
-try
+try:
     raise MyError("error message")
-except e then
+except e:
     print("{e}")
 ```
 
@@ -1090,7 +1089,7 @@ Exits out of a function. If a value is after it, that value is the return value,
 
 ```mu
 isThirteen(x) =
-    if x == 13 then
+    if x == 13:
         return True  -- Exits the function and returns true.
     False            -- Returns false.
 ```
@@ -1101,7 +1100,7 @@ Exits out of a function with an `Iter` type. The return value of the function mu
 
 ```mu
 count(n: Int): Iter Int =
-    for i in 0..n then
+    for i in 0..n:
         yield i
 ```
 
@@ -1120,13 +1119,13 @@ Both `yield` and `await` can be used together in an `Iter Async T` type. Use `fo
 
 ```mu
 asyncIterFn(n): Iter Async Int =
-    for i in 0..n then
+    for i in 0..n:
         val = await fetch(i)
         yield val
 
 asyncCollect(n): Async Int# =
     ret: mu Int# = []
-    for await x in asyncIterFn(n) then
+    for await x in asyncIterFn(n):
         ret ++= x
     ret
 ```
@@ -1266,18 +1265,18 @@ MyException :: except
     DivideByZero(Int)
 ```
 
-### Virtual Types (`virt`)
+### Pototypes (`proto`)
 
-A `virt` is an abstract interface &mdash; a named contract with no data. It is equivalent to a `virtual class` (C++), `trait` (Rust), or `interface` (Java, TypeScript, etc.) in other languages. Each member is a function, also called a **method**. Methods that have a parameter named `self` at the beginning will be called as methods on the instance of that type, i.e. `instance.method(...)`. This is equivalent to saying `(typeof instance).method(instance, ...)`. `self` is inferred to be type of `Self` which represents the current type implementing this virt. 
+A `proto` is an abstract interface &mdash; a named contract with no data. It is equivalent to a `virtual class` (C++), `trait` (Rust), or `interface` (Java, TypeScript, etc.) in other languages. Each member is a function, also called a **method**. Methods that have a parameter named `self` at the beginning will be called as methods on the instance of that type, i.e. `instance.method(...)`. This is equivalent to saying `(typeof instance).method(instance, ...)`. `self` is inferred to be type of `Self` which represents the current type implementing this proto. 
 
 ```mu
-MyVirtual :: virt
+MyPrototype :: proto
     speak(self): Str
 ```
 
 ### Implementing (`impl`)
 
-Methods and trait implementations are added separately with `impl`. Much like `virt`, `self` refers to the current instance and `Self` refers to the current type. You can also add static values that are attached to the type itself. Use `.` to access static values and methods like with structs.
+Methods and trait implementations are added separately with `impl`. Much like `proto`, `self` refers to the current instance and `Self` refers to the current type. You can also add static values that are attached to the type itself. Use `.` to access static values and methods like with structs.
 
 ```mu
 MyStruct :: impl
@@ -1288,14 +1287,14 @@ MyStruct :: impl
 print("{MyStruct.staticValue}")
 ```
 
-To implement a virt onto another type, you add the virt's name after `impl`:
+To implement a prototype onto another type, you add the proto's name after `impl`:
 
 ```mu
-MyStruct :: impl MyVirtual
+MyStruct :: impl MyPrototype
     speak(self) =
         "I am a MyStruct {{ x={self.x}, y={self.y} }}"
 
-MyEnum :: impl MyVirtual
+MyEnum :: impl MyPrototype
     speak(self) =
         match self
         case First then
@@ -1352,10 +1351,10 @@ MAX a b :: if a > b then a else b
 MIN a b :: if a < b then a else b
 ```
 
-You can also have multi-line macros similar to functions. You need to create a block scope to define variables. Defining variables that could bleed into the surrounding scope is not allowed. The simplest method is to use `do` which creates a new scope that runs once. The last expression is the return value.
+You can also have multi-line macros similar to functions. Each meta function creates a new scope. Defining variables that could bleed into the surrounding scope is not allowed. The last expression is the return value.
 
 ```mu
-doSomethingComplicated x :: do
+doSomethingComplicated x ::
     x = x + 1
     x = x / 2
     x * x
@@ -1366,7 +1365,7 @@ value = doSomethingComplicated 3
 This is the same as this:
 
 ```mu
-value = (do
+value = (::
     x = (3) + 1
     x = x / 2
     x * x
@@ -1531,7 +1530,7 @@ How this is implemented is outside of the scope of this document. That will be s
 
 ## Keywords
 
-There are 47 keywords in total:
+There are 46 keywords in total:
 
 * `and`
 * `as`
@@ -1540,7 +1539,6 @@ There are 47 keywords in total:
 * `case`
 * `continue`
 * `default`
-* `do`
 * `else`
 * `end`
 * `enum`
@@ -1575,7 +1573,7 @@ There are 47 keywords in total:
 * `undefined`
 * `unknown`
 * `until`
-* `virt`
+* `proto`
 * `void`
 * `where`
 * `while`
