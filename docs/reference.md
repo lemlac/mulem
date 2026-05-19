@@ -64,7 +64,7 @@ block:
     expr
 ```
 
-Whitespace is signficant. Indentation marks the end of the block. All subsequent expressions within a block should have the same indentation. If an expression has less indentation than the first but more than the opening of the block, then that's a syntax error. If an expression has more indentation than the first, then it must be in a new block or inside parentheses otherwise, it's also a syntax error.
+Whitespace is significant. Indentation marks the end of the block. All subsequent expressions within a block should have the same indentation. If an expression has less indentation than the first but more than the opening of the block, then that's a syntax error. If an expression has more indentation than the first, then it must be in a new block or inside parentheses otherwise, it's also a syntax error.
 
 ```
 block:
@@ -73,7 +73,7 @@ block:
                  -- Ends both blocks.
 ```
 
-Mulang uses significant whitespace, so only indentation matters. While this saves a lot from typing so many `end` or closing curly braces `}`, this can also makes it difficult to write expressive code at times. *What if you wanted to pass a function to another function?* In Python, you might define the function within a function like this:
+Mulang uses significant whitespace, so only indentation matters. While this saves a lot from typing so many `end` or closing curly braces `}`, this can also make it difficult to write expressive code at times. *What if you wanted to pass a function to another function?* In Python, you might define the function within a function like this:
 
 ```py
 def doThing():
@@ -85,7 +85,7 @@ def doThing():
     apiFetch(callback)
 ```
 
-But you can't inline the function directly like you can in other languages. You need some way switch between signficant whitespace for *block mode* and insignificant whitespace for *inline mode.* Mulang's solution is the `do`/`end` pattern. That's the signal to make the switch between block mode and inline mode. **`end` always closes the nearest `do`.** The two keywords are semantically linked.
+But you can't inline the function directly like you can in other languages. You need some way switch between significant whitespace for *block mode* and insignificant whitespace for *inline mode.* Mulang's solution is the `do`/`end` pattern. That's the signal to make the switch between block mode and inline mode. **`end` always closes the nearest `do`.** The two keywords are semantically linked.
 
 ```
 doThing() =
@@ -101,7 +101,7 @@ doThing() =
 
 ```
 (do block:       -- `do` --> Switch to block mode.
-    expr         -- Signficant whitepace here.
+    expr         -- significant whitepace here.
 end)             -- `end` --> Switch to inline mode.
 
 (do block:       -- This starts a block, so indentation is significant.
@@ -150,8 +150,7 @@ end)            -- `end` finishes the inline-block expression.
 
 ## Operators
 
-The philosophy of Mulang is that symbols should be easy to understand and that generally keywords are preferred over symbols. Most 
-, for example `*` and `/` relate to math, `~` relates to bitwise operators, `!` relates to exceptions, `&` relates to tuples, etc.. There's also a common pattern where repeating an operator gets you a more advanced version of that operator, for example: `+` addition vs `++` concatenation, `*` multiplication vs `**` exponentiation, `/` division vs `//` floor division, and `%` standard modulo vs `%%` floor division modulo. Mulang will check any combination of symbols greedily until the next space or word except for the reserved comment token (`--`), so for example `++` would be different from `+ +`. Spaces are required between multiple symbolic operators, much like how spaces are required between words. Symbol characters include any ASCII character that isn't alphanumeric, whitespace, quotation marks, delimiters, or brackets&mdash;in other words these symbols: `~!@#$%^&*-+=|\:<.>/?`. There may be operator overloading in the future, so even if an operator could be broken into smaller parts, it's considered a unique operator even if it has no meaning. Because of that, long sequences of operators need to be broken up into their separate symbols. From example `a???b`, the compiler will see `???` as one operator instead of as `?` and `??`. You would need to put at least one space here `a? ??b` to make sure it's clear that it's 2 operators and not one. This not only helps the parser but also helps the coder when reading the code. The exception to this rule is `--` which is **always** a comment no matter what.
+The philosophy of Mulang is that symbols should be easy to understand and that generally keywords are preferred over symbols. Many are semantically grouped based on their contextual usage, for example `*` and `/` relate to math, `%` relates to bitwise operators, `!` relates to exceptions, `&` relates to tuples, etc.. There's also a common pattern where repeating an operator gives you a more technical or complex version of that operator, for example: `+` addition vs `++` concatenation, `*` multiplication vs `**` exponentiation, `/` division vs `//` floor division, and `%` standard modulo vs `%%` floor division modulo. Mulang will check any combination of symbols greedily until the next space or word except for the reserved comment token (`--`), so for example `++` would be different from `+ +`. Spaces are required between multiple symbolic operators, much like how spaces are required between words. Symbol characters include any ASCII character that isn't alphanumeric, whitespace, quotation marks, delimiters, or brackets&mdash;in other words these symbols: `~!@#$%^&*-+=|\:<.>/?`. There may be operator overloading in the future, so even if an operator could be broken into smaller parts, it's considered a unique operator even if it has no meaning. Because of that, long sequences of operators need to be broken up into their separate symbols. From example `a???b`, the compiler will see `???` as one operator instead of as `?` and `??`. You would need to put at least one space here `a? ??b` to make sure it's clear that it's 2 operators and not one. This not only helps the parser but also helps the coder when reading the code. The exception to this rule is `--` which is **always** a comment no matter what.
 
 __Arithmetic:__
 
@@ -684,7 +683,7 @@ myStr: Str = "Hello"
 myPtr: Ptr = ExternalLib.getSomething()
 ```
 
-You can get the type of any variable with the `typeof` keyword.
+You can get the type of any variable with the `typeof` keyword. This fetches the type of that symbol at that point during compile time. 
 
 ```
 x = 0
@@ -819,22 +818,41 @@ You can write a raw string with `''...''` (two apostrophes). Although apostrophe
 rawString = ''It's okay to put an apostrophe (') in the string.''
 filePath = ''C:\files\on\windows.txt''
 template = ''Insert here -> {{variable}}''
-bigDocument = ''
-    This
-   is
-  all
-  in
-   a
-    string
-''
 ```
 
-*Note: raw strings containing `''` are not supported; use a file or escaping instead.* The double apostrophes `''` syntax isn't perfect, but it's at least something. For anything more complicated, it's better to save the string in a document and open it as a file, which will be handled by a separate library and lies outside the scope of this document.
+To escape `''` within a raw string, add a hash `#` before and after the apostrophes. The number of `#`s must match to close the raw string.
+
+```
+-- Add a `#` to escape the `''` within the string.
+bigDocument = #''
+    This  '
+   is   ''      ''
+  all       ''
+  in  '         '
+   a     '''' '
+    string
+''#
+-- Maching number of `#` closes the string.
+
+-- `##''` to escape the `''#` within the string.
+nestedDocument = ##''
+bigDocument = #''
+    This  '
+   is   ''      ''
+  all       ''
+  in  '         '
+   a     '''' '
+    string
+''#                 
+''##
+-- `''##` closes the matching `##''`.
+```
+
+While this is possible, this is not recommended for the sake of legibility. For anything more complicated, it's recommended to save the string in a document and open it as a file, which will be handled by a separate library and lies outside the scope of this document.
 
 #### Arrays
 
-Array types are declared with the hash symbol (`#`). This was chosen because the `#` is commonly used for numbers in English. For example, `#1` is read as `number 1`. A number after the `#` makes it a fixed length array `type#N`. Arrays are statically sized when written as `type#N`; `type#` is the dynamic form. Items are separated with commas (`,`). The hash symbol is also used for accessing an array, giving a clear visible mirror between the two. Other languages use `[]` for indexing, but that has another meaning in Mulang which is explained in the subsequent example.
-
+Array types are declared with the hash symbol (`#`). This was chosen because the `#` is commonly used for numbers in English. For example, `#1` is read as `number 1`. A number after the `#` makes it a fixed length array `type#N`. Arrays are statically sized when written as `type#N`; `type#` is the dynamic form. Items are separated with commas (`,`). The hash symbol is also used for accessing an array, giving a clear visible mirror between the two. 
 ```
 list: Int#4 = [1, 2, 3, 4]
 print("length of list: {len(list)}")
@@ -842,7 +860,15 @@ compressedList = [list#0 + list#1, list#2 + list#3]
 doubleArray: Int#2#2 = [[1, 2], [3, 4]]
 ```
 
-To make chaining accesses easier, there's a special rule for square brackets: any operator `op` can be expressed with `a[op b]` which is the same as `((a) op (b))`. This can be used together with the index operator `#` to get an item from a matrix or multi-dimensional array. This helps keep the visual association of `#` for arrays and leaves room for `[]` for other possible uses in the future.
+This builds on the visible simatry between type notation and their value expressions:
+
+| Type | Notation | Expression |
+|:--|:-:|:-:|
+| **Results** | `T!` | `x!` |
+| **Options** | `T?` | `x?` |
+| **Arrays** | `T#N` | `x#n` |
+
+Other languages use `[]` for indexing, but that has another meaning in Mulang. To make chaining accesses easier, there's a special rule for square brackets: any operator `op` can be expressed with `a[op b]` which is the same as `((a) op (b))`. This can be used together with the index operator `#` to get an item from a matrix or multi-dimensional array. This helps keep the visual association of `#` for arrays and leaves room for `[]` for other possible uses in the future.
 
 ```
 item = doubleArray[#1][#0]  -- The 2nd row, 1st column
@@ -1048,7 +1074,12 @@ for o in iterGet():
         print("{x}")
     else:
         continue
+```
 
+
+__NOTE:__ Nothing is skipped in the inline version of `for case`. In this example, we unwrap each option type or yield the default value of its type (whatever it is).
+
+```
 inlineForCase = (for o in iterGet() then if case Some(x) = o then x else default)
 ```
 
@@ -1123,7 +1154,7 @@ Wraps a single expression in a option type. You can use `?` to unwrap multiple o
 x = (opt f(a?))?? "fallback"     -- x is "fallback" if a is none.
 ```
 
-If a function returns an option type, then use of the `?` is allowed without `opt`. Using an `?` inside a function will automatically infer the return type as an option. The return will be automatically wrapped in `Some(_)`.
+If a function returns an option type, then use of the `?` is allowed without `opt`. Using an `?` inside a function will automatically infer the return type as an option. The return will be automatically wrapped in `Some(_)`. If there isn't a return value in the function, then it should be a type `Void?`. Unwrapping it gives an empty tuple `()`. *[See [Tuples](#Tuples).)*
 
 ```
 addStuff(a: Int, b: Int): Int? =
@@ -1174,7 +1205,7 @@ except e:
 --)
 ```
 
-If a function returns a result type `type!`, then it can also use the `!` like in a `try` block. Use of a `!` in a function automatically infers a result type as the return.
+If a function returns a result type `type!`, then it can also use the `!` like in a `try` block. Use of a `!` in a function automatically infers a result type as the return. If the function doesn't have a return value, like with options, the type is `Void!` which unwraps into an empty tuple `()`. *[See [Tuples](#Tuples).)*
 
 ```
 riskyFunction(a: Int): Int! =
@@ -1187,7 +1218,7 @@ You can combine `?` and `!` together when the return type is `type?!` (an **opti
 
 ```
 -- With type notation:
-doSomething(x: Str?): Str?! =
+doSomething(x: Str?): Void?! =
     x = x?
     doSomethingElse(x)!
 
@@ -1238,6 +1269,17 @@ Exits out of a function with an `Iter` type. The return value of the function mu
 count(n: Int): Iter Int =
     for i in 0..n:
         yield i
+```
+
+If you use `yield`, you can only use a void `return` to exit the function. 
+
+```
+countUntil(i: mu Int, max: Int): Iter Int =
+     loop:
+        if i >= max:
+            return      -- Break out of the loop and the function.
+        yield i
+        i += 1
 ```
 
 #### `await`
