@@ -84,7 +84,7 @@ end)             -- Required here since the block is in parentheses.
 end)             -- Use only one `end` to end to whole block.
 ```
 
-You probably think "Don't you need another `end` for the inner block?" No, and this is intentional. Mulang uses significant whitespace, so only indentation matters. The exception to this is inside an expression such a between parentheses. Then you need some way to exit out of the block, and `end` is the answer to that. That's the signal to make the switch from block mode back to inline mode. 
+You probably think "Don't you need another `end` for the inner block?" No, and this is intentional. Mulang uses significant whitespace, so only indentation matters. The exception to this is inside an expression such a between parentheses. Then you need some way to exit out of the block, and `end` is the answer to that. That's the signal to make the switch from block mode back to inline mode. `end` always closes the nearest open block that cannot be closed by indentation.
 
 Some keywords can be inlined or blocked based on whether they use a `:` or not. 
 
@@ -103,7 +103,7 @@ All subsequent expressions within a block should have the same indentation. If a
 
 ## Operators
 
-The philosophy of Mulang is that symbols should be easy to understand and that generally keywords are preferred over symbols. Most symbols are consistent with their contextual meaning, for example `*` and `/` relate to math, `~` relates to bitwise operators, `!` relates to exceptions, `&` relates to tuples, etc.. There's also a common pattern where repeating an operator gets you a more advanced version of that operator, for example: `+` addition vs `++` concatenation, `*` multiplication vs `**` exponentiation, `/` division vs `//` floor division, and `%` standard modulo vs `%%` floor division modulo. Mulang will check any combination of symbols greedily until the next space or word, so for example `++` would be different from `+ +`. Spaces are required between multiple symbolic operators, much like how spaces are required between words. Symbol characters include any ASCII character that isn't alphanumeric, whitespace, quotation marks, delimiters, or brackets&mdash;in other words these symbols: `~!@#$%^&*-+=|\:<.>/?`. There may be operator overloading in the future, so even if an operator could be broken into smaller parts, it's considered a unique operator even if it has no meaning. Because of that, long sequences of operators need to be broken up into their separate symbols. From example `a+++b`, the compiler will see `+++` as one operator instead of as `++` and `+`. You would need to say `a++ +b` to make sure it's clear that it's 2 operators and not one. This not only helps the parser but also helps the coder when reading the code. There are exceptions to this rule: `--` is **always** a comment no matter what, and `^` can be chained for pointer dereferencing.
+The philosophy of Mulang is that symbols should be easy to understand and that generally keywords are preferred over symbols. Most symbols are consistent with their contextual meaning, for example `*` and `/` relate to math, `~` relates to bitwise operators, `!` relates to exceptions, `&` relates to tuples, etc.. There's also a common pattern where repeating an operator gets you a more advanced version of that operator, for example: `+` addition vs `++` concatenation, `*` multiplication vs `**` exponentiation, `/` division vs `//` floor division, and `%` standard modulo vs `%%` floor division modulo. Mulang will check any combination of symbols greedily until the next space or word except for the reserved comment token (`--`), so for example `++` would be different from `+ +`. Spaces are required between multiple symbolic operators, much like how spaces are required between words. Symbol characters include any ASCII character that isn't alphanumeric, whitespace, quotation marks, delimiters, or brackets&mdash;in other words these symbols: `~!@#$%^&*-+=|\:<.>/?`. There may be operator overloading in the future, so even if an operator could be broken into smaller parts, it's considered a unique operator even if it has no meaning. Because of that, long sequences of operators need to be broken up into their separate symbols. From example `a+++b`, the compiler will see `+++` as one operator instead of as `++` and `+`. You would need to say `a++ +b` to make sure it's clear that it's 2 operators and not one. This not only helps the parser but also helps the coder when reading the code. There are exceptions to this rule: `--` is **always** a comment no matter what, and `^` can be chained for pointer dereferencing.
 
 **Algebra:**
 
@@ -270,7 +270,7 @@ doSomething(x)   -- This is okay.
 
 See [`undefined`](#undefined) for more details about what it means and its uses.
 
-Assigning to the variable for the rest of the scope and any sub-scopes will mutate the variable. The exception to this is functions which always set a new variable unless its been explicitly captured. (See [Capturing](#Capturing-capture).)
+`mu` variables cannot be shadowed by `=`. They can only be mutated. Assigning to the variable for the rest of the scope and any sub-scopes will mutate the variable&mdash;except for functions which always set a new variable unless its been explicitly captured. (See [Capturing](#Capturing-capture).)
 
 ```
 x: mu Int = 0
@@ -293,7 +293,7 @@ then:
 
 #### References (`ref`/`ref mu`)
 
-A reference type points to the same spot in memory as another variable. It's like a lightweight version of a pointer. (See [Pointers](#Pointers).) Both sides of the equation must be variables, i.e. no references that point to a constant. References are immutable by default unless declared with `ref mu`. The syntax follows the same pattern as `mu`:
+A reference type points to the same spot in memory as another variable. It's like a lightweight version of a pointer. (See [Pointers](#Pointers).) The right hand side has be something stored in memory, i.e. not a constant. References are immutable by default unless declared with `ref mu`. The syntax follows the same pattern as `mu`:
 
 * `x: ref T = y` = Immutable reference with explicit type.
 * `ref x = y` = Immutable reference with inferred type.
@@ -755,7 +755,7 @@ print("{xPtr^}")  -- Prints "0", because it's still referencing the old x.
 -- This might lead to a crash.
 ```
 
-Pointers can also be treated as numbers. The resulted type is `^Unknown` by default which means it can't be dereferenced unless it's been casted to a known pointer type. Use `^type(_)` to cast a pointer to a different type. Although pointer arithmetic is possible, it's not recommended because it can easily lead to crashes. This should be reserved for low-level code. 
+Pointer arithmetic is allowed but always unsafe and may cause undefined behavior. The resulted type is `^Unknown` by default which means it can't be dereferenced unless it's been casted to a known pointer type. Use `^type()` to cast a pointer to a different type. Although pointer arithmetic is possible, it's not recommended because it can easily lead to crashes. This should be reserved for low-level code. 
 
 ```
 x = 0
@@ -1220,7 +1220,7 @@ Opaque types such as primitives and enums coerce into a tuple of one, so creatin
 
 Combining empty tuples produces an empty tuple `() & () == ()`. The same is true for empty named tuples `{} & {} == {}`. This also means that empty positional tuples and empty named tuples are equivalent `() == {}`. Both tuples have zero dimensions in both positional and named components; therefore they are equivalent. Saying `() & {} & ()` or `{} & ()` and any combination of empty tuples all produce an empty tuple. If you think about it, this makes sense. They all represent nothing, like a cup that can holds 0mL of water. If you stacked a bunch of 0mL cups, you would still not be able to hold any water in it. Is it even a cup then? That's why empty tuples are treated as `void`, which verbally represents nothing, because they're all nothing. Therefore `void == () == {}`. The 3 types are all the same. 
 
-This also means that a void function and a function that returns an empty tuple are the same.
+This also means that a void function and a function that returns an empty tuple are the same. *Empty positional tuples, empty named tuples, and void are fully interchangeable at the type level.*
 
 ```
 voidFn(): void = ()
@@ -1564,40 +1564,40 @@ How this is implemented is outside of the scope of this document. That will be s
 10. `end`
 11. `enum`
 12. `except`
-13. `fn`
-14. `for`
-15. `if`
-16. `impl`
-17. `import`
-18. `inherit`
-19. `in`
-20. `let`
-21. `loop`
-22. `match`
-23. `mod`
-24. `mu`
-25. `not`
-26. `opt`
-27. `or`
-28. `out`
-29. `pass`
-30. `proto`
-31. `raise`
-32. `ref`
-33. `return`
-34. `self`
-35. `sizeof`
-36. `struct`
-37. `then`
-38. `try`
-39. `type`
-40. `typeof`
-41. `undefined`
-42. `until`
-43. `void`
-44. `where`
-45. `while`
-46. `yield`
+14. `fn`
+15. `for`
+16. `if`
+17. `impl`
+18. `import`
+19. `inherit`
+20. `in`
+21. `let`
+22. `loop`
+23. `match`
+24. `mod`
+25. `mu`
+26. `not`
+27. `opt`
+28. `or`
+29. `out`
+30. `pass`
+31. `proto`
+32. `raise`
+33. `ref`
+34. `return`
+35. `self`
+36. `sizeof`
+37. `struct`
+38. `then`
+39. `try`
+40. `type`
+41. `typeof`
+42. `undefined`
+43. `until`
+44. `void`
+45. `where`
+46. `while`
+47. `yield`
 
 *NOTE: `Self` (uppercase) is a variable and not a keyword, not to be confused with `self` (lowercase) which is a keyword used to signify a method can be used on an instance of a type. See [Implementation](#Implementing-impl).*
 
