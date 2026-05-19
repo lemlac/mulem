@@ -2,9 +2,9 @@
 
 *Version 0.1 (Draft)*
 
-Mu is a general-purpose, multi-paradigm programming language with significant whitespace. It targets Python developers who need C-level performance all within the same language. It is expression-oriented where possible and provides explicit control over evaluation strategy, memory model, and error handling. Another goal is to make it minimalist and have opinionated formatting to make it easier for both humans to read and LLMs to produce without over-consuming tokens.
+The Mu programming language or *Mulang* is a general-purpose, multi-paradigm programming language with significant whitespace. It targets Python developers who need C-level performance all within the same language. It is expression-oriented where possible and provides explicit control over evaluation strategy, memory model, and error handling. Another goal is to make it minimalist and have opinionated formatting to make it easier for both humans to read and LLMs to produce without over-consuming tokens.
 
-Mu will be both a compiled and an interpreted language. Unlike Python, you won't need to use another language like C to increase performance. You can instead compile some of it and then call it as a shared library all within the same language. Some use cases for this are AI, systems programming, and game development.
+Mulang will be both a compiled and an interpreted language. Unlike Python, you won't need to use another language like C to increase performance. You can instead compile some of it and then call it as a shared library all within the same language. Some use cases for this are AI, systems programming, and game development.
 
 This document will focus on the language itself. Some features may come in a standard library which will not be discussed here.
 
@@ -96,7 +96,7 @@ All subsequent expressions within a block should have the same indentation. If a
 
 ## Operators
 
-The philosophy of Mu is that symbols should be easy to understand and that generally keywords are preferred over symbols. Most symbols are consistent with their contextual meaning, for example `*` and `/` relate to math, `~` relates to bitwise operators, `!` relates to exceptions, `&` relates to tuples, etc.. There's also a common pattern where repeating an operator gets you a more advanced version of that operator, for example: `+` addition vs `++` concatenation, `*` multiplication vs `**` exponentiation, `/` division vs `//` floor division, and `%` standard modulo vs `%%` floor division modulo. Mu will check any combination of symbols greedily until the next space or word, so for example `++` would be different from `+ +`. Spaces are required between multiple symbolic operators, much like how spaces are required between words. Symbol characters include any ASCII character that isn't alphanumeric, whitespace, quotation marks, delimiters, or brackets&mdash;in other words these symbols: `~!@#$%^&*-+=|\:<.>/?`.
+The philosophy of Mulang is that symbols should be easy to understand and that generally keywords are preferred over symbols. Most symbols are consistent with their contextual meaning, for example `*` and `/` relate to math, `~` relates to bitwise operators, `!` relates to exceptions, `&` relates to tuples, etc.. There's also a common pattern where repeating an operator gets you a more advanced version of that operator, for example: `+` addition vs `++` concatenation, `*` multiplication vs `**` exponentiation, `/` division vs `//` floor division, and `%` standard modulo vs `%%` floor division modulo. Mulang will check any combination of symbols greedily until the next space or word, so for example `++` would be different from `+ +`. Spaces are required between multiple symbolic operators, much like how spaces are required between words. Symbol characters include any ASCII character that isn't alphanumeric, whitespace, quotation marks, delimiters, or brackets&mdash;in other words these symbols: `~!@#$%^&*-+=|\:<.>/?`.
 
 **Algebra:**
 
@@ -221,7 +221,7 @@ if x == 0:
 
 #### Mutability (`mu`)
 
-Mutable variables are marked with the keyword `mu`, the main star of the language. Just as Go has its `go` keyword, Mu has `mu`. This was chosen since mutability is a common practice in programming much like functions are&mdash;which is why functions also get their own two letter keyword `fn`. (See [Function Declarations](#Function-Declarations).) The general rule of thumb in Mu is that *patterns scale with complexity*&mdash;simple things like declaring a variable or function use short patterns, more complex things use bigger patterns.
+Mutable variables are marked with the keyword `mu`, the main star of the language. Just as Go has its `go` keyword, Mulang has `mu`. This was chosen since mutability is a common practice in programming much like functions are&mdash;which is why functions also get their own two letter keyword `fn`. (See [Function Declarations](#Function-Declarations).) The general rule of thumb in Mulang is that *patterns scale with complexity*&mdash;simple things like declaring a variable or function use short patterns, more complex things use bigger patterns.
 
 Declare a mutable variable with `mu type`. Setting it will change the value instead of shadowing it. The type of value when mutating it should match its original type.
 
@@ -274,7 +274,7 @@ print("{x}")   -- still 1, cantSetX didn't change it
 
 #### Rebinding (`let`)
 
-Since using `=` on a mutable variable mutates it, there's no way to create an immutable variable with the same name until you go out of scope. In other languages, you can say `let _ = _` to declare a new variable in scope, but Mu abandoned this pattern for the simpler `_ = _` one. In order to create a fresh binding to any variable name, you can use the pattern `let _`. Note that there's no equals sign after the variable name. This is to distinguish it from the `let () in` pattern. (See [Inline Binding](#Inline-binding-let-in-and-as).) This is the same as declaring a new variable in scope, allowing you to shadow it without affecting the original variable. Once you exit the scope, the original variable is accessible again as normal. You can also use commas to declare multiple variables at once like `let a, b, c`. The variable names do not have to be already defined. 
+Since using `=` on a mutable variable mutates it, there's no way to create an immutable variable with the same name until you go out of scope. In other languages, you can say `let _ = _` to declare a new variable in scope, but Mulang abandoned this pattern for the simpler `_ = _` one. In order to create a fresh binding to any variable name, you can use the pattern `let _`. Note that there's no equals sign after the variable name. This is to distinguish it from the `let () in` pattern. (See [Inline Binding](#Inline-binding-let-in-and-as).) This is the same as declaring a new variable in scope, allowing you to shadow it without affecting the original variable. Once you exit the scope, the original variable is accessible again as normal. You can also use commas to declare multiple variables at once like `let a, b, c`. The variable names do not have to be already defined. 
 
 ```mu
 mu x = 0
@@ -661,7 +661,7 @@ print(str3)
 -- Prints "This string is broken up into multiple parts."
 ```
 
-You can also write multi-line strings. A common issue in programming languages is how to fix the issue of leading whitespace in a multi-line string. Mu uses significant whitespace, so unintenting the string wouldn't work. We don't want all the leading whitespace to be in the string, but how to we solve this? You can write a multi-line string in Mu in the following way:
+You can also write multi-line strings. A common issue in programming languages is how to fix the issue of leading whitespace in a multi-line string. Mulang uses significant whitespace, so unintenting the string wouldn't work. We don't want all the leading whitespace to be in the string, but how to we solve this? You can write a multi-line string in Mulang in the following way:
 
 1. Start with 3 quotation marks `"""` + a new-line.
 2. Start each line with a single quotation mark `"`.
@@ -705,7 +705,7 @@ Array types are declared with the hash symbol (`#`). This was chosen because the
 
 A number after the `#` makes it a fixed length array `type#N`. Arrays are fixed length by default; however, immutable arrays can be shadowed with different type, so this only matters for mutable arrays. Items are separated with commas (`,`).
 
-The hash symbol is also used for accessing an array, giving a clear visible mirror between the two. Other languages use `[]` for indexing, but that is reserved for a nother meaning in Mu which is explained below.
+The hash symbol is also used for accessing an array, giving a clear visible mirror between the two. Other languages use `[]` for indexing, but that is reserved for a nother meaning in Mulang which is explained below.
 
 ```mu
 list: Float#4 = [1, 2, 3, 4]
@@ -911,7 +911,7 @@ else:
 
 #### `match` / `case`
 
-Enum/exception branching. Exhaustive by default. `case _` for the default case. The indentation of each `case` must be the same as the starting `match`, ending any debate on whether `case` should be indented or not&mdash;Mu is opinionated after all. This is done not only to save indentation but also to stay consistant. Because `match _` doesn't use `:` or `then`, it logically shouldn't indent the next line.
+Enum/exception branching. Exhaustive by default. `case _` for the default case. The indentation of each `case` must be the same as the starting `match`, ending any debate on whether `case` should be indented or not&mdash;Mulang is opinionated after all. This is done not only to save indentation but also to stay consistant. Because `match _` doesn't use `:` or `then`, it logically shouldn't indent the next line.
 
 The patterns match to the type of enum passed to `match`, so you only need to reference the members of that type in each `case` block.
 
@@ -1529,7 +1529,7 @@ import myModule.addThing
 
 ### Memory Models
 
-Mu is multi-paradigm: different functions, structs, or modules can use different memory strategies in the same program. The model is controlled per-module via decorators. Boundary crossing between models follows FFI-like rules &mdash; automatic marshalling where possible, explicit escapes otherwise.
+Mulang is multi-paradigm: different functions, structs, or modules can use different memory strategies in the same program. The model is controlled per-module via decorators. Boundary crossing between models follows FFI-like rules &mdash; automatic marshalling where possible, explicit escapes otherwise.
 
 Modules define how memory is handled with the `@memory` decorator. By default, modules use a garbage collector. Some options include `Collect(GC)` (default),  `Count(ARC)` (reference counting), `Borrow` (borrow checking), and `Manual`. `GC` and `ARC` represent the standard garbage collector and reference counter respectively, but others can be defined and used instead.
 
@@ -1540,7 +1540,7 @@ import std.mem{memory, Count, ARC, _}
 mod moduleThatUsesReferenceCounting
 ```
 
-How this is implemented is outside of the scope of this document. That will be saved for when it's time to make a standard library for Mu.
+How this is implemented is outside of the scope of this document. That will be saved for when it's time to make a standard library for Mulang.
 
 ---
 
@@ -1610,4 +1610,4 @@ There are 47 keywords in total:
 
 ---
 
-*This document captures the current state of the Mu design. The language is still evolving.*
+*This document captures the current state of the Mulang design. The language is still evolving.*
