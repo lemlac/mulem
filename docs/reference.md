@@ -192,117 +192,99 @@ The philosophy of Mulang is that symbols should be easy to recognize and underst
 
 Mulang will check any combination of symbols greedily until the next space or word except for the reserved comment token (`--`). For example `++` would be different from `+ +`, but `++--` would be considered `++` and a comment `--`. Spaces are required between multiple symbolic operators, much like how spaces are required between words. Symbol characters include any ASCII character that isn't alphanumeric, whitespace, quotation marks, delimiters, or brackets—in other words these symbols: `~!@#$%^&*-+=|\:<.>/?`.
 
-There may be operator overloading in the future. Even if an operator could be broken into smaller parts, it's considered a unique operator even though it may not be defined—just like how you can technically write a method that may not be defined, but they're both considered errors. Because of that, long sequences of operators need to be broken up into their separate symbols. From example `a???b`, the compiler will see `???` as one symbol instead of as `?` and `??`. You would need to put at least one space here `a? ??b` to make sure it's clear that it's 2 operators and not one. This not only helps the parser but also helps the coder when reading the code. The exception to this rule is `--` which is **always** a comment no matter what.
+There may be operator overloading in the future. Even if an operator could be broken into smaller parts, it's considered a unique operator even though it may not be defined—just like how you can technically write a method that may not be defined, but they're both considered errors. Because of that, long sequences of operators need to be broken up into their separate symbols. From example `a+++b`, the compiler will see `+++` as one symbol instead of 3 individual `+`s. You would need to put at least one space here `a+ + +b` to make sure it's clear that it's 2 operators and not one. This not only helps the parser but also helps the coder when reading the code. The exception to this rule is `--` which is **always** a comment no matter what.
 
-__Arithmetic:__
+| Operation | Meaning | Order |
+|:--|:--|:--|
+| __(Arithmetic)__ | — | — |
+| `lhs + rhs` | addition | 6 |
+| `lhs - rhs` | subtraction | 6 |
+| `+ rhs` | keeps the sign the same; *so does nothing* | 3 |
+| `- rhs` | sign-flip | 3 |
+| `lhs * rhs` | multiplication | 5 |
+| `lhs / rhs` | exact division; *returns a floating point number* | 5 |
+| `lhs // rhs` | floored division (rounded down); *returns an integer* | 5 |
+| `lhs % rhs` | modulo (sign matches `lhs`) | 5 |
+| `lhs %% rhs` | floor division modulo (sign matches `rhs`); *result is between the range `[0, rhs)` if `rhs` is positive or `(rhs, 0]` if `rhs` is negative* | 5 |
+| `lhs ** rhs` | exponential | 4 |
+| __(Comparison)__ | — | — |
+| `lhs == rhs` | equality | 9 |
+| `lhs != rhs` | inequality | 9 |
+| `lhs > rhs` | greater than | 9 |
+| `lhs < rhs` | less than | 9 |
+| `lhs >= rhs` | greater than or equals to | 9 |
+| `lhs <= rhs` | less than or equals to | 9 |
+| __(Boolean)__ | — | — |
+| `lhs and rhs` | false if any are false | 10 |
+| `lhs or rhs` | true if any are true | 11 |
+| `not rhs` | inverts a boolean | 3 |
+| `and rhs` | do `and` on each component of a tuple: `and (True, False, True)` -> `True and False and True` -> `False | 3 |
+| `or rhs` | do `or` on each component of a tuple: `or (True, False, True)` -> `True or False or True` -> `True` | 3 |
+| __(Bitwise)__ | — | — |
+|  `lhs band rhs` | bitwise `AND` | 7 |
+| `lhs bor rhs` | bitwise `OR` | 7 |
+| `lhs bxor rhs` | bitwise `XOR` | 7 |
+| `bnot rhs` | bitwise `NOT` | 3 |
+| `lhs << rhs` | bitshift left | 5 |
+| `lhs >> rhs` | bitshift right | 5 |
+| __(Arrays)__ | — | — |
+| `lhs # rhs` | get an item from `lhs` at an index `rhs` (index starting at 0) | 2 |
+| `lhs ++ rhs` | concatenation, returns a new array | 6 |
+| `++ rhs` | spread an array or iterator into an array or positional tuple | 3 |
+| `lhs .. rhs` | creates an iterator that starts at the left value and ends just before the right value (exclusive) | 8 |
+| `lhs ..= rhs` | creates an iterator that starts at the left value and ends with the right value (inclusive) | 8 |
+| `lhs in rhs` | checks if an item exists in an array, returns a boolean | 9 |
+| __(Tuples)__ | — | — |
+| `lhs . rhs` | access a member/component | 1 |
+| `& rhs` | spread a tuple into another tuple | 3 |
+| __(Options)__ | — | — |
+| `lhs ?` | returns the `Some` value if it's not `None`, otherwise propagate to the nearest `opt` keyword *(see [`opt` block](#opt))* | 2 |
+| `lhs ?. rhs` | gets a method or member of an optional type if it has something, otherwise return `None` | 1 |
+| `lhs ?# rhs` | applies `#` to an optional type if it has something, otherwise return `None` | 2 |
+| `lhs orelse rhs` | fallback to another value if the left side is `None`. | 12 |
+| __(Results)__ | — | — |
+| `lhs !` | returns the result value if it's not an exception, otherwise propagate to the nearest `try` keyword *(see [`try` block](#try--except))* | 2 |
+| __(Functional)__ | — | — |
+| `lhs -> rhs` | pipelining, disregards `lhs` and returns `rhs`, but `_` becomes the value of `lhs` in the expression of `rhs` | 13 |
+| `~ rhs` — inferred type conversion | 3 |
+| __(Assignment)__ | — | — |
+| `lhs = rhs` | assignment or inferred-type declaration *(See [Variable Declarations](#Variable-Declaration).)* | 14 |
+| `lhs := rhs` | always inferred-type declaration | 14 |
+| `lhs: T = rhs` | explicit-type declaration | 14 |
+| `lhs as rhs` | inline for `:=` but returns the assigned value instead of being void; the operands are inverted (variable goes on the right); creates an immutable variable by default *(See [Inline Binding](#Inline-Binding).)* | 1 |
+| `lhs += rhs` | increment | 14 |
+| `lhs -= rhs` | decrement | 14 |
+| `lhs *= rhs` | `lhs = lhs * rhs` — multiplication assignment | 14 |
+| `lhs /= rhs` | `lhs = lhs / rhs` — division assignment | 14 |
+| `lhs //= rhs` | `lhs = lhs // rhs` — floor division assignment | 14 |
+| `lhs %= rhs` | `lhs = lhs % rhs` — modulo assignment | 14 |
+| `lhs %%= rhs` | `lhs = lhs %% rhs` — floor division modulo assignment (binds `lhs` to a range in `[0, rhs)` if `rhs` is positive or `(rhs, 0]` if `rhs` is negative) | 14 |
+| `lhs <<= rhs` | `lhs = lhs << rhs` — bitshift left assignment | 14 |
+| `lhs >>= rhs` | `lhs = lhs >> rhs` — bitshift right assignment | 14 |
+| `lhs ++= rhs` | `lhs = lhs ++ rhs` — append to an array (not allowed if `lhs` is a fixed length array) | 14 |
 
-- `lhs + rhs` — addition
-- `lhs - rhs` — subtraction
-- `+ rhs` — keeps the sign the same; *so does nothing*
-- `- rhs` — sign-flip
-- `lhs * rhs` — multiplication
-- `lhs / rhs` — exact division; *returns a floating point number*
-- `lhs // rhs` — floored division (rounded down); *returns an integer*
-- `lhs % rhs` — modulo (sign matches `lhs`)
-- `lhs %% rhs` — floor division modulo (sign matches `rhs`); *result is between the range `[0, rhs)` if `rhs` is positive or `(rhs, 0]` if `rhs` is negative*
-- `lhs ** rhs` — exponential
+__Order of Operations:__
 
-__Comparison:__
+1. Member Accessing/Inline-Binding (Highest)
+2. Primary/Postfix Operators
+3. Unary Operators
+4. Exponentiation *(right-associative: `2**3**2` is `2**(3**2)`)*
+5. Multiplicative/Bitshift Operators
+6. Additive/Vector Operators
+7. Bitwise Logic
+8. Range/Interval Operators
+9. Comparisons/Membership
+10. Logical AND
+11. Logical OR
+12. None Coalescing
+13. Pipelining
+14. Assignment (Lowest)
 
-- `lhs == rhs` — equality
-- `lhs != rhs` — inequality
-- `lhs > rhs` — greater than
-- `lhs < rhs` — less than
-- `lhs >= rhs` — greater than or equals to
-- `lhs <= rhs` — less than or equals to
-
-__Boolean:__
-
-- `lhs and rhs` — false if any are false
-- `lhs or rhs` — true if any are true
-- `not rhs` — inverts a boolean
-- `and rhs` — do `and` on each component of a tuple: `and (True, False, True)` -> `True and False and True` -> `False
-- `or rhs` — do `or` on each component of a tuple: `or (True, False, True)` -> `True or False or True` -> `True`
-
-__Bitwise:__
-
-- `lhs band rhs` — bitwise `AND`
-- `lhs bor rhs` — bitwise `OR`
-- `lhs bxor rhs` — bitwise `XOR`
-- `bnot rhs` — bitwise `NOT`
-- `lhs << rhs` — bitshift left
-- `lhs >> rhs` — bitshift right
-
-__Arrays:__
-
-- `lhs # rhs` — get an item from `lhs` at an index `rhs` (index starting at 0)
-- `lhs ++ rhs` — concatenation, returns a new array
-- `++ rhs` — spread an array or iterator into an array or positional tuple
-- `lhs .. rhs` — creates an iterator that starts at the left value and ends just before the right value (exclusive)
-- `lhs ..= rhs` — creates an iterator that starts at the left value and ends with the right value (inclusive)
-- `lhs in rhs` — checks if an item exists in an array, returns a boolean
-
-__Tuples:__
-
-- `lhs . rhs` — access a member/component
-- `& rhs` — spread a tuple into another tuple
-
-__Options:__
-
-- `lhs ?` — returns the `Some` value if it's not `None`, otherwise propagate to the nearest `opt` keyword *(see [`opt` block](#opt))*
-- `lhs ?. rhs` — gets a method or member of an optional type if it has something, otherwise return `None`
-- `lhs ?# rhs` — applies `#` to an optional type if it has something, otherwise return `None`
-- `lhs ?? rhs` — fallback to another value if the left side is `None`.
-
-__Results:__
-
-- `lhs !` — returns the result value if it's not an exception, otherwise propagate to the nearest `try` keyword *(see [`try` block](#try--except))*
-
-__Functional:__
-
-- `lhs -> rhs` — pipelining, disregards `lhs` and returns `rhs`, but `_` becomes the value of `lhs` in the expression of `rhs`
-- `~ rhs` — inferred type conversion
-
-__Assignment:__
-
-- `lhs = rhs` — assignment or inferred-type declaration *(See [Variable Declarations](#Variable-Declaration).)*
-- `lhs := rhs` — always inferred-type declaration
-- `lhs: T = rhs` — explicit-type declaration
-- `lhs as rhs` — inline for `:=` but returns the assigned value instead of being void; the operands are inverted (variable goes on the right); creates an immutable variable by default *(See [Inline Binding](#Inline-Binding).)*
+*Note: keywords `band`, `bor`, `bxor`, and `bnot` are used instead of the traditional `&|^~` because those symbols have different meanings in Mulang: `&` -> tuples, `|` -> pattern matching, `~` -> type conversion. This breaks some of the usual habits of other languages, but that frees these symbols to do other things. This is an experimental language, so it's not obligated to follow normal conventions.* 
 
 Some operators have assignment alternatives by adding an equals sign `=` after it. These are reserved for the operators that aren't keywords and return the same type as their left-hand side  This sets a variable based on its previous value. The left-hand side must be an already defined variable. If it's immutable, then this is the same as shadowing it. If it's mutable, then the value is mutated. *(See [Mutability(#Mutability-mu).)* All of these are void statements, i.e. they return nothing and should only be used in an expression by themselves.
 
-- `lhs += rhs` — `lhs = lhs + rhs` — increment
-- `lhs -= rhs` — `lhs = lhs - rhs` — decrement
-- `lhs *= rhs` — `lhs = lhs * rhs` — multiplication assignment
-- `lhs /= rhs` — `lhs = lhs / rhs` — division assignment
-- `lhs //= rhs` — `lhs = lhs // rhs` — floor division assignment
-- `lhs %= rhs` — `lhs = lhs % rhs` — modulo assignment
-- `lhs %%= rhs` — `lhs = lhs %% rhs` — floor division modulo assignment (binds `lhs` to a range in `[0, rhs)` if `rhs` is positive or `(rhs, 0]` if `rhs` is negative)
-- `lhs <<= rhs` — `lhs = lhs << rhs` — bitshift left assignment
-- `lhs >>= rhs` — `lhs = lhs >> rhs` — bitshift right assignment
-- `lhs ++= rhs` — `lhs = lhs ++ rhs` — append to an array (not allowed if `lhs` is a fixed length array)
-
 All assignment operators *(except for `as`)* are **void.** This is intentional to prevent bugs and difficult to read code. It's recommend to put all assignment statements on their own separate lines for clarity. 
-
-### Order of Operations
-
-Organizing operator precedence requires balancing mathematical convention with developer intuition. Below is the standard, battle-tested hierarchy for a modern programming language like Mu, ordered from highest precedence (binds tightest) to lowest precedence (binds loosest).
-
-1. __Member Accessing/Inline-Binding (Highest):__ `lhs . rhs`, `lhs ?. rhs`, `lhs as rhs`
-2. __Primary/Postfix Operators:__ `lhs # rhs`, `lhs ?`, `lhs ?#`, `lhs !`
-3. __Unary Operators:__ `+ rhs`, `- rhs`, `not rhs`, `and rhs`, `or rhs`, `%~ rhs`, `++ rhs`, `& rhs`, `~ rhs`
-5. __Exponentiation:__ `lhs ** rhs` *(right-associative: `2**3**2` is `2**(3**2)`)*
-6. __Multiplicative/Bitshift Operators:__ `lhs * rhs`, `lhs / rhs`, `lhs // rhs`, `lhs % rhs`, `lhs %% rhs`, `lhs << rhs`, `lhs >> rhs`
-7. __Additive/Vector Operators:__ `lhs + rhs`, `lhs - rhs`, `lhs ++ rhs`
-8. __Bitwise Logic:__ `lhs %& rhs`, `lhs %^ rhs`, `lhs %| rhs`
-9. __Range/Interval Operators:__ `lhs .. rhs`, `lhs ..= rhs`
-10. __Comparisons/Membership:__ `lhs == rhs`, `lhs != rhs`, `lhs > rhs`, `lhs < rhs`, `lhs >= rhs`, `lhs <= rhs`, `lhs in rhs`
-11. __Logical AND:__ `lhs and rhs`
-12. __Logical OR:__ `lhs or rhs`
-13. __None Coalescing:__ `lhs ?? rhs`
-14. __Pipelining (Lowest):__ `lhs -> rhs`
-15. __Assignment (Lowest):__ `lhs = rhs`, *etc. (excluding `as`)*
 
 ### Operation chaining with `[]`
 
@@ -1565,7 +1547,9 @@ match expr then | ptrn:
     body
 ```
 
-It's syntax is a bit different than most blocks. You start with `match expr then` with no colon. Each case starts with `|`. That's because it's parsily inlined, relying on the rule that symbols at the start of the line are part of the same expression. The colons are put at the end of the pattern on each case, with each case being its own block. 
+Each pattern starts with `|`. This was chosen because pattern matching is a core feature in Mulang and a core identy of functional programming. This keeps it much briefer than the usual `switch`/`case` statement, closer to the pattern matching found in functional programming languages like Haskell or OCaml. 
+
+Its syntax is a bit different than most blocks. You start with `match expr then` with no colon. Each case starts with `|`. That's because it's parsily inlined, relying on the rule that symbols at the start of the line are part of the same expression, although this is a special case since each pattern starts a block. The colons are put at the end of the pattern on each case, with each case being its own block. 
 
 The patterns map to the type passed in after `match`, so you only need to reference the members of that type in each pattern.
 
@@ -1628,7 +1612,7 @@ match choice then
 
 This does the same job as single `|` in a `match` block. Most languages use `case` for the `switch`/`match` block, but since Mulang uses `|`, that frees up `case` to be used for other useful patterns.
 
-The pattern `case`/`else` binds the destructured variable to the current scope. You must have `else` at the end, and the block must break out of the scope such as with `break`, `continue`, `return`, `raise`, etc.. Destructured variables are only visible outside of the block rather than in it.
+The pattern `case`/`else` extracts an enum and binds its value to the scope. You must have `else` at the end, and the block must break out of the scope such as with `break`, `continue`, `return`, `raise`, etc.. This is analogous to the `let pattern(x) = value else {}` pattern found in other languages.
 
 ```
 block label:
