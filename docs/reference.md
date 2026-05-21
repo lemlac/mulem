@@ -206,8 +206,8 @@ The philosophy of Mulang is that symbols should be easy to recognize and underst
 | `and rhs` | do `and` on each component of a tuple: `and (True, False, True)` → `True and False and True` → `False` | 3 |
 | `or rhs` | do `or` on each component of a tuple: `or (True, False, True)` → `True or False or True` → `True` | 3 |
 | __(Bitwise)__ | — | — |
-|  `lhs && rhs` | bitwise-`AND` | 7 |
-| `lhs \|\| rhs` | bitwise-`OR` | 7 |
+|  `lhs /\ rhs` | bitwise-`AND` *(resembles a wedge* $\land$ *, the symbol for logical AND; also resembles a capital A)* | 7 |
+| `lhs \/ rhs` | bitwise-`OR` *(resembles a vee* $\lor$ *, the symbol for logical OR; invert of `\/`)* | 7 |
 | `lhs >< rhs` | bitwise-`XOR` *(resembles an X for XOR)* | 7 |
 | `bnot rhs` | bitwise-`NOT` | 3 |
 | `lhs << rhs` | bitshift-left | 5 |
@@ -226,6 +226,8 @@ The philosophy of Mulang is that symbols should be easy to recognize and underst
 | `lhs ?` | returns the `Some` value if it's not `None`, otherwise propagate to the nearest `opt` keyword *(see [`opt` block](#opt))* | 2 |
 | __(Results)__ | — | — |
 | `lhs !` | returns the result value if it's not an exception, otherwise propagate to the nearest `try` keyword *(see [`try` block](#try--except))* | 2 |
+| __(Pointers)__ | — | — |
+| `lhs ^` | dereferences a raw pointer | 2 |
 | __(Functional)__ | — | — |
 | `lhs \|> rhs` | pipelining, disregards `lhs` and returns `rhs` | 12 |
 | `~ rhs` | inferred type conversion | 3 |
@@ -241,8 +243,8 @@ The philosophy of Mulang is that symbols should be easy to recognize and underst
 | `lhs //= rhs` | floor division assignment | 12 |
 | `lhs %= rhs` | modulo assignment | 12 |
 | `lhs %%= rhs` | floor division modulo assignment (binds `lhs` to a range in `[0, rhs)` if `rhs` is positive or `(rhs, 0]` if `rhs` is negative) | 12 |
-| `lhs &&= rhs` | bitwise-`AND` assignment | 12 |
-| `lhs \|\|= rhs` | bitwise-`OR` assignment | 12 |
+| `lhs \/= rhs` | bitwise-`AND` assignment | 12 |
+| `lhs /\= rhs` | bitwise-`OR` assignment | 12 |
 | `lhs ><= rhs` | bitwise-`XOR` assignment | 12 |
 | `lhs <<= rhs` | bitshift-left assignment | 12 |
 | `lhs >>= rhs` | bitshift-right assignment | 12 |
@@ -263,7 +265,7 @@ __Order of Operations:__
 11. Logical OR
 12. Assignment/Pipelining (Lowest)
 
-*Note: keywords bitwise operators use double their usual symbols `&|^~` (and also the keyword `bnot`) because those symbols have different meanings by themselves in Mulang: `&` → tuples, `|` → pattern matching, `~` → type conversion. `&&` and `||` are usually boolean operators, but those are taken by the keywords `and` and `or` instead. This breaks some of the usual habits of other languages, but that frees these symbols to do other things. This is an experimental language, so it's not obligated to follow normal conventions.* 
+*Note: keywords bitwise operators use different symbols than their conventional `&|^~ in other languages because those symbols have different meanings by themselves in Mulang: `&` → tuples, `|` → pattern matching, `~` → type conversion. `&&` and `||` are usually boolean operators and would also be ambiguous, even though those operations are handled by the keywords `and` and `or` instead. `/\`, `\/`, and `><` seem like the right blend of uniqueness without being too ambiguous. Being symbols, they also have assignemnt versions `/\=`, `\/=, and `><=`. This breaks some of the usual habits of other languages, but that frees these symbols to do other things. This is an experimental language, so it's not obligated to follow normal conventions.* 
 
 Some operators have assignment alternatives by adding an equals sign `=` after it. These are reserved for the operators that aren't keywords and return the same type that their left-hand side is. This sets a variable based on its previous value. The left-hand side must be an already defined variable. If it's immutable, then this shadows it. If it's mutable, then the value is mutated. *(See [Mutability(#Mutability-mu).)* All of these are void statements, i.e. they return nothing and should only be used in an expression by themselves.
 
@@ -1138,6 +1140,7 @@ This builds on the visible simatry between type notation and their value express
 |:--|:-:|:-:|
 | **Results** | `T!` | `x!` |
 | **Options** | `T?` | `x?` |
+| **Pointers** | `T^` | `x^` |
 | **Arrays** | `T#N` | `x#n` |
 
 Other languages use `[]` for indexing, but that has another meaning in Mulang. Instead, you can use operation chaining to do the same thing like `[]` in other languages. *(See [Operation Chaining](#Operation-Chaining).)*
@@ -1232,6 +1235,16 @@ mu x = 0             -- Create a local mutable variable.
 xPtr = getMuPtr(x)?  -- Map `Null` to a option type, branch if it's `None`, return `Some(ptr)` if it's not and unwrap it with `?`.
 xPtr.set(1)!         -- Safely set the pointer and branch if there's an error.
 print("{x}")         -- "1", the pointer successfully mutated `x`.
+```
+
+Sometimes, it's necessary to dig deep into the unsafe territory. The `^` is the symbol associated with pointers, analogus to `?` for options, `!` for results, and `#` for arrays. It can be used in type notation, but it's also the operator to dereference a pointer. Thy type must be known at compile-time. Dereferencing an opaque pointer `ptr` is a compile-time error. In the type notation, `T^` prevents the pointer from mutating its memory or `T^mu` allows mutation with `^ =` (dereference + assignement). 
+
+```
+mu x = 0                 -- `ptr` type takes a reference and creates a generic pointer.
+xPtr: int^mu = ~ptr(x)   -- Convert `ptr` to `int^mu`, type is known.
+xPtr^ = 1                -- Mutate the memory.
+print("{xPtr^}")         -- Prints "1".
+print("{x}")             -- Prints "1".
 ```
 
 Please know that this is only an example and is subject to change. Some more testing is required to figure out the best way to handle pointers. Consider this a work in progress.
