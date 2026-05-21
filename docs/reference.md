@@ -1645,41 +1645,41 @@ mightGetSomething() =
     Some(x + 1)
 ```
 
-Conditional block-types `if`, `while`, and `loop`/`until` have alternative forms by adding `case` after the keyword. This combines the pattern matching of `match` into one expression. The `case` is necessary so that it doesn't get confused for assignement `=` which is not allowed in the condition of these blocks. The `case` makes it semantically clear that the next thing to expect is a pattern.
+Conditional block-types `if`, `while`, and `until` have alternative forms by adding `case` after the keyword. They because `ifcase`, `whilecasae`, and `untilcase`. New keywords where made for each so that `case` would be overloaded but makes it semantically clear it's related. This combines the pattern matching of `case` into a condition. Each expects a pattern and expression pair with `=` in between.
 
-`if case` is useful if you want to destructure a single case of a sum type. This must be a pattern that matches the type of the value after `=`.
+`ifcase` is useful if you want to destructure a single case of a sum type. This must be a pattern that matches the type of the value after `=`.
 
 ```
-if case Pattern(x) = value:
+ifcase Pattern(x) = value:
     print("value is {x}")
 else:
     print("value doesn't match")
 
-something = if case Some(x) = getSomething() then x else "fallback"
+something = ifcase Some(x) = getSomething() then x else "fallback"
 ```
 
 You can match multiple patterns also with `|` like with a `match` block. All patterns must go on the left of the `=` sign. Any destructured variables must match in name and type.
 
 ```
-if case ResultType1(val: int) | ResultType2{data as val: int} = getResult():
+ifcase ResultType1(val: int) | ResultType2{data as val: int} = getResult():
     print("val = {val}")
 ```
 
-`while case` is just like with `if case` but will loop until the pattern breaks. In some cases, this might be more desirable than the `while` / `tobe` format. 
+`whilecase` is just like with `ifcase` but will loop until the pattern breaks. In some cases, this might be more desirable than the `while` / `tobe` format. 
 
 ```
-while case Some(x) = nextValue():
+whilecase Some(x) = nextValue():
     print("value is {x}")
 ```
 
-`until case` is also possible. It's behavior is closer to just `case` than the other `_ case` blocks. It creates a new variable in the scope outside of the loop. This is because it appears at the end of the block instead of the top, so it won't be set *until* it matches which means the loop breaks. This can be useful if you want to repeatedly call a function *until* you get something.  The loop cannot conditionally break inside the body because then the variable would be unset. This ensures that the destructured variables are defined after the loop finishes. The loop runs until the pattern matches, and when it does, the matched value is your result — it would be meaningless otherwise. The scoping rule follows directly from the semantics. You can't use the value inside the loop body anyway since until is a termination condition, so there's only one place the binding could go — outside. *The scope of bindings mirrors the position of the pattern.*
+`untilcase` is also possible. It's behavior is closer to just `case` than the other `_ case` blocks. It creates a new variable in the scope outside of the loop. This is because it appears at the end of the block instead of the top, so it won't be set *until* it matches which means the loop breaks. This can be useful if you want to repeatedly call a function *until* you get something.  The loop cannot conditionally break inside the body because then the variable would be unset. This ensures that the destructured variables are defined after the loop finishes. The loop runs until the pattern matches, and when it does, the matched value is your result — it would be meaningless otherwise. The scoping rule follows directly from the semantics. You can't use the value inside the loop body anyway since until is a termination condition, so there's only one place the binding could go — outside. *The scope of bindings mirrors the position of the pattern.*
 
 ```
 value: mu int?
 
 loop:
     value = getValue()
-until case Some(x) = value
+untilcase Some(x) = value
 
 print("value = {x}")
 ```
@@ -1872,12 +1872,12 @@ Last
 - `expr!` — propagate an error upward (Rust/Swift style).
 - Exceptions are sum types; the compiler unions all possible exception types from every `!` site in a `try` block.
 - `try` / `except` can be an expression or a block and must unify return types (like `if` / `else`).
-- Pattern matching on errors works with `match` or `if case Pattern(x) = value`.
+- Pattern matching on errors works with `match` or `ifcase Pattern(x) = value`.
 
 ## Pattern Matching and Destructuring
 
 - Full `match` (exhaustive unless `| _:` is present).
-- `if case` — like Rust's `if let`.
+- `ifcase` — like Rust's `if let`.
 - Destructuring supports structs, tuples, enum variants, and wildcards (`_`).
 
 ---
@@ -2388,34 +2388,37 @@ This is a work in progress though. How these decorators are implemented and thei
 18. `fn`
 19. `for`
 20. `if`
-21. `impl`
-22. `import`
-23. `inherit`
-24. `in`
-25. `let`
-26. `loop`
-27. `match`
-28. `mod`
-29. `mu`
-30. `not`
-31. `opt`
-32. `or`
-33. `orelse`
-34. `out`
-35. `pass`
-36. `proto`
-37. `raise`
-38. `ref`
-39. `return`
-40. `self`
-41. `struct`
-42. `then`
-43. `tobe`
-44. `try`
-45. `until`
-46. `where`
-47. `while`
-48. `yield`
+21. `ifcase`
+22. `impl`
+23. `import`
+24. `inherit`
+25. `in`
+26. `let`
+27. `loop`
+28. `match`
+29. `mod`
+30. `mu`
+31. `not`
+32. `opt`
+33. `or`
+34. `orelse`
+35. `out`
+36. `pass`
+37. `proto`
+38. `raise`
+39. `ref`
+40. `return`
+41. `self`
+42. `struct`
+43. `then`
+44. `tobe`
+45. `try`
+46. `until`
+47. `untilcase`
+48. `where`
+49. `while`
+50. `whilecase`
+51. `yield`
 
 *NOTE: Built-in types, values, functions, and decorators like `int`, `True`, `Some`, `default`, `print`, `@memory` etc. are not considered keywords.*
 
