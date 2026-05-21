@@ -179,10 +179,6 @@ end)            -- `end` finishes the inline-block expression.
 
 The philosophy of Mulang is that symbols should be easy to recognize and understand. Generally, keywords are preferred over symbols to make it easier to read, but symbols can also help make code easier to both write and read at times. Many are semantically grouped based on their contextual usage, for example `*` and `/` relate to math, `?` relates to options, `&` relates to tuples, etc.. There's also a common pattern where repeating an operator gives you a more technical or complex version of that operator, for example: `+` addition vs `++` concatenation, `*` multiplication vs `**` exponentiation, `/` division vs `//` floor division, and `%` standard modulo vs `%%` floor division modulo.
 
-Mulang will check any combination of symbols greedily until the next space or word except for the reserved comment token (`--`). For example `++` would be different from `+ +`, but `++--` would be considered `++` and a comment `--`. Spaces are required between multiple symbolic operators, much like how spaces are required between words. Symbol characters include any ASCII character that isn't alphanumeric, whitespace, quotation marks, delimiters, or brackets—in other words these symbols: `~!@#$%^&*-+=|\:<.>/?`.
-
-There may be operator overloading in the future. Even if an operator could be broken into smaller parts, it's considered a unique operator even though it may not be defined—just like how you can technically write a method that may not be defined, but they're both considered errors. Because of that, long sequences of operators need to be broken up into their separate symbols. From example `a+++b`, the compiler will see `+++` like one symbol instead of 3 individual `+`s. You would need to put at least one space here `a+ + +b` to make sure it's clear that it's 2 operators and not one. This not only helps the parser but also helps the coder when reading the code. The exception to this rule is `--` which is **always** a comment no matter what.
-
 | Operation | Meaning | Order |
 |:--|:--|:--|
 | __(Arithmetic)__ | — | — |
@@ -506,12 +502,12 @@ All components of a tuple should be referenced on the left. Use `_` to explicitl
 (_, b, _) & {x, _} = (0, 1, 2, x: 3, y: 4)
 ```
 
-When destructuring a type that isn't anonymous, the type can optionally be put before the parentheses/braces, otherwise it's automatically inferred. This could conflict with function declarations which uses a similar pattern `name(param) = body`. *(See [Function Declarations](#Function-Declarations).)* Because functions are far more common than destructured assignments, they take the simpler pattern. An empty tuple and ampersand (`()&`) should be placed at the start of the expression so it won't be confused for a function declaration. This guarantees that you are destructuring based on the correct type. This follows the same schema that pattern matching does like in `case` and `except` lines. *(See [Control Flow](#Control-Flow).)*
+When destructuring a type that isn't anonymous, the type can optionally be put after the parentheses/braces, otherwise it's automatically inferred. 
 
 ```
 Thing :: {x: int, y: int}
 thing = Thing(x: 1, y: 2)
-()& Thing{x, y} = thing       -- Split thing into its components.
+{x, y}: Thing = thing         -- Split thing into its components.
 {x, y} = thing                -- Or just infer the type.
 ```
 
@@ -597,7 +593,7 @@ What each modifier means changes the functionality:
 | `ref` | Passes reference | Immutable |
 | `ref mu` | Passes reference | Mutable |
 
-Another type of parameter is `out`. This is like `ref mu` but is treated like `unset` at the start of the function. Use it to set a variable that hasn't been set yet. The parameter must not be `unset` in any branch within the function. This means either setting it within the function or passing it to another function with an `out` parameter. This ensures that the variable is set after the function has been called. 
+Another type of parameter is `out`. This is like `ref mu` but is treated like `unset[_]` at the start of the function. Use it to set a variable that hasn't been set yet. The parameter must not be `unset[_]` in any branch within the function. This means either setting it within the function or passing it to another function with an `out` parameter. This ensures that the variable is set after the function has been called. 
 
 ```
 setInt(out i) =
@@ -754,20 +750,20 @@ add(a: 2, 1, b: 3)
 add(a: 2, b: 3, 1)
 ```
 
-Named parameters can be defined in their own object and then passed in with the `&` operator also. The named parameters in the function can also be collected into a single variable using `as`. Like with desctructuring, a `()&` should be placed before the typed name parameters even if the function doesn't have any positional parameters.
+Named parameters can be defined in their own object and then passed in with the `&` operator also. The named parameters in the function can also be collected into a single variable using `as`. An empty positional parameter `()` needs to be placed before the typed name parameters even if the function doesn't have any positional parameters. Objects are spread with `&object` in the argument of the function when called.
 
 ```
-Settings :: { enabled: bool }
-doThing(key: str) & Settings as settings =
+Settings :: { enabled: bool, key: str }
+doThing() & Settings as settings =
     if settings.enabled:
         Some(callApi(key))
     else:
         None
 
-settings = Settings(enabled: True)
+settings = Settings(key: "foo", enabled: True)
 
-doThing("foo", &settings)      -- Spreads `settings` into the arguments.
-doThing("foo", enabled: True)  -- Or passed like a named parameter.
+doThing(&settings)                  -- Spreads `settings` into the arguments.
+doThing(key: "foo", enabled: True)  -- Or passed like a named parameter.
 ```
 
 See [Tuples](#Tuples) for more details on the `&` operator.
@@ -1770,18 +1766,21 @@ If a you have nested options like `type??`, you can add aditional `?`s to contin
 unnestOptions(x: int??): int? = x??
 ```
 
-You can combine `?` and `!` together when the return type is `type?!` (an **option result type**).
+You can combine `?` and `!` together when the return type is `type?!` (an **option result type**). When unwrapping it, use `!?`. This means *"unwrap the result type"* then *"unwrap the option type."*
 
 ```
 -- With type notation:
-doSomething(x: str?): void?! =
-    x = x?
-    doSomethingElse(x)!
+getSomething(x: str?): str?! =
+    riskyBusiness(x?)!
 
 -- Or inferred:
-doSomething(x) =
-    x = x?
-    doSomethingElse(x)!
+getSomething(x) =
+    riskyBusiness(x?)!
+
+-- Unwrap both in one go:
+printTheThing(): void?! =
+    x = getSomething("thing")!?
+    print("{x}")
 ```
 
 #### `return`
@@ -2177,7 +2176,7 @@ A subtype cannot accidentally expose or clash with a private inherited member be
 
 ## Meta Functions
 
-Adding a parameter before the double colon (`::`) turns it into a **meta function** which combines the concepts of **inline functions**, **macros**, and **generics**. Parameters are put in square brackets `[]` to distinguish them from regular functions which use parentheses `()`. The types of parameters can be inferred based on context. If the meta function has no parameters or the values of those parameters can be inferred based on context, then you don't have to use `[]` when calling it. Because of this, you can't pass it around like a regular function. For any meta function `m[]`, saying `m` infers calling `m[]`. The result is treated like a constant for run-time code. 
+Adding a parameter before the double colon (`::`) turns it into a **meta function** which combines the concepts of **inline functions**, **macros**, and **generics**. Parameters are put in square brackets `[]` to distinguish them from regular functions which use parentheses `()`. The result is treated like a constant for run-time code. 
 
 You can define a meta function by adding a parameter before the double colons and writing an expression after it. Like constants, they don't output a value in memory when compiled, useful for collecting repeated code. Unlike regular functions, meta function cannot be passed to another function. They only exist at compile-time. Each parameter is a variable within the expression, so you don't need to wrap them in parentheses `()` like with C macros. 
 
@@ -2223,7 +2222,7 @@ print("{ maxAdd[ f(0), g(0) ] (1) }")
 
 The compiler will read the body of the macro and understand where to insert its parameters, so if a parameter gets shadowed, then it will no longer insert it for the rest of that scope. 
 
-You can also define a type with a meta function.
+You can also define a type with a meta function. The meta functions parameters in `[]` will be inferred if it returns a function or type and you call it with parentheses `()`. In other words, `meta(_)` is equal to `meta[_](_)`. 
 
 ```
 -- Note that this is not the actual defintion for an option type `type?`. This is just a user-defined enum that uses the same pattern.
@@ -2267,11 +2266,11 @@ List[T, N] :: impl =
 
 ### Manual Implementation
 
-Generics will automatically generate code based on their parameters, but you can also implement them by hand using pattern matching. If you only want to use the manual implementations for a generic function, you can set its body to `unset`. We've mentioned `unset` before when declaring variables without settinging them. `unset` itself is actually a meta function and not a keyword. It takes a type parameter `unset[T]` but can be dropped if the type is inferred. This creates a virtual function that can be overloaded later. If you use a function that is defined with `unset` or `unset[T], it will throw a compile-time error.
+Generics will automatically generate code based on their parameters, but you can also implement them by hand using pattern matching. If you only want to use the manual implementations for a generic function, you can set its body to `unset[_]`. We've mentioned `unset[T]` before when declaring variables without settinging them. `unset` itself is actually a meta function and not a keyword. It takes a type parameter `unset[T]` can be inferred with `_`. This creates a virtual function that can be overloaded later. If you use a function that is defined with `unset[_]`, it will throw a compile-time error.
 
 ```
 -- Forces every type to have its own implementation
-increment[T] :: fn(c: ref mu T): void = unset
+increment[T] :: fn(c: ref mu T): void = unset[_]
 
 Counter :: struct = value: int
 
