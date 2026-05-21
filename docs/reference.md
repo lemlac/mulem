@@ -188,7 +188,7 @@ end)            -- `end` finishes the inline-block expression.
 
 ## Operators
 
-The philosophy of Mulang is that symbols should be easy to recognize and understand. Generally, keywords are preferred over symbols to make it easier to read, but symbols can also help make code easier to both write and read at times. Many are semantically grouped based on their contextual usage, for example `*` and `/` relate to math, `%` relates to bitwise operators, `?` relates to options, `&` relates to tuples, etc.. There's also a common pattern where repeating an operator gives you a more technical or complex version of that operator, for example: `+` addition vs `++` concatenation, `*` multiplication vs `**` exponentiation, `/` division vs `//` floor division, and `%` standard modulo vs `%%` floor division modulo.
+The philosophy of Mulang is that symbols should be easy to recognize and understand. Generally, keywords are preferred over symbols to make it easier to read, but symbols can also help make code easier to both write and read at times. Many are semantically grouped based on their contextual usage, for example `*` and `/` relate to math, `?` relates to options, `&` relates to tuples, etc.. There's also a common pattern where repeating an operator gives you a more technical or complex version of that operator, for example: `+` addition vs `++` concatenation, `*` multiplication vs `**` exponentiation, `/` division vs `//` floor division, and `%` standard modulo vs `%%` floor division modulo.
 
 Mulang will check any combination of symbols greedily until the next space or word except for the reserved comment token (`--`). For example `++` would be different from `+ +`, but `++--` would be considered `++` and a comment `--`. Spaces are required between multiple symbolic operators, much like how spaces are required between words. Symbol characters include any ASCII character that isn't alphanumeric, whitespace, quotation marks, delimiters, or brackets—in other words these symbols: `~!@#$%^&*-+=|\:<.>/?`.
 
@@ -226,14 +226,12 @@ __Boolean:__
 
 __Bitwise:__
 
-- `lhs %& rhs` — bitwise `AND`
-- `lhs %| rhs` — bitwise `OR`
-- `lhs %^ rhs` — bitwise `XOR`
-- `%~ rhs` — bitwise `NOT`
+- `lhs band rhs` — bitwise `AND`
+- `lhs bor rhs` — bitwise `OR`
+- `lhs bxor rhs` — bitwise `XOR`
+- `bnot rhs` — bitwise `NOT`
 - `lhs << rhs` — bitshift left
 - `lhs >> rhs` — bitshift right
-
-*NOTE: `%` is reused for bitwise operators to keep with the pattern of `%` as symbol for computer-related math. Most people don't learn about the modulo operator `%` unless they learn computer science. Therefore, it makes sense to associate it with other computer-related math operations as well. You may think that this is overloading the meaning of `%`, but the trade-off is that this makes it semantically clear that when you see `%`, some kind of computer-science related math is going on. In general, bitwise operations are only used for very low-level programming, so this will not be something that new users have to worry about.*
 
 __Arrays:__
 
@@ -272,7 +270,7 @@ __Assignment:__
 - `lhs: T = rhs` — explicit-type declaration
 - `lhs as rhs` — inline for `:=` but returns the assigned value instead of being void; the operands are inverted (variable goes on the right); creates an immutable variable by default *(See [Inline Binding](#Inline-Binding).)*
 
-Operators that return the same type as their left-hand side have assignment alternatives by adding an equals sign `=` after it. This sets a variable based on its previous value. The left-hand side must be an already defined variable. If it's immutable, then this is the same as shadowing it. If it's mutable, then the value is mutated. *(See [Mutability(#Mutability-mu).)* All of these are void statements, i.e. they return nothing and should only be used in an expression by themselves.
+Some operators have assignment alternatives by adding an equals sign `=` after it. These are reserved for the operators that aren't keywords and return the same type as their left-hand side  This sets a variable based on its previous value. The left-hand side must be an already defined variable. If it's immutable, then this is the same as shadowing it. If it's mutable, then the value is mutated. *(See [Mutability(#Mutability-mu).)* All of these are void statements, i.e. they return nothing and should only be used in an expression by themselves.
 
 - `lhs += rhs` — `lhs = lhs + rhs` — increment
 - `lhs -= rhs` — `lhs = lhs - rhs` — decrement
@@ -281,9 +279,6 @@ Operators that return the same type as their left-hand side have assignment alte
 - `lhs //= rhs` — `lhs = lhs // rhs` — floor division assignment
 - `lhs %= rhs` — `lhs = lhs % rhs` — modulo assignment
 - `lhs %%= rhs` — `lhs = lhs %% rhs` — floor division modulo assignment (binds `lhs` to a range in `[0, rhs)` if `rhs` is positive or `(rhs, 0]` if `rhs` is negative)
-- `lhs %&= rhs` — `lhs = lhs %& rhs` — bitwise `AND` assignment
-- `lhs %|= rhs` — `lhs = lhs %| rhs` — bitwise `OR` assignment
-- `lhs %^= rhs` — `lhs = lhs %^ rhs` — bitwise `XOR` assignment
 - `lhs <<= rhs` — `lhs = lhs << rhs` — bitshift left assignment
 - `lhs >>= rhs` — `lhs = lhs >> rhs` — bitshift right assignment
 - `lhs ++= rhs` — `lhs = lhs ++ rhs` — append to an array (not allowed if `lhs` is a fixed length array)
@@ -372,11 +367,13 @@ Tuples are transparent by default, and a tuple with only one position component 
 - `(10).[0] == 10`
 - _Therefore:_ `(10) == 10`
 
-Most programming languages use `[]` by itself for indexing an array. While this is still possible in Mulang, operation chaining gives the coder a lot more options and ability to write expressive code. This is a break from the traditional style of programming, but it opens the door for more pragmatic and ergonomic code. The transition from array indexing with `[]` in other languages like C or Python to array indexing with `#[]` in Mulang is as simple as adding `#` before each square bracket.
+**Mu the programming language is a novel and experimental one.** It has no obligation to follow normal conventions. Most other languages use `[]` by itself for indexing an array. While this is still possible in Mulang, operation chaining gives the coder a lot more options and ability to write expressive code. This is a break from the traditional style of programming, but it opens the door for more pragmatic and ergonomic code. This makes it instantly clear that when you see `#`, it's an array, just like `?` for options and `!` for results, staying consistent with itself rather than with other languages.
+
+The transition from array indexing with `[]` in other languages to array indexing with `#[]` in Mulang is as simple as adding `#` before each square bracket.
 
 - `array[0][1]` -> `array#[0]#[1]`
 
-This frees `name[]` to take on a new meaning in Mulang: **meta functions.** *For more on that, see [Meta Functions](#Meta-Functions).*
+This frees `name[]` to take on a new meaning in Mulang. *For more on that, see [Meta Functions](#Meta-Functions).*
 
 ## Basic Bindings
 
@@ -433,69 +430,74 @@ lunch =
 
 #### Mutability (`mu`)
 
-Mutable variables are marked with the keyword `mu`, the main star of the language. Just as Go has its `go` keyword, Mulang has `mu`. This was chosen since mutability is a common practice in programming much like functions are—which is why functions also get their own two letter keyword `fn`. *(See [Function Declarations](#Function-Declarations).)* The general rule of thumb in Mulang is that *patterns scale with complexity*—simple things like declaring a variable or function use short patterns, more complex things use bigger patterns.
+Mutable variables are marked with the keyword `mu`, the main star of the language. Just as Go has its `go` keyword, Mulang has `mu`. This was chosen since mutability is a common practice in programming much like functions are—which is why functions also get their own two letter keyword `fn`. *(See [Function Declarations](#Function-Declarations).)* The brevity of it is its strength. It beats other keywords such `mut` *(mutt? like a mixed dog breed? meaning too ambiguous),* `val` *(too common of a variable name),* `var` *(doesn't imply mutability).* The general rule of thumb in Mulang is that *patterns scale with complexity*—simple things like declaring a variable or function use short patterns, more complex things use bigger patterns. That's why the two letter keyword `mu` is perfect for this. 
+
+This is grounded in the language's own internal consistency. If `fn` for functions is acceptable at two characters, `mu` for mutability follows the same pattern naturally. The pairing is actually elegant:
+
+- `fn` — the thing that does something
+- `mu` — the thing that changes
 
 You might think the choice of `mu` as a keyword—which is the same name as the language itself—will be a potential source of confusion. However, Go doesn't have this problem with its `go` keyword. When searching or discussing about *Mu*, it's sometimes preferable to write it as *Mulang* for clarity, just as other languages can have "lang" at the end of their names such as *Go* -> *Golang* or *D* -> *Dlang*.
 
 Declare a mutable variable with `mu type`. Setting it will change the value instead of shadowing it. The type of value when mutating it must match its original type.
 
 ```
-x: mu int = 0
-x = 1          -- `x` is mutated
+mut: mu int = 0
+mut = 1          -- `mut` is mutated
 ```
 
 You can also infer the type with `mu _ = _`:
 
 ```
-mu x = 0   -- Same as `x: mu int = 0`.
-x = 1
+mu mut = 0   -- Same as `mut: mu int = 0`.
+mut = 1
 ```
 
 Or you can declare the type and set it later:
 
 ```
-x: mu int
+mut: mu int
 doSomething()
-x = 1
+mut = 1
 ```
 
 Not setting a mutable variable implies `= unset[T]` after it which means it cannot be used until it's been set. The exception is passing unset variables to the `out` parameters of functions. *(See [Function Declarations](#Function-Declarations).)*
 
 ```
-x: mu int = unset[mu int]
--- `x` cannot be used here.
+mut: mu int = unset[mu int]
+-- `mut` cannot be used here.
 (--
-doSomething(x)   -- This is an error.
+doSomething(mut)   -- This is an error.
 --)
 
-x = 1
--- `x` can be used now.
-doSomething(x)   -- This is okay.
+mut = 1
+-- `mut` can be used now.
+doSomething(mut)   -- This is okay.
 ```
 
 `mu` variables cannot be shadowed by `=`. They can only be mutated. Assigning to the variable for the rest of the scope and any sub-scopes will mutate the variable—except for functions which always set a new variable unless its been explicitly captured. *(See [Capturing](#Capturing-capture).)*
 
 ```
-mu x = 0
+mu mut = 0
 block:
-    x = 1
-    print("{x}")  -- Prints "1", same as outer `x`.
-print("{x}")      -- Prints "1", `x` was mutated.
-cantSetX() =
-    x = 2
-cantSetX()
-print("{x}")      -- Prints "1" again, cantSetX didn't change it.
+    mut = 1
+    print("{mut}") -- Prints "1", same as outer `mut`.
+print("{mut}")     -- Prints "1", `mut` was mutated.
+cantSetMut() =
+    mut = 2
+cantSetMut()
+print("{mut}")     -- Prints "1" again, cantSetMut didn't change it.
 ```
 
 If you wish to shadow it, you can redeclare the variable with `: T =` or `:=`.
 
 ```
-mu x = 0
+mu mut = 0
 block:
-    x := 1        -- Delcare new `x` in this block.
-    print("{x}")  -- Prints "1", inner `x` was shadowed.
-                  -- Exit block
-print("{x}")      -- Prints "0", outer `x` was not mutated.
+    mut := 1        -- Delcare new `mut` in this block.
+    print("{mut}")  -- Prints "1", inner `mut` was shadowed.
+                    -- Exit block
+print("{mut}")      -- Prints "0", outer `mut` was not mutated.
 ```
 
 #### References (`ref`/`ref mu`)
@@ -554,6 +556,12 @@ add(a: int, b: int): int = a + b
 add(a, b) = a + b
 
 result = add(1, 2)
+```
+
+This keeps function declarations short and sweet. Anyone familar with algebra will be able to recognize its format and understand what it means right away.
+
+```
+f(x) = x*x + 2*x + 1
 ```
 
 Functions can be a block statement by placing a new line and indentation after the equals sign `=`. This allows you to put multiple lines in one function. The last line evaluated is the return value.
@@ -631,11 +639,11 @@ setInt(x)
 print("{x}")    -- Prints "3"
 ```
 
-This works for mutable variables, but what if you wanted to make an immutable variable using `out`? You can write `out as` while calling a function to declare it as an immutable variable in the current scope. This has the same rules as just `as`. *(See [Inline Binding](#Inline-Binding).)
+This works for mutable variables, but what if you wanted to make an immutable variable using `out`? You can write `out` while calling a function to declare it as an immutable variable in the current scope. This has the same rules as `as`. *(See [Inline Binding](#Inline-Binding).)
 
 ```
-setInt(out as n)   -- Declare a new variable `n` that gets set by `setInt`.
-print("{n}")       -- Prints "3"
+setInt(out n)   -- Declare a new variable `n` that gets set by `setInt`.
+print("{n}")    -- Prints "3"
 ```
 
 #### Capturing (`@capture`)
@@ -668,14 +676,29 @@ mu squared = 1
 mu cubed = 1
 
 addCount() =
-    @capture count += 1
-    @capture squared = count * count
+    @capture                          -- On the line before the assignment.
+    count += 1
+    @capture squared = count * count  -- Or inlined.
     @capture cubed = squared * count
 
 addCount()
 addCount()
 addCount()
 print("{count}, {squared}, {cubed}") -- Prints "3, 9, 27"
+```
+
+You can also write `@capture()` over the function to capture multiple variables at once.
+
+```
+mu count = 0
+mu squared = 1
+mu cubed = 1
+
+@capture(count, squared, cubed)  -- Capture 3 variables at once.
+addCount() =
+    count += 1
+    squared = count * count
+    cubed = squared * count
 ```
 
 #### Lambda Functions
@@ -1525,23 +1548,44 @@ block label loop:
 print("I'm free!")
 ```
 
-#### `match` *(Basic)*
+#### `match`
 
 Enum/exception branching. Exhaustive by default. `| _:` for the default case.
+
+```
+match expr then | ptrn:
+    body
+| ptrn:
+    body
+    ...
+| _:
+    body
+```
 
 It's syntax is a bit different than most blocks. You start with `match expr then` with no colon. Each case starts with `|`. That's because it's parsily inlined, relying on the rule that symbols at the start of the line are part of the same expression. The colons are put at the end of the pattern on each case, with each case being its own block. 
 
 The patterns map to the type passed in after `match`, so you only need to reference the members of that type in each pattern.
 
 ```
-match choice then        -- No `:`. No extra indentation is necessary.
-| First:                 -- Each case is at the same indentation or more.
-    print("First")       -- Each case marks a new block, indent here.
-| Second(x):             -- Continue this for each case.
-    print("Second({x})") -- ...
-| Third{val}:            -- ...
+match choice then | First: -- Each pattern case starts its on block.
+    print("First")         -- Ident for the new block.
+| Second(x):               -- Continue this for each case.
+    print("Second({x})")   -- ...
+| Third{val}:              -- ...
     print("Third \{ val={val} }")
-                         -- All choices were exhausted, so no `| _:` is necessary.
+                           -- All choices were exhausted, so no `| _:` is necessary.
+```
+
+The first case can also be put on the next like this:
+
+```
+match choice then
+| First:
+    print("First")
+| Second(x):
+    print("Second({x})")
+| Third{val}:
+    print("Third \{ val={val} }")
 ```
 
 The inline form switches `:` for `->`, unlike other blocks which use `then` for inline form. This makes it easier to read and take up less space. Patterns are usually words, so you can visually sequence it into pattern/expression pairs: `| ptrn -> expr | ptrn -> expr | ptrn -> expr` etc.. This won't clash with the `->` operator because each case is a pattern, not an expression. Semantically, it makes sense because it does the same job—in `lhs -> rhs`, `rhs` is always returned, just like how the case returns that expression when the pattern matches.
@@ -1550,127 +1594,38 @@ The inline form switches `:` for `->`, unlike other blocks which use `then` for 
 message = match e then | OpenError{filename} -> "Open error: {filename}" | _ -> "Unknown error"
 ```
 
-You can have multiple patterns match to one case. If any of the case's patterns destructurs with a variable, the same variable name and type must be in all patterns. If not, use a wildcard `_` in each tuple or omit the tuples entirely to disable destructuring.
+You can have multiple patterns match to one case. If any of the patterns destructur with a variable, the same variable name and type must be in all patterns. If not, use a wildcard `_` in each pattern or omit the tuples part entirely to disable destructuring.
 
 ```
 match choice then
 | First:
     print("First")
-| Second(val) | Third{val}:            -- `val` must be in all patterns
+| Second(val) | Third{val}:                  -- `val` must be in all patterns
     print("Second or Third, val={val}")
 
-match choice then
-| First | Second | Third:              -- `First` doesn't have any values, so destructuring must be disabled.
+match choice then | First | Second | Third:  -- `First` doesn't have any values, so destructuring must be disabled.
     print("First, Second, or Third")
 ```
 
-#### `match` *(Advanced)*
-
-Sometimes, there just isn't a clean way to write a C-style `switch` block with only the other control flow patterns mentioned. Mulang lets you do that with some aditional features to make it feel both modern and safe. The advanced `match` pattern is similar to basic `match`, but replace `|` at the start of each case with the keyword `case`:
+Unlike old-style `switch` blocks, each pattern block breaks automatically without the need for a `break`. Instead you can use the keyword `fallthrough` to go to the next case. The next case can't have any destructured values if `fallthrough` is used.
 
 ```
-match choice:                -- Colon here becase this is a block.
-    case First:              -- Another indent for each case.
-        print("First")       -- Each case marks a new block, indent here.
-    case Second(x):          -- Continue this for each case.
-        print("Second({x})") -- ...
-    case Third{val}:         -- ...
-        print("Third \{ val={val} }")
+match choice then
+| First:
+    print("First!")
+    fallthrough
+| Second(_):              -- Destructuring is disabled.
+    print("And second!")
+    fallthrough
+| Third:                  -- `(_)` is optional.
+    print("And third!")
 ```
 
-This type of `match` block can match both patterns and expressions. Whether the condition of each `case` is a pattern or an expression depends on the type passed to `match`: enum/exceptions -> pattern, other types -> expression.
+#### `case`
 
-In the block form, the entire `switch` is a block with each `case` being a sub block. Any code in a `match` block outside of a `case` will always run. This can be useful for setting up variables that are shared between `case` blocks.
+This does the same job as single `|` in a `match` block. Most languages use `case` for the `switch`/`match` block, but since Mulang uses `|`, that frees up `case` to be used for other useful patterns.
 
-```
-x = 2
-match x:
-    mu y: int
-    case 0:
-        print("Inside first case!")
-        y = 0b0001
-    print("After first case.")
-    case 1:
-        print("Inside second case!")
-        y = 0b0010
-    print("After second case.")
-    case 2:
-        print("Inside third case!")
-        y = 0b0100
-    print("After third case.")
-    case 3:
-        print("Inside forth case!")
-        y = 0b1000
-    print("After forth case.")
-    case _:
-        print("Inside last case!")
-        y = 0b1111
-    print("After last case. y = {y}")
-```
-
-What it prints:
-
-```
-After first case.
-After second case.
-Inside third case!
-After third case.
-After forth case.
-After last case. y = 4
-```
-
-Only the first case that matches will run by default. If you want to keep going to the next case, you can put `fallthrough` at the end of it. Put `fallthrough` at the bottom of every case to run all of them, starting at the first one that matches. This achieves the same effect as a C-style `switch` with no `break` statements but is safer since it's explicit rather than implicit.
-
-```
-x = 0
-match x:
-    case 0:
-        print("Fall through!")
-        fallthrough
-    case 1:
-        print("Fall through!")
-        fallthrough
-    case 2:
-        print("Fall through!")
-        fallthrough
-    case _:
-        print("Fall through!")
-        fallthrough
-```
-
-Use this to match multiple cases into one block.
-
-```
-x = 3
-match x:
-    case 1:
-        fallthrough
-    case 2:
-        fallthrough
-    case 3:
-        fallthrough
-    case 4:
-        print("x is 1 or 2 or 3 or 4")
-        -- No fallthrough here so it breaks.
-    case _:
-        print("x is not 1 or 2 or 3 or 4")
-```
-
-The alternative is to use `|` to seperate case values like with the `match then` block.
-
-```
-x = 3
-match x:
-    case 1 | 2 | 3 | 4:
-        print)"x is 1 or 2 or 3 or 4")
-        -- No fallthrough here so it breaks.
-    case _:
-        print("x is not 1 or 2 or 3 or 4")
-```
-
-#### Conditional `case`
-
-The pattern `case`/`else` binds the variable to the current scope. You must have `else` at the end, and the block in `else` must break out of the scope such as with `break`, `continue`, `return`, `raise`, etc.. Destructured variables are only visible outside of the block rather than in it.
+The pattern `case`/`else` binds the destructured variable to the current scope. You must have `else` at the end, and the block must break out of the scope such as with `break`, `continue`, `return`, `raise`, etc.. Destructured variables are only visible outside of the block rather than in it.
 
 ```
 block label:
@@ -1690,20 +1645,6 @@ mightGetSomething() =
     Some(x + 1)
 ```
 
-This might visiually clash with the `case` inside a `match` block, but the addition of `=` and `else` makes it clear that this an assignment and not a pattern match.
-
-```
-match x:
-    case Some(mu y) = getSomething() else return
-    case Up:
-        y += 1
-    case Down:
-        y -= 1
-    case _:
-        print("no action")
-    print("{y}")
-```
-
 Conditional block-types `if`, `while`, and `loop`/`until` have alternative forms by adding `case` after the keyword. This combines the pattern matching of `match` into one expression. Useful if you want to destructure a single case of a sum type. This must be a pattern that matches the type of the value after `=`.
 
 ```
@@ -1711,6 +1652,8 @@ if case Pattern(x) = value:
     print("value is {x}")
 else:
     print("value doesn't match")
+
+something = if case Some(x) = getSomething() then x else "fallback"
 ```
 
 You can match multiple patterns as well with `|` like with a `match` block. All patterns must go on the left of the `=` sign. Any destructured variables must match in name and type.
@@ -1756,40 +1699,11 @@ addStuff(a: int, b: int): int? =
     a + b
 ```
 
-Option types automatically flatten in the following manner:
-
-- `Some(Some(_))` = `Some(_)`
-- `Some(None)` = `None`
-
-This is true even for deeply nested options:
-
-- `Some(Some(Some(Some(Some(_)))))` = `Some(_)`
-- `Some(Some(Some(Some(Some(Some(Some(Some(None))))))))` = `None`
-
-This rules out certain legitimate patterns where the distinction between "no result" and "a result that itself has no value" is meaningful. If you need that, then you can make your own option-like enum type and use that instead. *(See [Meta Functions](#Meta-Functions).)*
+If a you have nested options like `type??`, you can add aditional `?`s to continuously unwrap it until you get to the value. 
 
 ```
-MyOption[T] :: enum =
-    Some(T)
-    None
-
-Some[T] :: MyOption[T].Some
-None[T] :: MyOption[T].None
-
-x = Some(Some("foo"))
-
-match x then
-| Some (y):
-    match y
-    | Some(z):
-        print("{z}")
-    | None:
-        print("No inner")
-| None:
-    print("No outer")
+unnestOptions(x: int??): int? = x??
 ```
-
-As stated before, patterns scale with complexity. This is a much more complex pattern than just flattening option types, so that's the default behavior. If the default behavior doesnt work for you, you have to freedom to define your own patterns to use. 
 
 #### `try` / `except`
 
@@ -2051,7 +1965,7 @@ We say that a void function returns nothing. Well, that's what an empty tuple is
 
 ### Definition Blocks
 
-Some keywords after `::` start a **definition block.** They can only be used in `::` definitions. These are special blocks used for abstract data such as types and static variables. Inside any definition block, the word `Self` is a self-reference to the abstract data that's being defined. 
+Some keywords after `::` start a **definition block.** They can only be used in `::` definitions. These are special blocks used for abstract data such as types and static variables. 
 
 #### Structures (`struct`)
 
@@ -2158,7 +2072,7 @@ except DivideByZero(x):
 
 #### Prototypes (`proto`)
 
-A `proto` is an abstract interface — a named contract with no data. It is equivalent to a `virtual class` (C++), `trait` (Rust), or `interface` (Java, TypeScript, etc.) in other languages. Each member is a function, also called a **method**. Methods that have a parameter named `self` at the beginning will be called as methods on the instance of that type, i.e. `self.method(...)`. This is equivalent to saying `typeof[self].method(self, ...)` or `Self.method(self, ...)`. The type of `self` is `Self` which represents the current type implementing this proto. 
+A `proto` is an abstract interface — a named contract with no data. It is equivalent to a `virtual class` (C++), `trait` (Rust), or `interface` (Java, TypeScript, etc.) in other languages. Each member is a function, also called a **method**. Methods that have a parameter named `self` at the beginning will be called as methods on the instance of that type, i.e. `self.method(...)`. This is equivalent to saying `typeof[self].method(self, ...)`.
 
 ```
 MyPrototype :: proto =
@@ -2167,12 +2081,12 @@ MyPrototype :: proto =
 
 #### Implementing (`impl`)
 
-Methods and trait implementations are added separately with `impl`. Much like `proto`, `self` refers to the current instance and `Self` refers to the current type. You can also add static values that are attached to the type itself. Use `.` to access static values and methods like with structs.
+Methods and trait implementations are added separately with `impl`. Much like `proto`, `self` in the first parameter of a method refers to the current instance. You can also add static values that are attached to the type itself. Use `.` to access static values and methods like with structs.
 
 ```
 MyStruct :: impl =
     staticValue = 1234
-    init(name: str, value: int): Self =
+    init(name: str, value: int): MyStruct =
         MyStruct(name: name, value: value)
 
 print("{MyStruct.staticValue}")
@@ -2318,7 +2232,7 @@ List[T, N] :: struct =
 List[T, N] :: impl =
     init() =
         data: T#N = [++for _ in 0..N then default]
-        Self(data: data)
+        List[T, N](data: data)
 ```
 
 ### Manual Implementation
@@ -2439,13 +2353,12 @@ This is a work in progress though. How these decorators are implemented and thei
 
 ## Design Philosophy
 
-- **Readability first** — Python-like syntax with significant whitespace and opinionated formatting.
+- **Readability first** — significant whitespace and opinionated formatting.
 - **Patterns scale with complexity** — simple things like declaring a mutable variable (`mu`), making a function (`fn`), or wrapping a block (`do`+`end`) use short patterns, more complex things use bigger patterns.
 - **Performance on demand** — start with GC; change to a lower level memory model where necessary.
 - **Explicit but ergonomic** — `!` for errors, attributes for memory models, same keywords used between inline and block expressions.
 - **Trace and auditability** — `import`, `inherit`, and `capture` require variables to be listed out to know where they're coming from; no glob-like imports.
-- **Unified concepts** — `capture` for scope capture; `inherit` for member visibility; `::` for all top-level definitions.
-- **Python-developer friendly** — gradual typing, familiar control flow, no second language or FFI layer required.
+- **Unified concepts** — `@capture` for scope capture; `inherit` for member visibility; `::` for all top-level definitions.
 
 ---
 
@@ -2454,48 +2367,51 @@ This is a work in progress though. How these decorators are implemented and thei
 1. `and`
 2. `as`
 3. `await`
-4. `break`
-5. `capture`
-6. `case`
-7. `continue`
-8. `defer`
-9. `do`
-10. `else`
-11. `end`
-12. `enum`
-13. `except`
-14. `fallthrough`
-15. `fn`
-16. `for`
-17. `if`
-18. `impl`
-19. `import`
-20. `inherit`
-21. `in`
-22. `let`
-23. `loop`
-24. `match`
-25. `mod`
-26. `mu`
-27. `not`
-28. `opt`
-29. `or`
-30. `out`
-31. `pass`
-32. `proto`
-33. `raise`
-34. `ref`
-35. `return`
-36. `self`
-37. `struct`
-38. `then`
-39. `try`
-40. `until`
-41. `where`
-42. `while`
-43. `yield`
+4. `band`
+5. `bnot`
+6. `bor`
+7. `break`
+8. `capture`
+9. `case`
+10. `continue`
+11. `defer`
+12. `do`
+13. `else`
+14. `end`
+15. `enum`
+16. `except`
+17. `fallthrough`
+18. `fn`
+19. `for`
+20. `if`
+21. `impl`
+22. `import`
+23. `inherit`
+24. `in`
+25. `let`
+26. `loop`
+27. `match`
+28. `mod`
+29. `mu`
+30. `not`
+31. `opt`
+32. `or`
+33. `out`
+34. `pass`
+35. `proto`
+36. `raise`
+37. `ref`
+38. `return`
+39. `self`
+40. `struct`
+41. `then`
+42. `try`
+43. `until`
+44. `where`
+45. `while`
+46. `yield`
 
-*NOTE: Built-in types, values, and functions such as `int`, `void`, `True`, `False`, `Some`, `None`, `Null`, `default`, `unset` etc. are not considered keywords. `Self` (uppercase) is a type/value and not a keyword, not to be confused with `self` (lowercase) which is a keyword used to signify a method can be used on an instance of a type. See [Implementation](#Implementing-impl).*
+*NOTE: Built-in types, values, functions, and decorators such as `int`, `True`, `Some`, `default`, `print`, `@memory` etc. are not considered keywords.*
 
 ---
 
