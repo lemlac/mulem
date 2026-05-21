@@ -207,7 +207,7 @@ The philosophy of Mulang is that symbols should be easy to recognize and underst
 | `or rhs` | do `or` on each component of a tuple: `or (True, False, True)` → `True or False or True` → `True` | 3 |
 | __(Bitwise)__ | — | — |
 |  `lhs && rhs` | bitwise-`AND` | 7 |
-| `lhs || rhs` | bitwise-`OR` | 7 |
+| `lhs \|\| rhs` | bitwise-`OR` | 7 |
 | `lhs ^^ rhs` | bitwise-`XOR` | 7 |
 | `bnot rhs` | bitwise-`NOT` | 3 |
 | `lhs << rhs` | bitshift-left | 5 |
@@ -242,7 +242,7 @@ The philosophy of Mulang is that symbols should be easy to recognize and underst
 | `lhs %= rhs` | modulo assignment | 12 |
 | `lhs %%= rhs` | floor division modulo assignment (binds `lhs` to a range in `[0, rhs)` if `rhs` is positive or `(rhs, 0]` if `rhs` is negative) | 12 |
 | `lhs &&= rhs` | bitwise-`AND` assignment | 12 |
-| `lhs ||= rhs` | bitwise-`OR` assignment | 12 |
+| `lhs \|\|= rhs` | bitwise-`OR` assignment | 12 |
 | `lhs ^^= rhs` | bitwise-`XOR` assignment | 12 |
 | `lhs <<= rhs` | bitshift-left assignment | 12 |
 | `lhs >>= rhs` | bitshift-right assignment | 12 |
