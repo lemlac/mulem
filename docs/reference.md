@@ -430,16 +430,7 @@ lunch =
 
 #### Mutability (`mu`)
 
-Mutable variables are marked with the keyword `mu`, the main star of the language. Just as Go has its `go` keyword, Mulang has `mu`. This was chosen since mutability is a common practice in programming much like functions are—which is why functions also get their own two letter keyword `fn`. *(See [Function Declarations](#Function-Declarations).)* The brevity of it is its strength. It beats other keywords such `mut` *(mutt? like a mixed dog breed? meaning too ambiguous),* `val` *(too common of a variable name),* `var` *(doesn't imply mutability).* The general rule of thumb in Mulang is that *patterns scale with complexity*—simple things like declaring a variable or function use short patterns, more complex things use bigger patterns. That's why the two letter keyword `mu` is perfect for this. 
-
-This is grounded in the language's own internal consistency. If `fn` for functions is acceptable at two characters, `mu` for mutability follows the same pattern naturally. The pairing is actually elegant:
-
-- `fn` — the thing that does something
-- `mu` — the thing that changes
-
-You might think the choice of `mu` as a keyword—which is the same name as the language itself—will be a potential source of confusion. However, Go doesn't have this problem with its `go` keyword. When searching or discussing about *Mu*, it's sometimes preferable to write it as *Mulang* for clarity, just as other languages can have "lang" at the end of their names such as *Go* -> *Golang* or *D* -> *Dlang*.
-
-Declare a mutable variable with `mu type`. Setting it will change the value instead of shadowing it. The type of value when mutating it must match its original type.
+Mutable variables are marked with the keyword `mu`, the main star of the language. Declare a mutable variable with `mu type`. Setting it will change the value instead of shadowing it. The type of value when mutating it must match its original type.
 
 ```
 mut: mu int = 0
@@ -499,6 +490,18 @@ block:
                     -- Exit block
 print("{mut}")      -- Prints "0", outer `mut` was not mutated.
 ```
+
+__A brief word on the choice of `mu` as a keyword...__
+
+Just as Go has its `go` keyword, Mulang has `mu`. Go's `go` has a clear and obvious connection with *goroutines*, and Mu's `mu` has a clear and obvious connection with *mutable.* This was chosen since mutability is a common practice in programming much like functions are—which is why functions also get their own two letter keyword `fn`. *(See [Function Declarations](#Function-Declarations).)* The brevity of it is its strength. It beats other keywords such `mut` *(mutt? like a mixed dog breed? meaning too ambiguous),* `val` *(too common of a variable name),* `var` *(doesn't imply mutability).* The general rule of thumb in Mulang is that *patterns scale with complexity*—simple things like declaring a variable or function use short patterns, more complex things use bigger patterns. That's why the two letter keyword `mu` beats any three letter keyword. Making a *mutable* variable in *Mu* is as easy as making a *goroutine* in *Go.* 
+
+This is grounded in the language's own internal consistency. If `fn` for functions is acceptable at two characters, `mu` for mutability follows the same pattern naturally. The pairing is actually elegant:
+
+- `fn` — the thing that does something
+- `mu` — the thing that changes
+
+You might think the choice of `mu` as a keyword—which is the same name as the language itself—will be a potential source of confusion. However, Go doesn't have this problem with its `go` keyword. When searching or discussing about *Mu*, it's sometimes preferable to write it as *Mulang* for clarity, just as other languages can have "lang" at the end of their names such as *Go* -> *Golang* or *D* -> *Dlang*.
+
 
 #### References (`ref`/`ref mu`)
 
