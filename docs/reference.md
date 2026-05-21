@@ -206,12 +206,12 @@ The philosophy of Mulang is that symbols should be easy to recognize and underst
 | `and rhs` | do `and` on each component of a tuple: `and (True, False, True)` → `True and False and True` → `False` | 3 |
 | `or rhs` | do `or` on each component of a tuple: `or (True, False, True)` → `True or False or True` → `True` | 3 |
 | __(Bitwise)__ | — | — |
-|  `lhs band rhs` | bitwise `AND` | 7 |
-| `lhs bor rhs` | bitwise `OR` | 7 |
-| `lhs bxor rhs` | bitwise `XOR` | 7 |
-| `bnot rhs` | bitwise `NOT` | 3 |
-| `lhs << rhs` | bitshift left | 5 |
-| `lhs >> rhs` | bitshift right | 5 |
+|  `lhs && rhs` | bitwise-`AND` | 7 |
+| `lhs || rhs` | bitwise-`OR` | 7 |
+| `lhs ^^ rhs` | bitwise-`XOR` | 7 |
+| `bnot rhs` | bitwise-`NOT` | 3 |
+| `lhs << rhs` | bitshift-left | 5 |
+| `lhs >> rhs` | bitshift-right | 5 |
 | __(Arrays)__ | — | — |
 | `lhs # rhs` | get an item from `lhs` at an index `rhs` (index starting at 0) | 2 |
 | `lhs ++ rhs` | concatenation, returns a new array | 6 |
@@ -241,8 +241,11 @@ The philosophy of Mulang is that symbols should be easy to recognize and underst
 | `lhs //= rhs` | floor division assignment | 12 |
 | `lhs %= rhs` | modulo assignment | 12 |
 | `lhs %%= rhs` | floor division modulo assignment (binds `lhs` to a range in `[0, rhs)` if `rhs` is positive or `(rhs, 0]` if `rhs` is negative) | 12 |
-| `lhs <<= rhs` | bitshift left assignment | 12 |
-| `lhs >>= rhs` | bitshift right assignment | 12 |
+| `lhs &&= rhs` | bitwise-`AND` assignment | 12 |
+| `lhs ||= rhs` | bitwise-`OR` assignment | 12 |
+| `lhs ^^= rhs` | bitwise-`XOR` assignment | 12 |
+| `lhs <<= rhs` | bitshift-left assignment | 12 |
+| `lhs >>= rhs` | bitshift-right assignment | 12 |
 | `lhs ++= rhs` | append to an array (not allowed if `lhs` is a fixed length array) | 12 |
 
 __Order of Operations:__
@@ -260,7 +263,7 @@ __Order of Operations:__
 11. Logical OR
 12. Assignment/Pipelining (Lowest)
 
-*Note: keywords `band`, `bor`, `bxor`, and `bnot` are used instead of the traditional `&|^~` because those symbols have different meanings in Mulang: `&` → tuples, `|` → pattern matching, `~` → type conversion. This breaks some of the usual habits of other languages, but that frees these symbols to do other things. This is an experimental language, so it's not obligated to follow normal conventions.* 
+*Note: keywords bitwise operators use double their usual symbols `&|^~` (and also the keyword `bnot`) because those symbols have different meanings by themselves in Mulang: `&` → tuples, `|` → pattern matching, `~` → type conversion. `&&` and `||` are usually boolean operators, but those are taken by the keywords `and` and `or` instead. This breaks some of the usual habits of other languages, but that frees these symbols to do other things. This is an experimental language, so it's not obligated to follow normal conventions.* 
 
 Some operators have assignment alternatives by adding an equals sign `=` after it. These are reserved for the operators that aren't keywords and return the same type that their left-hand side is. This sets a variable based on its previous value. The left-hand side must be an already defined variable. If it's immutable, then this shadows it. If it's mutable, then the value is mutated. *(See [Mutability(#Mutability-mu).)* All of these are void statements, i.e. they return nothing and should only be used in an expression by themselves.
 
@@ -812,10 +815,10 @@ loop if next() tobe val != None:
 
 This reads like an English sentence: "Loop if next to be value is not none..."
 
-Not that `let` wouldn't work here because it only works on a single expression.
+*Note that `let` wouldn't work here because it only works on a single expression.*
 
 ```
-loop if None != getValue() bind value:
+loop if let value == getValue() then value != None:
     print("{value}")   -- Error: `value` is not defined.
 ```
 
@@ -863,7 +866,7 @@ Notation:
 
 ### Built-in Types
 
-Some built-in types include `int`, `uint`, `float`, `bool`, `char`, `str`, and `ptr`. Note that although built-in types use lowercase names, they are not *keywords*. This is just a naming convention. It's recommended that users create custom types with capitalized names to differentiant from built-in types.
+Some built-in types include `int`, `uint`, `float`, `bool`, `char`, `str`, and `ptr`. Note that although built-in types use lowercase names, they are not *keywords*. This is just a naming convention. *It's recommended that users create custom types with capitalized names to differentiant from built-in types.*
 
 ```
 myInt: int = -1234
@@ -905,7 +908,7 @@ There will be an API for defining the default value of custom types, but that is
 MyType :: struct =
     value: int
 
-MyType :: impl(Default) =            -- Implement the Default proto
+MyType :: impl[Default] =            -- Implement the Default proto
     getDefault() = MyType(value: 0)  -- Default value for this type
 ```
 
@@ -920,16 +923,7 @@ sizeOfVoid = sizeof[void]   -- == 0
 sizeOfPtr  = sizeof[ptr]    -- == 4 or 8
 ```
 
-You can call a type like
-a function to convert types into other types if conversion is possible. 
-
-```
-x = 1
-y = float(x)
-print("{y}")     -- Prints "1.0"
-```
-
-Or implicitly convert types using `~` if the result type of the expression is known.
+Use `~` to convert one type into another. This only works if the result type of the expression is known. The symbol `~` plays on its general meaning of "about" or "roughly", like *"I left at about ~3:30."* 
 
 ```
 x: float = 1.5  -- `x` is a float.
@@ -937,13 +931,20 @@ y: int = ~x     -- `y` is expecting an int, so call `int(x)`
 print("{y}")    -- Prints "1"
 ```
 
-#### Booleans
-
-`bool` is a built-in enum type with its only members being `False` and `True`. This means you can also pattern match with a bool, although it's recommended to use `if`/`else` instead. Enum-members are usually capitalized, and this matches Python's `True` and `False` convention. 
+If the result type cannot be inferred, you can call a type like a function around it. The `~` before the argument distinguishes it from instansiation which also uses a function call. This only works if both the input type and output type are compatible.
 
 ```
-match value then
-| True:
+x = 1
+y = float(~x)
+print("{y}")     -- Prints "1.0"
+```
+
+#### Booleans
+
+`bool` is a built-in enum type with its only members being `False` and `True`. This means you can also pattern match with a bool, although it's recommended to use `if`/`else` instead. Enum-members are generally capitalized, and this matches Python's `True` and `False` convention. 
+
+```
+match value then | True:
     print("It's true!")
 | False:
     print("It's false!")
@@ -994,13 +995,13 @@ Changing the base invovles adding a `0` and a then the letters `b`, `o`, or `x` 
 | `0o` | 8 | `01234567` |
 | `0x` | 16 | `0123456789abcdef` (case insensitive) |
 
-It's been said before, but it's essential to put spaces between operators so that they don't get confused for something else.
+It's essential to put spaces between operators at times so that they don't get confused for something else.
 
 ```
-1++1  -- Creates an array [1, 1].
-1+ +1 -- Add 1+1 => 2.
-1--1  -- Just 1 with a comment
-1- -1 -- Subtract 1-(-1) => 1+1 => 2.
+1++1  -- Creates an array       => [1, 1]
+1+ +1 -- Add 1+1                => 2
+1--1  -- Just 1 with a comment  => 1
+1- -1 -- Subtract 1-(-1) => 1+1 => 2
 ```
 
 It's not likely anyone would mark a positive number and add it on the right hand side, and neither is it likely anyone would flip the sign of a number and subtract it on the right-hand side. For most people, both `1+(+1)` and `1-(-1)` would just be written `1+1`. 
@@ -1625,6 +1626,31 @@ match choice then
     print("And third!")
 ```
 
+#### `match` + `if`
+
+Inside any pattern, you can add `if` to conditionally check the variable and only match when the condition is met. Only the first condition to pass will go *(unless there's a `fallthrough`).*
+
+```
+match choice then
+| Second(x if x > 0):
+    print("Second is positive: {x}")
+| Second(x if x < 0):
+    print("Second is negatve: {x}")
+| Second(x):
+    print("Second is zero: {x}")
+| _:
+    print("Choice is not Second.")
+```
+
+If you have `as` and `if` together, the `as` goes first and the `if` statement checks with the alias.
+
+```
+match choice then | Third{val as x if x == 1}:
+    print("Third.val is one: {x}")
+| _:
+    print("Either Third.val isn't one or choice isn't Third.")
+```
+
 #### `case`
 
 This does the same job that a single `|` in a `match` block does. Most languages use `case` for the `switch`/`match` block, but since Mulang uses `|`, that frees up the keyword `case` to be used for other useful patterns.
@@ -1647,6 +1673,15 @@ getStuffPlease() =
 mightGetSomething() =
     case Some(x: int) = getSomething() else return None
     Some(x + 1)
+```
+
+Like with `match`, you can also conditionally check with `if`. This works for all other pattern matching blocks too.
+
+```
+getStuffPlease() =
+    case Pattern(x if x >= 100) = getStuff() else:
+        raise Error("It either doesn't match or x ({x}) is less than 100")
+    print("{x} is definitely 100 or more.")
 ```
 
 #### `when`
@@ -1677,6 +1712,15 @@ when ResultType1(val: int) | ResultType2{data as val: int} = getResult():
     print("val = {val}")
 ```
 
+`x if` is also available like before and follows the same rules. You can iteratively match nested enums. This means there's no need for `x when` because it would be redundant.
+
+```
+when Some(Some(Some(Some(x if x >= 0)))) = nestedOpt:
+    print("Phew! That was a lot of unwrapping for {x}!")
+else:
+    print("Either none of those nested options matched or x is negative.")
+```
+
 #### `loop when`
 
 Are you sensing a pattern? We have `if` and `when`, so that means we also get `loop if` and... `loop when`! This will loop until the pattern breaks. In some cases, this might be more desirable than the `loop if` / `tobe` format.
@@ -1688,7 +1732,7 @@ loop when Some(x) = nextValue():
 
 #### `loop` / `until when`
 
-Like how `if` has `when`, `until if` has `until when`. Like `case`, `until when` creates a new variable in the parent scope of its block. This is because it appears at the end of the block instead of the top, so it won't be set *until when* it matches which itself is the condition for the loop to break. This can be useful if you want to repeatedly call a function *until* you get something. The loop cannot conditionally break inside the body because then the variable would not be set. This ensures that the destructured variables are defined after the loop finishes. The loop runs until the pattern matches, and when it does, the matched value is your result — it would be meaningless otherwise. The scoping rule follows directly from the semantics. You can't use the value inside the `loop` body anyway since `until` is a termination condition, so there's only one place the binding could go — outside. *The scope of bindings mirrors the position of the pattern.*
+Like how `if` has `when`, `until if` has `until when`. Similar to `case`, `until when` creates a new variable in the parent scope of its block. This is because it appears at the end of the block instead of the top, so it won't be set *until when* it matches which itself is the condition for the loop to break. This can be useful if you want to repeatedly call a function *until* you get something. The loop cannot conditionally break inside the body because then the variable would not be set. This ensures that the destructured variables are defined after the loop finishes. The loop runs until the pattern matches, and when it does, the matched value is your result — it would be meaningless otherwise. The scoping rule follows directly from the semantics. You can't use the value inside the `loop` body anyway since `until` is a termination condition, so there's only one place the binding could go — outside. *The scope of bindings mirrors the position of the pattern.*
 
 ```
 value: mu int?
@@ -1756,20 +1800,28 @@ Use it as a block to unwrap multiple values at once.
 
 ```
 opt:
-    a = getSomething(a)?
-    b = getSomething(b)?
-    print("{a + b}")
-orelse:                   -- Optional, runs when the `opt` block ends early.
+    a = getOpt(a)?
+    b = getOpt(b)?
+    c = getOpt(c) orelse 0  -- Fallback on a single option
+    print("{a + b + c}")
+orelse:                     -- Optional, runs when the `opt` block ends early.
     print("Didn't work")
 ```
 
 If a function returns an option type, then use of the `?` is allowed without `opt`. Using an `?` inside a function will automatically infer the return type to be an option. The return will be automatically wrapped in `Some(_)`. If there isn't a return value in the function, then it should be a type `void?`. Unwrapping it gives an empty tuple `()`. *[See [Tuples](#Tuples).)*
 
 ```
-addStuff(a: int, b: int): int? =
-    a = getSomething(a)?
-    b = getSomething(b)?
-    a + b
+addStuff(a: int, b: int, c: int): int? =
+    a = getOpt(a)?
+    b = getOpt(b)?
+    c = getOpt(c) orelse 0
+    a + b + c
+```
+
+Chain `orelse` to unwrap multiple option types with a final fallback at the end. The type `T?` should match on all left-hand side arguments, and the final fallback needs to have a matching type `T`. The first `Some` option is returned. 
+
+```
+getFirstSome(a: int, b: int, c: int): int = getOpt(a) orelse getOpt(b) orelse getOpt(c) orelse 0
 ```
 
 If a you have nested options like `type??`, you can add additional `?`s to continuously unwrap it until you get to the value. 
@@ -1778,7 +1830,7 @@ If a you have nested options like `type??`, you can add additional `?`s to conti
 unnestOptions(x: int??): int? = x??
 ```
 
-You can combine `?` and `!` together when the return type is `type?!` (an **option result type**). When unwrapping it, use `!?`. This means *"unwrap the result type"* then *"unwrap the option type."*
+You can combine `?` and `!` together when the return type is `type?!` (an **option result type**). When unwrapping it, use `!?`. This means *"unwrap the result type"* **then** *"unwrap the option type."*
 
 ```
 -- With type notation:
@@ -1900,8 +1952,8 @@ Last
 ## Looping
 
 - `loop` — marks any kind of loop.
-- `loop if` + `loop when` — breaks when the condition break.
-- `loop` / `until` — loops until the condition is true
+- `loop if` + `loop when` — loops *when* the condition is true.
+- `loop` / `until` — loops *until* the condition is true.
 - `loop for` — loops through an iterator or array.
 
 ## Error Handling
@@ -1915,13 +1967,14 @@ Last
 
 - Full `match` (exhaustive unless `| _:` is present).
 - `when` — like Rust's `if let`.
+- `if` on destructured values inside patterns.
 - Destructuring supports structs, tuples, enum variants, and wildcards (`_`).
 
 ---
 
 ## Meta Bindings (`::`)
 
-Variable and functions primarily use the equals sign (`=`) and are for storing actual data within a program, but there's another type of binding used for abstract values for the compiler to know about like constants, types, inline-functions, and generics. This type of declaration is **constant**; in other words, they cannot be **mutated** or **shadowed**. Depending on what it is, subsequent `::` of the same name will modify its definition. The most common is `:: impl` with adds methods and static variables to a meta binding. 
+Variable and functions primarily use the equals sign (`=`) and are for storing actual data within a program, but there's another type of binding used for abstract values for the compiler to know about like constants, types, inline-functions, and generics. This type of declaration is **constant**; in other words, they cannot be **mutated** or **shadowed**. Depending on what it is, subsequent `::` of the same name will modify its definition. The most common is `:: impl[]` with adds methods and static variables to a meta binding. 
 
 ### Constants
 
@@ -2002,7 +2055,7 @@ voidFn(): () = ()
 voidFn(): {} = ()
 ```
 
-We say that a void function returns nothing. Well, that's what an empty tuple is: *nothing*. So there isn't any issue here. Maybe in other languages there would be in an issue, but not in Mulang. 
+We say that a void function returns nothing. Well, that's what an empty tuple is: *nothing*. So there isn't any issue here. This is one of Mulang's strengths. It's not afraid to make bold claims and go against the grain. This has a lot of potential in math and logic. 
 
 ### Definition Blocks
 
@@ -2100,14 +2153,28 @@ MyException :: except =
     DivideByZero(int)
 ```
 
-Becaues esceptions group together to form custom exception types per `try` block, each member must use their full name or be given an alias. This helps prevent potential name-clashses.
+Becaues esceptions group together to form custom exception types per `try` block, each member must match with their full name. This helps prevent potential name-clashses.
 
 ```
 try
     risky()!
-except OutOfBounds:
+except MyException.OutOfBounds:
     print("Out of bounds!")
-except DivideByZero(x):
+except MyException.DivideByZero(x):
+    print("Can't divide {x} by zero!")
+```
+
+Alternatively, you can give each exception an alias.
+
+```
+OOB :: MyException.OutOfBounds
+DBZ :: MyException.DivideByZero
+
+try
+    risky()!
+except OOB:
+    print("Out of bounds!")
+except DBZ(x):
     print("Can't divide {x} by zero!")
 ```
 
@@ -2120,12 +2187,12 @@ MyPrototype :: proto =
     speak(self): str
 ```
 
-#### Implementing (`impl`)
+#### Implementing (`impl[]`)
 
 Methods and trait implementations are added separately with `impl`. Much like `proto`, `self` in the first parameter of a method refers to the current instance. You can also add static values that are attached to the type itself. Use `.` to access static values and methods like with structs.
 
 ```
-MyStruct :: impl =
+MyStruct :: impl[] =
     staticValue = 1234
     init(name: str, value: int): MyStruct =
         MyStruct(name: name, value: value)
@@ -2133,14 +2200,14 @@ MyStruct :: impl =
 print("{MyStruct.staticValue}")
 ```
 
-To implement a prototype onto another type, you add the proto's name after `impl`. Each implementation gets their own `impl` block. 
+To implement from a prototype, add the proto's name in the square brackets. Each implementation gets their own `impl[]` block. 
 
 ```
-MyStruct :: impl(MyPrototype) =
+MyStruct :: impl[MyPrototype] =
     speak(self) =
         "I am a MyStruct \{ name={self.name}, value={self.value} }"
 
-MyEnum :: impl(MyPrototype) =
+MyEnum :: impl[MyPrototype] =
     speak(self) =
         match self then
         | First:
@@ -2270,7 +2337,7 @@ List[T, N] :: where =
 List[T, N] :: struct =
     data: T#N
 
-List[T, N] :: impl =
+List[T, N] :: impl[] =
     init() =
         data: T#N = [++for _ in 0..N then default]
         List[T, N](data: data)
@@ -2339,7 +2406,7 @@ import myModule.addThing
 
 Mulang is multi-paradigm: different functions, structs, or modules can use different memory strategies in the same program. The model is controlled per-module via decorators. Boundary crossing between models follows FFI-like rules — automatic marshalling where possible, explicit escapes otherwise.
 
-Modules define how memory is handled with the `@memory` decorator. *(See [Decorators](#Decorators) for more informations on available decorators.)* By default, modules use a garbage collector. Some options include `Collect(GC)` (default),  `Count(ARC)` (reference counting), `Borrow` (borrow checking), and `Manual`. `GC` and `ARC` represent the standard garbage collector and reference counter respectively, but others can be defined and used instead.
+Modules define how memory is handled with the `@memory` decorator. *(See [Decorators](#Decorators) for more informations on available decorators.)* By default, modules use a garbage collector. Some options include `Collect(GC)` (default),  `Count(ARC)` (reference counting), and `Manual`. `GC` and `ARC` represent the standard garbage collector and reference counter respectively, but others can be defined and used instead.
 
 ```
 import std.mem{memory, Count, ARC, _}
@@ -2364,7 +2431,7 @@ expr             -- Modifies whatever this expression is.
 
 Decorators can be stacked and will run in reverse order. *Closest decorator to the expression runs, then the next one above that, then the next one, etc.*
 
-Built-in decorators so far include `@nonlocal`, `@capture`, `@opaque`, and `@memory`. More will be added in the future.
+Built-in decorators demonstrated so far include `@nonlocal`, `@capture`, `@opaque`, and `@memory`. More planned for the future.
 
 ```
 @memory(Manual) -- Call it like a function to pass a variable.
@@ -2381,11 +2448,12 @@ increment() =
 
 Some other ideas for built-in decorators include:
 
-- `@local` — locks a symbol to only be used within its module.
+- `@private` — locks a symbol to only be used within its module.
 - `@static` — make a variable global but only available within the scope that it was defined in.
 - `@inline` — marks that a regular function should inline itself like a meta function.
+- `@comptime` — run a function at compile-time, return it's value as a constant.
 - `@pure` — enforces pure function programming practices: *no `ref mu`, no `capture`, no `out`, etc.*
-- `@safe` — enforces borrow-checking at compile time for this function.
+- `@safe` — enforces borrow-checking at compile time for this module or function.
 - `@override` — marks that a previously implemented method will be overridden.
 
 This is a work in progress though. How these decorators are implemented and their API are subject to change.
@@ -2408,51 +2476,48 @@ This is a work in progress though. How these decorators are implemented and thei
 1. `and`
 2. `as`
 3. `await`
-4. `band`
-5. `bnot`
-6. `bor`
-7. `break`
-8. `bxor`
-9. `case`
-10. `continue`
-11. `defer`
-12. `do`
-13. `else`
-14. `end`
-15. `enum`
-16. `except`
-17. `fallthrough`
-18. `fn`
-19. `for`
-20. `if`
-21. `impl`
-22. `import`
-23. `inherit`
-24. `in`
-25. `let`
-26. `loop`
-27. `match`
-28. `mod`
-29. `mu`
-30. `not`
-31. `opt`
-32. `or`
-33. `orelse`
-34. `out`
-35. `pass`
-36. `proto`
-37. `raise`
-38. `ref`
-39. `return`
-40. `self`
-41. `struct`
-42. `then`
-43. `tobe`
-44. `try`
-45. `until`
-46. `when`
-47. `where`
-48. `yield`
+4. `bnot`
+5. `break`
+6. `case`
+7. `continue`
+8. `defer`
+9. `do`
+10. `else`
+11. `end`
+12. `enum`
+13. `except`
+14. `fallthrough`
+15. `fn`
+16. `for`
+17. `if`
+18. `impl`
+19. `import`
+20. `inherit`
+21. `in`
+22. `let`
+23. `loop`
+24. `match`
+25. `mod`
+26. `mu`
+27. `not`
+28. `opt`
+29. `or`
+30. `orelse`
+31. `out`
+32. `pass`
+33. `proto`
+34. `raise`
+35. `ref`
+36. `return`
+37. `self`
+38. `struct`
+39. `then`
+40. `tobe`
+41. `try`
+42. `until`
+43. `when`
+44. `where`
+45. `yield`
 
 *NOTE: Built-in types, values, functions, and decorators like `int`, `True`, `Some`, `default`, `print`, `@memory` etc. are not considered keywords.*
 
