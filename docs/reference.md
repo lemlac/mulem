@@ -4,7 +4,7 @@
 
 The Mu programming language or *Mulang* is a general-purpose, multi-paradigm programming language with significant whitespace. It targets programmers who want to be able to write expressive code but also have low-level control. It is expression-oriented where possible and provides explicit control over evaluation strategy, memory model, and error handling.
 
-Mulang will be both a compiled and an interpreted language. You won't need to use another language like C to increase performance. You can instead compile some of it and then call it as a shared library all within the same language. Some use cases for this are AI, systems programming, and game development.
+Mulang will be both a compiled and an interpreted language. You won't need to use another language like C to increase performance. You can instead compile some of it and then call it like a shared library all within the same language. Some use cases for this are AI, systems programming, and game development.
 
 This document will focus on the language itself. Some features may come in a standard library which will not be discussed here.
 
@@ -61,7 +61,7 @@ Whitespace is significant. **Indentation** is used to mark when blocks start and
 A single new-lines can be either Carriage Return (`\r`), Line Feed (`\n`), or both (`\r\n`). A new-line marks the end of an expression *unless...*
 
 1. The line contains an open bracket or quotation mark.
-2. The next line after it and starts with a *symbol* after indentation, known as **expression splitting.**
+2. The next line after it and starts with a *symbol* after indentation, called **expression splitting.**
 
 If one of these rules is broken, *then indentation is ignored.*
 
@@ -135,7 +135,7 @@ doThing() =
     end)
 ```
 
-`do` signals to switch to block mode. After the `do` comes a block keyword, and then there needs to be a `:` (or `=` for functions) at the end of the line. When the keyword `end` appears, that's the signal to switch back to inline mode. The expression between `do` and `end` is known as an **inline-block expression.**
+`do` signals to switch to block mode. After the `do` comes a block keyword, and then there needs to be a `:` (or `=` for functions) at the end of the line. When the keyword `end` appears, that's the signal to switch back to inline mode. The expression between `do` and `end` is called an **inline-block expression.**
 
 ```
 (do block:       -- `do` --> Switch to block mode.
@@ -192,7 +192,7 @@ The philosophy of Mulang is that symbols should be easy to recognize and underst
 
 Mulang will check any combination of symbols greedily until the next space or word except for the reserved comment token (`--`). For example `++` would be different from `+ +`, but `++--` would be considered `++` and a comment `--`. Spaces are required between multiple symbolic operators, much like how spaces are required between words. Symbol characters include any ASCII character that isn't alphanumeric, whitespace, quotation marks, delimiters, or brackets—in other words these symbols: `~!@#$%^&*-+=|\:<.>/?`.
 
-There may be operator overloading in the future. Even if an operator could be broken into smaller parts, it's considered a unique operator even though it may not be defined—just like how you can technically write a method that may not be defined, but they're both considered errors. Because of that, long sequences of operators need to be broken up into their separate symbols. From example `a+++b`, the compiler will see `+++` as one symbol instead of 3 individual `+`s. You would need to put at least one space here `a+ + +b` to make sure it's clear that it's 2 operators and not one. This not only helps the parser but also helps the coder when reading the code. The exception to this rule is `--` which is **always** a comment no matter what.
+There may be operator overloading in the future. Even if an operator could be broken into smaller parts, it's considered a unique operator even though it may not be defined—just like how you can technically write a method that may not be defined, but they're both considered errors. Because of that, long sequences of operators need to be broken up into their separate symbols. From example `a+++b`, the compiler will see `+++` like one symbol instead of 3 individual `+`s. You would need to put at least one space here `a+ + +b` to make sure it's clear that it's 2 operators and not one. This not only helps the parser but also helps the coder when reading the code. The exception to this rule is `--` which is **always** a comment no matter what.
 
 | Operation | Meaning | Order |
 |:--|:--|:--|
@@ -283,15 +283,15 @@ __Order of Operations:__
 
 *Note: keywords `band`, `bor`, `bxor`, and `bnot` are used instead of the traditional `&|^~` because those symbols have different meanings in Mulang: `&` -> tuples, `|` -> pattern matching, `~` -> type conversion. This breaks some of the usual habits of other languages, but that frees these symbols to do other things. This is an experimental language, so it's not obligated to follow normal conventions.* 
 
-Some operators have assignment alternatives by adding an equals sign `=` after it. These are reserved for the operators that aren't keywords and return the same type as their left-hand side  This sets a variable based on its previous value. The left-hand side must be an already defined variable. If it's immutable, then this is the same as shadowing it. If it's mutable, then the value is mutated. *(See [Mutability(#Mutability-mu).)* All of these are void statements, i.e. they return nothing and should only be used in an expression by themselves.
+Some operators have assignment alternatives by adding an equals sign `=` after it. These are reserved for the operators that aren't keywords and return the same type that their left-hand side is. This sets a variable based on its previous value. The left-hand side must be an already defined variable. If it's immutable, then this shadows it. If it's mutable, then the value is mutated. *(See [Mutability(#Mutability-mu).)* All of these are void statements, i.e. they return nothing and should only be used in an expression by themselves.
 
 All assignment operators *(except for `as`)* are **void.** This is intentional to prevent bugs and difficult to read code. It's recommend to put all assignment statements on their own separate lines for clarity. 
 
 ### Operation chaining with `[]`
 
-**Infix operator** are operators who have both an `lhs` and `rhs`. For any non-void infix operator `op`, you can write it as `lhs op[rhs]` (an operator + an array literal). This is shorthand for writing `((lhs) op (rhs))` and has the same precedence as accessing with `.` or wrapping parentheses around the expression. This is primarily used for arrays, but has many potential use cases which can be explored.
+**Infix operator** are operators who have both an `lhs` and `rhs`. For any non-void infix operator `op`, you can write it like `lhs op[rhs]` (an operator + an array literal). This is shorthand for writing `((lhs) op (rhs))` and has the same precedence like accessing with `.` or wrapping parentheses around the expression. This is primarily used for arrays, but has many potential use cases which can be explored.
 
-Operation chaining has the same precedence has member accessing `.`. This allows you to treat any operator as a member access. The most useful use cases for this are for array indexing `#` and piplining `->`.
+Operation chaining has the same precedence has member accessing `.`. This allows you to treat any operator like a member access. The most useful use cases for this are for array indexing `#` and piplining `->`.
 
 ```
 array#[0]#[1]              -- => ( ( array # 0 ) # 1 )
@@ -320,7 +320,7 @@ if or x == [0, 1, 2, 3, 4]:
     print("x is 0 or 1 or 2 or 3 or 4")
 ```
 
-You can create an named tuple instead of a position tuple too. Members can have names by adding the name and a colon `:` in front of each index. It must be a valid variable name. If you define a member as `name:`, you can access it in the next expression with `_.name`. 
+You can create an named tuple instead of a position tuple too. Members can have names by adding the name and a colon `:` in front of each index. It must be a valid variable name. If you define a member with `name:`, you can access it in the next expression with `_.name`. 
 
 ```
 -- Split `x` into 3 components and collect.
@@ -352,9 +352,9 @@ Tuples are transparent by default, and a tuple with only one position component 
 
 **Mu the programming language is a novel and experimental one.** It has no obligation to follow normal conventions. Most other languages use `[]` by itself for indexing an array. While this is still possible in Mulang, operation chaining gives the coder a lot more options and ability to write expressive code. This is a break from the traditional style of programming, but it opens the door for more pragmatic and ergonomic code. This makes it instantly clear that when you see `#`, it's an array, just like `?` for options and `!` for results, staying consistent with itself rather than with other languages.
 
-The transition from array indexing with `[]` in other languages to array indexing with `#[]` in Mulang is as simple as adding `#` before each square bracket.
+The transition from array indexing with `[]` in other languages to array indexing with `#[]` in Mulang is simple: add `#` before each square bracket. In most cases, the square brackets aren't even needed, making the `#` pattern more compacted than the `[]` one.
 
-- `array[0][1]` -> `array#[0]#[1]`
+- `array[0][1]` -> `array#[0]#[1]` -> `array#0#1`
 
 This frees `name[]` to take on a new meaning in Mulang. *For more on that, see [Meta Functions](#Meta-Functions).*
 
@@ -372,7 +372,7 @@ b: int = 1  -- Explicit declaration with type.
 c := 2      -- Explicit declaration but infer its type.
 ```
 
-Variables are immutable, but declaring it again shadows it. Any subsequent `=` of an immutable variable is an implicit declaration. Redeclaring a variable with the same name is known as **shadowing.** This makes Mulang flexable like a dynamicly typed language like Python while still having the advantages of being statically typed.
+Variables are immutable, but declaring it again shadows it. Any subsequent `=` of an immutable variable is an implicit declaration. Redeclaring a variable with the same name is called **shadowing.** This makes Mulang flexable like a dynamicly typed language like Python while still having the advantages of being statically typed.
 
 ```
 a = 1
@@ -385,8 +385,8 @@ You can also shadow a variable using its previous value.
 
 ```
 i = 0
-i = i + 1     -- Sets new `i` based on old `i`
-i += 1        -- Same as above
+i = i + 1     -- Sets new `i` based on old `i`.
+i += 1        -- Does the same.
 ```
 
 Using the single equal-sign is a void statement. If you use it within an expression and not on its own, it's a syntax error. This helps prevent the common bug of using `=` when you meant `==`. For inline binding, use `let`/`then` or `as` instead. *(See [Inline Binding](#Inline-binding).)*
@@ -423,7 +423,7 @@ mut = 1          -- `mut` is mutated
 You can also infer the type with `mu _ = _`:
 
 ```
-mu mut = 0   -- Same as `mut: mu int = 0`.
+mu mut = 0   -- Shorthand for `mut: mu int = 0`.
 mut = 1
 ```
 
@@ -455,7 +455,7 @@ doSomething(mut)   -- This is okay.
 mu mut = 0
 block:
     mut = 1
-    print("{mut}") -- Prints "1", same as outer `mut`.
+    print("{mut}") -- Prints "1", same outer `mut`.
 print("{mut}")     -- Prints "1", `mut` was mutated.
 cantSetMut() =
     mut = 2
@@ -474,21 +474,21 @@ block:
 print("{mut}")      -- Prints "0", outer `mut` was not mutated.
 ```
 
-__A brief word on the choice of `mu` as a keyword...__
+__A brief word on the choice of the keyword `mu`...__
 
-Just as Go has its `go` keyword, Mulang has `mu`. Go's `go` has a clear and obvious connection with *goroutines*, and Mu's `mu` has a clear and obvious connection with *mutable.* This was chosen since mutability is a common practice in programming much like functions are—which is why functions also get their own two letter keyword `fn`. *(See [Function Declarations](#Function-Declarations).)* The brevity of it is its strength. It beats other keywords such `mut` *(mutt? like a mixed dog breed? meaning too ambiguous),* `val` *(too common of a variable name),* `var` *(doesn't imply mutability).* The general rule of thumb in Mulang is that *patterns scale with complexity*—simple things like declaring a variable or function use short patterns, more complex things use bigger patterns. That's why the two letter keyword `mu` beats any three letter keyword. Making a *mutable* variable in *Mu* is as easy as making a *goroutine* in *Go.* 
+Just like Go has its `go` keyword, Mulang has `mu`. Go's `go` has a clear and obvious connection with *goroutines*, and Mu's `mu` has a clear and obvious connection with *mutable.* This was chosen since mutability is a common practice in programming much like functions are—which is why functions also get their own two letter keyword `fn`. *(See [Function Declarations](#Function-Declarations).)* The brevity of it is its strength. It beats other keywords such `mut` *(mutt? like a mixed dog breed? meaning too ambiguous),* `val` *(too common of a variable name),* `var` *(doesn't imply mutability).* The general rule of thumb in Mulang is that *patterns scale with complexity*—simple things like declaring a variable or function use short patterns, more complex things use bigger patterns. That's why the two letter keyword `mu` beats any three letter keyword. Making a *mutable* variable in *Mu* is easy like making a *goroutine* in *Go.* 
 
 This is grounded in the language's own internal consistency. If `fn` for functions is acceptable at two characters, `mu` for mutability follows the same pattern naturally. The pairing is actually elegant:
 
 - `fn` — the thing that does something
 - `mu` — the thing that changes
 
-You might think the choice of `mu` as a keyword—which is the same name as the language itself—will be a potential source of confusion. However, Go doesn't have this problem with its `go` keyword. When searching or discussing about *Mu*, it's sometimes preferable to write it as *Mulang* for clarity, just as other languages can have "lang" at the end of their names such as *Go* -> *Golang* or *D* -> *Dlang*.
+You might think the choice of the keyword `mu`—which is the same name that the language itself is—will be a potential source of confusion. However, Go doesn't have this problem with its `go` keyword. When searching or discussing about *Mu*, it's sometimes preferable to write it *Mulang* for clarity, just like other languages can have "lang" at the end of their names like *Go* -> *Golang* or *D* -> *Dlang*.
 
 
 #### References (`ref`/`ref mu`)
 
-A reference type points to the same spot in memory as another variable. It's like a lightweight version of a pointer. *(See [Pointers](#Pointers).)* Lifetimes are inferred via borrow-checking when the memory model is set to `Borrow`. *(See [Memory Models](#Memory-Models).)* The right hand side has be something stored in memory, i.e. not a constant. References are immutable by default unless declared with `ref mu`. The syntax follows the same pattern as `mu`:
+A reference type points to the same spot in memory that another variable has. It's like a lightweight version of a pointer. *(See [Pointers](#Pointers).)* Lifetimes are inferred via borrow-checking when the memory model is set to `Borrow`. *(See [Memory Models](#Memory-Models).)* The right hand side has be something stored in memory, i.e. not a constant. References are immutable by default unless declared with `ref mu`. The syntax follows the same pattern that `mu` does:
 
 * `x: ref T = y` = Immutable reference with explicit type.
 * `ref x = y` = Immutable reference with inferred type.
@@ -523,7 +523,7 @@ All components of a tuple should be referenced on the left. Use `_` to explicitl
 (_, b, _) & {x, _} = (0, 1, 2, x: 3, y: 4)
 ```
 
-When destructuring a type that isn't anonymous, the type can optionally be put before the parentheses/braces, otherwise it's automatically inferred. This could conflict with function declarations which uses a similar pattern `name(param) = body`. *(See [Function Declarations](#Function-Declarations).)* Because functions are far more common than destructured assignments, they take the simpler pattern. An empty tuple and ampersand (`()&`) should be placed at the start of the expression so it won't be confused for a function declaration. This guarantees that you are destructuring based on the correct type. This follows the same schema as pattern matching such as in `case` and `except` lines. *(See [Control Flow](#Control-Flow).)*
+When destructuring a type that isn't anonymous, the type can optionally be put before the parentheses/braces, otherwise it's automatically inferred. This could conflict with function declarations which uses a similar pattern `name(param) = body`. *(See [Function Declarations](#Function-Declarations).)* Because functions are far more common than destructured assignments, they take the simpler pattern. An empty tuple and ampersand (`()&`) should be placed at the start of the expression so it won't be confused for a function declaration. This guarantees that you are destructuring based on the correct type. This follows the same schema that pattern matching does like in `case` and `except` lines. *(See [Control Flow](#Control-Flow).)*
 
 ```
 Thing :: {x: int, y: int}
@@ -581,7 +581,7 @@ add3(,1,2, ,3,,) -- This is not okay.
 --)
 ```
 
-Functions can also be declared with type `fn` to be set later. This type is known as a **function pointer.** It lets you treat functions as values.
+Functions can also be declared with type `fn` to be set later. This type is called a **function pointer.** It lets you treat functions that same way you do with variables.
 
 ```
 action: mu fn(int, int): int
@@ -614,7 +614,7 @@ What each modifier means changes the functionality:
 | `ref` | Passes reference | Immutable |
 | `ref mu` | Passes reference | Mutable |
 
-Another type of parameter is `out`. This is like `ref mu` but is treated as `unset` at the start of the function. Use it to set a variable that hasn't been set yet. The parameter must not be `unset` in any branch within the function. This means either setting it within the function or passing it to another function with an `out` parameter. This ensures that the variable is set after the function has been called. 
+Another type of parameter is `out`. This is like `ref mu` but is treated like `unset` at the start of the function. Use it to set a variable that hasn't been set yet. The parameter must not be `unset` in any branch within the function. This means either setting it within the function or passing it to another function with an `out` parameter. This ensures that the variable is set after the function has been called. 
 
 ```
 setInt(out i) =
@@ -625,7 +625,7 @@ setInt(x)
 print("{x}")    -- Prints "3"
 ```
 
-This works for mutable variables, but what if you wanted to make an immutable variable using `out`? You can write `out` while calling a function to declare it as an immutable variable in the current scope. This has the same rules as `as`. *(See [Inline Binding](#Inline-Binding).)
+This works for mutable variables, but what if you wanted to make an immutable variable using `out`? You can write `out` while calling a function to declare an immutable variable in the current scope. This has the same rules that `as` does. *(See [Inline Binding](#Inline-Binding).)
 
 ```
 setInt(out n)   -- Declare a new variable `n` that gets set by `setInt`.
@@ -638,7 +638,7 @@ Immutable variables can be captured without an issue. If you try to set it withi
 
 **By default, functions cannot capture mutable variables.**
 
-This is an intentional decision for better safety in Mulang. Functions don't automatically capture mutable variables. Instead, any variable set inside a function is treated as a new variable. This helps prevent accidentally mutating a variable that you didn't mean to and encourage good functional programming practices.
+This is an intentional decision for better safety in Mulang. Functions don't automatically capture mutable variables. Instead, any variable set inside a function is treated like a new variable. This helps prevent accidentally mutating a variable that you didn't mean to and encourage good functional programming practices.
 
 ```
 x = 1
@@ -654,7 +654,7 @@ cannotChangeX(2) -- Prints "2"
 print("{x}")     -- Prints "1"
 ```
 
-To capture a mutable variable, you must mark it with the `@capture` decorator. This helps make it easy to see which functions can mutate other variables and which don't. You just have to use `@capture` on the first assignment of a variable—subsequent assignments will mutate the variable. This follows the same practice as `import` and `inherit` where all words in a given context are listed out clearly so that there are no accident name collisions or hidden gotchas.
+To capture a mutable variable, you must mark it with the `@capture` decorator. This helps make it easy to see which functions can mutate other variables and which don't. You just have to use `@capture` on the first assignment of a variable—subsequent assignments will mutate the variable. This follows the same practice that `import` and `inherit` where all words in a given context are listed out clearly so that there are no accident name collisions or hidden gotchas.
 
 ```
 mu count = 0
@@ -714,11 +714,11 @@ doThing(do fn callback(val) =
 end)
 ```
 
-The same keyword for creating functions is also used for function type notation. If this seems confusing, just remember where the context is: if it's being used as a type, it means a *function pointer type*; if it's being used as a value, it's a *lambda function*.
+The same keyword for creating functions is also used for function type notation. If this seems confusing, just remember where the context is: if it's being used like a type, it means a *function pointer type*; if it's being used like a value, it's a *lambda function*.
 
 ```
 action: mu fn(int, int): int    -- Declaring a variable with a function type.
-action = fn(a, b) = a + b       -- Passing a function to the variable as a value.
+action = fn(a, b) = a + b       -- Passing to the variable with a function value.
 ```
 
 Note that if you try to declare a function with the name `fn`, it will throw an error. This prevents potential gotchas and silent errors. The exception is if it's the last value in a block, then the return value of that block is a function.
@@ -759,7 +759,7 @@ add{ a: int, b: int }: int =
 add(b: 1, a: 2)     -- Order doesn't matter.
 ```
 
-You can also have both positional and named parameters. Split the positionals into `()` and named into `{}` and place a `&` between them. Parentheses mark a **positional tuple**, and curly braces mark a **named tuple**. *(See [Tuples](#Tuples).)* This works the same way as **destructuring.** *(See [Destructuring](#Destructuring).)* Named parameters don't take up any position, so they can be placed anywhere in the parameters.
+You can also have both positional and named parameters. Split the positionals into `()` and named into `{}` and place a `&` between them. Parentheses mark a **positional tuple**, and curly braces mark a **named tuple**. *(See [Tuples](#Tuples).)* This works the same way that **destructuring** does. *(See [Destructuring](#Destructuring).)* Named parameters don't take up any position, so they can be placed anywhere in the parameters.
 
 ```
 add(x: int) & { a: int, b: int }: int =
@@ -771,7 +771,7 @@ add(a: 2, 1, b: 3)
 add(a: 2, b: 3, 1)
 ```
 
-Named parameters can be defined in their own object and then passed in with the `&` operator as well. The named parameters in the function can also be collected into a single variable using `as`. Like with desctructuring, a `()&` should be placed before the typed name parameters even if the function doesn't have any positional parameters.
+Named parameters can be defined in their own object and then passed in with the `&` operator also. The named parameters in the function can also be collected into a single variable using `as`. Like with desctructuring, a `()&` should be placed before the typed name parameters even if the function doesn't have any positional parameters.
 
 ```
 Settings :: { enabled: bool }
@@ -784,7 +784,7 @@ doThing(key: str) & Settings as settings =
 settings = Settings(enabled: True)
 
 doThing("foo", &settings)      -- Spreads `settings` into the arguments.
-doThing("foo", enabled: True)  -- Or passed as a named parameter.
+doThing("foo", enabled: True)  -- Or passed like a named parameter.
 ```
 
 See [Tuples](#Tuples) for more details on the `&` operator.
@@ -806,8 +806,8 @@ All variables after `let` are new declarations, much like variables in a non-cap
 
 ```mu
 mu x = 0
-y = let x = 1 then x + x   -- Is the same as `y = let x := 1 then x + x`
-print("x = {x}, y = {y}")  -- Prints "x = 0, y = 2"
+y = let x = 1 then x + x   -- Or also `y = let x := 1 then x + x`, the same thing.
+print("x = {x}, y = {y}")  -- Prints "x = 0, y = 2".
 ```
 
 Multiple variables can also be declared at once. You must surround the variables with square brackets like `let [] then`. Each variable is seperated by commas. 
@@ -853,6 +853,26 @@ object.method1()
 result += 1
 print("{result}")
 ```
+
+Other keywords like `bind` would not work for `as` and would be too ambiguous in meaning.
+
+```
+object.method1()
+    .method2() bind result   -- What does this mean?
+    .method3()
+```
+
+And `let` only works on a single expression.
+
+```
+while None != getValue() bind value:
+    print("{value}")   -- Error: `value` is not defined.
+```
+
+The two usages of `as` appear in different grammatical contexts:
+
+* Aliasing: always left of `=` inside a destructuring pattern
+* Binding: always postfix on a subexpression
 
 ---
 
@@ -928,7 +948,8 @@ sizeOfVoid = sizeof[void]   -- == 0
 sizeOfPtr  = sizeof[ptr]    -- == 4 or 8
 ```
 
-You can call a type as a function to convert types into other types if conversion is possible. 
+You can call a type like
+a function to convert types into other types if conversion is possible. 
 
 ```
 x = 1
@@ -956,7 +977,7 @@ match value then
     print("It's false!")
 ```
 
-That's the same as this.
+These two are the same thing.
 
 ```
 if value:
@@ -967,7 +988,7 @@ else:
 
 #### Numbers
 
-There are several number types. More may be added in the future, but for now we'll focus on the 3 main types. For any of these types, you can add a suffix to explicitly declare a number as a particular type. However, suffixes are disabled if the number already has letters in it. 
+There are several number types. More may be added in the future, but for now we'll focus on the 3 main types. For any of these types, you can add a suffix to explicitly declare a number with a particular type. However, suffixes are disabled if the number already has letters in it. 
 
 | Type | Meaning | Suffix | Examples |
 |:--|:--|:--|:--|:--|
@@ -989,7 +1010,7 @@ You can place underscores `_` anywhere in a number to break it up into segments.
 
 - `1_234`, `1_000_000`, `0b1111_0000`, `0xab_cd_ef`
 
-Leading zeros are allowed as well and don't effect the value. Unless there's a base letter, it's still in base 10, unlike in most C languages where a leading 0 switches to base 8.
+Leading zeros are allowed also and don't effect the value. Unless there's a base letter, it's still in base 10, unlike in most C languages where a leading 0 switches to base 8.
 
 - `001`, `009`, `000100`, `000u`, `010.0f`
 
@@ -1001,7 +1022,7 @@ Changing the base invovles adding a `0` and a then the letters `b`, `o`, or `x` 
 | `0o` | 8 | `01234567` |
 | `0x` | 16 | `0123456789abcdef` (case insensitive) |
 
-As said before, it's essential to put spaces between operators so that they don't get confused for something else.
+It's been said before, but it's essential to put spaces between operators so that they don't get confused for something else.
 
 ```
 1++1  -- Creates an array [1, 1].
@@ -1010,7 +1031,7 @@ As said before, it's essential to put spaces between operators so that they don'
 1- -1 -- Subtract 1-(-1) => 1+1 => 2.
 ```
 
-It's not likely anyone would mark a number as positive and add it on the right hand side, and neither is it likely anyone would flip the sign of a number and subtract it on the right-hand side. Most people whould write both `1+(+1)` and `1-(-1)` as just `1+1`. 
+It's not likely anyone would mark a positive number and add it on the right hand side, and neither is it likely anyone would flip the sign of a number and subtract it on the right-hand side. For most people, both `1+(+1)` and `1-(-1)` would just be written `1+1`. 
 
 #### Characters
 
@@ -1125,11 +1146,11 @@ bigDocument = #''
 -- `''##` closes the matching `##''`.
 ```
 
-While this is possible, this is not recommended for the sake of legibility. For anything more complicated, it's recommended to save the string in a document and open it as a file, which will be handled by a separate library and lies outside the scope of this document.
+While this is possible, this is not recommended for the sake of legibility. For anything more complicated, it's recommended to save the string in a document and programmically open the file, which will be handled by a separate library and lies outside the scope of this document.
 
 #### Arrays
 
-Array types are declared with the hash symbol (`#`). This was chosen because the `#` is commonly used for numbers in English. For example, `#1` is read as `number 1`. A number after the `#` makes it a fixed length array `type#N`. Arrays are statically sized when written as `type#N`; `type#` is the dynamic form. Items are separated with commas (`,`). The hash symbol is also used for accessing an array, giving a clear visible mirror between the two. 
+Array types are declared with the hash symbol (`#`). This was chosen because the `#` is commonly used for numbers in English. For example, `#1` is read `number 1`. A number after the `#` makes it a fixed length array `type#N`. Arrays are statically sized when written `type#N`; `type#` is the dynamic form. Items are separated with commas (`,`). The hash symbol is also used for accessing an array, giving a clear visible mirror between the two. 
 
 ```
 list: int#4 = [1, 2, 3, 4]
@@ -1146,7 +1167,7 @@ This builds on the visible simatry between type notation and their value express
 | **Options** | `T?` | `x?` |
 | **Arrays** | `T#N` | `x#n` |
 
-Other languages use `[]` for indexing, but that has another meaning in Mulang. Instead, you can use operation chaining to do the same thing as `[]` in other languages. *(See [Operation Chaining](#Operation-chaining-with).)*
+Other languages use `[]` for indexing, but that has another meaning in Mulang. Instead, you can use operation chaining to do the same thing like `[]` in other languages. *(See [Operation Chaining](#Operation-chaining-with).)*
 
 ```
 item = doubleArray#[1]#[0]  -- The 2nd row, 1st column
@@ -1462,7 +1483,7 @@ while cond:
     body
 ```
 
-The same things that apply to `if` apply to `while` such as the `or == []` pattern.
+The same things that apply to `if` apply to `while` likw the `or == []` pattern.
 
 ```
 mu x = 0
@@ -1509,7 +1530,7 @@ until cond
 -- The loop will run at least once before checking the condition.
 ```
 
-`loop`/`until` is arguably a better choice than `do`/`while` because it's more descriptive of what it's doing. *"Loop until this is true."* You can visually see that the condition is true after the `loop`/`until` block is finished, whereas you would need to invert the condition in your head for a `do`/`while` loop. It acts as a blockade to wait until a certain condition is true.
+`loop`/`until` is arguably a better choice than `do`/`while` because it's more descriptive of what it's doing. *"Loop until this is true."* You can visually see that the condition is true after the `loop`/`until` block is finished, whereas you would need to invert the condition in your head for a `do`/`while` loop. It acts like a blockade to wait until a certain condition is true.
 
 ```
 mu i = 0
@@ -1611,9 +1632,9 @@ match choice then
 
 #### `case`
 
-This does the same job as single `|` in a `match` block. Most languages use `case` for the `switch`/`match` block, but since Mulang uses `|`, that frees up `case` to be used for other useful patterns.
+This does the same job that a single `|` in a `match` block does. Most languages use `case` for the `switch`/`match` block, but since Mulang uses `|`, that frees up the keyword `case` to be used for other useful patterns.
 
-The pattern `case`/`else` extracts an enum and binds its value to the scope. You must have `else` at the end, and the block must break out of the scope such as with `break`, `continue`, `return`, `raise`, etc.. This is analogous to the `let pattern(x) = value else {}` pattern found in other languages.
+The pattern `case`/`else` extracts an enum and binds its value to the scope. You must have `else` at the end, and the block must break out of the scope like with `break`, `continue`, `return`, `raise`, etc.. This is analogous to the `let pattern(x) = value else {}` pattern found in other languages.
 
 ```
 block label:
@@ -1644,7 +1665,7 @@ else:
 something = if case Some(x) = getSomething() then x else "fallback"
 ```
 
-You can match multiple patterns as well with `|` like with a `match` block. All patterns must go on the left of the `=` sign. Any destructured variables must match in name and type.
+You can match multiple patterns also with `|` like with a `match` block. All patterns must go on the left of the `=` sign. Any destructured variables must match in name and type.
 
 ```
 if case ResultType1(val: int) | ResultType2{data as val: int} = getResult():
@@ -1678,7 +1699,7 @@ Wraps a single expression in an option type. After `opt`, you can use `?` within
 x = opt f(a?) orelse "fallback"     -- x is "fallback" if a is none.
 ```
 
-If a function returns an option type, then use of the `?` is allowed without `opt`. Using an `?` inside a function will automatically infer the return type as an option. The return will be automatically wrapped in `Some(_)`. If there isn't a return value in the function, then it should be a type `void?`. Unwrapping it gives an empty tuple `()`. *[See [Tuples](#Tuples).)*
+If a function returns an option type, then use of the `?` is allowed without `opt`. Using an `?` inside a function will automatically infer the return type to be an option. The return will be automatically wrapped in `Some(_)`. If there isn't a return value in the function, then it should be a type `void?`. Unwrapping it gives an empty tuple `()`. *[See [Tuples](#Tuples).)*
 
 ```
 addStuff(a: int, b: int): int? =
@@ -1719,7 +1740,7 @@ except e:
 --)
 ```
 
-If a function returns a result type `type!`, then it can also use the `!` like in a `try` block. Use of a `!` in a function automatically infers a result type as the return. If the function doesn't have a return value, like with options, the type is `void!` which unwraps into an empty tuple `()`. *[See [Tuples](#Tuples).)*
+If a function returns a result type `type!`, then it can also use the `!` like in a `try` block. Use of a `!` in a function automatically infers a result type to be the return. If the function doesn't have a return value, like with options, the type is `void!` which unwraps into an empty tuple `()`. *[See [Tuples](#Tuples).)*
 
 ```
 riskyFunction(a: int): int! =
@@ -1742,7 +1763,7 @@ doSomething(x) =
     doSomethingElse(x)!
 ```
 
-Result types flatten similarly to option types. The rules go as follows:
+Result types flatten similarly to option types. The rules go the following:
 
 - For every `raise` or `!` in a `try` block, an exception is added to the exception sum type of the result.
 - For every `except` after the `try` block, an exception is removed from the exception sum type of the result.
@@ -1777,7 +1798,7 @@ except e:
 
 #### `yield`
 
-Exits out of a function with an `iter[_]` type. The return value of the function must be of type `iter[T]` where T is the yield type. When you have `yield` in your function, the actual return value in the function body is discarded, and using `return _` in it is a compile-time error. Use of `yield` will infer the return type as `iter[_]`. 
+Exits out of a function with an `iter[_]` type. The return value of the function must be of type `iter[T]` where T is the yield type. When you have `yield` in your function, the actual return value in the function body is discarded, and using `return _` in it is a compile-time error. Use of `yield` will infer the return type to be `iter[_]`. 
 
 ```
 count(n: int): iter[int] =
@@ -1798,7 +1819,7 @@ countUntil(i: mu int, max: int): iter[int] =
 
 #### `await`
 
-Exits out of a function with an `async[_]` type. The return type of the function must be of type `async[T]` where T is the type that the asynchronous value will resolve in the end. The return value of the asynchronous instance is determined the same way as a non-asynchronous function. Use of `await` will infer the return type as `async[_]`. 
+Exits out of a function with an `async[_]` type. The return type of the function must be of type `async[T]` where T is the type that the asynchronous value will resolve in the end. The return value of the asynchronous instance is determined the same way that a non-asynchronous function does it. Use of `await` will infer the return type to be `async[_]`. 
 
 ```
 asyncFn(a, b): async[int] =
@@ -1807,7 +1828,7 @@ asyncFn(a, b): async[int] =
     a + b
 ```
 
-Both `yield` and `await` can be used together in an `iter[async[_]]` type. As the type suggests, each yield is of type `async[_]`. Use `for await` to wait for each async value to resolve in sequential order.
+Both `yield` and `await` can be used together in an `iter[async[_]]` type. The type suggests it—each yield is of type `async[_]`. Use `for await` to wait for each async value to resolve in sequential order.
 
 ```
 asyncIterFn(n): iter[async[int]] =
@@ -1824,7 +1845,7 @@ asyncCollect(n): async[int#] =
 
 #### `defer`
 
-Runs after a function done. For iterator functions, this is when the iterator was broken or exhausted. For asynchronous functions, this is when the asynchronous type is resolved or rejected. Each `defer` statement go in reverse order: *first-in last-out*. It can be one line `defer _` or a block `defer:`. Generally though it's just one line such as `defer cleanUp()`. 
+Runs after a function done. For iterator functions, this is when the iterator was broken or exhausted. For asynchronous functions, this is when the asynchronous type is resolved or rejected. Each `defer` statement go in reverse order: *first-in last-out*. It can be one line `defer _` or a block `defer:`. Generally though it's just one line like `defer cleanUp()`. 
 
 ```
 deferPrint() =
@@ -1868,7 +1889,7 @@ Last
 
 ## Meta Bindings (`::`)
 
-Variable and functions primarily use the equals sign (`=`) and are for storing actual data within a program, but there's another type of binding used for abstract values for the compiler to know about such as constants, types, inline-functions, and generics. This type of declaration is **constant**; in other words, they cannot be **mutated** or **shadowed**. Depending on what it is, subsequent `::` of the same name will modify its definition. The most common is `:: impl` with adds methods and static variables to a meta binding. 
+Variable and functions primarily use the equals sign (`=`) and are for storing actual data within a program, but there's another type of binding used for abstract values for the compiler to know about like constants, types, inline-functions, and generics. This type of declaration is **constant**; in other words, they cannot be **mutated** or **shadowed**. Depending on what it is, subsequent `::` of the same name will modify its definition. The most common is `:: impl` with adds methods and static variables to a meta binding. 
 
 ### Constants
 
@@ -1878,12 +1899,12 @@ Putting a constant value after `::` creates a constant. This holds an unchangeab
 PI :: 3.1415926535
 ```
 
-You can also bind a function to a constant. When calling it, it would be the same as defining it inline and then calling. This can be useful if you need to pass a function multiple times but don't want it to be outputted when compiled.
+You can also bind a function to a constant. When calling it, it would be the same like defining it inline and then calling. This can be useful if you need to pass a function multiple times but don't want it to be outputted when compiled.
 
 ```
 IDENTITY :: fn(x) = x
 addOne :: fn(x) = x + 1
-value = addOne(2)               -- Same as (fn(x) = x + 1)(2), result is 3.
+value = addOne(2)               -- Means (fn(x) = x + 1)(2), result is 3.
 array = map([1, 2, 3, 4], addOne)
 ```
 
@@ -1910,13 +1931,13 @@ sumUnion     ::  int | float | char                    -- Is the size of the lar
 
 #### Tuples
 
-Every opaque type by itself is its own tuple, so for example `char` and `(char)` are the same. This means that in the example, `int & float & char` is the same as `(int, float, char)`.
+Every opaque type by itself is its own tuple, so for example `char` and `(char)` are the same. This means that in the example, `int & float & char` is the equal to `(int, float, char)`.
 
-Tuples use commas (`,`) to separate components for both positional (`()`) and named (`{}`) tuples. This follows the same rules as function parameters. *(See [Function Declarations](#Function-Declarations).)*
+Tuples use commas (`,`) to separate components for both positional (`()`) and named (`{}`) tuples. This follows the same rules that function parameters does. *(See [Function Declarations](#Function-Declarations).)*
 
 Product unions with the `&` operator can be used for both types and values. When combining two or more positional tuples, the positions of subsequent tuples get bumped up by the number of positions in the previous tuples, i.e. `(a, b) & (c, d)` becomes `(a, b, c, d)`. When you combine two or more named tuples, conflicting named parameters override each other with the last tuple taking priority—much like how shadowing works. So if you have `{x: 1} & {x: 2}`, the result is just `{x: 2}` since it overrides the `x` of the previous tuple. Positional tuples and named tuples can be combined together for example `(0, 1) & {x: 2}`. The shorthand for this is to write named parameters in a positional tuple like `(0, 1, x: 2)`. 
 
-You can think of it as every tuple always having both dimensions, just with most slots empty:
+You can think of it like every tuple always having both dimensions, just with most slots empty:
 
 ```
 (0, 1)           -- positional: (0, 1), named: {}
@@ -1937,9 +1958,9 @@ This makes the algebra quite principled. The only cases where order matters are 
 
 It also means the shorthand `(0, 1, x: 2)` isn't really special syntax. It's the natural representation of a tuple that has both dimensions populated, which any `&` expression across the two types would produce anyway.
 
-Opaque types such as primitives and enums coerce into a tuple of one, so creating a product type of them creates a positional tuple, e.g. `int & float & char` becomes `(int, float, char)`. Structs convert to named tuples unless declared with an `@opaque` decorator, in which case they behave like opaque types. The `void` type coerces to an empty tuple `()`. *(See [Decorators](#Decorators)* for more informations on available decorators.)
+Opaque types like primitives and enums coerce into a tuple of one, so creating a product type of them creates a positional tuple, e.g. `int & float & char` becomes `(int, float, char)`. Structs convert to named tuples unless declared with an `@opaque` decorator, in which case they behave like opaque types. The `void` type coerces to an empty tuple `()`. *(See [Decorators](#Decorators)* for more informations on available decorators.)
 
-Combining empty tuples produces an empty tuple `() & () == ()`. The same is true for empty named tuples `{} & {} == {}`. This also means that empty positional tuples and empty named tuples are equivalent `() == {}`. Both tuples have zero dimensions in both positional and named components; therefore they are equivalent. Saying `() & {} & ()` or `{} & ()` and any combination of empty tuples all produce an empty tuple. If you think about it, this makes sense. They all represent nothing, like a cup that can holds 0mL of water. If you stacked a bunch of 0mL cups, you would still not be able to hold any water in it. Is it even a cup then? That's why empty tuples are treated as `void`, which verbally represents nothing, because they're all nothing. Therefore `void == () == {}`. The 3 types are all the same. 
+Combining empty tuples produces an empty tuple `() & () == ()`. The same is true for empty named tuples `{} & {} == {}`. This also means that empty positional tuples and empty named tuples are equivalent `() == {}`. Both tuples have zero dimensions in both positional and named components; therefore they are equivalent. Saying `() & {} & ()` or `{} & ()` and any combination of empty tuples all produce an empty tuple. If you think about it, this makes sense. They all represent nothing, like a cup that can holds 0mL of water. If you stacked a bunch of 0mL cups, you would still not be able to hold any water in it. Is it even a cup then? That's why empty tuples are treated like `void`, which verbally represents nothing, because they're all nothing. Therefore `void == () == {}`. The 3 types are all the same. 
 
 This also means that a void function and a function that returns an empty tuple are the same. *Empty positional tuples, empty named tuples, and void are fully interchangeable at the type level.*
 
@@ -1953,7 +1974,7 @@ We say that a void function returns nothing. Well, that's what an empty tuple is
 
 ### Definition Blocks
 
-Some keywords after `::` start a **definition block.** They can only be used in `::` definitions. These are special blocks used for abstract data such as types and static variables. 
+Some keywords after `::` start a **definition block.** They can only be used in `::` definitions. These are special blocks used for abstract data like types and static variables. 
 
 #### Structures (`struct`)
 
@@ -1973,13 +1994,13 @@ You can write it with one line, seperating each member with a comma `,`.
 MyStruct :: struct = name: str, value: int
 ```
 
-Instantiate a struct by calling it like a function. Each member is treated as a named argument.
+Instantiate a struct by calling it like a function. Each member is treated like a named argument.
 
 ```
 myObject = MyStruct(name: "Foobar", value: 1)
 ```
 
-Structs are transparent. They can be destructured like named arrays. Use `@opaque` if you need to disable this. That will treat the struct type as an opaque type and prevent it from being inherited with `inherit`. *(See [Inheritance and Visibility](Inheritance-and-Visibility).)*
+Structs are transparent. They can be destructured like named arrays. Use `@opaque` if you need to disable this. That will treat the struct type to be an opaque type and prevent it from being inherited with `inherit`. *(See [Inheritance and Visibility](Inheritance-and-Visibility).)*
 
 ```
 TransparentThing :: struct =
@@ -2017,7 +2038,7 @@ The inline version works the same.
 NyEnum :: enum = First, Second(int), Third{val: int}
 ```
 
-Like structs, instantiate by calling the member as a function unless it doesn't carry any data.
+Like structs, instantiate by calling the member like a function unless it doesn't carry any data.
 
 ```
 a = MyEnum.First
@@ -2039,7 +2060,7 @@ match a then
 
 #### Exceptions (`except`)
 
-Exceptions are similar to enums but used for error handling. See "Error Handling" for more details. Instantiation works the same as enums.
+Exceptions are similar to enums but used for error handling. See "Error Handling" for more details. Instantiation works the same like enums.
 
 ```
 MyException :: except =
@@ -2060,7 +2081,7 @@ except DivideByZero(x):
 
 #### Prototypes (`proto`)
 
-A `proto` is an abstract interface — a named contract with no data. It is equivalent to a `virtual class` (C++), `trait` (Rust), or `interface` (Java, TypeScript, etc.) in other languages. Each member is a function, also called a **method**. Methods that have a parameter named `self` at the beginning will be called as methods on the instance of that type, i.e. `self.method(...)`. This is equivalent to saying `typeof[self].method(self, ...)`.
+A `proto` is an abstract interface — a named contract with no data. It is equivalent to a `virtual class` (C++), `trait` (Rust), or `interface` (Java, TypeScript, etc.) in other languages. Each member is a function, also called a **method**. Methods that have a parameter named `self` at the beginning will be called like methods on the instance of that type, i.e. `self.method(...)`. This is equivalent to saying `typeof[self].method(self, ...)`.
 
 ```
 MyPrototype :: proto =
@@ -2100,7 +2121,7 @@ MyEnum :: impl(MyPrototype) =
 
 ### Inheritance and Visibility
 
-Even though structs cannot be extended the usual way, they can **inherit** from other structs using the `inherit` keyword. This works similar to **importing.** It marks members that map to members of another struct, making conversion possible. It follows the same convention for pattern matching as destructuring. *(See [Destructuring](#Destructuring).)* The struct being inherited must not be `@opaque` or else it's a compile-time error. *(See [Decorators](#Decorators) for more informations on available decorators.)*
+Even though structs cannot be extended the usual way, they can **inherit** from other structs using the `inherit` keyword. This works similar to **importing.** It marks members that map to members of another struct, making conversion possible. It follows the same convention for pattern matching like destructuring. *(See [Destructuring](#Destructuring).)* The struct being inherited must not be `@opaque` or else it's a compile-time error. *(See [Decorators](#Decorators) for more informations on available decorators.)*
 
 ```
 Vector2 :: struct =
@@ -2135,7 +2156,7 @@ A subtype cannot accidentally expose or clash with a private inherited member be
 
 ## Meta Functions
 
-Adding a parameter before the double colon (`::`) turns it into a **meta function** which combines the concepts of **inline functions**, **macros**, and **generics**. Parameters are put in square brackets `[]` to distinguish them from regular functions which use parentheses `()`. The types of parameters can be inferred based on context. If the meta function has no parameters or the values of those parameters can be inferred based on context, then you don't have to use `[]` when calling it. Because of this, you can't pass it around like a regular function. For any meta function `m[]`, saying `m` infers calling `m[]`. The result is treated as a constant for run-time code. 
+Adding a parameter before the double colon (`::`) turns it into a **meta function** which combines the concepts of **inline functions**, **macros**, and **generics**. Parameters are put in square brackets `[]` to distinguish them from regular functions which use parentheses `()`. The types of parameters can be inferred based on context. If the meta function has no parameters or the values of those parameters can be inferred based on context, then you don't have to use `[]` when calling it. Because of this, you can't pass it around like a regular function. For any meta function `m[]`, saying `m` infers calling `m[]`. The result is treated like a constant for run-time code. 
 
 Analogous to constant values, you can define an inline function or macro by adding a parameter before the double colons and writing an expression after it. Like constants, they don't output a value in memory when compiled, useful for collecting repeated code. Unlike constant functions, they cannot be passed to another function. They are only for inserting an expression. Each parameter is a variable within the expression, so you don't need to wrap them in parentheses `()` like with C macros. 
 
@@ -2155,7 +2176,7 @@ doSomethingComplicated[x] ::
 value = doSomethingComplicated[3]
 ```
 
-This is the same as this:
+These two are the same thing:
 
 ```
 value =
@@ -2203,7 +2224,7 @@ maxAdd[a, b] :: if a > b then fn(c) = a + c else fn(c) = b + c
 print("{ maxAdd[ f(0), g(0) ] (1) }")
 ```
 
-The syntax `[]` was chosen so that generic type inferrence will take precedence. `neta(a, b)` means to *call the instantiated function that `neta` returns with inferred types* where as `neta[a, b]` means to *call the abstract function `neta` with these exact values.* This also makes it easy to distinguish actual function calls from macros/inlining. This removes the need for the more conventional `<>` syntax, which can get confusing. For example, in `f( g < a, b > ( c ) )`, is `g` a generic function or is that comparing two values and passing the results to `f`? The square bracket syntax removes this ambiguity, `f( g [ a, b ] ( c ) )`. This makes it semantically clear that you're doing a compile-time function call followed by a run-time function call. 
+The syntax `[]` was chosen so that generic type inferrence will take precedence. `neta(a, b)` means to *call the instantiated function that `neta` returns with inferred types* whereas `neta[a, b]` means to *call the abstract function `neta` with these exact values.* This also makes it easy to distinguish actual function calls from macros/inlining. This removes the need for the more conventional `<>` syntax, which can get confusing. For example, in `f( g < a, b > ( c ) )`, is `g` a generic function or is that comparing two values and passing the results to `f`? The square bracket syntax removes this ambiguity, `f( g [ a, b ] ( c ) )`. This makes it semantically clear that you're doing a compile-time function call followed by a run-time function call. 
 
 ### Where Block
 
@@ -2225,7 +2246,7 @@ List[T, N] :: impl =
 
 ### Manual Implementation
 
-Generics will automatically generate code based on their parameters, but you can also implement them by hand using pattern matching. If you only want to use the manual implementations for a generic function, you can set its body to `unset`. We've mentioned `unset` before when declaring variables without settinging them. `unset` itself is actually a meta function and not a keyword. It takes a type parameter `unset[T]` but can be dropped if the type is inferred. This creates a virtual function that can be overloaded later. If you use a function that is defined as `unset` or `unset[T], it will throw a compile-time error.
+Generics will automatically generate code based on their parameters, but you can also implement them by hand using pattern matching. If you only want to use the manual implementations for a generic function, you can set its body to `unset`. We've mentioned `unset` before when declaring variables without settinging them. `unset` itself is actually a meta function and not a keyword. It takes a type parameter `unset[T]` but can be dropped if the type is inferred. This creates a virtual function that can be overloaded later. If you use a function that is defined with `unset` or `unset[T], it will throw a compile-time error.
 
 ```
 -- Forces every type to have its own implementation
@@ -2245,10 +2266,10 @@ c = Counter(value: 2)
 f = 3.0
 b = True
 
-increment(c)   -- T is inferred as Counter
-increment(f)   -- T is inferred as float
+increment(c)   -- T is inferred Counter
+increment(f)   -- T is inferred float
 (--
-increment(b)   -- T is inferred as bool which has no implementation, compile-time error
+increment(b)   -- T is inferred bool which has no implementation, compile-time error
 --)
 ```
 
@@ -2256,7 +2277,7 @@ increment(b)   -- T is inferred as bool which has no implementation, compile-tim
 
 ## Importing and Modules
 
-Use `import` to import something, optionally giving the import an alias with `as`. You can either import a single export such as `import a.b.c` or multiple at once using destructuring rules `import a.b{c, d}`. *(See [Destructuring](#Destructuring).)* Note that there is no `.` before the `{`. This follows the same convention as destructuring with tuples. All imports must be **explicitly** declared—no `import a.b._`. This helps prevent naming conflicts and track where things have been defined.
+Use `import` to import something, optionally giving the import an alias with `as`. You can either import a single export like `import a.b.c` or multiple at once using destructuring rules `import a.b{c, d}`. *(See [Destructuring](#Destructuring).)* Note that there is no `.` before the `{`. This follows the same convention that destructuring with tuples does. All imports must be **explicitly** declared—no `import a.b._`. This helps prevent naming conflicts and track where things have been defined.
 
 The most common import will likely be the `print` function, which will be defined somewhere in a standard library.
 
@@ -2301,7 +2322,7 @@ How this is implemented is outside of the scope of this document. That will be s
 
 ## Decorators
 
-There have been a few examples of decorators in this document such as `@opaque` and `@memory`. These are compile-time functions that communicate to the compiler directly and can alter the behavior of things. The API for defining your own decorators is not set in stone yet. More information on them will be available in the future. The syntax for adding decorators goes like this:
+There have been a few examples of decorators in this document like `@opaque` and `@memory`. These are compile-time functions that communicate to the compiler directly and can alter the behavior of things. The API for defining your own decorators is not set in stone yet. More information on them will be available in the future. The syntax for adding decorators goes like this:
 
 ```
 @decorator1      -- No arguments.
@@ -2400,7 +2421,7 @@ This is a work in progress though. How these decorators are implemented and thei
 46. `while`
 47. `yield`
 
-*NOTE: Built-in types, values, functions, and decorators such as `int`, `True`, `Some`, `default`, `print`, `@memory` etc. are not considered keywords.*
+*NOTE: Built-in types, values, functions, and decorators like `int`, `True`, `Some`, `default`, `print`, `@memory` etc. are not considered keywords.*
 
 ---
 
