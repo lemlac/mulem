@@ -652,6 +652,8 @@ addCount()
 print("{count}, {squared}, {cubed}") -- Prints "3, 9, 27"
 ```
 
+This highlights the flexibility of the language. It doesn't need a dedicated keyword like `nonlocal`. Compiler behavior can be dictated through the use of decorators, changing the language itself. *(See [Decorators](#Decorators).)*
+
 You can also write `@capture` over the function to capture multiple variables at once. This is preferable for declared functions since it makes it clear right away that a function is mutating variables. `@nonlocal` is useful for callback functions inside a `do`/`end` expression. 
 
 ```
@@ -1493,24 +1495,32 @@ loop if None != (getValue() tobe value):
     print("value = {value}")
 ```
 
-#### `loop` / `until`
+#### `loop` / `until if`
 
-Add `until` after a `loop` block to create a condition that will break the loop. Unlike `loop if`, this will break when the condition is `True`, analogous to `if cond then break` inside the block. This would be a `do { body } while (!cond);` loop in other languages like C. The reason it doesn't use `while` or `if` is because that would get confused for the start of a block, and `do` already has a different meaning in Mulang, so `loop` and `until` were chosen instead. This makes it clear that `loop` and `until` are semantically connected since `until` is only used with `loop`.
+Postpone the conditional check until the end of the loop. Add `until if` after a `loop` block to create a condition that will break the loop. Unlike `loop if`, this will break when the condition is `True`, analogous to `if cond then break` inside the body. This would be a `do { body } while (!cond);` loop in other languages like C. The reason it doesn't use `while` is because that would get confused for the start of a block, and `do` already has a different meaning in Mulang, so `loop` and `until` were chosen instead. This makes it clear that `loop` and `until` are semantically connected since `until` can only come after `loop`.
 
 ```
 loop:
     body
-until cond
--- The loop will run at least once before checking the condition.
+    if cond:
+        break
+
+-- Transforms into:
+
+loop:
+    body
+until if cond
 ```
 
-`loop`/`until` is arguably a better choice than `do`/`while` because it's more descriptive of what it's doing. *"Loop until this is true."* You can visually see that the condition is true after the `loop`/`until` block is finished, whereas you would need to invert the condition in your head for a `do`/`while` loop. It acts like a blockade to wait until a certain condition is true.
+The loop will run at least once before checking the condition.
+
+`loop`/`until` is arguably a better choice than `do`/`while` because it's more descriptive of what it's doing. *"Loop until if this is true."* You can visually see that the condition is true after the `loop`/`until` block is finished, whereas you would need to invert the condition in your head for a `do`/`while` loop. It acts like a blockade to wait until a certain condition is true.
 
 ```
 mu i = 0
 loop:
     i += 1
-until i >= 10
+until if i >= 10
 -- i is >=10 at this point
 ```
 
@@ -1660,12 +1670,14 @@ x = 0
 if Some(x) = getStuff():  -- Did you mean `==`? Are you creating a new `x` or wrapping the exisiting `x`?
 ```
 
-You can match multiple patterns also with `|` like with a `match` block. All patterns must go on the left of the `=` sign. Any destructured variables must match in name and type.
+Multiple patterns can be checked for at once with `|` like with a `match` block. All patterns must go on the left of the `=` sign. Any destructured variables must match in name and type.
 
 ```
 when ResultType1(val: int) | ResultType2{data as val: int} = getResult():
     print("val = {val}")
 ```
+
+#### `loop when`
 
 Are you sensing a pattern? We have `if` and `when`, so that means we also get `loop if` and... `loop when`! This will loop until the pattern breaks. In some cases, this might be more desirable than the `loop if` / `tobe` format.
 
@@ -1674,16 +1686,16 @@ loop when Some(x) = nextValue():
     print("value is {x}")
 ```
 
-#### `until case`
+#### `loop` / `until when`
 
-Like how `if` has `when`, `until` has `until case`. It's behavior is closer to just `case` blocks, so it uses the keyword `case` together. `until` is kept too because it marks the ending of a `loop`, analogous to `do`/`end`. Like `case`, `until case` creates a new variable in the parent scope of its block. This is because it appears at the end of the block instead of the top, so it won't be set *until* it matches which means the loop breaks. This can be useful if you want to repeatedly call a function *until* you get something.  The loop cannot conditionally break inside the body because then the variable would be unset. This ensures that the destructured variables are defined after the loop finishes. The loop runs until the pattern matches, and when it does, the matched value is your result — it would be meaningless otherwise. The scoping rule follows directly from the semantics. You can't use the value inside the loop body anyway since until is a termination condition, so there's only one place the binding could go — outside. *The scope of bindings mirrors the position of the pattern.*
+Like how `if` has `when`, `until if` has `until when`. Like `case`, `until when` creates a new variable in the parent scope of its block. This is because it appears at the end of the block instead of the top, so it won't be set *until when* it matches which itself is the condition for the loop to break. This can be useful if you want to repeatedly call a function *until* you get something. The loop cannot conditionally break inside the body because then the variable would not be set. This ensures that the destructured variables are defined after the loop finishes. The loop runs until the pattern matches, and when it does, the matched value is your result — it would be meaningless otherwise. The scoping rule follows directly from the semantics. You can't use the value inside the `loop` body anyway since `until` is a termination condition, so there's only one place the binding could go — outside. *The scope of bindings mirrors the position of the pattern.*
 
 ```
 value: mu int?
 
 loop:
     value = getValue()
-until case Some(x) = value
+until when Some(x) = value
 
 print("value = {x}")
 ```
@@ -1732,7 +1744,7 @@ When all exceptions have been handled, the result is `type!void` which automatic
 
 #### `opt` / `orelse`
 
-Wraps a single expression in an option type. After `opt`, you can use `?` within to expression to unwrap multiple option values. If one `?` returns `None`, then the whole `opt` expression stops and returns `None`. `orelse` is optional. It unwraps the option, giving the right-hand side if the left-hand side is `None`. 
+Wraps a single expression in an option type. After `opt`, you can use `?` within the expression to unwrap multiple option values. If one `?` returns `None`, then the whole `opt` expression stops and returns `None`. `orelse` is optional. It unwraps the option, giving the right-hand side if the left-hand side is `None`. 
 
 ```
 x = opt f(a?) orelse "fallback"     -- `x` is "fallback" if `a` is none.
@@ -1747,7 +1759,7 @@ opt:
     a = getSomething(a)?
     b = getSomething(b)?
     print("{a + b}")
-orelse:                   -- Option if the block ends early.
+orelse:                   -- Optional, runs when the `opt` block ends early.
     print("Didn't work")
 ```
 
