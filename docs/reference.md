@@ -807,13 +807,11 @@ y = let x = 1 then x + x   -- Or also `y = let x := 1 then x + x`, the same thin
 print("x = {x}, y = {y}")  -- Prints "x = 0, y = 2".
 ```
 
-Multiple variables can also be declared at once. You must surround the variables with square brackets like `let [] then`. Each variable is separated by commas. 
+Multiple variables can also be declared at once. You must surround the variables with parentheses like `let () then`. Each variable is separated by commas. 
 
 ```
-sum = let [x = 1, y = 2] then x + y
+sum = let (x = 1, y = 2) then x + y
 ```
-
-`[]` are used instead of `()` to distinguish it from a regular function call. It also follows the pattern of `name[]` meaning a compile-time function, which `let []` sort of is a compile-time function since it's running at compile-time. However, it's technically a part of the syntax and not a function.
 
 #### Inline Assignment Operator `=>`
 
