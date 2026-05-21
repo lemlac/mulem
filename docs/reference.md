@@ -179,79 +179,79 @@ end)            -- `end` finishes the inline-block expression.
 
 The philosophy of Mulang is that symbols should be easy to recognize and understand. Good symbols can also help make code easier to both write and read at times. Many are semantically grouped based on their contextual usage, for example `*` and `/` relate to math, `?` relates to options, `&` relates to tuples, etc.. There's also a common pattern where repeating an operator gives you a more technical or complex version of that operator, for example: `+` addition vs `++` concatenation, `*` multiplication vs `**` exponentiation, `/` division vs `//` floor division, and `%` standard modulo vs `%%` floor division modulo.
 
-| Operation | Meaning | Order |
-|:--|:--|:--|
+| Operation      | Meaning | Order |
+|:---------------|:--|:--|
 | __(Arithmetic)__ | — | — |
-| `lhs + rhs` | addition | 6 |
-| `lhs - rhs` | subtraction | 6 |
-| `+ rhs` | keeps the sign the same; *so does nothing* | 9 |
-| `- rhs` | sign-flip | 9 |
-| `lhs * rhs` | multiplication | 7 |
-| `lhs / rhs` | exact division; *returns a floating-point number* | 7 |
-| `lhs // rhs` | floored division (rounded down); *returns an integer* | 7 |
-| `lhs % rhs` | modulo (sign matches `lhs`) | 7 |
-| `lhs %% rhs` | floor division modulo (sign matches `rhs`); *result is between the range `[0, rhs)` if `rhs` is positive or `(rhs, 0]` if `rhs` is negative* | 7 |
-| `lhs ** rhs` | exponential *(right associative: `2**3**2` is `2**(3**2)`)* | 8 |
+| `lhs + rhs`    | addition | 6 |
+| `lhs - rhs`    | subtraction | 6 |
+| `+ rhs`        | keeps the sign the same; *so does nothing* | 9 |
+| `- rhs`        | sign-flip | 9 |
+| `lhs * rhs`    | multiplication | 7 |
+| `lhs / rhs`    | exact division; *returns a floating-point number* | 7 |
+| `lhs // rhs`   | floored division (rounded down); *returns an integer* | 7 |
+| `lhs % rhs`    | modulo (sign matches `lhs`) | 7 |
+| `lhs %% rhs`   | floor division modulo (sign matches `rhs`); *result is between the range `[0, rhs)` if `rhs` is positive or `(rhs, 0]` if `rhs` is negative* | 7 |
+| `lhs ** rhs`   | exponential *(right associative: `2**3**2` is `2**(3**2)`)* | 8 |
 | __(Comparison)__ | — | — |
-| `lhs == rhs` | equality | 3 |
-| `lhs != rhs` | inequality | 3 |
-| `lhs > rhs` | greater than | 3 |
-| `lhs < rhs` | less than | 3 |
-| `lhs >= rhs` | greater than or equals to | 3 |
-| `lhs <= rhs` | less than or equals to | 3 |
-| __(Boolean)__ | — | — |
-| `lhs and rhs` | false if any are false | 2 |
-| `lhs or rhs` | true if any are true | 1 |
-| `not rhs` | inverts a boolean or bitwise-`NOT` when `rhs` is a number | 9 |
-| `and rhs` | do `and` on each component of a tuple: `and (True, False, True)` → `True and False and True` → `False` | 9 |
-| `or rhs` | do `or` on each component of a tuple: `or (True, False, True)` → `True or False or True` → `True` | 9 |
-| __(Bitwise)__ | — | — |
-|  `lhs /\ rhs` | bitwise-`AND` *(resembles a wedge* $\land$ *, the symbol for logical AND; also resembles a capital A)* | 5 |
-| `lhs \/ rhs` | bitwise-`OR` *(resembles a vee* $\lor$ *, the symbol for logical OR; also invert of `/\`)* | 5 |
-| `lhs >< rhs` | bitwise-`XOR` *(resembles an X for XOR)* | 5 |
-| `lhs << rhs` | bitshift-left | 7 |
-| `lhs >> rhs` | bitshift-right | 7 |
-| `lhs >>> rhs` | bitshift-right (unsigned) | 7 |
-| __(Arrays)__ | — | — |
-| `lhs # rhs` | get an item from `lhs` at an index `rhs` (index starting at 0) | 10 |
-| `lhs ++ rhs` | concatenation, returns a new array | 6 |
-| `++ rhs` | spread an array or iterator into an array or positional tuple | 10 |
-| `lhs .. rhs` | creates an iterator that starts at the left value and ends just before the right value (exclusive) | 4 |
-| `lhs ..= rhs` | creates an iterator that starts at the left value and ends with the right value (inclusive) | 4 |
-| `lhs in rhs` | checks if an item exists in an array, returns a boolean | 3 |
-| __(Tuples)__ | — | — |
-| `lhs . rhs` | access a member/component | 11 |
-| `& rhs` | spread a tuple into another tuple | 10 |
-| __(Options)__ | — | — |
-| `lhs ?` | returns the `Some` value if it's not `None`, otherwise propagate to the nearest `opt` keyword *(see [`opt` block](#opt))* | 10 |
-| `lhs || rhs` | `None`-coalescing; if `lhs` is `Some(x)` then `x` else `rhs` | 1 |
-| __(Results)__ | — | — |
-| `lhs !` | returns the result value if it's not an exception, otherwise propagate to the nearest `try` keyword *(see [`try` block](#try--except))* | 10 |
+| `lhs == rhs`   | equality | 3 |
+| `lhs != rhs`   | inequality | 3 |
+| `lhs > rhs`    | greater than | 3 |
+| `lhs < rhs`    | less than | 3 |
+| `lhs >= rhs`   | greater than or equals to | 3 |
+| `lhs <= rhs`   | less than or equals to | 3 |
+| __(Boolean)__  | — | — |
+| `lhs and rhs`  | false if any are false | 2 |
+| `lhs or rhs`   | true if any are true | 1 |
+| `not rhs`      | inverts a boolean or bitwise-`NOT` when `rhs` is a number | 9 |
+| `and rhs`      | do `and` on each component of a tuple: `and (True, False, True)` → `True and False and True` → `False` | 9 |
+| `or rhs`       | do `or` on each component of a tuple: `or (True, False, True)` → `True or False or True` → `True` | 9 |
+| __(Bitwise)__  | — | — |
+|  `lhs /\ rhs`  | bitwise-`AND` *(resembles a wedge* $\land$ *, the symbol for logical AND; also resembles a capital A)* | 5 |
+| `lhs \/ rhs`   | bitwise-`OR` *(resembles a vee* $\lor$ *, the symbol for logical OR; also invert of `/\`)* | 5 |
+| `lhs >< rhs`   | bitwise-`XOR` *(resembles an X for XOR)* | 5 |
+| `lhs << rhs`   | bitshift-left | 7 |
+| `lhs >> rhs`   | bitshift-right | 7 |
+| `lhs >>> rhs`  | bitshift-right (unsigned) | 7 |
+| __(Arrays)__   | — | — |
+| `lhs # rhs`    | get an item from `lhs` at an index `rhs` (index starting at 0) | 10 |
+| `lhs ++ rhs`   | concatenation, returns a new array | 6 |
+| `++ rhs`       | spread an array or iterator into an array or positional tuple | 10 |
+| `lhs .. rhs`   | creates an iterator that starts at the left value and ends just before the right value (exclusive) | 4 |
+| `lhs ..= rhs`  | creates an iterator that starts at the left value and ends with the right value (inclusive) | 4 |
+| `lhs in rhs`   | checks if an item exists in an array, returns a boolean | 3 |
+| __(Tuples)__   | — | — |
+| `lhs . rhs`    | access a member/component | 11 |
+| `& rhs`        | spread a tuple into another tuple | 10 |
+| __(Options)__  | — | — |
+| `lhs ?`        | returns the `Some` value if it's not `None`, otherwise propagate to the nearest `opt` keyword *(see [`opt` block](#opt))* | 10 |
+| `lhs || rhs`   | `None`-coalescing; if `lhs` is `Some(x)` then `x` else `rhs` | 1 |
+| __(Results)__  | — | — |
+| `lhs !`        | returns the result value if it's not an exception, otherwise propagate to the nearest `try` keyword *(see [`try` block](#try--except))*        | 10 |
 | __(Pointers)__ | — | — |
-| `lhs ^` | dereferences a typed pointer | 10 |
+| `lhs ^`        | dereferences a typed pointer | 10 |
 | __(Functional)__ | — | — |
-| `lhs \|> rhs` | pipelining, disregards `lhs` and returns `rhs` | 1 |
-| `~ rhs` | inferred type conversion | 10 |
+| `lhs \|> rhs`  | pipelining, disregards `lhs` and returns `rhs` | 1 |
+| `~ rhs`        | inferred type conversion | 10 |
 | __(Assignment)__ | — | — |
-| `lhs = rhs` | assignment or inferred-type declaration *(See [Variable Declarations](#Variable-Declaration).)* | 0 |
-| `lhs := rhs` | always inferred-type declaration | 0 |
+| `lhs = rhs`    | assignment or inferred-type declaration *(See [Variable Declarations](#Variable-Declaration).)* | 0 |
+| `lhs := rhs`   | always inferred-type declaration | 0 |
 | `lhs: T = rhs` | explicit-type declaration | 0 |
-| `lhs => rhs` | inline for `:=` but returns the assigned value instead of being void; the operands are inverted (variable goes on the right); creates an immutable variable by default *(See [Inline Binding](#Inline-Binding).)* | 0 |
-| `lhs += rhs` | increment | 0 |
-| `lhs -= rhs` | decrement | 0 |
-| `lhs *= rhs` | multiplication assignment | 0 |
-| `lhs /= rhs` | division assignment | 0 |
-| `lhs //= rhs` | floor division assignment | 0 |
-| `lhs %= rhs` | modulo assignment | 0 |
-| `lhs %%= rhs` | floor division modulo assignment (binds `lhs` to a range in `[0, rhs)` if `rhs` is positive or `(rhs, 0]` if `rhs` is negative) | 0 |
-| `lhs **= rhs` | exponential assignment | 0 |
-| `lhs /\= rhs` | bitwise-`AND` assignment | 0 |
-| `lhs \/= rhs` | bitwise-`OR` assignment | 0 |
-| `lhs ><= rhs` | bitwise-`XOR` assignment | 0 |
-| `lhs <<= rhs` | bitshift-left assignment | 0 |
-| `lhs >>= rhs` | bitshift-right assignment | 0 |
+| `lhs => rhs`   | inline for `:=` but returns the assigned value instead of being void; the operands are inverted (variable goes on the right); creates an immutable variable by default *(See [Inline Binding](#Inline-Binding).)* | 0 |
+| `lhs += rhs`   | increment | 0 |
+| `lhs -= rhs`   | decrement | 0 |
+| `lhs *= rhs`   | multiplication assignment | 0 |
+| `lhs /= rhs`   | division assignment | 0 |
+| `lhs //= rhs`  | floor division assignment | 0 |
+| `lhs %= rhs`   | modulo assignment | 0 |
+| `lhs %%= rhs`  | floor division modulo assignment (binds `lhs` to a range in `[0, rhs)` if `rhs` is positive or `(rhs, 0]` if `rhs` is negative) | 0 |
+| `lhs **= rhs`  | exponential assignment | 0 |
+| `lhs /\= rhs`  | bitwise-`AND` assignment | 0 |
+| `lhs \/= rhs`  | bitwise-`OR` assignment | 0 |
+| `lhs ><= rhs`  | bitwise-`XOR` assignment | 0 |
+| `lhs <<= rhs`  | bitshift-left assignment | 0 |
+| `lhs >>= rhs`  | bitshift-right assignment | 0 |
 | `lhs >>>= rhs` | unsigned bitshift-right assignment | 0 |
-| `lhs ++= rhs` | append to an array (not allowed if `lhs` is a fixed length array) | 0 |
+| `lhs ++= rhs`  | append to an array (not allowed if `lhs` is a fixed length array) | 0 |
 
 __Order of Operations:__
 
@@ -2070,20 +2070,20 @@ Product unions with the `&` operator can be used for both types and values. When
 
 You can think of it like every tuple always having both dimensions, just with most slots empty:
 
-```
-(0, 1)           -- positional: (0, 1), named: {}
-{x: 2}           -- positional: (),     named: {x: 2}
-(0, 1) & {x: 2}  -- positional: (0, 1), named: {x: 2}
-{x: 2} & (0, 1)  -- positional: (0, 1), named: {x: 2} -- identical
-```
+| Type                     | Value          | Positional | Named  |
+|:-------------------------|:---------------|:---------|:---------|
+| `(int, int)`             | `(0, 1)`       | `(0, 1)` | `{}`     |
+| `{x: int}`               | `(x: 2)`       | `()`     | `{x: 2}` |
+| `(int, int) & {x: int}`  | `(0, 1, x: 2)` | `(0, 1)` | `{x: 2}` |
+| `{x: int} & (int, int)`  | `(x: 2, 0, 1)` | `(0, 1)` | `{x: 2}` |
 
 So `&` has different commutativity rules depending on what's being combined:
 
-| Combination | Commutative? | Rule |
-|:--|:--|:--|
-| Positional & Positional | No | Positions concatenate in order |
-| Named & Named | No | Conflicts resolve last-wins |
-| Positional & Named | Yes | Orthogonal, no interaction |
+|      Combination  | Commutative? |        Rule                 |
+|:-----------------------:|:---:|:-------------------------------|
+| Positional & Positional | No  | Positions concatenate in order |
+|      Named & Named      | No  | Conflicts resolve last-wins    |
+| Positional & Named      | Yes | Orthogonal, no interaction     |
 
 This makes the algebra quite principled. The only cases where order matters are also the cases where a conflict is actually possible — two positional slots or two named slots with the same key. When there's no possible conflict, order is irrelevant.
 
