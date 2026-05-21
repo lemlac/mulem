@@ -2,7 +2,7 @@
 
 *Version 0.1 (Draft)*
 
-The Mu programming language or *Mulang* is a general-purpose, multi-paradigm programming language with significant whitespace. It targets programmers who want to be able to write expressive code but also have low-level control. It is expression-oriented where possible and provides explicit control over evaluation strategy, memory model, and error handling. Mulang is not afraid to break conventions and try new things. That's what making a new programming language from scrach is all about. It's experimental—it's meant to make you think—and may not be for everyone. 
+The Mu programming language or *Mulang* is a general-purpose, multi-paradigm programming language with significant whitespace. It targets programmers who want to be able to write expressive code but also have low-level control. It is expression-oriented where possible and provides explicit control over evaluation strategy, memory model, and error handling. Mulang is not afraid to break conventions and try new things. That's what making a new programming language from scratch is all about. It's experimental—it's meant to make you think—and may not be for everyone. 
 
 Mulang is planned to be both a compiled and an interpreted language. You won't need to use another language like C to increase performance. You can instead compile some of it and then call it like a shared library all within the same language. Some use cases for this are AI, systems programming, and game development.
 
@@ -47,7 +47,7 @@ expr; expr
 
 Almost everything is an expression. Some statements can be either inline or block depending on the presence of a colon (`:`) or equals sign (`=`) followed by a new-line.
 
-Parts of an expression are divided into 4 catagories:
+Parts of an expression are divided into 4 categories:
 
 1. __Words:__ variable names: `x`, `PI; numeric constants: `1`, `3.14`, `0xABCDEF`;
 2. __Char/String Literals:__ things surrounded in quotes: `'a'`, `"foo"`, `"""big string"""`, `#''raw string''#`
@@ -541,7 +541,7 @@ fib(n) =
         fib(n - 1) + fib(n - 2)
 ```
 
-The arguments of a function are a **tuple.** The share the same sintax. Arguments are separated by commas `,`. Trailing commas are ignored, but leading commas and double commas are considered a syntax error. 
+The arguments of a function are a **tuple.** The share the same syntax. Arguments are separated by commas `,`. Trailing commas are ignored, but leading commas and double commas are considered a syntax error. 
 
 ```
 add3(a, b, c) = a + b + c
@@ -873,14 +873,14 @@ myStr: str = "Hello"
 myPtr: ptr = ExternalLib.getSomething()
 ```
 
-You can get the type of any variable with the copile-time function `typeof`. This fetches the type of that symbol at that point during compile time. *(See [Meta Functions](#Meta-Functions).)*
+You can get the type of any variable with the compile-time function `typeof`. This fetches the type of that symbol at that point during compile time. *(See [Meta Functions](#Meta-Functions).)*
 
 ```
 x = 0
 y: typeof[x] = 1    -- Ensures that x and y have the same type.
 ```
 
-You can also get the default value of any type with the copile-time function `default`. The type needs to have a default value defined which is yet to be determined how, but they're already defined for basic types.
+You can also get the default value of any type with the compile-time function `default`. The type needs to have a default value defined which is yet to be determined how, but they're already defined for basic types.
 
 ```
 x = default[int]    -- == 0
@@ -909,7 +909,7 @@ MyType :: impl(Default) =            -- Implement the Default proto
 
 *This API is subject to change.*
 
-You can also get the size of any type with the copile-time function `sizeof`. It returns a constant `uint` (unsigned integer) with the number of bytes of memory that type requires. The exact sizes of some types like `int` or `float` might vary, but you can rely on `char` and `bool` being 1 byte each. There's also the `void` type which represents no data. `ptr` depends on the pointer size of the system. 
+You can also get the size of any type with the compile-time function `sizeof`. It returns a constant `uint` (unsigned integer) with the number of bytes of memory that type requires. The exact sizes of some types like `int` or `float` might vary, but you can rely on `char` and `bool` being 1 byte each. There's also the `void` type which represents no data. `ptr` depends on the pointer size of the system. 
 
 ```
 sizeOfBool = sizeof[bool]   -- == 1
@@ -1760,7 +1760,7 @@ addStuff(a: int, b: int): int? =
     a + b
 ```
 
-If a you have nested options like `type??`, you can add aditional `?`s to continuously unwrap it until you get to the value. 
+If a you have nested options like `type??`, you can add additional `?`s to continuously unwrap it until you get to the value. 
 
 ```
 unnestOptions(x: int??): int? = x??
@@ -2055,7 +2055,7 @@ MyEnum :: enum =
 The inline version works the same.
 
 ```
-NyEnum :: enum = First, Second(int), Third{val: int}
+MyEnum :: enum = First, Second(int), Third{val: int}
 ```
 
 Like structs, instantiate by calling the member like a function unless it doesn't carry any data.
@@ -2400,7 +2400,7 @@ This is a work in progress though. How these decorators are implemented and thei
 5. `bnot`
 6. `bor`
 7. `break`
-8. `capture`
+8. `bxor`
 9. `case`
 10. `continue`
 11. `defer`
