@@ -274,7 +274,7 @@ All assignment operators *(except for `=>`)* are **void.** This is intentional t
 
 __On the choice of the unique operators...__
 
-Keywords bitwise operators use different symbols than their conventional `&|^~` in other languages because those symbols have different meanings by themselves in Mulang: `&` → tuples, `|` → pattern matching, `~` → type conversion. `&&` and `||` are usually Boolean operators and would also be ambiguous, even though those operations are handled by the keywords `and` and `or` instead. Bitwise-AND and bitwise-OR need to stay separate because their evaluation strategies differ from `and` / `or`, but NOT is unified `not` because it doesn't have that problem; it only differs by type. `/\`, `\/`, and `><` seem like the right blend of uniqueness without being too ambiguous. Being symbols, they also have assignment versions `/\=`, `\/=, and `><=`—useful for low-level bit manipulation. Keywords such as `band`, `bor`, or `bxor` wouldn't work here. How would their assignment operators look?
+Keywords bitwise operators use different symbols than their conventional `&|^~` in other languages because those symbols have different meanings by themselves in Mulang: `&` → tuples, `|` → pattern matching, `~` → type conversion. `&&` and `||` are usually Boolean operators and would also be ambiguous, even though those operations are handled by the keywords `and` and `or` instead. Bitwise-AND and bitwise-OR need to stay separate because their evaluation strategies differ from `and` / `or`, but NOT is unified `not` because it doesn't have that problem; it only differs by type. `/\`, `\/`, and `><` seem like the right blend of uniqueness without being too ambiguous. Being symbols, they also have assignment versions `/\=`, `\/=`, and `><=`—useful for low-level bit manipulation. Keywords such as `band`, `bor`, or `bxor` wouldn't work here. How would their assignment operators look?
 
 ```
 x band= 0b10  -- Did you mean `x: band = 0b10`?
@@ -283,7 +283,39 @@ x /\= 0b10    -- Clearly an assignment operation.
 
 That's why only non-keyword operators are allowed to have assignment forms.
 
-Bitwise operators resemble arrows which give them both visual and semantic unity. This breaks some of the usual habits of other languages, but that frees the usual symbols to do novel things. This is an experimental language, so it's not obligated to follow normal conventions.
+The operators are logically motivated — `/\` resembles ∧, `\/` resembles ∨, `><` looks like an X for XOR. The problem isn't that they're unmotivated, it's that the motivation isn't visible at a glance. Good syntax highlighting, inline hints, and a well-written guide would do more work here than any syntactic change. Bitwise operators resemble arrows which give them both visual and semantic unity.
+
+This may break some of the usual habits of other languages, but that frees the usual symbols to do novel things. This is an experimental language, so it's not obligated to follow normal conventions.
+
+### Pipelining `|>`
+
+When placed at the start of a line in a block, the pipelining operator `|>` takes on a special meaning. It takes the value of the previous line and inserts it into the its line as `_`. This makes it easy to chain functions one after another in sequence.
+
+```
+print("{
+    fetchC(
+        fetchB(
+            fetchA()
+        )
+    )
+}")
+```
+
+*Becomes...*
+
+```
+fetchA()
+|> fetchB(_)
+|> fetchC(_)
+|> print("{_}")
+```
+
+This makes it easier to see what gets called in what order. It reads like a list written in plain English:
+
+- `fetchA`
+- *then* `fetchB`
+- *then* `fetchC`
+- *then* `print`
 
 ### Operation chaining `[]`
 
@@ -358,7 +390,7 @@ This frees `name[]` to take on a new meaning in Mulang. *For more on that, see [
 
 ## Basic Bindings
 
-There are two types of bindings: basic `=` and meta `::`. See [Meta Bindings](#Meta-Bindings) below for details about `::`.
+There are two types of bindings: basic `=` and meta `::`. See [Meta Bindings](#Meta-Bindings-) below for details about `::`.
 
 ### Variable Declarations
 
@@ -2053,26 +2085,9 @@ Variable and functions primarily use the equals sign (`=`) and are for storing a
 
 Meta bindings are meant to resemble definitions. *"This is that."* Only when things get complicated should you have to expand on that. It should be easy and simple to define something. They are like the language file of your API, telling the compiler how to speak your own custom language—not just the language that you *speak* but the language that you *think* in.
 
-### Constants
-
-Putting a constant value after `::` creates a constant. This holds an unchangeable value that must be known at compile time. Explicit typing isn't necessary since it cannot be changed.
-
-```
-PI :: 3.1415926535
-```
-
-You can also bind a function to a constant. When calling it, it would be the same like defining it inline and then calling. This can be useful if you need to pass a function multiple times but don't want it to be outputted when compiled.
-
-```
-IDENTITY :: fn(x) = x
-addOne :: fn(x) = x + 1
-value = addOne(2)               -- Means (fn(x) = x + 1)(2), result is 3.
-array = map([1, 2, 3, 4], addOne)
-```
-
 ### Aliases
 
-Assigning a type after `::` creates an alias
+Assigning a type after `::` creates an alias. 
 
 ```
 numberType :: int
@@ -2134,9 +2149,27 @@ voidFn(): {} = ()
 
 We say that a void function returns nothing. Well, that's what an empty tuple is: *nothing*. So there isn't any issue here. This is one of Mulang's strengths. It's not afraid to make bold claims and go against the grain. This has a lot of potential in math and logic. 
 
+### Constants
+
+Pair `::` and `=` together to create a constant. This can be combined together as `::=` to mean the same thing. This distinguishes them from aliases and makes it clear that there's a value on the right hand side. A constant holds an unchangeable value that must be known at compile time. Explicit typing isn't necessary since it cannot be changed.
+
+```
+PI :: = 3.14159
+E ::= 2.71828   -- No space between `::` and `=` is needed.
+```
+
+You can also bind a function to a constant. To do so, but the parameter before the `=` like you would with basic functions. When calling it, it would be the same like defining it inline and then calling. This can be useful if you need to pass a function multiple times but don't want it to be outputted when compiled.
+
+```
+IDENTITY :: (x) = x
+addOne :: (x) = x + 1
+value = addOne(2)               -- Means (fn(x) = x + 1)(2), result is 3.
+array = map([1, 2, 3, 4], addOne)
+```
+
 ### Definition Blocks
 
-Some keywords after `::` start a **definition block.** They can only be used in `::` definitions. These are special blocks used for abstract data like types and static variables. 
+Some keywords after `::` start a **definition block.** They can only be used in `::` definitions. These are special blocks used for abstract data like types and static members. 
 
 #### Structural Types (`struct`)
 
@@ -2337,14 +2370,14 @@ Adding a parameter before the double colon (`::`) turns it into a **meta functio
 You can define a meta function by adding a parameter before the double colons and writing an expression after it. Like constants, they don't output a value in memory when compiled, useful for collecting repeated code. Unlike regular functions, meta function cannot be passed to another function. They only exist at compile-time. Each parameter is a variable within the expression, so you don't need to wrap them in parentheses `()` like with C macros. 
 
 ```
-max[a, b] :: if a > b then a else b
-min[a, b] :: if a < b then a else b
+max[a, b] ::= if a > b then a else b
+min[a, b] ::= if a < b then a else b
 ```
 
 You can also have multi-line meta function like regular functions. Each meta function creates a new scope. Defining variables that could bleed into the surrounding scope is not allowed. The last expression is the return value. Call it like a function using `[]`. 
 
 ```
-doSomethingComplicated[x] ::
+doSomethingComplicated[x] ::=
     x = x + 1
     x = x / 2
     x * x
@@ -2364,15 +2397,15 @@ value =
 Some more examples using the `[]` notation:
 
 ```
-max[a, b] :: if a > b then a else b
-min[a, b] :: if a < b then a else b
+max[a, b] ::= if a > b then a else b
+min[a, b] ::= if a < b then a else b
 print("{ max[0, 1] }")           -- Prints "1"
 print("{ min[0, 1] }")           -- Prints "0"
 print("{ max[1+2, 3+4] }")       -- Prints "7"
 
 f(x) = x * x
 g(x) = x + 2
-maxAdd[a, b] :: if a > b then fn(c) = a + c else fn(c) = b + c
+maxAdd[a, b] ::= if a > b then fn(c) = a + c else fn(c) = b + c
 print("{ maxAdd[ f(0), g(0) ] (1) }")
 ```
 
@@ -2386,7 +2419,7 @@ Maybe[T] :: enum =
     Some(T)
     None
 
-Some[T] :: fn(x: T) = Maybe[T].Some(x)
+Some[T] :: (x: T) = Maybe[T].Some(x)
 
 maybeInt = Some(1)
 ```
@@ -2426,16 +2459,16 @@ Generics will automatically generate code based on their parameters, but you can
 
 ```
 -- Forces every type to have its own implementation
-increment[T] :: fn(c: ref mu T): void = unset[]
+increment[T] :: (c: ref mu T): void = unset[]
 
 Counter :: struct = value: int
 
 -- Specialized for Counter
-increment[Counter] :: fn(c: ref mu Counter): void =
+increment[Counter] :: (c: ref mu Counter): void =
     c.value += 1
 
 -- Specialized for float
-increment[float] :: fn(c: ref mu float): void =
+increment[float] :: (c: ref mu float): void =
     c += 1.0
 
 c = Counter(value: 2)
