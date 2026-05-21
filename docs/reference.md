@@ -228,7 +228,7 @@ The philosophy of Mulang is that symbols should be easy to recognize and underst
 | `lhs !` | returns the result value if it's not an exception, otherwise propagate to the nearest `try` keyword *(see [`try` block](#try--except))* | 2 |
 | __(Functional)__ | — | — |
 | `lhs |> rhs` | pipelining, disregards `lhs` and returns `rhs` | 12 |
-| `~ rhs` — inferred type conversion | 3 |
+| `~ rhs` | inferred type conversion | 3 |
 | __(Assignment)__ | — | — |
 | `lhs = rhs` | assignment or inferred-type declaration *(See [Variable Declarations](#Variable-Declaration).)* | 12 |
 | `lhs := rhs` | always inferred-type declaration | 12 |
