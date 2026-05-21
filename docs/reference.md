@@ -252,7 +252,7 @@ There may be operator overloading in the future. Even if an operator could be br
 | `lhs = rhs` | assignment or inferred-type declaration *(See [Variable Declarations](#Variable-Declaration).)* | 14 |
 | `lhs := rhs` | always inferred-type declaration | 14 |
 | `lhs: T = rhs` | explicit-type declaration | 14 |
-| `lhs as rhs` | inline for `:=` but returns the assigned value instead of being void; the operands are inverted (variable goes on the right); creates an immutable variable by default *(See [Inline Binding](#Inline-Binding).)* | 1 |
+| `lhs tobe rhs` | inline for `:=` but returns the assigned value instead of being void; the operands are inverted (variable goes on the right); creates an immutable variable by default *(See [Inline Binding](#Inline-Binding).)* | 1 |
 | `lhs += rhs` | increment | 14 |
 | `lhs -= rhs` | decrement | 14 |
 | `lhs *= rhs` | `lhs = lhs * rhs` — multiplication assignment | 14 |
@@ -285,7 +285,7 @@ __Order of Operations:__
 
 Some operators have assignment alternatives by adding an equals sign `=` after it. These are reserved for the operators that aren't keywords and return the same type that their left-hand side is. This sets a variable based on its previous value. The left-hand side must be an already defined variable. If it's immutable, then this shadows it. If it's mutable, then the value is mutated. *(See [Mutability(#Mutability-mu).)* All of these are void statements, i.e. they return nothing and should only be used in an expression by themselves.
 
-All assignment operators *(except for `as`)* are **void.** This is intentional to prevent bugs and difficult to read code. It's recommend to put all assignment statements on their own separate lines for clarity. 
+All assignment operators *(except for `tobe`)* are **void.** This is intentional to prevent bugs and difficult to read code. It's recommend to put all assignment statements on their own separate lines for clarity. 
 
 ### Operation chaining with `[]`
 
@@ -344,10 +344,10 @@ y = x -> [
 5. `( 1 * 2 * 3 + 4 )`
 6. `( 10 )`
 
-Tuples are transparent by default, and a tuple with only one position component and no named components is equal to just its position component. *For an explaination why, see [Tuples](#Tuples).*
+Tuples are transparent by default, and a tuple with only one position component and no named components is equal to just its position component. *For an explaination why, see [Tuples](#Tuples).* Semantically, this makes sese. If you have a parenthetical expressions, you essentially have a tuple of one. Some languages make a distinction between tuples and parenthetical expressions with syntax like `(10,)`, but this is not necessary in Mulang. 
 
-- `(10) == (10).[0]`
-- `(10).[0] == 10`
+- `(10) == (10).0`
+- `(10).0 == 10`
 - _Therefore:_ `(10) == 10`
 
 **Mu the programming language is a novel and experimental one.** It has no obligation to follow normal conventions. Most other languages use `[]` by itself for indexing an array. While this is still possible in Mulang, operation chaining gives the coder a lot more options and ability to write expressive code. This is a break from the traditional style of programming, but it opens the door for more pragmatic and ergonomic code. This makes it instantly clear that when you see `#`, it's an array, just like `?` for options and `!` for results, staying consistent with itself rather than with other languages.
@@ -389,7 +389,7 @@ i = i + 1     -- Sets new `i` based on old `i`.
 i += 1        -- Does the same.
 ```
 
-Using the single equal-sign is a void statement. If you use it within an expression and not on its own, it's a syntax error. This helps prevent the common bug of using `=` when you meant `==`. For inline binding, use `let`/`then` or `as` instead. *(See [Inline Binding](#Inline-binding).)*
+Using the single equal-sign is a void statement. If you use it within an expression and not on its own, it's a syntax error. This helps prevent the common bug of using `=` when you meant `==`. For inline binding, use `let`/`then` or `tobe` instead. *(See [Inline Binding](#Inline-binding).)*
 
 ```
 (-- Error:
@@ -449,7 +449,7 @@ mut = 1
 doSomething(mut)   -- This is okay.
 ```
 
-`mu` variables cannot be shadowed by `=`. They can only be mutated. Assigning to the variable for the rest of the scope and any sub-scopes will mutate the variable—except for functions which always set a new variable unless its been explicitly captured. *(See [Capturing](#Capturing-capture).)*
+`mu` variables cannot be shadowed by `=`. They can only be mutated. Assigning to the variable for the rest of the scope and any sub-scopes will mutate the variable—except for functions which always set a new variable unless its been explicitly captured. *(See [Capturing](#Capturing).)*
 
 ```
 mu mut = 0
@@ -625,14 +625,14 @@ setInt(x)
 print("{x}")    -- Prints "3"
 ```
 
-This works for mutable variables, but what if you wanted to make an immutable variable using `out`? You can write `out` while calling a function to declare an immutable variable in the current scope. This has the same rules that `as` does. *(See [Inline Binding](#Inline-Binding).)
+This works for mutable variables, but what if you wanted to make an immutable variable using `out`? You can write `out` while calling a function to declare an immutable variable in the current scope. This has the same rules that `tobe` does. *(See [Inline Binding](#Inline-Binding).)
 
 ```
 setInt(out n)   -- Declare a new variable `n` that gets set by `setInt`.
 print("{n}")    -- Prints "3"
 ```
 
-#### Capturing (`@capture`)
+#### Capturing
 
 Immutable variables can be captured without an issue. If you try to set it within a function, it will get shadowed within the scope of the function. This also includes other functions which are also immutable by default.
 
@@ -654,7 +654,7 @@ cannotChangeX(2) -- Prints "2"
 print("{x}")     -- Prints "1"
 ```
 
-To capture a mutable variable, you must mark it with the `@capture` decorator. This helps make it easy to see which functions can mutate other variables and which don't. You just have to use `@capture` on the first assignment of a variable—subsequent assignments will mutate the variable. This follows the same practice that `import` and `inherit` where all words in a given context are listed out clearly so that there are no accident name collisions or hidden gotchas.
+To capture a mutable variable, you must mark it with the `@nonlocal` decorator. This helps make it easy to see which functions can mutate other variables and which don't. You just have to use `@nonlocal` on the first assignment of a variable—subsequent assignments will mutate the variable. This follows the same practice that `import` and `inherit` where all words in a given context are listed out clearly so that there are no accident name collisions or hidden gotchas.
 
 ```
 mu count = 0
@@ -662,10 +662,10 @@ mu squared = 1
 mu cubed = 1
 
 addCount() =
-    @capture                          -- On the line before the assignment.
+    @nonlocal                          -- On the line before the assignment.
     count += 1
-    @capture squared = count * count  -- Or inlined.
-    @capture cubed = squared * count
+    @nonlocal squared = count * count  -- Or inlined.
+    @nonlocal cubed = squared * count
 
 addCount()
 addCount()
@@ -673,7 +673,7 @@ addCount()
 print("{count}, {squared}, {cubed}") -- Prints "3, 9, 27"
 ```
 
-You can also write `@capture()` over the function to capture multiple variables at once.
+You can also write `@capture` over the function to capture multiple variables at once. This is preferable for declared functions since it makes it clear right away that a function is mutating variables. `@nonlocal` is useful for callback functions inside a `do`/`end` expression. 
 
 ```
 mu count = 0
@@ -744,7 +744,7 @@ Capturing also works inside lambda functions just like with named functions.
 ```
 mu count = 0
 forEach([1, 2, 3, 4], do fn(x) =
-    @capture count += x
+    @nonlocal count += x
 end)
 ```
 
@@ -798,7 +798,7 @@ You can also bind variables within an expression using `let`/`then` and `as`. `l
 ```
 squared = let x = getSomething() then x * x
 
-while next() as val != None:
+while next() tobe val != None:
     print("{val}")
 ```
 
@@ -818,22 +818,31 @@ sum = let [x = 1, y = 2] then x + y
 
 `[]` are used instead of `()` to distinguish it from a regular function call. It also follows the pattern of `name[]` meaning a compile-time function, which `let []` sort of is a compile-time function since it's running at compile-time. However, it's technically a part of the syntax and not a function.
 
-#### `as`
+#### `tobe`
 
-`as` sets a value within an expression as a variable within a block's scope. It returns the value of the left-hand side, the right-hand side should be a valid variable name. Like `let`, it's an explicit declaration like `:=`, so it can't mutate. Note that this is slightly different from but consistent with the `as` that's used for aliasing. *`as` the operator* is only used in **expressions**; meanwhile, *`as` for aliases* is only used in **patterns.** *For information on how patterns work, see [Destructuring](#Destructuring).*
+`tobe` sets a value within an expression as a variable within a block's scope. It returns the value of the left-hand side, the right-hand side should be a valid variable name. Like `let`, it's an explicit declaration like `:=`, so it can't mutate. Note that this is slightly different from but consistent with the `as` that's used for aliasing. *`tobe` the operator* is only used in **expressions**; meanwhile, *`as` for aliases* is only used in **patterns.** *For information on how patterns work, see [Destructuring](#Destructuring).*
 
-The simplest use case for `as` is to pair it with a `while` loop to get a value on each iteration.
+The simplest use case for `tobe` is to pair it with a `while` loop to get a value on each iteration.
 
 ```
-while next() as val != None:
+while next() tobe val != None:
     print("{val}")
 ```
 
-Another is to use while method chaining to get a result of one of the methods. Note that `as` has the same order of operations as `.`. *(See [Order of Operations](#Order-of-Operations).)*
+This reads like an English sentence: "While next to be value is not none..."
+
+Not that `let` wouldn't work here because it only works on a single expression.
+
+```
+while None != getValue() bind value:
+    print("{value}")   -- Error: `value` is not defined.
+```
+
+Another use case for `tobe` is to use while method chaining to get a result of one of the methods. Note that `tobe` has the same order of operations as `.`. *(See [Order of Operations](#Order-of-Operations).)*
 
 ```
 object.method1()
-    .method2() as result
+    .method2() tobe result
     .method3()
 print("{result}")
 ```
@@ -841,38 +850,20 @@ print("{result}")
 Type must be inferred. This is to avoid using `:` in an expression, which could be mistaken for the key name of a tuple or a declaration.
 
 ```
-action(get() as result: int) -- Is this a named component? Did you forget the commas?
+(-- Syntax Error:
+action(get() tobe result: int) -- Is this a named component? Did you forget the commas?
+--)
 ```
 
-However, mutability can be set with `as mu`.
+However, mutability can be set with `tobe mu`.
 
 ```
 object.method1()
-    .method2() as mu result   -- New mutable variable.
+    .method2() tobe mu result   -- New mutable variable.
     .method3()
 result += 1
 print("{result}")
 ```
-
-Other keywords like `bind` would not work for `as` and would be too ambiguous in meaning.
-
-```
-object.method1()
-    .method2() bind result   -- What does this mean?
-    .method3()
-```
-
-And `let` only works on a single expression.
-
-```
-while None != getValue() bind value:
-    print("{value}")   -- Error: `value` is not defined.
-```
-
-The two usages of `as` appear in different grammatical contexts:
-
-* Aliasing: always left of `=` inside a destructuring pattern
-* Binding: always postfix on a subexpression
 
 ---
 
@@ -1502,12 +1493,12 @@ else:
     print("The loop failed")
 ```
 
-#### `while` / `as`
+#### `while` / `tobe`
 
-Some programming languages let you do something like `while value = getValue()`. Mulang doesn't allow this because `=` is a void statement. Instead, you can use `as` to achieve the same thing but more explicitly.
+Some programming languages let you do something like `while value = getValue()`. Mulang doesn't allow this because `=` is a void statement. Instead, you can use `tobe` to achieve the same thing but more explicitly.
 
 ```
-while None != getValue() as value:
+while None != getValue() tobe value:
     print("value = {value}")
 ```
 
@@ -1654,7 +1645,9 @@ mightGetSomething() =
     Some(x + 1)
 ```
 
-Conditional block-types `if`, `while`, and `loop`/`until` have alternative forms by adding `case` after the keyword. This combines the pattern matching of `match` into one expression. Useful if you want to destructure a single case of a sum type. This must be a pattern that matches the type of the value after `=`.
+Conditional block-types `if`, `while`, and `loop`/`until` have alternative forms by adding `case` after the keyword. This combines the pattern matching of `match` into one expression. The `case` is necessary so that it doesn't get confused for assignement `=` which is not allowed in the condition of these blocks. The `case` makes it semantically clear that the next thing to expect is a pattern.
+
+`if case` is useful if you want to destructure a single case of a sum type. This must be a pattern that matches the type of the value after `=`.
 
 ```
 if case Pattern(x) = value:
@@ -1672,14 +1665,14 @@ if case ResultType1(val: int) | ResultType2{data as val: int} = getResult():
     print("val = {val}")
 ```
 
-You can also do `while case` just like with `if case`. This will loop until the pattern breaks. 
+`while case` is just like with `if case` but will loop until the pattern breaks. In some cases, this might be more desirable than the `while` / `tobe` format. 
 
 ```
 while case Some(x) = nextValue():
     print("value is {x}")
 ```
 
-`until case` is also possible, but it's behavior is a bit different than the other `_ case` blocks. Instead of destructuring and creating a new variable in the loop body, it creates a new variable in the scope outside of the loop. This can be useful if you want to repeatedly call a function until you get something.  The loop cannot conditionally break inside the body. This ensures that the destructured variables are defined after the loop finishes.
+`until case` is also possible. It's behavior is closer to just `case` than the other `_ case` blocks. It creates a new variable in the scope outside of the loop. This is because it appears at the end of the block instead of the top, so it won't be set *until* it matches which means the loop breaks. This can be useful if you want to repeatedly call a function *until* you get something.  The loop cannot conditionally break inside the body because then the variable would be unset. This ensures that the destructured variables are defined after the loop finishes. The loop runs until the pattern matches, and when it does, the matched value is your result — it would be meaningless otherwise. The scoping rule follows directly from the semantics. You can't use the value inside the loop body anyway since until is a termination condition, so there's only one place the binding could go — outside. *The scope of bindings mirrors the position of the pattern.*
 
 ```
 value: mu int?
@@ -1691,9 +1684,11 @@ until case Some(x) = value
 print("value = {x}")
 ```
 
-#### `opt`
+All of these blocks are semantically linked with `case`. It makes it very clear that some kind of pattern matching with an enum is happening. 
 
-Wraps a single expression in an option type. After `opt`, you can use `?` within to expression to unwrap multiple option values. If one `?` returns `None`, then the whole `opt` expression stops and returns `None`.
+#### `opt` / `orelse`
+
+Wraps a single expression in an option type. After `opt`, you can use `?` within to expression to unwrap multiple option values. If one `?` returns `None`, then the whole `opt` expression stops and returns `None`. `orelse` is optional. It unwraps the option or gives the right-hand side if it's `None`. 
 
 ```
 x = opt f(a?) orelse "fallback"     -- x is "fallback" if a is none.
@@ -2332,7 +2327,7 @@ expr             -- Modifies whatever this expression is.
 
 Decorators can be stacked and will run in reverse order. *Closest decorator to the expression runs, then the next one above that, then the next one, etc.*
 
-Built-in decorators so far include `@capture`, `@opaque`, and `@memory`. More will be added in the future.
+Built-in decorators so far include `@nonlocal`, `@capture`, `@opaque`, and `@memory`. More will be added in the future.
 
 ```
 @memory(Manual) -- Call it like a function to pass a variable.
@@ -2344,7 +2339,7 @@ Thing :: struct =
 
 mu count = 0
 increment() =
-    @capture count += 1   -- Inlined decorator.
+    @nonlocal count += 1   -- Inlined decorator.
 ```
 
 Some other ideas for built-in decorators include:
@@ -2415,11 +2410,12 @@ This is a work in progress though. How these decorators are implemented and thei
 40. `self`
 41. `struct`
 42. `then`
-43. `try`
-44. `until`
-45. `where`
-46. `while`
-47. `yield`
+43. `tobe`
+44. `try`
+45. `until`
+46. `where`
+47. `while`
+48. `yield`
 
 *NOTE: Built-in types, values, functions, and decorators like `int`, `True`, `Some`, `default`, `print`, `@memory` etc. are not considered keywords.*
 
