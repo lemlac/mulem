@@ -50,9 +50,9 @@ Almost everything is an expression. Some statements can be either inline or bloc
 Parts of an expression are divided into 4 categories:
 
 1. __Words:__ variable names: `x`, `PI; numeric constants: `1`, `3.14`, `0xABCDEF`;
-2. __Char/String Literals:__ things surrounded in quotes: `'a'`, `"foo"`, `"""big string"""`, `$''raw string''$`
+2. __Char/String Literals:__ things surrounded in quotes: `'a'`, `"foo"`, `"""big string"""`, `@''raw string''@`
 3. __Delimiters:__ commas `,` for tuples and arrays; `;` for subsequent expressions
-4. __Symbols:__ operators and anything with these characters: `~!@#$%^&*-+=\|:<.>/?` *but excluding the symbol for a comment `--`*
+4. __Symbols:__ operators and anything with these characters: `~!@#%^&*-+=\|:<.>/?` *but excluding the symbol for a comment `--`*
 5. __Bracket Expressions:__ anything in parentheses `()`, square brackets `[]`, or curly braces `{}`; *note: the term __bracket__ means any of these characters `()[]{}`, and the term __square bracket__ means just these characters `[]`*
 6. __Whitespace:__ spaces, tabs `\t`, new lines `\n`/`\r`, etc.
 
@@ -206,8 +206,8 @@ The philosophy of Mulang is that symbols should be easy to recognize and underst
 | `and rhs`      | do `and` on each component of a tuple: `and (True, False, True)` → `True and False and True` → `False` | 9 |
 | `or rhs`       | do `or` on each component of a tuple: `or (True, False, True)` → `True or False or True` → `True` | 9 |
 | __(Bitwise)__  | — | — |
-|  `lhs /\ rhs`  | bitwise-`AND` *(resembles a wedge* $\land$ *, the symbol for logical AND; also resembles a capital A)* | 5 |
-| `lhs \/ rhs`   | bitwise-`OR` *(resembles a vee* $\lor$ *, the symbol for logical OR; also invert of `/\`)* | 5 |
+|  `lhs /\ rhs`  | bitwise-`AND` *(resembles a wedge ∧ , the symbol for logical AND; also resembles a capital A)* | 5 |
+| `lhs \/ rhs`   | bitwise-`OR` *(resembles a vee ∨ , the symbol for logical OR; also invert of `/\`)* | 5 |
 | `lhs >< rhs`   | bitwise-`XOR` *(resembles an X for XOR)* | 5 |
 | `lhs << rhs`   | bitshift-left | 7 |
 | `lhs >> rhs`   | bitshift-right | 7 |
@@ -289,7 +289,7 @@ This may break some of the usual habits of other languages, but that frees the u
 
 ### Pipelining `|>`
 
-When placed at the start of a line in a block, the pipelining operator `|>` takes on a special meaning. It takes the value of the previous line and inserts it into the its line as `_`. This makes it easy to chain functions one after another in sequence.
+When placed at the start of a line in a block, the pipelining operator `|>` takes on a special meaning. It takes the value of the previous line and inserts it into into the next line as `$`. This symbol is known as the **contextual reference.** This symbol has several uses in Mulang, but for now just know that it represents the value of the previous line before `|>`. *(See [Contextual Reference (`$`)](#Contextual-Reference-$).)* This makes it easy to chain functions one after another in sequence.
 
 ```
 print("{
@@ -305,9 +305,9 @@ print("{
 
 ```
 fetchA()
-|> fetchB(_)
-|> fetchC(_)
-|> print("{_}")
+|> fetchB($)
+|> fetchC($)
+|> print("{$}")
 ```
 
 This makes it easier to see what gets called in what order. It reads like a list written in plain English:
@@ -325,18 +325,18 @@ Operation chaining has the same precedence has member accessing `.`. This allows
 
 ```
 array#[0]#[1]                  -- → ( ( array # 0 ) # 1 )
-fn1() |> [fn2(_)] |> [fn3(_)]  -- → ( ( fn1() |> fn2(_) ) |> fn3(_) ) → fn3( fn2( fn1() ) )
+fn1() |> [fn2($)] |> [fn3($)]  -- → ( ( fn1() |> fn2($) ) |> fn3($) ) → fn3( fn2( fn1() ) )
 ```
 
 Pipelining can be particularly useful when combined with `[]` for inlining a variable that's repeated in an expression or method-chaining on an object with non-method functions.
 
 ```
 -- Repeated value:
-onePlusTwoCubed = (1+2) |> [_*_*_]
+onePlusTwoCubed = ( 1 + 2 ) |> [ $ * $ * $ ]
 print("{onePlusTwoCubed}")       -- Prints "27"
 
 -- Method chaining:
-object.method1() |> [fn1(_)].method2() |> [fn2(_)]
+object.method1() |> [ fn1($) ].method2() |> [ fn2($) ]
 -- Becomes…
 fn2( fn1( object.method1() ).method2() )
 ```
@@ -350,25 +350,23 @@ if or x == [0, 1, 2, 3, 4]:
     print("x is 0 or 1 or 2 or 3 or 4")
 ```
 
-You can create an named tuple instead of a position tuple too. Members can have names by adding the name and a colon `:` in front of each index. It must be a valid variable name. If you define a member with `name:`, you can access it in the next expression with `_.name`. 
+You can create an named tuple instead of a position tuple too. Members can have names by adding the name and a colon `:` in front of each index. It must be a valid variable name. If you define a member with `name:`, you can access it in the next expression with `$name`. 
 
 ```
 -- Split `x` into 3 components and collect.
 x = 1
 y = x |> [
-    a: _,
-    b: _ + 1,
-    c: _ + 2,
-    d: _ + 3,
-] |> [
-    _.a * _.b * _.c + _.d
-]    
+    a: $,
+    b: $ + 1,
+    c: $ + 2,
+    d: $ + 3,
+] |> [ $a * $b * $c + $d ]
 ```
 
 `y` simplifies like this:
 
-1. `x |> [ a: _, b: _ + 1, c: _ + 2, d: _ + 3 ] |> [ _.a * _.b * _.c + _.d ]`
-2. `( a: x, b: x + 1, c: x + 2, d: x + 3 ) |> [ _.a * _.b * _.c + _.d ]`
+1. `x |> [ a: $, b: $ + 1, c: $ + 2, d: $ + 3 ] |> [ $a * $b * $c + $d ]`
+2. `( a: x, b: x + 1, c: x + 2, d: x + 3 ) |> [ $a * $b * $c + $d ]`
 3. `( x * (x + 1) * (x + 2) + (x + 3) )`
 4. `( 1 * (1 + 1) * (1 + 2) + (1 + 3) )`
 5. `( 1 * 2 * 3 + 4 )`
@@ -388,18 +386,58 @@ The transition from array indexing with `[]` in other languages to array indexin
 
 This frees `name[]` to take on a new meaning in Mulang. *For more on that, see [Meta Functions](#Meta-Functions).* *For more information on array indexes, see [Arrays](#Arrays).*
 
+### Contextual Reference (`$`)
+
+`$` has a special meaning. It holds the value of a context specific variable. Words in Mulang don't allow `$`, but this symbol is treated like one. You can put symbols next to it, and other words needs to be seperated by spaces next to it.
+
+```
+-$    -- This is okay, 1 symbol + 1 word: `-` + `$`.
+not$  -- This is one word, error since `not$` doesn't exist.
+not $ -- This is okay, 2 words: `not` + `$`.
+```
+
+Members of `$` can be accessed without a `.`, just write the member's name after the sign like a variable prefixed with `$`. This should be familiar to programmers who've used some languages where variables normally start with `$`. 
+
+- If `$` has a member called named `member`, `$.member` can be written as `$member`.
+
+The two main places you'll see `$` are in pipelining and `impl` blocks. *(See [Pipelining `|>`](#Pipelining-) or [Implementing](#Implementing-impl).)*
+
+```
+fetchA()
+|> fetchB($)
+|> fetchC($)
+|> print("{$}")
+```
+
+A method with `$` in the first parameter are callable as a method on the instance. `$` refers to the instance, analogous to `self` or `this` in other languages. You can give it an alias with `as`. 
+
+```
+MyType :: struct = foo: str
+
+MyType :: impl =
+    method1($) = $foo
+    method2($ as self) = self.foo      -- `$` can be aliased with `as`.
+    method3($ as myType) = myType.foo  -- Alias name can be any valid variable name.
+
+x = MyType(foo: "bar")
+print("{ x.method1() }")  -- Prints "foo"
+print("{ x.method2() }")  -- Prints "foo"
+print("{ x.method3() }")  -- Prints "foo"
+```
+
 ## Basic Bindings
 
 There are two types of bindings: basic `=` and meta `::`. See [Meta Bindings](#Meta-Bindings-) below for details about `::`.
 
 ### Variable Declarations
 
-Variables are declared with just the equals sign (`=`). Type is inferred, but can be declared with a colon (`:`). You can also use the `:=` operator instead to declare and infer the type at the same time. This is useful for shadowing mutable variables. *(See [Mutability](#Mutability).)* For now, just know that anytime you see `:` before `=`, *it always declares a new variable,* and if you see just `=`, *it's either declaring or mutating a variable.*
+Variables are declared with just the equals sign (`=`). Type is inferred, but can be declared with a colon (`:`). You can also use the `: =` or `:=` operator instead to declare and infer the type at the same time. This is useful for shadowing mutable variables. *(See [Mutability](#Mutability).)* For now, just know that anytime you see `:` before `=`, *it always declares a new variable,* and if you see just `=`, *it's either declaring or mutating a variable.*
 
 ```
-a = 1       -- Implicit declaration
+a = 0       -- Implicit declaration
 b: int = 1  -- Explicit declaration with type.
 c := 2      -- Explicit declaration but infer its type.
+d: = 4      -- Space between the `:` and `=` doesn't matter.
 ```
 
 Variables are immutable, but declaring it again shadows it. Any subsequent `=` of an immutable variable is an implicit declaration. Redeclaring a variable with the same name is called **shadowing.** This makes Mulang flexible while still having the advantages of being statically typed.
@@ -1063,7 +1101,7 @@ unicode = '\uFFFF'
 
 #### Strings
 
-Strings are marked with quotation marks (`"_"`) *(also called double quotes)* and can be formatted with curly braces (`{expr}`) in the string. Use a backslash to write a literal opening curly brace (`\{`). Note that string insertion and named tuples both use curly braces. This shouldn't be an issue though since they're used in different contexts. Expression are implicitly converted to strings, so using `str()` or `~` isn't necessary.
+Strings are marked with quotation marks (`"…"`) *(also called double quotes)* and can be formatted with curly braces (`{expr}`) in the string. Use a backslash to write a literal opening curly brace (`\{`). Note that string insertion and named tuples both use curly braces. This shouldn't be an issue though since they're used in different contexts. Expression are implicitly converted to strings, so using `str()` or `~` isn't necessary.
 
 ```
 name = "world"  
@@ -1116,7 +1154,7 @@ But three quotation marks like """ need to be escaped.
 This is the last line because of the closing quotation marks below it.
 ```
 
-You can write a raw string with `''…''` (two apostrophes). Although apostrophes `'` are used for chars, an empty char isn't possible since the default char is written `'\0'` (null character). This is a common practice in programming languages where `"` mark formattable strings and `'` mark raw strings, so this should be easy to understand for any programmer. When you write `''`, every character after it (including whitespace and indentation) is in the string until the closing `''`. Escaping with backslashes `\` and insertion with curly braces `{}` are ignored.
+You can write a basic raw string with `''…''` (two apostrophes). Although apostrophes `'` are used for chars, an empty char isn't possible since the default char is written `'\0'` (null character). A common practice in programming languages uses the double quote `"` for formattable strings and the single quote mark `'` for raw strings, so it should be easy for any programmer to see the parallel. When you write `''`, every character after it (including whitespace and indentation) is in the string until the closing `''`. Escaping with backslashes `\` and insertion with curly braces `{}` are ignored.
 
 ```
 rawString = ''It's okay to put an apostrophe (') in the string.''
@@ -1124,32 +1162,62 @@ filePath = ''C:\files\on\windows.txt''
 template = ''Insert here → {{variable}}''
 ```
 
-To escape `''` within a raw string, add a dollar sign `$` before and after the apostrophes. The number of `$`s must match to close the raw string.
+To escape `''` within a raw string, add an at sign `@` before and after the string. The number of `@`s must match to close the raw string. This symbol is also used for decorators such as `@capture`, so the two connect giving `@` the general meaning of a compile-time signal.
 
 ```
--- Add a `$` to escape the `''` within the string.
-bigDocument = $''
+-- Add a `@` to escape the `''` within the string.
+bigDocument = @''
     This  '
    is   ''      ''
   all       ''
   in  '         '
    a     '''' '
     string
-''$
--- Matching number of `$` closes the string.
+''@
+-- Matching number of `@` closes the string.
 
--- `$$''` to escape the `''$` within the string.
-nestedDocument = $$''
-bigDocument = $''
+-- `@@''` to escape the `''@` within the string.
+nestedDocument = @@''
+bigDocument = @''
     This  '
    is   ''      ''
   all       ''
   in  '         '
    a     '''' '
     string
-''$                
-''$$
--- `''$$` closes the matching `$$''`.
+''@               
+''@@
+-- `''@@` closes the matching `@@''`.
+```
+
+You can put a raw string enclosed in `@` signs at the start of a new line without breaking a block. Significant whitespace is temporarially disabled when the line starts with `@`-style raw string, and the parser ignores indentation significance while inside the raw string. All whitespace and characters are put into the string without formatting until it gets to the matching `''@` marker. Then, reident to resume the block. This is useful for when you really just want to copy and paste data directly into the code without indenting.  
+
+```
+block:
+    block:
+        block:
+            block:
+                nestedRawString =  -- Put raw string on the next line without indenting.
+@@@''                       
+                       
+    Indentation  
+  doesn't matter     
+ here.              
+                  
+   ''@@@  -- Right here: the string ends and the block resumes.
+                print("{nestedRawString}")    -- Re-indent to return to the block.
+```
+
+What it prints:
+
+```
+                       
+                       
+    Indentation  
+  doesn't matter     
+ here.              
+                  
+   
 ```
 
 While this is possible, this is not recommended for the sake of legibility. For anything more complicated, it's recommended to save the string in a document and open the file inside your program, which will be handled by a separate library and lies outside the scope of this document.
@@ -2290,16 +2358,16 @@ except DBZ(x):
 
 #### Prototypes (`proto`)
 
-A `proto` is an abstract interface — a named contract with no data. It is equivalent to a `virtual class` (C++), `trait` (Rust), or `interface` (Java, TypeScript, etc.) in other languages. Each member is a function, also called a **method**. Methods that have a parameter named `self` at the beginning will be called like methods on the instance of that type, i.e. `self.method(…)`. This is equivalent to saying `typeof[self].method(self, …)`.
+A `proto` is an abstract interface — a named contract with no data. It is equivalent to a `virtual class` (C++), `trait` (Rust), or `interface` (Java, TypeScript, etc.) in other languages. Each member is a function, also called a **method**. Methods that have a parameter named `$` at the beginning will be called like methods on the instance of that type, i.e. `$.method(…)`. This is equivalent to saying `typeof[$].method($, …)`.
 
 ```
 MyPrototype :: proto =
-    speak(self): str
+    speak($): str
 ```
 
 #### Implementing (`impl`)
 
-Methods and trait implementations are added separately with `impl`. Much like `proto`, `self` in the first parameter of a method refers to the current instance. You can also add static values that are attached to the type itself. Use `.` to access static values and methods like with structs.
+Methods and trait implementations are added separately with `impl`. Much like `proto`, `$` in the first parameter of a method refers to the current instance. You can also add static values that are attached to the type itself. Use `.` to access static values and methods like with structs.
 
 ```
 MyStruct :: impl =
@@ -2318,8 +2386,8 @@ MyStruct :: impl[MyPrototype] =
         "I am a MyStruct \{ name={self.name}, value={self.value} }"
 
 MyEnum :: impl[MyPrototype] =
-    speak(self) =
-        match self then
+    speak($) =
+        match $ then
         | First:
             "I am a MyEnum of First"
         | Second(x):
@@ -2619,14 +2687,13 @@ This is a work in progress though. How these decorators are implemented and thei
 32. `raise`
 33. `ref`
 34. `return`
-35. `self`
-36. `struct`
-37. `then`
-38. `try`
-39. `until`
-40. `when`
-41. `where`
-42. `yield`
+35. `struct`
+36. `then`
+37. `try`
+38. `until`
+39. `when`
+40. `where`
+41. `yield`
 
 *NOTE: Built-in types, values, functions, and decorators like `int`, `True`, `Some`, `default`, `print`, `@memory` etc. are not considered keywords.*
 
