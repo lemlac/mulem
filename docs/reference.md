@@ -177,101 +177,102 @@ end)            -- `end` finishes the inline-block expression.
 
 ## Operators
 
-The philosophy of Mulang is that symbols should be easy to recognize and understand. Generally, keywords are preferred over symbols to make it easier to read, but symbols can also help make code easier to both write and read at times. Many are semantically grouped based on their contextual usage, for example `*` and `/` relate to math, `?` relates to options, `&` relates to tuples, etc.. There's also a common pattern where repeating an operator gives you a more technical or complex version of that operator, for example: `+` addition vs `++` concatenation, `*` multiplication vs `**` exponentiation, `/` division vs `//` floor division, and `%` standard modulo vs `%%` floor division modulo.
+The philosophy of Mulang is that symbols should be easy to recognize and understand. Good symbols can also help make code easier to both write and read at times. Many are semantically grouped based on their contextual usage, for example `*` and `/` relate to math, `?` relates to options, `&` relates to tuples, etc.. There's also a common pattern where repeating an operator gives you a more technical or complex version of that operator, for example: `+` addition vs `++` concatenation, `*` multiplication vs `**` exponentiation, `/` division vs `//` floor division, and `%` standard modulo vs `%%` floor division modulo.
 
 | Operation | Meaning | Order |
 |:--|:--|:--|
 | __(Arithmetic)__ | — | — |
 | `lhs + rhs` | addition | 6 |
 | `lhs - rhs` | subtraction | 6 |
-| `+ rhs` | keeps the sign the same; *so does nothing* | 3 |
-| `- rhs` | sign-flip | 3 |
-| `lhs * rhs` | multiplication | 5 |
-| `lhs / rhs` | exact division; *returns a floating point number* | 5 |
-| `lhs // rhs` | floored division (rounded down); *returns an integer* | 5 |
-| `lhs % rhs` | modulo (sign matches `lhs`) | 5 |
-| `lhs %% rhs` | floor division modulo (sign matches `rhs`); *result is between the range `[0, rhs)` if `rhs` is positive or `(rhs, 0]` if `rhs` is negative* | 5 |
-| `lhs ** rhs` | exponential | 4 |
+| `+ rhs` | keeps the sign the same; *so does nothing* | 9 |
+| `- rhs` | sign-flip | 9 |
+| `lhs * rhs` | multiplication | 7 |
+| `lhs / rhs` | exact division; *returns a floating point number* | 7 |
+| `lhs // rhs` | floored division (rounded down); *returns an integer* | 7 |
+| `lhs % rhs` | modulo (sign matches `lhs`) | 7 |
+| `lhs %% rhs` | floor division modulo (sign matches `rhs`); *result is between the range `[0, rhs)` if `rhs` is positive or `(rhs, 0]` if `rhs` is negative* | 7 |
+| `lhs ** rhs` | exponential *(right-associative: `2**3**2` is `2**(3**2)`)* | 8 |
 | __(Comparison)__ | — | — |
-| `lhs == rhs` | equality | 9 |
-| `lhs != rhs` | inequality | 9 |
-| `lhs > rhs` | greater than | 9 |
-| `lhs < rhs` | less than | 9 |
-| `lhs >= rhs` | greater than or equals to | 9 |
-| `lhs <= rhs` | less than or equals to | 9 |
+| `lhs == rhs` | equality | 3 |
+| `lhs != rhs` | inequality | 3 |
+| `lhs > rhs` | greater than | 3 |
+| `lhs < rhs` | less than | 3 |
+| `lhs >= rhs` | greater than or equals to | 3 |
+| `lhs <= rhs` | less than or equals to | 3 |
 | __(Boolean)__ | — | — |
-| `lhs and rhs` | false if any are false | 10 |
-| `lhs or rhs` | true if any are true | 11 |
-| `not rhs` | inverts a boolean or bitwise-`NOT` when `rhs` is a number | 3 |
-| `and rhs` | do `and` on each component of a tuple: `and (True, False, True)` → `True and False and True` → `False` | 3 |
-| `or rhs` | do `or` on each component of a tuple: `or (True, False, True)` → `True or False or True` → `True` | 3 |
+| `lhs and rhs` | false if any are false | 2 |
+| `lhs or rhs` | true if any are true | 1 |
+| `not rhs` | inverts a boolean or bitwise-`NOT` when `rhs` is a number | 9 |
+| `and rhs` | do `and` on each component of a tuple: `and (True, False, True)` → `True and False and True` → `False` | 9 |
+| `or rhs` | do `or` on each component of a tuple: `or (True, False, True)` → `True or False or True` → `True` | 9 |
 | __(Bitwise)__ | — | — |
-|  `lhs /\ rhs` | bitwise-`AND` *(resembles a wedge* $\land$ *, the symbol for logical AND; also resembles a capital A)* | 7 |
-| `lhs \/ rhs` | bitwise-`OR` *(resembles a vee* $\lor$ *, the symbol for logical OR; also invert of `/\`)* | 7 |
-| `lhs >< rhs` | bitwise-`XOR` *(resembles an X for XOR)* | 7 |
-| `lhs << rhs` | bitshift-left | 5 |
-| `lhs >> rhs` | bitshift-right | 5 |
-| `lhs >>> rhs` | bitshift-right (unsigned) | 5 |
+|  `lhs /\ rhs` | bitwise-`AND` *(resembles a wedge* $\land$ *, the symbol for logical AND; also resembles a capital A)* | 5 |
+| `lhs \/ rhs` | bitwise-`OR` *(resembles a vee* $\lor$ *, the symbol for logical OR; also invert of `/\`)* | 5 |
+| `lhs >< rhs` | bitwise-`XOR` *(resembles an X for XOR)* | 5 |
+| `lhs << rhs` | bitshift-left | 7 |
+| `lhs >> rhs` | bitshift-right | 7 |
+| `lhs >>> rhs` | bitshift-right (unsigned) | 7 |
 | __(Arrays)__ | — | — |
-| `lhs # rhs` | get an item from `lhs` at an index `rhs` (index starting at 0) | 2 |
+| `lhs # rhs` | get an item from `lhs` at an index `rhs` (index starting at 0) | 10 |
 | `lhs ++ rhs` | concatenation, returns a new array | 6 |
-| `++ rhs` | spread an array or iterator into an array or positional tuple | 3 |
-| `lhs .. rhs` | creates an iterator that starts at the left value and ends just before the right value (exclusive) | 8 |
-| `lhs ..= rhs` | creates an iterator that starts at the left value and ends with the right value (inclusive) | 8 |
-| `lhs in rhs` | checks if an item exists in an array, returns a boolean | 9 |
+| `++ rhs` | spread an array or iterator into an array or positional tuple | 10 |
+| `lhs .. rhs` | creates an iterator that starts at the left value and ends just before the right value (exclusive) | 4 |
+| `lhs ..= rhs` | creates an iterator that starts at the left value and ends with the right value (inclusive) | 4 |
+| `lhs in rhs` | checks if an item exists in an array, returns a boolean | 3 |
 | __(Tuples)__ | — | — |
-| `lhs . rhs` | access a member/component | 1 |
-| `& rhs` | spread a tuple into another tuple | 3 |
+| `lhs . rhs` | access a member/component | 11 |
+| `& rhs` | spread a tuple into another tuple | 10 |
 | __(Options)__ | — | — |
-| `lhs ?` | returns the `Some` value if it's not `None`, otherwise propagate to the nearest `opt` keyword *(see [`opt` block](#opt))* | 2 |
+| `lhs ?` | returns the `Some` value if it's not `None`, otherwise propagate to the nearest `opt` keyword *(see [`opt` block](#opt))* | 10 |
+| `lhs || rhs` | `None`-coelessing; if `lhs` is `Some(x)` then `x` else `rhs` | 1 |
 | __(Results)__ | — | — |
-| `lhs !` | returns the result value if it's not an exception, otherwise propagate to the nearest `try` keyword *(see [`try` block](#try--except))* | 2 |
+| `lhs !` | returns the result value if it's not an exception, otherwise propagate to the nearest `try` keyword *(see [`try` block](#try--except))* | 10 |
 | __(Pointers)__ | — | — |
-| `lhs ^` | dereferences a typed pointer | 2 |
+| `lhs ^` | dereferences a typed pointer | 10 |
 | __(Functional)__ | — | — |
-| `lhs \|> rhs` | pipelining, disregards `lhs` and returns `rhs` | 12 |
-| `~ rhs` | inferred type conversion | 3 |
+| `lhs \|> rhs` | pipelining, disregards `lhs` and returns `rhs` | 1 |
+| `~ rhs` | inferred type conversion | 10 |
 | __(Assignment)__ | — | — |
-| `lhs = rhs` | assignment or inferred-type declaration *(See [Variable Declarations](#Variable-Declaration).)* | 12 |
-| `lhs := rhs` | always inferred-type declaration | 12 |
-| `lhs: T = rhs` | explicit-type declaration | 12 |
-| `lhs tobe rhs` | inline for `:=` but returns the assigned value instead of being void; the operands are inverted (variable goes on the right); creates an immutable variable by default *(See [Inline Binding](#Inline-Binding).)* | 12 |
-| `lhs += rhs` | increment | 12 |
-| `lhs -= rhs` | decrement | 12 |
-| `lhs *= rhs` | multiplication assignment | 12 |
-| `lhs /= rhs` | division assignment | 12 |
-| `lhs //= rhs` | floor division assignment | 12 |
-| `lhs %= rhs` | modulo assignment | 12 |
-| `lhs %%= rhs` | floor division modulo assignment (binds `lhs` to a range in `[0, rhs)` if `rhs` is positive or `(rhs, 0]` if `rhs` is negative) | 12 |
-| `lhs **= rhs` | exponential assignment | 12 |
-| `lhs /\= rhs` | bitwise-`AND` assignment | 12 |
-| `lhs \/= rhs` | bitwise-`OR` assignment | 12 |
-| `lhs ><= rhs` | bitwise-`XOR` assignment | 12 |
-| `lhs <<= rhs` | bitshift-left assignment | 12 |
-| `lhs >>= rhs` | bitshift-right assignment | 12 |
-| `lhs >>>= rhs` | unsigned bitshift-right assignment | 12 |
-| `lhs ++= rhs` | append to an array (not allowed if `lhs` is a fixed length array) | 12 |
+| `lhs = rhs` | assignment or inferred-type declaration *(See [Variable Declarations](#Variable-Declaration).)* | 0 |
+| `lhs := rhs` | always inferred-type declaration | 0 |
+| `lhs: T = rhs` | explicit-type declaration | 0 |
+| `lhs => rhs` | inline for `:=` but returns the assigned value instead of being void; the operands are inverted (variable goes on the right); creates an immutable variable by default *(See [Inline Binding](#Inline-Binding).)* | 0 |
+| `lhs += rhs` | increment | 0 |
+| `lhs -= rhs` | decrement | 0 |
+| `lhs *= rhs` | multiplication assignment | 0 |
+| `lhs /= rhs` | division assignment | 0 |
+| `lhs //= rhs` | floor division assignment | 0 |
+| `lhs %= rhs` | modulo assignment | 0 |
+| `lhs %%= rhs` | floor division modulo assignment (binds `lhs` to a range in `[0, rhs)` if `rhs` is positive or `(rhs, 0]` if `rhs` is negative) | 0 |
+| `lhs **= rhs` | exponential assignment | 0 |
+| `lhs /\= rhs` | bitwise-`AND` assignment | 0 |
+| `lhs \/= rhs` | bitwise-`OR` assignment | 0 |
+| `lhs ><= rhs` | bitwise-`XOR` assignment | 0 |
+| `lhs <<= rhs` | bitshift-left assignment | 0 |
+| `lhs >>= rhs` | bitshift-right assignment | 0 |
+| `lhs >>>= rhs` | unsigned bitshift-right assignment | 0 |
+| `lhs ++= rhs` | append to an array (not allowed if `lhs` is a fixed length array) | 0 |
 
 __Order of Operations:__
 
-1. Member Accessing/Inline-Binding (Highest)
-2. Primary/Postfix Operators
-3. Unary Operators
-4. Exponentiation *(right-associative: `2**3**2` is `2**(3**2)`)*
-5. Multiplicative/Bitshift Operators
-6. Additive/Vector Operators
-7. Bitwise Logic
-8. Range/Interval Operators
-9. Comparisons/Membership
-10. Logical AND
-11. Logical OR
-12. Assignment/Pipelining (Lowest)
+12-  0. Assignment/Pipelining (Lowest)
+11-  1. Logical OR
+10-  2. Logical AND
+9 -  3. Comparisons/Membership
+8 -  4. Range/Interval Operators
+7 -  5. Bitwise Logic
+6 -  6. Additive/Vector Operators
+5 -  7. Multiplicative/Bitshift Operators
+4 -  8. Exponentiation *(right-associative: `2**3**2` is `2**(3**2)`)*
+3 -  9. Unary Operators
+2 - 10. Primary/Postfix Operators
+1 - 11. Member Accessing/Inline-Binding (Highest)
 
 *Note: keywords bitwise operators use different symbols than their conventional `&|^~` in other languages because those symbols have different meanings by themselves in Mulang: `&` → tuples, `|` → pattern matching, `~` → type conversion. `&&` and `||` are usually boolean operators and would also be ambiguous, even though those operations are handled by the keywords `and` and `or` instead. Bitwise-AND and bitwise-OR need to stay separate because their evaluation strategies differ from `and` / `or`, but NOT is unified `not` because it doesn't have that problem; it only differs by type. `/\`, `\/`, and `><` seem like the right blend of uniqueness without being too ambiguous. Being symbols, they also have assignemnt versions `/\=`, `\/=, and `><=`—useful for low-level bit manipulation. Bitwise operators resemble arrows which give them both visual and semantic unity. This breaks some of the usual habits of other languages, but that frees the usual symbols to do novel things. This is an experimental language, so it's not obligated to follow normal conventions.* 
 
 Some operators have assignment alternatives by adding an equals sign `=` after it. These are reserved for the operators that aren't keywords and return the same type that their left-hand side is. This sets a variable based on its previous value. The left-hand side must be an already defined variable. If it's immutable, then this shadows it. If it's mutable, then the value is mutated. *(See [Mutability(#Mutability-mu).)* All of these are void statements, i.e. they return nothing and should only be used in an expression by themselves.
 
-All assignment operators *(except for `tobe`)* are **void.** This is intentional to prevent bugs and difficult to read code. It's recommend to put all assignment statements on their own separate lines for clarity. 
+All assignment operators *(except for `=>`)* are **void.** This is intentional to prevent bugs and difficult to read code. It's recommend to put all assignment statements on their own separate lines for clarity. 
 
 ### Operation chaining `[]`
 
@@ -280,8 +281,8 @@ All assignment operators *(except for `tobe`)* are **void.** This is intentional
 Operation chaining has the same precedence has member accessing `.`. This allows you to treat any operator like a member access. The most useful use cases for this are for array indexing `#` and piplining `|>`.
 
 ```
-array#[0]#[1]                  -- => ( ( array # 0 ) # 1 )
-fn1() |> [fn2(_)] |> [fn3(_)]  -- => ( ( fn1() |> fn2(_) ) |> fn3(_) ) => fn3( fn2( fn1() ) )
+array#[0]#[1]                  -- → ( ( array # 0 ) # 1 )
+fn1() |> [fn2(_)] |> [fn3(_)]  -- → ( ( fn1() |> fn2(_) ) |> fn3(_) ) → fn3( fn2( fn1() ) )
 ```
 
 Pipelining can be particularly useful when combined with `[]` for inlining a variable that's repeated in an expression or method-chaining on an object with non-method functions.
@@ -375,7 +376,7 @@ i = i + 1     -- Sets new `i` based on old `i`.
 i += 1        -- Does the same.
 ```
 
-Using the single equal-sign is a void statement. If you use it within an expression and not on its own, it's a syntax error. This helps prevent the common bug of using `=` when you meant `==`. For inline binding, use `let`/`then` or `tobe` instead. *(See [Inline Binding](#Inline-binding).)*
+Using the single equal-sign is a void statement. If you use it within an expression and not on its own, it's a syntax error. This helps prevent the common bug of using `=` when you meant `==`. For inline binding, use `let`/`then` or `=>` instead. *(See [Inline Binding](#Inline-binding).)*
 
 ```
 (-- Error:
@@ -611,7 +612,7 @@ setInt(x)
 print("{x}")    -- Prints "3"
 ```
 
-This works for mutable variables, but what if you wanted to make an immutable variable using `out`? You can write `out` while calling a function to declare an immutable variable in the current scope. This has the same rules that `tobe` does. *(See [Inline Binding](#Inline-Binding).)
+This works for mutable variables, but what if you wanted to make an immutable variable using `out`? You can write `out` while calling a function to declare an immutable variable in the current scope. This has the same rules that `=>` does. *(See [Inline Binding](#Inline-Binding).)
 
 ```
 setInt(out n)   -- Declare a new variable `n` that gets set by `setInt`.
@@ -786,7 +787,7 @@ You can also bind variables within an expression using `let`/`then` and `as`. `l
 ```
 squared = let x = getSomething() then x * x
 
-loop if next() tobe val != None:
+loop if next() => val != None:
     print("{val}")
 ```
 
@@ -806,14 +807,14 @@ sum = let [x = 1, y = 2] then x + y
 
 `[]` are used instead of `()` to distinguish it from a regular function call. It also follows the pattern of `name[]` meaning a compile-time function, which `let []` sort of is a compile-time function since it's running at compile-time. However, it's technically a part of the syntax and not a function.
 
-#### `tobe`
+#### Inline Assignment Operator `=>`
 
-`tobe` sets a value within an expression as a variable within a block's scope. It returns the value of the left-hand side, the right-hand side should be a valid variable name. Like `let`, it's an explicit declaration like `:=`, so it can't mutate. Note that this is slightly different from but consistent with the `as` that's used for aliasing. *`tobe` the operator* is only used in **expressions**; meanwhile, *`as` for aliases* is only used in **patterns.** *For information on how patterns work, see [Destructuring](#Destructuring).*
+The inline assignment operator `=>` sets a value within an expression as a variable within a block's scope. It returns the value of the left-hand side, the right-hand side should be a valid variable name. Like `let`, it's an explicit declaration like `:=`, so it can't mutate. Note that this is slightly different from but consistent with the `as` that's used for aliasing. *`=>` the operator* is only used in **expressions**; meanwhile, *`as` for aliases* is only used in **patterns.** *For information on how patterns work, see [Destructuring](#Destructuring).*
 
-The simplest use case for `tobe` is to pair it with a `loop if` loop to get a value on each iteration.
+The simplest use case for `=>` is to pair it with a `loop if` loop to get a value on each iteration.
 
 ```
-loop if next() tobe val != None:
+loop if next() => val != None:
     print("{val}")
 ```
 
@@ -826,11 +827,11 @@ loop if let value == getValue() then value != None:
     print("{value}")   -- Error: `value` is not defined.
 ```
 
-Another use case for `tobe` is to use while method chaining to get a result of one of the methods. Note that `tobe` has the same order of operations as `.` when using `[]`. This makes it possible to method chain without adding parantheses around it. `a() tobe[b].c` is the same as `(a() tobe b).c`. *(See [Operation Chaining](#Operation-Chaining).)*
+Another use case for `=>` is to use while method chaining to get a result of one of the methods. Note that `=>` has the same order of operations as `.` when using `[]`. This makes it possible to method chain without adding parantheses around it. `a() =>[b].c` is the same as `(a() => b).c`. *(See [Operation Chaining](#Operation-Chaining).)*
 
 ```
 (object.method1()
-    .method2() tobe[result]
+    .method2() =>[result]
     .method3())
 print("{result}")
 ```
@@ -839,15 +840,15 @@ Type must be inferred. This is to avoid using `:` in an expression, which could 
 
 ```
 (-- Syntax Error:
-action(get() tobe result: int) -- Is this a named component? Did you forget the commas?
+action(get() => result: int) -- Is this a named component? Did you forget the commas?
 --)
 ```
 
-However, mutability can be set with `tobe mu` / `tobe[mu]`.
+However, mutability can be set with `=> mu` / `=>[mu]`.
 
 ```
 (object.method1()
-    .method2() tobe[mu result]   -- New mutable variable.
+    .method2() =>[mu result]   -- New mutable variable.
     .method3())
 result += 1
 print("{result}")
@@ -1002,10 +1003,10 @@ Changing the base invovles adding a `0` and a then the letters `b`, `o`, or `x` 
 It's essential to put spaces between operators at times so that they don't get confused for something else.
 
 ```
-1++1  -- Creates an array       => [1, 1]
-1+ +1 -- Add 1+1                => 2
-1--1  -- Just 1 with a comment  => 1
-1- -1 -- Subtract 1-(-1) => 1+1 => 2
+1++1  -- Creates an array       → [1, 1]
+1+ +1 -- Add 1+1                → 2
+1--1  -- Just 1 with a comment  → 1
+1- -1 -- Subtract 1-(-1) → 1+1 → 2
 ```
 
 It's not likely anyone would mark a positive number and add it on the right hand side, and neither is it likely anyone would flip the sign of a number and subtract it on the right-hand side. For most people, both `1+(+1)` and `1-(-1)` would just be written `1+1`. 
@@ -1504,10 +1505,10 @@ else:
     print("The loop failed")
 ```
 
-Some programming languages let you do something like `while (value = getValue()) {body}`. Mulang doesn't allow this because `=` is a void statement. Instead, you can use `tobe` to achieve the same thing but more explicitly.
+Some programming languages let you do something like `while (value = getValue()) {body}`. Mulang doesn't allow this because `=` is a void statement. Instead, you can use `=>` to achieve the same thing but more explicitly.
 
 ```
-loop if None != (getValue() tobe value):
+loop if None != (getValue() => value):
     print("value = {value}")
 ```
 
@@ -1738,7 +1739,7 @@ else:
 
 #### `loop when`
 
-Are you sensing a pattern? We have `if` and `when`, so that means we also get `loop if` and… `loop when`! This will loop until the pattern breaks. In some cases, this might be more desirable than the `loop if` / `tobe` format.
+Are you sensing a pattern? We have `if` and `when`, so that means we also get `loop if` and… `loop when`! This will loop until the pattern breaks. In some cases, this might be more desirable than the `loop if` + `=>` format.
 
 ```
 loop when Some(x) = nextValue():
@@ -1801,26 +1802,33 @@ Result types flatten similarly to option types. The rules go the following:
 
 When all exceptions have been handled, the result is `type!void` which automatically converges to just `type`.
 
-#### `opt` / `orelse`
+#### `opt`
 
-Wraps a single expression in an option type. After `opt`, you can use `?` within the expression to unwrap multiple option values. If one `?` returns `None`, then the whole `opt` expression stops and returns `None`. `orelse` is optional. It unwraps the option, giving the right-hand side if the left-hand side is `None`. 
+Wraps a single expression in an option type. Inside the `opt` expression, you can use `?` to unwrap multiple option values. If one `?` returns `None`, then the whole `opt` expression stops and returns `None`. The `None`-coalescing operator `||` is optional. It unwraps the option, giving the right-hand side if the left-hand side is `None`. When you inline `opt`, it will stop the expression at the nearest `||`, so `opt x || y` becomes `(opt x) || y`. 
 
 ```
-x = opt f(a?) orelse "fallback"     -- `x` is "fallback" if `a` is none.
+x = opt f(a?) || "fallback"         -- `x` is "fallback" if `a` is none.
 y = opt f(a?)                       -- Or store the resulting option and unwrap it later.
 z = y.unwrap()
 ```
 
-Use it as a block to unwrap multiple values at once.
+Use it as a block to unwrap multiple values at once. The fallback goes to in an `else:` block. 
 
 ```
 opt:
     a = getOpt(a)?
     b = getOpt(b)?
-    c = getOpt(c) orelse 0  -- Fallback on a single option
+    c = getOpt(c) || 0      -- Fallback on a single option
     print("{a + b + c}")
-orelse:                     -- Optional, runs when the `opt` block ends early.
+else:                       -- Optional, runs when the `opt` block ends early.
     print("Didn't work")
+```
+
+Or inline `opt … else:` to behave like a conditional.
+
+```
+opt areYouThere()? else:
+    print("Not there...")
 ```
 
 If a function returns an option type, then use of the `?` is allowed without `opt`. Using an `?` inside a function will automatically infer the return type to be an option. The return will be automatically wrapped in `Some(_)`. If there isn't a return value in the function, then it should be a type `void?`. Unwrapping it gives an empty tuple `()`. *[See [Tuples](#Tuples).)*
@@ -1829,20 +1837,35 @@ If a function returns an option type, then use of the `?` is allowed without `op
 addStuff(a: int, b: int, c: int): int? =
     a = getOpt(a)?
     b = getOpt(b)?
-    c = getOpt(c) orelse 0
+    c = getOpt(c) || 0
     a + b + c
-```
-
-Chain `orelse` to unwrap multiple option types with a final fallback at the end. The type `T?` should match on all left-hand side arguments, and the final fallback needs to have a matching type `T`. The first `Some` option is returned. 
-
-```
-getFirstSome(a: int, b: int, c: int): int = getOpt(a) orelse getOpt(b) orelse getOpt(c) orelse 0
 ```
 
 If a you have nested options like `type??`, you can add additional `?`s to continuously unwrap it until you get to the value. 
 
 ```
 unnestOptions(x: int??): int? = x??
+```
+
+Chain `||` to unwrap multiple option types with a final fallback at the end. The type `T?` should match on all left-hand side arguments, and the final fallback needs to have a matching type `T`. The first `Some` option is returned. 
+
+```
+getFirstSome(a: int, b: int, c: int): int = getOpt(a) || getOpt(b) || getOpt(c) || 0
+```
+
+Note that although `||` normally means logical OR in other languages, Mulang uses `or` for that purpose. However, anyone who's done null-coalescing in a scripting language is probably familar with the `x or fallback` pattern. In that case, they will feel familiar with `||` since it's baked right into the language. 
+
+Other options wouldn't work:
+
+- `??` — is nested option unwrapping `x??`
+- `?:` — colon is heavily used in the language
+- `else` - would clash with `if`: `if a then o else fallback else b` *Which `else` is this?*
+- `else?` — doesn't feel like an operator
+
+So `||` is the best option remaining for the job of coalescing to a fallback.
+
+```
+opt a? || opt b? || opt c? || fallback
 ```
 
 You can combine `?` and `!` together when the return type is `type?!` (an **option result type**). When unwrapping it, use `!?`. This means *"unwrap the result type"* **then** *"unwrap the option type."*
@@ -2516,22 +2539,20 @@ This is a work in progress though. How these decorators are implemented and thei
 26. `not`
 27. `opt`
 28. `or`
-29. `orelse`
-30. `out`
-31. `pass`
-32. `proto`
-33. `raise`
-34. `ref`
-35. `return`
-36. `self`
-37. `struct`
-38. `then`
-39. `tobe`
-40. `try`
-41. `until`
-42. `when`
-43. `where`
-44. `yield`
+29. `out`
+30. `pass`
+31. `proto`
+32. `raise`
+33. `ref`
+34. `return`
+35. `self`
+36. `struct`
+37. `then`
+38. `try`
+39. `until`
+40. `when`
+41. `where`
+42. `yield`
 
 *NOTE: Built-in types, values, functions, and decorators like `int`, `True`, `Some`, `default`, `print`, `@memory` etc. are not considered keywords.*
 
