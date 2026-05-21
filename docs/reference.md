@@ -202,14 +202,13 @@ The philosophy of Mulang is that symbols should be easy to recognize and underst
 | __(Boolean)__ | — | — |
 | `lhs and rhs` | false if any are false | 10 |
 | `lhs or rhs` | true if any are true | 11 |
-| `not rhs` | inverts a boolean | 3 |
+| `not rhs` | inverts a boolean or bitwise-`NOT` when `rhs` is a number | 3 |
 | `and rhs` | do `and` on each component of a tuple: `and (True, False, True)` → `True and False and True` → `False` | 3 |
 | `or rhs` | do `or` on each component of a tuple: `or (True, False, True)` → `True or False or True` → `True` | 3 |
 | __(Bitwise)__ | — | — |
 |  `lhs /\ rhs` | bitwise-`AND` *(resembles a wedge* $\land$ *, the symbol for logical AND; also resembles a capital A)* | 7 |
 | `lhs \/ rhs` | bitwise-`OR` *(resembles a vee* $\lor$ *, the symbol for logical OR; also invert of `/\`)* | 7 |
 | `lhs >< rhs` | bitwise-`XOR` *(resembles an X for XOR)* | 7 |
-| `<> rhs` | bitwise-`NOT` *(borrows the alternative not-equals operator `<>` found in some language; also resembles flipping a switch)* | 3 |
 | `lhs << rhs` | bitshift-left | 5 |
 | `lhs >> rhs` | bitshift-right | 5 |
 | `lhs >>> rhs` | bitshift-right (unsigned) | 5 |
@@ -268,7 +267,7 @@ __Order of Operations:__
 11. Logical OR
 12. Assignment/Pipelining (Lowest)
 
-*Note: keywords bitwise operators use different symbols than their conventional `&|^~` in other languages because those symbols have different meanings by themselves in Mulang: `&` → tuples, `|` → pattern matching, `~` → type conversion. `&&` and `||` are usually boolean operators and would also be ambiguous, even though those operations are handled by the keywords `and` and `or` instead. `/\`, `\/`, and `><` seem like the right blend of uniqueness without being too ambiguous. Being symbols, they also have assignemnt versions `/\=`, `\/=, and `><=`. All bitwise operators resemble arrows which give them both visual and semantic unity. This breaks some of the usual habits of other languages, but that frees the usual symbols to do novel things. This is an experimental language, so it's not obligated to follow normal conventions.* 
+*Note: keywords bitwise operators use different symbols than their conventional `&|^~` in other languages because those symbols have different meanings by themselves in Mulang: `&` → tuples, `|` → pattern matching, `~` → type conversion. `&&` and `||` are usually boolean operators and would also be ambiguous, even though those operations are handled by the keywords `and` and `or` instead. Bitwise-AND and bitwise-OR need to stay separate because their evaluation strategies differ from `and` / `or`, but NOT is unified `not` because it doesn't have that problem; it only differs by type. `/\`, `\/`, and `><` seem like the right blend of uniqueness without being too ambiguous. Being symbols, they also have assignemnt versions `/\=`, `\/=, and `><=`—useful for low-level bit manipulation. Bitwise operators resemble arrows which give them both visual and semantic unity. This breaks some of the usual habits of other languages, but that frees the usual symbols to do novel things. This is an experimental language, so it's not obligated to follow normal conventions.* 
 
 Some operators have assignment alternatives by adding an equals sign `=` after it. These are reserved for the operators that aren't keywords and return the same type that their left-hand side is. This sets a variable based on its previous value. The left-hand side must be an already defined variable. If it's immutable, then this shadows it. If it's mutable, then the value is mutated. *(See [Mutability(#Mutability-mu).)* All of these are void statements, i.e. they return nothing and should only be used in an expression by themselves.
 
@@ -2339,7 +2338,7 @@ maybeInt = SomeInt(1)
 maybeInt = Some[int](1)
 ```
 
-The syntax `[]` was chosen so that generic type inferrence will take precedence. `neta(a, b)` means to *call the instantiated function that `neta` returns with inferred types* whereas `neta[a, b]` means to *call the abstract function `neta` with these exact values.* This also makes it easy to distinguish actual function calls from macros/inlining. This removes the need for the more conventional `<>` syntax, which can get confusing. For example, in `f( g < a, b > ( c ) )`, is `g` a generic function or is that comparing two values and passing the results to `f`? The square bracket syntax removes this ambiguity, `f( g [ a, b ] ( c ) )`. This makes it semantically clear that you're doing a compile-time function call followed by a run-time function call. 
+The syntax `[]` was chosen so that generic type inferrence will take precedence. `neta(a, b)` means to *call the instantiated function that `neta` returns with inferred types* whereas `neta[a, b]` means to *call the abstract function `neta` with these exact values.* This also makes it easy to distinguish actual function calls from macros/inlining. This removes the need for the more conventional arrow bracket `<>` syntax, which can get confusing. For example, in `f( g < a, b > ( c ) )`, is `g` a generic function or is that comparing two values and passing the results to `f`? The square bracket syntax removes this ambiguity, `f( g [ a, b ] ( c ) )`. This makes it semantically clear that you're doing a compile-time function call followed by a run-time function call. 
 
 ### Where Block
 
