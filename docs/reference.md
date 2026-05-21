@@ -641,18 +641,18 @@ cannotChangeX(2) -- Prints "2"
 print("{x}")     -- Prints "1"
 ```
 
-To capture a mutable variable, you must mark it with the `@nonlocal` decorator. This helps make it easy to see which functions can mutate other variables and which don't. You just have to use `@nonlocal` on the first assignment of a variable—subsequent assignments will mutate the variable. This follows the same practice that `import` and `inherit` where all words in a given context are listed out clearly so that there are no accident name collisions or hidden gotchas.
+To capture a mutable variable, you can write `@capture` at the top of the function body and capture multiple variables at once. This helps make it easy to see which functions can mutate other variables and which don't. This follows the same practice that `import` and `inherit` where all words in a given context are listed out clearly so that there are no accident name collisions or hidden gotchas.
 
 ```
 mu count = 0
 mu squared = 1
 mu cubed = 1
-
+   
 addCount() =
-    @nonlocal                          -- On the line before the assignment.
+    @capture(count, squared, cubed)    -- Capture 3 variables at once.
     count += 1
-    @nonlocal squared = count * count  -- Or in-lined.
-    @nonlocal cubed = squared * count
+    squared = count * count
+    cubed = squared * count
 
 addCount()
 addCount()
@@ -660,21 +660,7 @@ addCount()
 print("{count}, {squared}, {cubed}") -- Prints "3, 9, 27"
 ```
 
-This highlights the flexibility of the language. It doesn't need a dedicated keyword like `nonlocal`. Compiler behavior can be dictated using decorators, changing the language itself. *(See [Decorators](#Decorators).)*
-
-You can also write `@capture` over the function to capture multiple variables at once. This is preferable for declared functions since it makes it clear right away that a function is mutating variables. `@nonlocal` is useful for callback functions inside a `do`/`end` expression. 
-
-```
-mu count = 0
-mu squared = 1
-mu cubed = 1
-
-@capture(count, squared, cubed)  -- Capture 3 variables at once.
-addCount() =
-    count += 1
-    squared = count * count
-    cubed = squared * count
-```
+This highlights the flexibility of the language. It doesn't need a dedicated keyword like `capture`. Compiler behavior can be dictated using decorators, changing the language itself. *(See [Decorators](#Decorators).)* 
 
 #### Lambda Functions
 
@@ -733,7 +719,8 @@ Capturing also works inside lambda functions just like with named functions.
 ```
 mu count = 0
 forEach([1, 2, 3, 4], do fn(x) =
-    @nonlocal count += x
+    @capture(count)
+    count += x
 end)
 ```
 
@@ -1192,6 +1179,15 @@ c = [ 1, 2, 3, ++a ]
 b == c             -- True
 ```
 
+Some languages use `...` for the spread operator, but this visually clashes with the range operator `..`. *What if you wanted to spread a range into an array?*
+
+```
+tenDigits = [...0..10 ]
+tenDigits = [ ++0..10 ]
+```
+
+The second makes it clear that it's two operations: range (`..`) and spread (`++`). 
+
 #### Dictionaries
 
 Dictionaries are a subtype of arrays. Instead of numbers, each item is given a **key.** A dictionary's type is the type of the value `V` and the type of the key `K` join with a hash `#` in between: `V#K`. This makes it semantically clear that they are a subtype of arrays. Dictionaries also use the same operator to access items. The type passed to the `#` operator must match the key type. Each key is marked with `[]:` in the array.
@@ -1615,7 +1611,13 @@ match choice then
     print("Third \{ val={val} }")
 ```
 
-The inline form switches keeps `:` after patterns. This makes it easier to read and take up less space. Patterns are usually words, so you can visually sequence it into pattern/expression pairs: `| ptrn: expr | ptrn: expr | ptrn: expr` etc.. 
+The inline form switches keeps `:` after patterns. This makes it easier to read and take up less space. Patterns are usually words, so you can visually sequence it into pattern/expression pairs: `| ptrn: expr | ptrn: expr | ptrn: expr` etc.. Other symbols like `=>` wouldn't work because it would clash with operators. `:` also follows the `key: value` pattern that tuples and dictionaries use. 
+
+```
+tuple = (a: 1, b: 2)
+dict = [x: 3, y: 4]
+restult = match x then | Ptrn1: 5 | Ptrn2: 6 | _: 7
+```
 
 ```
 message = match e then | OpenError{filename}: "Open error: {filename}" | _: "Unknown error"
@@ -2475,7 +2477,7 @@ expr             -- Modifies whatever this expression is.
 
 Decorators can be stacked and will run in reverse order. *Closest decorator to the expression runs, then the next one above that, then the next one, etc.*
 
-Built-in decorators demonstrated so far include `@nonlocal`, `@capture`, `@opaque`, and `@memory`. More planned for the future.
+Built-in decorators demonstrated so far include `@capture`, `@opaque`, and `@memory`. More planned for the future.
 
 ```
 @memory(Manual) -- Call it like a function to pass a variable.
@@ -2487,11 +2489,13 @@ Thing :: struct =
 
 mu count = 0
 increment() =
-    @nonlocal count += 1   -- In-lined decorator.
+    @capture(count)
+    count += 1   -- In-lined decorator.
 ```
 
 Some other ideas for built-in decorators include:
 
+- `@nonlocal` - assign to a non-local variable like a one-off `@capture()`
 - `@private` — locks a symbol to only be used within its module.
 - `@static` — make a variable global but only available within the scope that it was defined in.
 - `@inline` — marks that a regular function should inline itself like a meta function.
