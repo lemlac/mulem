@@ -241,7 +241,8 @@ There may be operator overloading in the future. Even if an operator could be br
 | `lhs ?` | returns the `Some` value if it's not `None`, otherwise propagate to the nearest `opt` keyword *(see [`opt` block](#opt))* | 2 |
 | `lhs ?. rhs` | gets a method or member of an optional type if it has something, otherwise return `None` | 1 |
 | `lhs ?# rhs` | applies `#` to an optional type if it has something, otherwise return `None` | 2 |
-| `lhs orelse rhs` | fallback to another value if the left side is `None`. | 12 |
+| `lhs orelse rhs` | fallback to another value if the left side is `None` | 12 |
+| `opt rhs` | unwrap options with `?` in a single expression | 12 |
 | __(Results)__ | — | — |
 | `lhs !` | returns the result value if it's not an exception, otherwise propagate to the nearest `try` keyword *(see [`try` block](#try--except))* | 2 |
 | __(Functional)__ | — | — |
@@ -1674,7 +1675,7 @@ print("value = {x}")
 Wraps a single expression in an option type. After `opt`, you can use `?` within to expression to unwrap multiple option values. If one `?` returns `None`, then the whole `opt` expression stops and returns `None`.
 
 ```
-x = ( opt f(a?) ) ?? "fallback"     -- x is "fallback" if a is none.
+x = opt f(a?) orelse "fallback"     -- x is "fallback" if a is none.
 ```
 
 If a function returns an option type, then use of the `?` is allowed without `opt`. Using an `?` inside a function will automatically infer the return type as an option. The return will be automatically wrapped in `Some(_)`. If there isn't a return value in the function, then it should be a type `void?`. Unwrapping it gives an empty tuple `()`. *[See [Tuples](#Tuples).)*
@@ -2383,20 +2384,21 @@ This is a work in progress though. How these decorators are implemented and thei
 30. `not`
 31. `opt`
 32. `or`
-33. `out`
-34. `pass`
-35. `proto`
-36. `raise`
-37. `ref`
-38. `return`
-39. `self`
-40. `struct`
-41. `then`
-42. `try`
-43. `until`
-44. `where`
-45. `while`
-46. `yield`
+33. `orelse`
+34. `out`
+35. `pass`
+36. `proto`
+37. `raise`
+38. `ref`
+39. `return`
+40. `self`
+41. `struct`
+42. `then`
+43. `try`
+44. `until`
+45. `where`
+46. `while`
+47. `yield`
 
 *NOTE: Built-in types, values, functions, and decorators such as `int`, `True`, `Some`, `default`, `print`, `@memory` etc. are not considered keywords.*
 
