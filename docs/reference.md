@@ -968,7 +968,7 @@ else:
 There are several number types. More may be added in the future, but for now we'll focus on the 3 main types. For any of these types, you can add a suffix to explicitly declare a number with a particular type. However, suffixes are disabled if the number already has letters in it. 
 
 | Type | Meaning | Suffix | Examples |
-|:--|:--|:--|:--|:--|
+|:--|:--|:--|:--|
 | `int` | signed integer | `i` | `1`, `2i`, `10i`, `0xabcdef` |
 | `uint` | unsigned integer | `u` | `1`, `0u`, `5u`, `0x10ff` |
 | `float` | floating ploint number | `f` | `1.0`, `1.5f`, `100f`, `2.0e100` |
