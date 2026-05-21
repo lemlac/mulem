@@ -58,12 +58,7 @@ Parts of an expression are divided into 4 catagories:
 
 Whitespace is significant. **Indentation** is used to mark when blocks start and end. Indentation can be any whitespace character except for new-lines. Inside any block, expressions should start with the same indentation through out. This includes the number and value of indentations. You could mix tabs and spaces, but each subsequent expression in a block must have the same number of tabs and spaces and in the same order. It's recommended to use **4 spaces** per indentation, adding 4 more for each block.
 
-A single new-lines can be either Carriage Return (`\r`), Line Feed (`\n`), or both (`\r\n`). A new-line marks the end of an expression *unless...*
-
-1. The line contains an open bracket or quotation mark.
-2. The next line after it and starts with a *symbol* after indentation, called **expression splitting.**
-
-If one of these rules is broken, *then indentation is ignored.*
+A single new-lines can be either Carriage Return (`\r`), Line Feed (`\n`), or both (`\r\n`). A new-line marks the end of an expression *unless the line contains an open bracket or quotation mark.* When you wrap a single expression in parentheses, this is called *expression splitting.*
 
 Examples:
 
@@ -72,26 +67,20 @@ Examples:
 expr1
 expr2
 
--- This is one expression, ignores indentation until closing bracket:
+-- Split one expression into multiple lines, ignores indentation until closing bracket:
 (expr3p1
     expr3p2
    expr3p3
       expr3p4)
-
--- This is one expression, ignores indentation for each line that starts with a symbol:
-expr4p1
-   + expr4p2
-  + expr4p3
-      + expr4p4
 ```
 
-**Expression splitting** is when you split an expression into multiple parts. Each line should start with a **symbol.** The common use case for this is for *method chaining.*
+**Expression splitting** is when you split an expression into multiple parts. Line breaks are ignored when an expression is in-between any kind of brackets. The common use case for this is for *method chaining.*
 
 ```
-object.method1()
-      .method2()
-      .method3()
-      .method4()
+(object.method1()
+       .method2()
+       .method3()
+       .method4())
 ```
 
 Adding a newline and indentations after a `:` or `=` starts a block. A **block** wraps multiple expressions into one. *The last expression evaluated in any block becomes its value.* Expression splitting is also disabled for the first line in a block. For this demonstration, we'll use `block:` to represent any block-type. *(See [Control Flow](#Control-Flow) for more details about different types of block expressions.)*
@@ -135,12 +124,12 @@ doThing() =
     end)
 ```
 
-`do` signals to switch to block mode. After the `do` comes a block keyword, and then there needs to be a `:` (or `=` for functions) at the end of the line. When the keyword `end` appears, that's the signal to switch back to inline mode. The expression between `do` and `end` is called an **inline-block expression.**
+`do` signals to switch to block mode. After the `do` comes a block keyword, and then there needs to be a `:` (or `=` for functions) at the end of the line. When the keyword `end` appears, that's the signal to switch back to inline mode. The expression between `do` and `end` is called an **inline-block expression.** This allows you to write expressive code depending on your needs. 
 
 ```
-(do block:       -- `do` --> Switch to block mode.
+(do block:       -- `do` → Switch to block mode.
     expr         -- Inside the inline-block expression, significant whitepace here.
-end)             -- `end` --> Switch to inline mode.
+end)             -- `end` → Switch to inline mode.
 
 (do block:       -- This starts a block, so indentation is significant.
     block:       -- This starts another block inside that block.
@@ -218,8 +207,8 @@ There may be operator overloading in the future. Even if an operator could be br
 | `lhs and rhs` | false if any are false | 10 |
 | `lhs or rhs` | true if any are true | 11 |
 | `not rhs` | inverts a boolean | 3 |
-| `and rhs` | do `and` on each component of a tuple: `and (True, False, True)` -> `True and False and True` -> `False | 3 |
-| `or rhs` | do `or` on each component of a tuple: `or (True, False, True)` -> `True or False or True` -> `True` | 3 |
+| `and rhs` | do `and` on each component of a tuple: `and (True, False, True)` → `True and False and True` → `False | 3 |
+| `or rhs` | do `or` on each component of a tuple: `or (True, False, True)` → `True or False or True` → `True` | 3 |
 | __(Bitwise)__ | — | — |
 |  `lhs band rhs` | bitwise `AND` | 7 |
 | `lhs bor rhs` | bitwise `OR` | 7 |
@@ -239,30 +228,26 @@ There may be operator overloading in the future. Even if an operator could be br
 | `& rhs` | spread a tuple into another tuple | 3 |
 | __(Options)__ | — | — |
 | `lhs ?` | returns the `Some` value if it's not `None`, otherwise propagate to the nearest `opt` keyword *(see [`opt` block](#opt))* | 2 |
-| `lhs ?. rhs` | gets a method or member of an optional type if it has something, otherwise return `None` | 1 |
-| `lhs ?# rhs` | applies `#` to an optional type if it has something, otherwise return `None` | 2 |
-| `lhs orelse rhs` | fallback to another value if the left side is `None` | 12 |
-| `opt rhs` | unwrap options with `?` in a single expression | 12 |
 | __(Results)__ | — | — |
 | `lhs !` | returns the result value if it's not an exception, otherwise propagate to the nearest `try` keyword *(see [`try` block](#try--except))* | 2 |
 | __(Functional)__ | — | — |
-| `lhs -> rhs` | pipelining, disregards `lhs` and returns `rhs`, but `_` becomes the value of `lhs` in the expression of `rhs` | 13 |
+| `lhs |> rhs` | pipelining, disregards `lhs` and returns `rhs` | 12 |
 | `~ rhs` — inferred type conversion | 3 |
 | __(Assignment)__ | — | — |
-| `lhs = rhs` | assignment or inferred-type declaration *(See [Variable Declarations](#Variable-Declaration).)* | 14 |
-| `lhs := rhs` | always inferred-type declaration | 14 |
-| `lhs: T = rhs` | explicit-type declaration | 14 |
-| `lhs tobe rhs` | inline for `:=` but returns the assigned value instead of being void; the operands are inverted (variable goes on the right); creates an immutable variable by default *(See [Inline Binding](#Inline-Binding).)* | 1 |
-| `lhs += rhs` | increment | 14 |
-| `lhs -= rhs` | decrement | 14 |
-| `lhs *= rhs` | `lhs = lhs * rhs` — multiplication assignment | 14 |
-| `lhs /= rhs` | `lhs = lhs / rhs` — division assignment | 14 |
-| `lhs //= rhs` | `lhs = lhs // rhs` — floor division assignment | 14 |
-| `lhs %= rhs` | `lhs = lhs % rhs` — modulo assignment | 14 |
-| `lhs %%= rhs` | `lhs = lhs %% rhs` — floor division modulo assignment (binds `lhs` to a range in `[0, rhs)` if `rhs` is positive or `(rhs, 0]` if `rhs` is negative) | 14 |
-| `lhs <<= rhs` | `lhs = lhs << rhs` — bitshift left assignment | 14 |
-| `lhs >>= rhs` | `lhs = lhs >> rhs` — bitshift right assignment | 14 |
-| `lhs ++= rhs` | `lhs = lhs ++ rhs` — append to an array (not allowed if `lhs` is a fixed length array) | 14 |
+| `lhs = rhs` | assignment or inferred-type declaration *(See [Variable Declarations](#Variable-Declaration).)* | 12 |
+| `lhs := rhs` | always inferred-type declaration | 12 |
+| `lhs: T = rhs` | explicit-type declaration | 12 |
+| `lhs tobe rhs` | inline for `:=` but returns the assigned value instead of being void; the operands are inverted (variable goes on the right); creates an immutable variable by default *(See [Inline Binding](#Inline-Binding).)* | 12 |
+| `lhs += rhs` | increment | 12 |
+| `lhs -= rhs` | decrement | 12 |
+| `lhs *= rhs` | multiplication assignment | 12 |
+| `lhs /= rhs` | division assignment | 12 |
+| `lhs //= rhs` | floor division assignment | 12 |
+| `lhs %= rhs` | modulo assignment | 12 |
+| `lhs %%= rhs` | floor division modulo assignment (binds `lhs` to a range in `[0, rhs)` if `rhs` is positive or `(rhs, 0]` if `rhs` is negative) | 12 |
+| `lhs <<= rhs` | bitshift left assignment | 12 |
+| `lhs >>= rhs` | bitshift right assignment | 12 |
+| `lhs ++= rhs` | append to an array (not allowed if `lhs` is a fixed length array) | 12 |
 
 __Order of Operations:__
 
@@ -277,36 +262,34 @@ __Order of Operations:__
 9. Comparisons/Membership
 10. Logical AND
 11. Logical OR
-12. None Coalescing
-13. Pipelining
-14. Assignment (Lowest)
+12. Assignment/Pipelining (Lowest)
 
-*Note: keywords `band`, `bor`, `bxor`, and `bnot` are used instead of the traditional `&|^~` because those symbols have different meanings in Mulang: `&` -> tuples, `|` -> pattern matching, `~` -> type conversion. This breaks some of the usual habits of other languages, but that frees these symbols to do other things. This is an experimental language, so it's not obligated to follow normal conventions.* 
+*Note: keywords `band`, `bor`, `bxor`, and `bnot` are used instead of the traditional `&|^~` because those symbols have different meanings in Mulang: `&` → tuples, `|` → pattern matching, `~` → type conversion. This breaks some of the usual habits of other languages, but that frees these symbols to do other things. This is an experimental language, so it's not obligated to follow normal conventions.* 
 
 Some operators have assignment alternatives by adding an equals sign `=` after it. These are reserved for the operators that aren't keywords and return the same type that their left-hand side is. This sets a variable based on its previous value. The left-hand side must be an already defined variable. If it's immutable, then this shadows it. If it's mutable, then the value is mutated. *(See [Mutability(#Mutability-mu).)* All of these are void statements, i.e. they return nothing and should only be used in an expression by themselves.
 
 All assignment operators *(except for `tobe`)* are **void.** This is intentional to prevent bugs and difficult to read code. It's recommend to put all assignment statements on their own separate lines for clarity. 
 
-### Operation chaining with `[]`
+### Operation chaining `[]`
 
 **Infix operator** are operators who have both an `lhs` and `rhs`. For any non-void infix operator `op`, you can write it like `lhs op[rhs]` (an operator + an array literal). This is shorthand for writing `((lhs) op (rhs))` and has the same precedence like accessing with `.` or wrapping parentheses around the expression. This is primarily used for arrays, but has many potential use cases which can be explored.
 
-Operation chaining has the same precedence has member accessing `.`. This allows you to treat any operator like a member access. The most useful use cases for this are for array indexing `#` and piplining `->`.
+Operation chaining has the same precedence has member accessing `.`. This allows you to treat any operator like a member access. The most useful use cases for this are for array indexing `#` and piplining `|>`.
 
 ```
-array#[0]#[1]              -- => ( ( array # 0 ) # 1 )
-fn1()->[fn2(_)]->[fn3(_)]  -- => ( ( fn1() -> fn2(_) ) -> fn3(_) ) => fn3( fn2( fn1() ) )
+array#[0]#[1]                  -- => ( ( array # 0 ) # 1 )
+fn1() |> [fn2(_)] |> [fn3(_)]  -- => ( ( fn1() |> fn2(_) ) |> fn3(_) ) => fn3( fn2( fn1() ) )
 ```
 
 Pipelining can be particularly useful when combined with `[]` for inlining a variable that's repeated in an expression or method-chaining on an object with non-method functions.
 
 ```
 -- Repeated value:
-onePlusTwoCubed = (1+2)->[_*_*_]
+onePlusTwoCubed = (1+2) |> [_*_*_]
 print("{onePlusTwoCubed}")       -- Prints "27"
 
 -- Method chaining:
-object.method1()->[fn1(_)].method2()->[fn2(_)]
+object.method1() |> [fn1(_)].method2() |> [fn2(_)]
 -- Becomes...
 fn2( fn1( object.method1() ).method2() )
 ```
@@ -325,20 +308,20 @@ You can create an named tuple instead of a position tuple too. Members can have 
 ```
 -- Split `x` into 3 components and collect.
 x = 1
-y = x -> [
+y = x |> [
     a: _,
     b: _ + 1,
     c: _ + 2,
     d: _ + 3,
-] -> [
+] |> [
     _.a * _.b * _.c + _.d
 ]    
 ```
 
 `y` simplifies like this:
 
-1. `x -> [ a: _, b: _ + 1, c: _ + 2, d: _ + 3 ] -> [ _.a * _.b * _.c + _.d ]`
-2. `( a: x, b: x + 1, c: x + 2, d: x + 3 ) -> [ _.a * _.b * _.c + _.d ]`
+1. `x |> [ a: _, b: _ + 1, c: _ + 2, d: _ + 3 ] |> [ _.a * _.b * _.c + _.d ]`
+2. `( a: x, b: x + 1, c: x + 2, d: x + 3 ) |> [ _.a * _.b * _.c + _.d ]`
 3. `( x * (x + 1) * (x + 2) + (x + 3) )`
 4. `( 1 * (1 + 1) * (1 + 2) + (1 + 3) )`
 5. `( 1 * 2 * 3 + 4 )`
@@ -354,7 +337,7 @@ Tuples are transparent by default, and a tuple with only one position component 
 
 The transition from array indexing with `[]` in other languages to array indexing with `#[]` in Mulang is simple: add `#` before each square bracket. In most cases, the square brackets aren't even needed, making the `#` pattern more compacted than the `[]` one.
 
-- `array[0][1]` -> `array#[0]#[1]` -> `array#0#1`
+- `array[0][1]` → `array#[0]#[1]` → `array#0#1`
 
 This frees `name[]` to take on a new meaning in Mulang. *For more on that, see [Meta Functions](#Meta-Functions).*
 
@@ -483,7 +466,7 @@ This is grounded in the language's own internal consistency. If `fn` for functio
 - `fn` — the thing that does something
 - `mu` — the thing that changes
 
-You might think the choice of the keyword `mu`—which is the same name that the language itself is—will be a potential source of confusion. However, Go doesn't have this problem with its `go` keyword. When searching or discussing about *Mu*, it's sometimes preferable to write it *Mulang* for clarity, just like other languages can have "lang" at the end of their names like *Go* -> *Golang* or *D* -> *Dlang*.
+You might think the choice of the keyword `mu`—which is the same name that the language itself is—will be a potential source of confusion. However, Go doesn't have this problem with its `go` keyword. When searching or discussing about *Mu*, it's sometimes preferable to write it *Mulang* for clarity, just like other languages can have "lang" at the end of their names like *Go* → *Golang* or *D* → *Dlang*.
 
 
 #### References (`ref`/`ref mu`)
@@ -798,7 +781,7 @@ You can also bind variables within an expression using `let`/`then` and `as`. `l
 ```
 squared = let x = getSomething() then x * x
 
-while next() tobe val != None:
+loop if next() tobe val != None:
     print("{val}")
 ```
 
@@ -822,28 +805,28 @@ sum = let [x = 1, y = 2] then x + y
 
 `tobe` sets a value within an expression as a variable within a block's scope. It returns the value of the left-hand side, the right-hand side should be a valid variable name. Like `let`, it's an explicit declaration like `:=`, so it can't mutate. Note that this is slightly different from but consistent with the `as` that's used for aliasing. *`tobe` the operator* is only used in **expressions**; meanwhile, *`as` for aliases* is only used in **patterns.** *For information on how patterns work, see [Destructuring](#Destructuring).*
 
-The simplest use case for `tobe` is to pair it with a `while` loop to get a value on each iteration.
+The simplest use case for `tobe` is to pair it with a `loop if` loop to get a value on each iteration.
 
 ```
-while next() tobe val != None:
+loop if next() tobe val != None:
     print("{val}")
 ```
 
-This reads like an English sentence: "While next to be value is not none..."
+This reads like an English sentence: "Loop if next to be value is not none..."
 
 Not that `let` wouldn't work here because it only works on a single expression.
 
 ```
-while None != getValue() bind value:
+loop if None != getValue() bind value:
     print("{value}")   -- Error: `value` is not defined.
 ```
 
-Another use case for `tobe` is to use while method chaining to get a result of one of the methods. Note that `tobe` has the same order of operations as `.`. *(See [Order of Operations](#Order-of-Operations).)*
+Another use case for `tobe` is to use while method chaining to get a result of one of the methods. Note that `tobe` has the same order of operations as `.` when using `[]`. This makes it possible to method chain without adding parantheses around it. `a() tobe[b].c` is the same as `(a() tobe b).c`. *(See [Operation Chaining](#Operation-Chaining).)*
 
 ```
-object.method1()
-    .method2() tobe result
-    .method3()
+(object.method1()
+    .method2() tobe[result]
+    .method3())
 print("{result}")
 ```
 
@@ -855,12 +838,12 @@ action(get() tobe result: int) -- Is this a named component? Did you forget the 
 --)
 ```
 
-However, mutability can be set with `tobe mu`.
+However, mutability can be set with `tobe mu` / `tobe[mu]`.
 
 ```
-object.method1()
-    .method2() tobe mu result   -- New mutable variable.
-    .method3()
+(object.method1()
+    .method2() tobe[mu result]   -- New mutable variable.
+    .method3())
 result += 1
 print("{result}")
 ```
@@ -991,7 +974,7 @@ A number literal starts with a digit `0123456789` followed by zero or more other
 
 The sign is considered an operator and not a part of the constant itself. This gets automatically calculated in constant expressions at compile-time so that it seems like it's a part of the constant.
 
-- `- 1` -> `minus` + `1` -> `signflip(1)` -> `-1`
+- `- 1` → `minus` + `1` → `signflip(1)` → `-1`
 
 The exception to this rule is in scientific notation: the sign after `e` is a part of the number itself. There must not be a space between `e` and the sign `-`/`+`. The sign is optional for positive exponent values.
 
@@ -1106,7 +1089,7 @@ You can write a raw string with `''...''` (two apostrophes). Although apostrophe
 ```
 rawString = ''It's okay to put an apostrophe (') in the string.''
 filePath = ''C:\files\on\windows.txt''
-template = ''Insert here -> {{variable}}''
+template = ''Insert here → {{variable}}''
 ```
 
 To escape `''` within a raw string, add a hash `#` before and after the apostrophes. The number of `#`s must match to close the raw string.
@@ -1158,7 +1141,7 @@ This builds on the visible simatry between type notation and their value express
 | **Options** | `T?` | `x?` |
 | **Arrays** | `T#N` | `x#n` |
 
-Other languages use `[]` for indexing, but that has another meaning in Mulang. Instead, you can use operation chaining to do the same thing like `[]` in other languages. *(See [Operation Chaining](#Operation-chaining-with).)*
+Other languages use `[]` for indexing, but that has another meaning in Mulang. Instead, you can use operation chaining to do the same thing like `[]` in other languages. *(See [Operation Chaining](#Operation-Chaining).)*
 
 ```
 item = doubleArray#[1]#[0]  -- The 2nd row, 1st column
@@ -1197,15 +1180,6 @@ b = [ 1, 2, 3 ] ++a
 c = [ 1, 2, 3, ++a ]
 b == c             -- True
 ```
-
-This follows a symmetry with tuples and the `&` operator:
-
-| Type | Join | Spread |
-|:--|:--|:--|
-| Arrays | '[a, b] ++ c` | `[a, b, ++c]` |
-| Tuples | `(a, b) & c` | `(a, b, &c)` |
-
-Even though they behave similarly, arrays and tuples are fundamentally different, so their operations are kept seperate to make intention clear. 
 
 #### Dictionaries
 
@@ -1334,17 +1308,15 @@ block label:
     -- never runs
 ```
 
-You can put `block _` before any other block type to give it a label. This can be useful for nested loops.
+You can put `block label` before any other block type to give it a label.
 
 ```
-block loop for x in 0..100:     -- Label this block `loop`.
-    for y in 0..100:
-        prod = x * y
-        print("{x} * {y} == {prod}")
-        if prod >= 100:
-            break               -- Break inner loop, continue outer loop.
-        if prod == 77:
-            break loop          -- Break outer loop, loop ends.
+block branchLabel if a:
+    print("Condition pass.")
+    if b:
+        print("Break check.")
+        break branchLabel
+    print("a and not b but without `and`, `not`, or `else`")
 ```
 
 #### `if` / `else`
@@ -1403,7 +1375,7 @@ if not and (False, True, True):
     print("One of these is not true.")
 ```
 
-This can be paied with `==[]` to check multiple values at once. *(See [Operation Chaining](#Operation-chaining-with).)*
+This can be paied with `==[]` to check multiple values at once. *(See [Operation Chaining](#Operation-Chaining).)*
 
 ```
 x = "foo"
@@ -1426,19 +1398,44 @@ x = or (True, False, True)
 print("{x}")              -- Prints "True"
 ```
 
-#### `for` / `in`
+#### `loop`
+
+Repeats a block of code unconditionally until `break` is called.
+
+```
+loop:
+    print("I'm looping!")
+    break
+
+-- Infinite loop:
+loop:
+    print("I'm looping!")
+    -- no break
+```
+
+Like `block`, you can give a label after `loop` to use instead.
+
+```
+loop label:
+    if cond():
+        break label
+```
+
+`loop` has several varients to change what condition will break. The pattern is `loop keyword`. A label can be optionally put between with `loop label keyword`. This makes is clear that whenever you see `loop`, then you have a loop. A programmer at a glance can see the word `loop` and think *"Ah, there's a loop here."* 
+
+#### `loop for` / `in`
 
 Iterates through an array or iterator.
 
 ```
-for var in expr:
+loop for var in expr:
     body
 ```
 
-If inlined, it returns an iterator `iter[T]` which is lazily executed. It won't activate until it's collected in an array with `++` or passed into another `for _ in` loop. 
+If inlined, it returns an iterator `iter[T]` which is lazily executed. It won't activate until it's collected in an array with `++` or passed into another `loop for _ in`. 
 
 ```
-iterator = for x in list then x * 2
+iterator = loop for x in list then x * 2
 list = [++iterator]
 ```
 
@@ -1447,72 +1444,62 @@ The items can also be destructured. *(See [Destructuring](#Destructuring).)*
 ```
 listOfTuples = [(1, '2', "three"), (4, '5', "six")]
 
-for (x, y, z) in listOfTuples:
+loop for (x, y, z) in listOfTuples:
     print("{x}, {y}, {z}")
 ```
 
-Unlike with destructuring, you don't need `()&` if you want to destruct from a known type.
+Destructuring also works.
 
 ```
-for Thing{x, y} in getThings():
+loop for {x, y}: Thing in getThings():
     print("Thing\{x={x}, y={y}}")
 ```
 
-For an async iterator or an array of async types, you can use `for await` to automatically wait for each item in sequential order. *(See [`await`](#await).)*
+For an async iterator or an array of async types, you can use `loop for await` to automatically wait for each item in sequential order. *(See [`await`](#await).)*
 
 ```
-for await x in asyncIter():
+loop for await x in asyncIter():
     print("{x}")
 ```
 
-#### `while`
+#### `loop if`
 
 Repeats a block of code until the condition is `True`.
 
 ```
-while cond:
+loop if cond:
     body
 ```
 
-The same things that apply to `if` apply to `while` likw the `or == []` pattern.
+The same things that apply to `if` apply to `loop if` likw the `or == []` pattern.
 
 ```
 mu x = 0
-while or x ==[0, 2, 3, 4]:
+loop if or x ==[0, 2, 3, 4]:
     print("{x}")
     x = randInt(-1, 4)
 ```
 
-The `else` after a `while` block will run if the loop never ran even once. This is analogous to `if` / `else`. 
+The `else` after a `loop if` block will run if the loop never ran even once. This is analogous to `if` / `else`. 
 
 ```
 x = False
-while x:
+loop if x:
     pass
 else:
     print("The loop failed")
 ```
 
-#### `while` / `tobe`
-
-Some programming languages let you do something like `while value = getValue()`. Mulang doesn't allow this because `=` is a void statement. Instead, you can use `tobe` to achieve the same thing but more explicitly.
+Some programming languages let you do something like `while (value = getValue()) {body}`. Mulang doesn't allow this because `=` is a void statement. Instead, you can use `tobe` to achieve the same thing but more explicitly.
 
 ```
-while None != getValue() tobe value:
+loop if None != (getValue() tobe value):
     print("value = {value}")
 ```
 
 #### `loop` / `until`
 
-Repeats a block of code until `break` is called.
-
-```
-loop:
-    print("I'm looping!")
-    break
-```
-
-Add `until` after a `loop` block to create a condition that will break the loop. Unlike `while`, this will break when the condition is `True`, analogous to `if cond then break`. This would be a `do { body } while (!cond);` loop in other languages like C. The reason it doesn't use `while` is because that would start another block, and `do` already has a different meaning in Mulang, so `loop` and `until` were chosen instead. This makes it clear that `loop` and `until` are semantically connected since `until` is only used with `loop`.
+Add `until` after a `loop` block to create a condition that will break the loop. Unlike `loop if`, this will break when the condition is `True`, analogous to `if cond then break` inside the block. This would be a `do { body } while (!cond);` loop in other languages like C. The reason it doesn't use `while` or `if` is because that would get confused for the start of a block, and `do` already has a different meaning in Mulang, so `loop` and `until` were chosen instead. This makes it clear that `loop` and `until` are semantically connected since `until` is only used with `loop`.
 
 ```
 loop:
@@ -1535,15 +1522,26 @@ until i >= 10
 
 Controls the iteration of any loop type mentioned. `break` exits out of the loop, and `continue` skips to the next iteration. This is only allowed in block-level loops. Inlined `for` loops are not allowed to skip iterations. This keeps the mapping between iterators 1-to-1.
 
-Afer `break` or `continue`, you can give it a label to break. It must be the name of a `block` in the same scope or higher. 
+Afer `break` or `continue`, you can give it a label to break. It must be the name of a `block`/`loop` in the same scope or higher. 
 
 ```
-block label loop:
+loop label:
     loop:
         print("Double loop! How do I break?")
         break label
 
 print("I'm free!")
+```
+
+```
+loop outerFor for x in 0..100:      -- Label this block `outerFor`.
+    loop innerFor for y in 0..100:  -- Label this block `innerFor`.
+        prod = x * y
+        print("{x} * {y} == {prod}")
+        if prod >= 100:
+            break innerFor          -- Break inner loop, continue outer loop.
+        if prod == 77:
+            break outerFor          -- Break outer loop, loop ends.
 ```
 
 #### `match`
@@ -1588,10 +1586,10 @@ match choice then
     print("Third \{ val={val} }")
 ```
 
-The inline form switches `:` for `->`, unlike other blocks which use `then` for inline form. This makes it easier to read and take up less space. Patterns are usually words, so you can visually sequence it into pattern/expression pairs: `| ptrn -> expr | ptrn -> expr | ptrn -> expr` etc.. This won't clash with the `->` operator because each case is a pattern, not an expression. Semantically, it makes sense because it does the same job—in `lhs -> rhs`, `rhs` is always returned, just like how the case returns that expression when the pattern matches.
+The inline form switches keeps `:` after patterns. This makes it easier to read and take up less space. Patterns are usually words, so you can visually sequence it into pattern/expression pairs: `| ptrn: expr | ptrn: expr | ptrn: expr` etc.. 
 
 ```
-message = match e then | OpenError{filename} -> "Open error: {filename}" | _ -> "Unknown error"
+message = match e then | OpenError{filename}: "Open error: {filename}" | _: "Unknown error"
 ```
 
 You can have multiple patterns match to one case. If any of the patterns destructur with a variable, the same variable name and type must be in all patterns. If not, use a wildcard `_` in each pattern or omit the tuples part entirely to disable destructuring.
@@ -1625,7 +1623,7 @@ match choice then
 
 This does the same job that a single `|` in a `match` block does. Most languages use `case` for the `switch`/`match` block, but since Mulang uses `|`, that frees up the keyword `case` to be used for other useful patterns.
 
-The pattern `case`/`else` extracts an enum and binds its value to the scope. You must have `else` at the end, and the block must break out of the scope like with `break`, `continue`, `return`, `raise`, etc.. This is analogous to the `let pattern(x) = value else {}` pattern found in other languages.
+`case` / `else` extracts an enum and binds its value to the scope. You must have `else` at the end, and the block must break out of the scope like with `break`, `continue`, `return`, `raise`, etc.. This is analogous to the `let pattern(x) = value else {}` pattern found in other languages.
 
 ```
 block label:
@@ -1645,68 +1643,53 @@ mightGetSomething() =
     Some(x + 1)
 ```
 
-Conditional block-types `if`, `while`, and `until` have alternative forms by adding `case` after the keyword. They because `ifcase`, `whilecasae`, and `untilcase`. New keywords where made for each so that `case` would be overloaded but makes it semantically clear it's related. This combines the pattern matching of `case` into a condition. Each expects a pattern and expression pair with `=` in between.
+#### `when`
 
-`ifcase` is useful if you want to destructure a single case of a sum type. This must be a pattern that matches the type of the value after `=`.
+Combines the conditional branching of `if` with pattern matching of `case`. Useful if you want to destructure a single case of a sum type. This must be a pattern that matches the type of the value after `=`.
 
 ```
-ifcase Pattern(x) = value:
+when Pattern(x) = getStuff():
     print("value is {x}")
 else:
     print("value doesn't match")
 
-something = ifcase Some(x) = getSomething() then x else "fallback"
+something = when Some(x) = getSomething() then x else "fallback"
+```
+
+This makes it clear that you are pattern matching instead of checking a boolean value. We want to avoid using `=` in an `if` block beceause it could lead to potential ambiguity issues.
+
+```
+x = 0
+
+if Some(x) = getStuff():  -- Did you mean `==`? Are you creating a new `x` or wrapping the exisiting `x`?
 ```
 
 You can match multiple patterns also with `|` like with a `match` block. All patterns must go on the left of the `=` sign. Any destructured variables must match in name and type.
 
 ```
-ifcase ResultType1(val: int) | ResultType2{data as val: int} = getResult():
+when ResultType1(val: int) | ResultType2{data as val: int} = getResult():
     print("val = {val}")
 ```
 
-`whilecase` is just like with `ifcase` but will loop until the pattern breaks. In some cases, this might be more desirable than the `while` / `tobe` format. 
+Are you sensing a pattern? We have `if` and `when`, so that means we also get `loop if` and... `loop when`! This will loop until the pattern breaks. In some cases, this might be more desirable than the `loop if` / `tobe` format.
 
 ```
-whilecase Some(x) = nextValue():
+loop when Some(x) = nextValue():
     print("value is {x}")
 ```
 
-`untilcase` is also possible. It's behavior is closer to just `case` than the other `_ case` blocks. It creates a new variable in the scope outside of the loop. This is because it appears at the end of the block instead of the top, so it won't be set *until* it matches which means the loop breaks. This can be useful if you want to repeatedly call a function *until* you get something.  The loop cannot conditionally break inside the body because then the variable would be unset. This ensures that the destructured variables are defined after the loop finishes. The loop runs until the pattern matches, and when it does, the matched value is your result — it would be meaningless otherwise. The scoping rule follows directly from the semantics. You can't use the value inside the loop body anyway since until is a termination condition, so there's only one place the binding could go — outside. *The scope of bindings mirrors the position of the pattern.*
+#### `until case`
+
+Like how `if` has `when`, `until` has `until case`. It's behavior is closer to just `case` blocks, so it uses the keyword `case` together. `until` is kept too because it marks the ending of a `loop`, analogous to `do`/`end`. Like `case`, `until case` creates a new variable in the parent scope of its block. This is because it appears at the end of the block instead of the top, so it won't be set *until* it matches which means the loop breaks. This can be useful if you want to repeatedly call a function *until* you get something.  The loop cannot conditionally break inside the body because then the variable would be unset. This ensures that the destructured variables are defined after the loop finishes. The loop runs until the pattern matches, and when it does, the matched value is your result — it would be meaningless otherwise. The scoping rule follows directly from the semantics. You can't use the value inside the loop body anyway since until is a termination condition, so there's only one place the binding could go — outside. *The scope of bindings mirrors the position of the pattern.*
 
 ```
 value: mu int?
 
 loop:
     value = getValue()
-untilcase Some(x) = value
+until case Some(x) = value
 
 print("value = {x}")
-```
-
-All of these blocks are semantically linked with `case`. It makes it very clear that some kind of pattern matching with an enum is happening. 
-
-#### `opt` / `orelse`
-
-Wraps a single expression in an option type. After `opt`, you can use `?` within to expression to unwrap multiple option values. If one `?` returns `None`, then the whole `opt` expression stops and returns `None`. `orelse` is optional. It unwraps the option or gives the right-hand side if it's `None`. 
-
-```
-x = opt f(a?) orelse "fallback"     -- x is "fallback" if a is none.
-```
-
-If a function returns an option type, then use of the `?` is allowed without `opt`. Using an `?` inside a function will automatically infer the return type to be an option. The return will be automatically wrapped in `Some(_)`. If there isn't a return value in the function, then it should be a type `void?`. Unwrapping it gives an empty tuple `()`. *[See [Tuples](#Tuples).)*
-
-```
-addStuff(a: int, b: int): int? =
-    a = getSomething(a)?
-    b = getSomething(b)?
-    a + b
-```
-
-If a you have nested options like `type??`, you can add aditional `?`s to continuously unwrap it until you get to the value. 
-
-```
-unnestOptions(x: int??): int? = x??
 ```
 
 #### `try` / `except`
@@ -1744,6 +1727,49 @@ riskyFunction(a: int): int! =
     c
 ```
 
+Result types flatten similarly to option types. The rules go the following:
+
+- For every `raise` or `!` in a `try` block, an exception is added to the exception sum type of the result.
+- For every `except` after the `try` block, an exception is removed from the exception sum type of the result.
+
+When all exceptions have been handled, the result is `type!void` which automatically converges to just `type`.
+
+#### `opt` / `orelse`
+
+Wraps a single expression in an option type. After `opt`, you can use `?` within to expression to unwrap multiple option values. If one `?` returns `None`, then the whole `opt` expression stops and returns `None`. `orelse` is optional. It unwraps the option, giving the right-hand side if the left-hand side is `None`. 
+
+```
+x = opt f(a?) orelse "fallback"     -- `x` is "fallback" if `a` is none.
+y = opt f(a?)                       -- Or store the resulting option and unwrap it later.
+z = y.unwrap()
+```
+
+Use it as a block to unwrap multiple values at once.
+
+```
+opt:
+    a = getSomething(a)?
+    b = getSomething(b)?
+    print("{a + b}")
+orelse:                   -- Option if the block ends early.
+    print("Didn't work")
+```
+
+If a function returns an option type, then use of the `?` is allowed without `opt`. Using an `?` inside a function will automatically infer the return type to be an option. The return will be automatically wrapped in `Some(_)`. If there isn't a return value in the function, then it should be a type `void?`. Unwrapping it gives an empty tuple `()`. *[See [Tuples](#Tuples).)*
+
+```
+addStuff(a: int, b: int): int? =
+    a = getSomething(a)?
+    b = getSomething(b)?
+    a + b
+```
+
+If a you have nested options like `type??`, you can add aditional `?`s to continuously unwrap it until you get to the value. 
+
+```
+unnestOptions(x: int??): int? = x??
+```
+
 You can combine `?` and `!` together when the return type is `type?!` (an **option result type**).
 
 ```
@@ -1757,13 +1783,6 @@ doSomething(x) =
     x = x?
     doSomethingElse(x)!
 ```
-
-Result types flatten similarly to option types. The rules go the following:
-
-- For every `raise` or `!` in a `try` block, an exception is added to the exception sum type of the result.
-- For every `except` after the `try` block, an exception is removed from the exception sum type of the result.
-
-When all exceptions have been handled, the result is `type!void` which automatically converges to just `type`.
 
 #### `return`
 
@@ -1867,6 +1886,13 @@ Last
 
 ---
 
+## Looping
+
+- `loop` — marks any kind of loop.
+- `loop if` + `loop when` — breaks when the condition break.
+- `loop` / `until` — loops until the condition is true
+- `loop for` — loops through an iterator or array.
+
 ## Error Handling
 
 - `expr!` — propagate an error upward (Rust/Swift style).
@@ -1877,7 +1903,7 @@ Last
 ## Pattern Matching and Destructuring
 
 - Full `match` (exhaustive unless `| _:` is present).
-- `ifcase` — like Rust's `if let`.
+- `when` — like Rust's `if let`.
 - Destructuring supports structs, tuples, enum variants, and wildcards (`_`).
 
 ---
@@ -2388,37 +2414,34 @@ This is a work in progress though. How these decorators are implemented and thei
 18. `fn`
 19. `for`
 20. `if`
-21. `ifcase`
-22. `impl`
-23. `import`
-24. `inherit`
-25. `in`
-26. `let`
-27. `loop`
-28. `match`
-29. `mod`
-30. `mu`
-31. `not`
-32. `opt`
-33. `or`
-34. `orelse`
-35. `out`
-36. `pass`
-37. `proto`
-38. `raise`
-39. `ref`
-40. `return`
-41. `self`
-42. `struct`
-43. `then`
-44. `tobe`
-45. `try`
-46. `until`
-47. `untilcase`
-48. `where`
-49. `while`
-50. `whilecase`
-51. `yield`
+21. `impl`
+22. `import`
+23. `inherit`
+24. `in`
+25. `let`
+26. `loop`
+27. `match`
+28. `mod`
+29. `mu`
+30. `not`
+31. `opt`
+32. `or`
+33. `orelse`
+34. `out`
+35. `pass`
+36. `proto`
+37. `raise`
+38. `ref`
+39. `return`
+40. `self`
+41. `struct`
+42. `then`
+43. `tobe`
+44. `try`
+45. `until`
+46. `when`
+47. `where`
+48. `yield`
 
 *NOTE: Built-in types, values, functions, and decorators like `int`, `True`, `Some`, `default`, `print`, `@memory` etc. are not considered keywords.*
 
