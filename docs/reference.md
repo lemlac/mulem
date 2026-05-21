@@ -203,7 +203,7 @@ The philosophy of Mulang is that symbols should be easy to recognize and underst
 | `lhs and rhs` | false if any are false | 10 |
 | `lhs or rhs` | true if any are true | 11 |
 | `not rhs` | inverts a boolean | 3 |
-| `and rhs` | do `and` on each component of a tuple: `and (True, False, True)` → `True and False and True` → `False | 3 |
+| `and rhs` | do `and` on each component of a tuple: `and (True, False, True)` → `True and False and True` → `False` | 3 |
 | `or rhs` | do `or` on each component of a tuple: `or (True, False, True)` → `True or False or True` → `True` | 3 |
 | __(Bitwise)__ | — | — |
 |  `lhs band rhs` | bitwise `AND` | 7 |
