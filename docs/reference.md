@@ -15,7 +15,7 @@ This document will focus on the language itself. Some features may come in a sta
 - **Indentation**: Significant whitespace (4 spaces recommended). 
 - **Statements**: Each statement is divided by new lines. Semi-colons (;) can also be used. 
 - **Comments**: Double dash (`--`) to end-of-line. Block comments start with `(--` and end with `--)`.
-- **String literals**: `"..."` with interpolation with `{expr}` inside. To write a literal curly brace (`{`), escape it with a backslash `\{`. 
+- **String literals**: `"…"` with interpolation with `{expr}` inside. To write a literal curly brace (`{`), escape it with a backslash `\{`. 
 
 ## Basic Syntax
 
@@ -154,7 +154,7 @@ end)
 end)
 ```
 
-Not all blocks need to be wrapped in `do`...`end` all of the time. Only when they need to switch from inline mode to block mode. Most blocks in Mulang can be **inlined** though. Some are based on whether they use a `:` or not. If a block has a *subject* component, then the `:` goes after the subject in block mode but is swapped for the keyword `then` in inline mode. *(See [Control Flow](#Control-Flow) for more details.)*
+Not all blocks need to be wrapped in `do`…`end` all of the time. Only when they need to switch from inline mode to block mode. Most blocks in Mulang can be **inlined** though. Some are based on whether they use a `:` or not. If a block has a *subject* component, then the `:` goes after the subject in block mode but is swapped for the keyword `then` in inline mode. *(See [Control Flow](#Control-Flow) for more details.)*
 
 ```
 if x then "True" else "False"  -- Inline expression.
@@ -291,7 +291,7 @@ print("{onePlusTwoCubed}")       -- Prints "27"
 
 -- Method chaining:
 object.method1() |> [fn1(_)].method2() |> [fn2(_)]
--- Becomes...
+-- Becomes…
 fn2( fn1( object.method1() ).method2() )
 ```
 
@@ -458,7 +458,7 @@ block:
 print("{mut}")      -- Prints "0", outer `mut` was not mutated.
 ```
 
-__A brief word on the choice of the keyword `mu`...__
+__A brief word on the choice of the keyword `mu`…__
 
 Just like Go has its `go` keyword, Mulang has `mu`. Go's `go` has a clear and obvious connection with *goroutines*, and Mu's `mu` has a clear and obvious connection with *mutable.* This was chosen since mutability is a common practice in programming much like functions are—which is why functions also get their own two letter keyword `fn`. *(See [Function Declarations](#Function-Declarations).)* The brevity of it is its strength. It beats other keywords such `mut` *(mutt? like a mixed dog breed? meaning too ambiguous),* `val` *(too common of a variable name),* `var` *(doesn't imply mutability).* The general rule of thumb in Mulang is that *patterns scale with complexity*—simple things like declaring a variable or function use short patterns, more complex things use bigger patterns. That's why the two letter keyword `mu` beats any three letter keyword. Making a *mutable* variable in *Mu* is easy like making a *goroutine* in *Go.* 
 
@@ -675,7 +675,7 @@ addCount() =
 
 #### Lambda Functions
 
-You can define a function within an expression with the keyword `fn` in the pattern `fn(_) = _`. This is useful for passing functions to other functions. If the lambda function has multiple lines, it must be wrapped in `do`...`end`.
+You can define a function within an expression with the keyword `fn` in the pattern `fn(_) = _`. This is useful for passing functions to other functions. If the lambda function has multiple lines, it must be wrapped in `do`…`end`.
 
 ```
 map(array, func) = [++for x in array then func(x)]
@@ -815,7 +815,7 @@ loop if next() tobe val != None:
     print("{val}")
 ```
 
-This reads like an English sentence: "Loop if next to be value is not none..."
+This reads like an English sentence: "Loop if next to be value is not none…"
 
 *Note that `let` wouldn't work here because it only works on a single expression.*
 
@@ -1085,7 +1085,7 @@ But three quotation marks like """ need to be escaped.
 This is the last line because of the closing quotation marks below it.
 ```
 
-You can write a raw string with `''...''` (two apostrophes). Although apostrophes `'` are used for chars, an empty char isn't possible since the default char is written `'\0'` (null character). This is a common practice in programming languages where `"` mark formattable strings and `'` mark raw strings, so this should be easy to understand for any programmer. When you write `''`, every character after it (including whitespace and indentation) is in the string until the closing `''`. Escaping with backslashes `\` and insertion with curly braces `{}` are ignored.
+You can write a raw string with `''…''` (two apostrophes). Although apostrophes `'` are used for chars, an empty char isn't possible since the default char is written `'\0'` (null character). This is a common practice in programming languages where `"` mark formattable strings and `'` mark raw strings, so this should be easy to understand for any programmer. When you write `''`, every character after it (including whitespace and indentation) is in the string until the closing `''`. Escaping with backslashes `\` and insertion with curly braces `{}` are ignored.
 
 ```
 rawString = ''It's okay to put an apostrophe (') in the string.''
@@ -1573,7 +1573,7 @@ match expr then | ptrn:
     body
 | ptrn:
     body
-    ...
+    –
 | _:
     body
 ```
@@ -1588,8 +1588,8 @@ The patterns map to the type passed in after `match`, so you only need to refere
 match choice then | First: -- Each pattern case starts its on block.
     print("First")         -- Ident for the new block.
 | Second(x):               -- Continue this for each case.
-    print("Second({x})")   -- ...
-| Third{val}:              -- ...
+    print("Second({x})")   -- ……
+| Third{val}:              -- ……
     print("Third \{ val={val} }")
                            -- All choices were exhausted, so no `| _:` is necessary.
 ```
@@ -1736,7 +1736,7 @@ else:
 
 #### `loop when`
 
-Are you sensing a pattern? We have `if` and `when`, so that means we also get `loop if` and... `loop when`! This will loop until the pattern breaks. In some cases, this might be more desirable than the `loop if` / `tobe` format.
+Are you sensing a pattern? We have `if` and `when`, so that means we also get `loop if` and… `loop when`! This will loop until the pattern breaks. In some cases, this might be more desirable than the `loop if` / `tobe` format.
 
 ```
 loop when Some(x) = nextValue():
@@ -2193,7 +2193,7 @@ except DBZ(x):
 
 #### Prototypes (`proto`)
 
-A `proto` is an abstract interface — a named contract with no data. It is equivalent to a `virtual class` (C++), `trait` (Rust), or `interface` (Java, TypeScript, etc.) in other languages. Each member is a function, also called a **method**. Methods that have a parameter named `self` at the beginning will be called like methods on the instance of that type, i.e. `self.method(...)`. This is equivalent to saying `typeof[self].method(self, ...)`.
+A `proto` is an abstract interface — a named contract with no data. It is equivalent to a `virtual class` (C++), `trait` (Rust), or `interface` (Java, TypeScript, etc.) in other languages. Each member is a function, also called a **method**. Methods that have a parameter named `self` at the beginning will be called like methods on the instance of that type, i.e. `self.method(…)`. This is equivalent to saying `typeof[self].method(self, …)`.
 
 ```
 MyPrototype :: proto =
