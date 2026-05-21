@@ -30,9 +30,9 @@ comment.
 --)
 
 (--
-  (--
-    Nesting is allowed.
-  --)
+    (--
+        Nesting is allowed.
+    --)
 --)
 ```
 
@@ -50,7 +50,7 @@ Almost everything is an expression. Some statements can be either inline or bloc
 Parts of an expression are divided into 4 categories:
 
 1. __Words:__ variable names: `x`, `PI; numeric constants: `1`, `3.14`, `0xABCDEF`;
-2. __Char/String Literals:__ things surrounded in quotes: `'a'`, `"foo"`, `"""big string"""`, `#''raw string''#`
+2. __Char/String Literals:__ things surrounded in quotes: `'a'`, `"foo"`, `"""big string"""`, `$''raw string''$`
 3. __Delimiters:__ commas `,` for tuples and arrays; `;` for subsequent expressions
 4. __Symbols:__ operators and anything with these characters: `~!@#$%^&*-+=\|:<.>/?` *but excluding the symbol for a comment `--`*
 5. __Bracket Expressions:__ anything in parentheses `()`, square brackets `[]`, or curly braces `{}`; *note: the term __bracket__ means any of these characters `()[]{}`, and the term __square bracket__ means just these characters `[]`*
@@ -209,9 +209,10 @@ The philosophy of Mulang is that symbols should be easy to recognize and underst
 |  `lhs /\ rhs` | bitwise-`AND` *(resembles a wedge* $\land$ *, the symbol for logical AND; also resembles a capital A)* | 7 |
 | `lhs \/ rhs` | bitwise-`OR` *(resembles a vee* $\lor$ *, the symbol for logical OR; also invert of `/\`)* | 7 |
 | `lhs >< rhs` | bitwise-`XOR` *(resembles an X for XOR)* | 7 |
-| `bnot rhs` | bitwise-`NOT` | 3 |
+| `<> rhs` | bitwise-`NOT` *(borrows the alternative not-equals operator `<>` found in some language; also resembles flipping a switch)* | 3 |
 | `lhs << rhs` | bitshift-left | 5 |
 | `lhs >> rhs` | bitshift-right | 5 |
+| `lhs >>> rhs` | bitshift-right (unsigned) | 5 |
 | __(Arrays)__ | — | — |
 | `lhs # rhs` | get an item from `lhs` at an index `rhs` (index starting at 0) | 2 |
 | `lhs ++ rhs` | concatenation, returns a new array | 6 |
@@ -227,7 +228,7 @@ The philosophy of Mulang is that symbols should be easy to recognize and underst
 | __(Results)__ | — | — |
 | `lhs !` | returns the result value if it's not an exception, otherwise propagate to the nearest `try` keyword *(see [`try` block](#try--except))* | 2 |
 | __(Pointers)__ | — | — |
-| `lhs ^` | dereferences a raw pointer | 2 |
+| `lhs ^` | dereferences a typed pointer | 2 |
 | __(Functional)__ | — | — |
 | `lhs \|> rhs` | pipelining, disregards `lhs` and returns `rhs` | 12 |
 | `~ rhs` | inferred type conversion | 3 |
@@ -243,11 +244,13 @@ The philosophy of Mulang is that symbols should be easy to recognize and underst
 | `lhs //= rhs` | floor division assignment | 12 |
 | `lhs %= rhs` | modulo assignment | 12 |
 | `lhs %%= rhs` | floor division modulo assignment (binds `lhs` to a range in `[0, rhs)` if `rhs` is positive or `(rhs, 0]` if `rhs` is negative) | 12 |
-| `lhs \/= rhs` | bitwise-`AND` assignment | 12 |
-| `lhs /\= rhs` | bitwise-`OR` assignment | 12 |
+| `lhs **= rhs` | exponential assignment | 12 |
+| `lhs /\= rhs` | bitwise-`AND` assignment | 12 |
+| `lhs \/= rhs` | bitwise-`OR` assignment | 12 |
 | `lhs ><= rhs` | bitwise-`XOR` assignment | 12 |
 | `lhs <<= rhs` | bitshift-left assignment | 12 |
 | `lhs >>= rhs` | bitshift-right assignment | 12 |
+| `lhs >>>= rhs` | unsigned bitshift-right assignment | 12 |
 | `lhs ++= rhs` | append to an array (not allowed if `lhs` is a fixed length array) | 12 |
 
 __Order of Operations:__
@@ -265,7 +268,7 @@ __Order of Operations:__
 11. Logical OR
 12. Assignment/Pipelining (Lowest)
 
-*Note: keywords bitwise operators use different symbols than their conventional `&|^~` in other languages because those symbols have different meanings by themselves in Mulang: `&` → tuples, `|` → pattern matching, `~` → type conversion. `&&` and `||` are usually boolean operators and would also be ambiguous, even though those operations are handled by the keywords `and` and `or` instead. `/\`, `\/`, and `><` seem like the right blend of uniqueness without being too ambiguous. Being symbols, they also have assignemnt versions `/\=`, `\/=, and `><=`. This breaks some of the usual habits of other languages, but that frees the usual symbols to do novel things. This is an experimental language, so it's not obligated to follow normal conventions.* 
+*Note: keywords bitwise operators use different symbols than their conventional `&|^~` in other languages because those symbols have different meanings by themselves in Mulang: `&` → tuples, `|` → pattern matching, `~` → type conversion. `&&` and `||` are usually boolean operators and would also be ambiguous, even though those operations are handled by the keywords `and` and `or` instead. `/\`, `\/`, and `><` seem like the right blend of uniqueness without being too ambiguous. Being symbols, they also have assignemnt versions `/\=`, `\/=, and `><=`. All bitwise operators resemble arrows which give them both visual and semantic unity. This breaks some of the usual habits of other languages, but that frees the usual symbols to do novel things. This is an experimental language, so it's not obligated to follow normal conventions.* 
 
 Some operators have assignment alternatives by adding an equals sign `=` after it. These are reserved for the operators that aren't keywords and return the same type that their left-hand side is. This sets a variable based on its previous value. The left-hand side must be an already defined variable. If it's immutable, then this shadows it. If it's mutable, then the value is mutated. *(See [Mutability(#Mutability-mu).)* All of these are void statements, i.e. they return nothing and should only be used in an expression by themselves.
 
@@ -1093,32 +1096,32 @@ filePath = ''C:\files\on\windows.txt''
 template = ''Insert here → {{variable}}''
 ```
 
-To escape `''` within a raw string, add a hash `#` before and after the apostrophes. The number of `#`s must match to close the raw string.
+To escape `''` within a raw string, add a dollar sign `$` before and after the apostrophes. The number of `$`s must match to close the raw string.
 
 ```
--- Add a `#` to escape the `''` within the string.
-bigDocument = #''
+-- Add a `$` to escape the `''` within the string.
+bigDocument = $''
     This  '
    is   ''      ''
   all       ''
   in  '         '
    a     '''' '
     string
-''#
--- Maching number of `#` closes the string.
+''$
+-- Maching number of `$` closes the string.
 
--- `##''` to escape the `''#` within the string.
-nestedDocument = ##''
-bigDocument = #''
+-- `$$''` to escape the `''$` within the string.
+nestedDocument = $$''
+bigDocument = $''
     This  '
    is   ''      ''
   all       ''
   in  '         '
    a     '''' '
     string
-''#                 
-''##
--- `''##` closes the matching `##''`.
+''$                
+''$$
+-- `''$$` closes the matching `$$''`.
 ```
 
 While this is possible, this is not recommended for the sake of legibility. For anything more complicated, it's recommended to save the string in a document and programmically open the file, which will be handled by a separate library and lies outside the scope of this document.
@@ -2489,48 +2492,47 @@ This is a work in progress though. How these decorators are implemented and thei
 1. `and`
 2. `as`
 3. `await`
-4. `bnot`
-5. `break`
-6. `case`
-7. `continue`
-8. `defer`
-9. `do`
-10. `else`
-11. `end`
-12. `enum`
-13. `except`
-14. `fallthrough`
-15. `fn`
-16. `for`
-17. `if`
-18. `impl`
-19. `import`
-20. `inherit`
-21. `in`
-22. `let`
-23. `loop`
-24. `match`
-25. `mod`
-26. `mu`
-27. `not`
-28. `opt`
-29. `or`
-30. `orelse`
-31. `out`
-32. `pass`
-33. `proto`
-34. `raise`
-35. `ref`
-36. `return`
-37. `self`
-38. `struct`
-39. `then`
-40. `tobe`
-41. `try`
-42. `until`
-43. `when`
-44. `where`
-45. `yield`
+4. `break`
+5. `case`
+6. `continue`
+7. `defer`
+8. `do`
+9. `else`
+10. `end`
+11. `enum`
+12. `except`
+13. `fallthrough`
+14. `fn`
+15. `for`
+16. `if`
+17. `impl`
+18. `import`
+19. `inherit`
+20. `in`
+21. `let`
+22. `loop`
+23. `match`
+24. `mod`
+25. `mu`
+26. `not`
+27. `opt`
+28. `or`
+29. `orelse`
+30. `out`
+31. `pass`
+32. `proto`
+33. `raise`
+34. `ref`
+35. `return`
+36. `self`
+37. `struct`
+38. `then`
+39. `tobe`
+40. `try`
+41. `until`
+42. `when`
+43. `where`
+44. `yield`
 
 *NOTE: Built-in types, values, functions, and decorators like `int`, `True`, `Some`, `default`, `print`, `@memory` etc. are not considered keywords.*
 
