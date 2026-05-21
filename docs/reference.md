@@ -207,7 +207,7 @@ The philosophy of Mulang is that symbols should be easy to recognize and underst
 | `or rhs` | do `or` on each component of a tuple: `or (True, False, True)` → `True or False or True` → `True` | 3 |
 | __(Bitwise)__ | — | — |
 |  `lhs /\ rhs` | bitwise-`AND` *(resembles a wedge* $\land$ *, the symbol for logical AND; also resembles a capital A)* | 7 |
-| `lhs \/ rhs` | bitwise-`OR` *(resembles a vee* $\lor$ *, the symbol for logical OR; invert of `\/`)* | 7 |
+| `lhs \/ rhs` | bitwise-`OR` *(resembles a vee* $\lor$ *, the symbol for logical OR; also invert of `/\`)* | 7 |
 | `lhs >< rhs` | bitwise-`XOR` *(resembles an X for XOR)* | 7 |
 | `bnot rhs` | bitwise-`NOT` | 3 |
 | `lhs << rhs` | bitshift-left | 5 |
@@ -265,7 +265,7 @@ __Order of Operations:__
 11. Logical OR
 12. Assignment/Pipelining (Lowest)
 
-*Note: keywords bitwise operators use different symbols than their conventional `&|^~ in other languages because those symbols have different meanings by themselves in Mulang: `&` → tuples, `|` → pattern matching, `~` → type conversion. `&&` and `||` are usually boolean operators and would also be ambiguous, even though those operations are handled by the keywords `and` and `or` instead. `/\`, `\/`, and `><` seem like the right blend of uniqueness without being too ambiguous. Being symbols, they also have assignemnt versions `/\=`, `\/=, and `><=`. This breaks some of the usual habits of other languages, but that frees these symbols to do other things. This is an experimental language, so it's not obligated to follow normal conventions.* 
+*Note: keywords bitwise operators use different symbols than their conventional `&|^~` in other languages because those symbols have different meanings by themselves in Mulang: `&` → tuples, `|` → pattern matching, `~` → type conversion. `&&` and `||` are usually boolean operators and would also be ambiguous, even though those operations are handled by the keywords `and` and `or` instead. `/\`, `\/`, and `><` seem like the right blend of uniqueness without being too ambiguous. Being symbols, they also have assignemnt versions `/\=`, `\/=, and `><=`. This breaks some of the usual habits of other languages, but that frees the usual symbols to do novel things. This is an experimental language, so it's not obligated to follow normal conventions.* 
 
 Some operators have assignment alternatives by adding an equals sign `=` after it. These are reserved for the operators that aren't keywords and return the same type that their left-hand side is. This sets a variable based on its previous value. The left-hand side must be an already defined variable. If it's immutable, then this shadows it. If it's mutable, then the value is mutated. *(See [Mutability(#Mutability-mu).)* All of these are void statements, i.e. they return nothing and should only be used in an expression by themselves.
 
