@@ -1562,7 +1562,7 @@ match expr then | ptrn:
 
 Each pattern starts with `|`. This was chosen because pattern matching is a core feature in Mulang and a core identy of functional programming. This keeps it much briefer than the usual `switch`/`case` statement, closer to the pattern matching found in functional programming languages like Haskell or OCaml. 
 
-Its syntax is a bit different than most blocks. You start with `match expr then` with no colon. Each case starts with `|`. That's because it's parsily inlined, relying on the rule that symbols at the start of the line are part of the same expression, although this is a special case since each pattern starts a block. The colons are put at the end of the pattern on each case, with each case being its own block. 
+Its syntax is a bit different than most blocks. You start with `match expr then` with no colon. Each case starts with `|`. This is a special case since each pattern starts a block. The colons are put at the end of the pattern on each case, with each case being its own block. 
 
 The patterns map to the type passed in after `match`, so you only need to reference the members of that type in each pattern.
 
@@ -1576,7 +1576,7 @@ match choice then | First: -- Each pattern case starts its on block.
                            -- All choices were exhausted, so no `| _:` is necessary.
 ```
 
-The first case can also be put on the next like this:
+The first case can also be put on the next like this, making it easy to line up all the patterns:
 
 ```
 match choice then
@@ -2153,14 +2153,14 @@ A subtype cannot accidentally expose or clash with a private inherited member be
 
 Adding a parameter before the double colon (`::`) turns it into a **meta function** which combines the concepts of **inline functions**, **macros**, and **generics**. Parameters are put in square brackets `[]` to distinguish them from regular functions which use parentheses `()`. The types of parameters can be inferred based on context. If the meta function has no parameters or the values of those parameters can be inferred based on context, then you don't have to use `[]` when calling it. Because of this, you can't pass it around like a regular function. For any meta function `m[]`, saying `m` infers calling `m[]`. The result is treated like a constant for run-time code. 
 
-Analogous to constant values, you can define an inline function or macro by adding a parameter before the double colons and writing an expression after it. Like constants, they don't output a value in memory when compiled, useful for collecting repeated code. Unlike constant functions, they cannot be passed to another function. They are only for inserting an expression. Each parameter is a variable within the expression, so you don't need to wrap them in parentheses `()` like with C macros. 
+You can define a meta function by adding a parameter before the double colons and writing an expression after it. Like constants, they don't output a value in memory when compiled, useful for collecting repeated code. Unlike regular functions, meta function cannot be passed to another function. They only exist at compile-time. Each parameter is a variable within the expression, so you don't need to wrap them in parentheses `()` like with C macros. 
 
 ```
 max[a, b] :: if a > b then a else b
 min[a, b] :: if a < b then a else b
 ```
 
-You can also have multi-line macros similar to functions. Each meta function creates a new scope. Defining variables that could bleed into the surrounding scope is not allowed. The last expression is the return value. Call it like a function using `[]`. 
+You can also have multi-line meta function similar to regular functions. Each meta function creates a new scope. Defining variables that could bleed into the surrounding scope is not allowed. The last expression is the return value. Call it like a function using `[]`. 
 
 ```
 doSomethingComplicated[x] ::
@@ -2180,30 +2180,6 @@ value =
     x * x
 ```
 
-The compiler will read the body of the macro and understand where to insert its parameters, so if a parameter gets shadowed, then it will no longer insert it for the rest of that scope. 
-
-You can also pass a type back to make generic types and functions.
-
-```
--- Note that this is not the actual defintion for an option type `type?`. This is just a user-defined enum that uses the same pattern.
-Maybe[T] :: enum =
-    Some(T)
-    None
-
-Some[T] :: fn(x: T) = Maybe[T].Some(x)
-
-maybeInt = Some(1)
-```
-
-Type parameters can be omitted at the call site if they can be fully inferred from the value arguments, in which case the call uses parentheses like a regular function. It can also be called explicitly by making an alias for it or calling with both at the same time `[]()`
-
-```
-SomeInt :: Some[int]
-maybeInt = SomeInt(1)
-
-maybeInt = Some[int](1)
-```
-
 Some more examples using the `[]` notation:
 
 ```
@@ -2217,6 +2193,30 @@ f(x) = x * x
 g(x) = x + 2
 maxAdd[a, b] :: if a > b then fn(c) = a + c else fn(c) = b + c
 print("{ maxAdd[ f(0), g(0) ] (1) }")
+```
+
+The compiler will read the body of the macro and understand where to insert its parameters, so if a parameter gets shadowed, then it will no longer insert it for the rest of that scope. 
+
+You can also define a type with a meta function.
+
+```
+-- Note that this is not the actual defintion for an option type `type?`. This is just a user-defined enum that uses the same pattern.
+Maybe[T] :: enum =
+    Some(T)
+    None
+
+Some[T] :: fn(x: T) = Maybe[T].Some(x)
+
+maybeInt = Some(1)
+```
+
+Type parameters can be omitted at the call site if they can be fully inferred from the value arguments, in which case the call uses only parentheses `()`. It can also be called explicitly by making an alias for it or calling with both brackets at the same time `[]()`
+
+```
+SomeInt :: Some[int]
+maybeInt = SomeInt(1)
+
+maybeInt = Some[int](1)
 ```
 
 The syntax `[]` was chosen so that generic type inferrence will take precedence. `neta(a, b)` means to *call the instantiated function that `neta` returns with inferred types* whereas `neta[a, b]` means to *call the abstract function `neta` with these exact values.* This also makes it easy to distinguish actual function calls from macros/inlining. This removes the need for the more conventional `<>` syntax, which can get confusing. For example, in `f( g < a, b > ( c ) )`, is `g` a generic function or is that comparing two values and passing the results to `f`? The square bracket syntax removes this ambiguity, `f( g [ a, b ] ( c ) )`. This makes it semantically clear that you're doing a compile-time function call followed by a run-time function call. 
