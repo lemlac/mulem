@@ -343,15 +343,7 @@ The transition from array indexing with `[]` in other languages to array indexin
 
 - `array[0][1]` → `array#[0]#[1]` → `array#0#1`
 
-This frees `name[]` to take on a new meaning in Mulang. *For more on that, see [Meta Functions](#Meta-Functions).*
-
-The alternative would be to use both syntaxes, but that would make parsing difficult.
-
-```
-metaOrArray{0]   -- Is this an array or a meta function?
-```
-
-So Mulang chose to only support `[]` for meta functions and `#0` / `#[0]` for arrays. 
+This frees `name[]` to take on a new meaning in Mulang. *For more on that, see [Meta Functions](#Meta-Functions).* *For more information on array indexes, see [Arrays](#Arrays).*
 
 ## Basic Bindings
 
@@ -1158,6 +1150,14 @@ Other languages use `[]` for indexing, but that has another meaning in Mulang. I
 item = doubleArray#[1]#[0]  -- The 2nd row, 1st column
 print("{item}")             -- Prints "3"
 ```
+
+Habits can be hard to break. Many programmers have i internalized the `array[i]` format to mean "array index". To help with that, Mu allows the familiar `array[i]` format to be the same as `array#[i]`, but special care has to be taken into consideration to make sure it doesn't clash with [meta functions](#Meta-Functions). This rules out any tokens that looks like `name[]` or `name[a, b]` since array indexes normally only take one argument in other languages.
+
+```
+metaOrArray[0]   -- Is this an array or a meta function?
+```
+
+If Mulang thinks something might be an old-fashioned array index access like `metaOrArray[0]`, it will check the context to determine what the type of `metaOrArray` is to resolve it. If it's an array in this context, it will automatically treat it the same as `metaOrArray#[0]` without any fuss. This lets Mulang have the familiar syntax while also having the power and potential that comes with other features like *operation chaining* and *meta functions.*
 
 You may want to do an operation with an array literal on the right hand side of an operation. In that case, you can either store the array in a variable or surround it in parentheses `()`.
 
