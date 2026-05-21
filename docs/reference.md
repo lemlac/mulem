@@ -2,9 +2,9 @@
 
 *Version 0.1 (Draft)*
 
-The Mu programming language or *Mulang* is a general-purpose, multi-paradigm programming language with significant whitespace. It targets programmers who want to be able to write expressive code but also have low-level control. It is expression-oriented where possible and provides explicit control over evaluation strategy, memory model, and error handling.
+The Mu programming language or *Mulang* is a general-purpose, multi-paradigm programming language with significant whitespace. It targets programmers who want to be able to write expressive code but also have low-level control. It is expression-oriented where possible and provides explicit control over evaluation strategy, memory model, and error handling. Mulang is not afraid to break conventions and try new things. That's what making a new programming language from scrach is all about. It's experimental—it's meant to make you think—and may not be for everyone. 
 
-Mulang will be both a compiled and an interpreted language. You won't need to use another language like C to increase performance. You can instead compile some of it and then call it like a shared library all within the same language. Some use cases for this are AI, systems programming, and game development.
+Mulang is planned to be both a compiled and an interpreted language. You won't need to use another language like C to increase performance. You can instead compile some of it and then call it like a shared library all within the same language. Some use cases for this are AI, systems programming, and game development.
 
 This document will focus on the language itself. Some features may come in a standard library which will not be discussed here.
 
