@@ -268,11 +268,22 @@ __Order of Operations:__
 2 - 10. Primary/Postfix Operators
 1 - 11. Member Accessing/Inline-Binding (Highest)
 
-*Note: keywords bitwise operators use different symbols than their conventional `&|^~` in other languages because those symbols have different meanings by themselves in Mulang: `&` → tuples, `|` → pattern matching, `~` → type conversion. `&&` and `||` are usually Boolean operators and would also be ambiguous, even though those operations are handled by the keywords `and` and `or` instead. Bitwise-AND and bitwise-OR need to stay separate because their evaluation strategies differ from `and` / `or`, but NOT is unified `not` because it doesn't have that problem; it only differs by type. `/\`, `\/`, and `><` seem like the right blend of uniqueness without being too ambiguous. Being symbols, they also have assignment versions `/\=`, `\/=, and `><=`—useful for low-level bit manipulation. Bitwise operators resemble arrows which give them both visual and semantic unity. This breaks some of the usual habits of other languages, but that frees the usual symbols to do novel things. This is an experimental language, so it's not obligated to follow normal conventions.* 
-
 Some operators have assignment alternatives by adding an equals sign `=` after it. These are reserved for the operators that aren't keywords and return the same type that their left-hand side is. This sets a variable based on its previous value. The left-hand side must be an already defined variable. If it's immutable, then this shadows it. If it's mutable, then the value is mutated. *(See [Mutability(#Mutability-mu).)* All of these are void statements, i.e. they return nothing and should only be used in an expression by themselves.
 
 All assignment operators *(except for `=>`)* are **void.** This is intentional to prevent bugs and difficult to read code. It's recommend to put all assignment statements on their own separate lines for clarity. 
+
+__On the choice of the unique operators...__
+
+Keywords bitwise operators use different symbols than their conventional `&|^~` in other languages because those symbols have different meanings by themselves in Mulang: `&` → tuples, `|` → pattern matching, `~` → type conversion. `&&` and `||` are usually Boolean operators and would also be ambiguous, even though those operations are handled by the keywords `and` and `or` instead. Bitwise-AND and bitwise-OR need to stay separate because their evaluation strategies differ from `and` / `or`, but NOT is unified `not` because it doesn't have that problem; it only differs by type. `/\`, `\/`, and `><` seem like the right blend of uniqueness without being too ambiguous. Being symbols, they also have assignment versions `/\=`, `\/=, and `><=`—useful for low-level bit manipulation. Keywords such as `band`, `bor`, or `bxor` wouldn't work here. How would their assignment operators look?
+
+```
+x band= 0b10  -- Did you mean `x: band = 0b10`?
+x /\= 0b10    -- Clearly an assignment operation.
+```
+
+That's why only non-keyword operators are allowed to have assignment forms.
+
+Bitwise operators resemble arrows which give them both visual and semantic unity. This breaks some of the usual habits of other languages, but that frees the usual symbols to do novel things. This is an experimental language, so it's not obligated to follow normal conventions.
 
 ### Operation chaining `[]`
 
@@ -1756,16 +1767,34 @@ loop when Some(x) = nextValue():
 
 #### `loop` / `until when`
 
-Like how `if` has `when`, `until if` has `until when`. Like `case`, `until when` creates a new variable in the parent scope of its block. This is because it appears at the end of the block instead of the top, so it won't be set *until when* it matches which itself is the condition for the loop to break. This can be useful if you want to repeatedly call a function *until* you get something. The loop cannot conditionally break inside the body because then the variable would not be set. This ensures that the destructured variables are defined after the loop finishes. The loop runs until the pattern matches, and when it does, the matched value is your result — it would be meaningless otherwise. The scoping rule follows directly from the semantics. You can't use the value inside the `loop` body anyway since `until` is a termination condition, so there's only one place the binding could go — outside. *The scope of bindings mirrors the position of the pattern.*
+Like how `if` has `when`, `until if` has `until when`. This creates a new variable below the loop when the condition is met. This is because it appears at the end of the block instead of the top, so it won't be set *until* it matches which itself is the condition for the loop to break. This can be useful if you want to repeatedly call a function *until* you get something. This means that the loop cannot conditionally break inside the body because then the variable would not be set when it breaks. This ensures that the destructured variables are defined after the loop finishes. The loop runs until the pattern matches, and when it does, the matched value is your result. The scoping rule follows directly from the semantics. The variable is visible *below* the `when`. You can't use the value inside the `loop` body since `until when` is a termination condition, so there's only one place the binding could go — outside. *The scope of bindings mirrors the position of the pattern.*
 
 ```
 value: mu int?
 
 loop:
-    value = getValue()
-until when Some(x) = value
+    value = getValue()             -- Try to get something.
+until when Some(x: int) = value    -- Loop again if it fails. Exit here if it works.
+                                   -- Below the loop, `value` is guaranteed to be `Some(x)`, and `x` is guaranteed to be set.
+print("value = {x}")               -- Print the unwrapped value.
+```
 
-print("value = {x}")
+The reason it can't break is because then the condition wouldn't be guaranteed, and any destructured variables would not be set.
+
+```
+loop:
+    if someCondition:
+        break                      -- Compile-time error: cannot break inside `loop`/`until when`
+until when Some(x) = getValue()
+```
+
+If you wish to use `break`, you should disable destructuring so that there's no need for a guarantee.
+
+```
+loop:
+    if someCondition:
+        break                     -- Okay!
+until when Some(_) = getValue()   -- No new variables. This is fine now. 
 ```
 
 #### `try` / `except`
@@ -2021,6 +2050,8 @@ Last
 ## Meta Bindings (`::`)
 
 Variable and functions primarily use the equals sign (`=`) and are for storing actual data within a program, but there's another type of binding used for abstract values for the compiler to know about like constants, types, inline-functions, and generics. This type of declaration is **constant**; in other words, they cannot be **mutated** or **shadowed**. Depending on what it is, subsequent `::` of the same name will modify its definition. The most common is `:: impl[]` with adds methods and static variables to a meta binding. 
+
+Meta bindings are meant to resemble definitions. *"This is that."* Only when things get complicated should you have to expand on that. It should be easy and simple to define something. They are like the language file of your API, telling the compiler how to speak your own custom language—not just the language that you *speak* but the language that you *think* in.
 
 ### Constants
 
