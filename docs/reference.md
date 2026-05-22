@@ -387,14 +387,14 @@ not$  -- This is one word, error since `not$` doesn't exist.
 not $ -- This is okay, 2 words: `not` + `$`.
 ```
 
-Variables prefixed with `$` come from the context reference. This lets you use the context to write expressive code. 
+Variables prefixed with `$` come from the context reference. This lets you use the context to write expressive code. Named values use their names like `x` → `$x`, position values use numbers like `$0`, `$1`, `$2`, etc..
 
 ```
-(x: 1)             -- Create a tuple with named member `x`.
-|>:                -- Pass to a pipeline block.
-    print("{$x}")  -- Prints "1".
+(0, x: 1)               -- Create a tuple with position member and named member `x`.
+|>:                     -- Pass to a pipeline block.
+    print("{$0 + $x}")  -- Prints "1".
 
-(x: 1) |> print("{$x}")  -- Or in-lined.
+(0, x: 1) |> print("{$0 + $x}")  -- Or in-lined.
 ```
 
 This pairs with the next concept of Mulang: *operation chaining.*
