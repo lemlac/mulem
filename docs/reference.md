@@ -206,9 +206,9 @@ The philosophy of Mulang is that symbols should be easy to recognize and underst
 | `and rhs`      | do `and` on each component of a tuple: `and (True, False, True)` → `True and False and True` → `False` | 9 |
 | `or rhs`       | do `or` on each component of a tuple: `or (True, False, True)` → `True or False or True` → `True` | 9 |
 | __(Bitwise)__  | — | — |
-|  `lhs /\ rhs`  | bitwise-`AND` *(resembles a wedge ∧ , the symbol for logical AND; also resembles a capital A)* | 5 |
-| `lhs \/ rhs`   | bitwise-`OR` *(resembles a vee ∨ , the symbol for logical OR; also invert of `/\`)* | 5 |
-| `lhs >< rhs`   | bitwise-`XOR` *(resembles an X for XOR)* | 5 |
+|  `lhs /\ rhs` or `lhs band rhs` | bitwise-`AND` *(resembles a wedge ∧ , the symbol for logical AND; also resembles a capital A)* | 5 |
+| `lhs \/ rhs` or `lhs bor rhs`   | bitwise-`OR` *(resembles a vee ∨ , the symbol for logical OR; also invert of `/\`)* | 5 |
+| `lhs >< rhs` or `lhs xor rhs`  | bitwise-`XOR` *(resembles an X for XOR)* | 5 |
 | `lhs << rhs`   | bitshift-left | 7 |
 | `lhs >> rhs`   | bitshift-right | 7 |
 | `lhs >>> rhs`  | bitshift-right (unsigned) | 7 |
@@ -231,12 +231,12 @@ The philosophy of Mulang is that symbols should be easy to recognize and underst
 | `lhs ^`        | dereferences a typed pointer | 10 |
 | __(Functional)__ | — | — |
 | `lhs \|> rhs`  | pipelining, disregards `lhs` and returns `rhs` | 1 |
+| `lhs => rhs`   | pipeline assignment | 1 |
 | `~ rhs`        | inferred type conversion | 10 |
 | __(Assignment)__ | — | — |
 | `lhs = rhs`    | assignment or inferred-type declaration *(See [Variable Declarations](#Variable-Declaration).)* | 0 |
 | `lhs := rhs`   | always inferred-type declaration | 0 |
 | `lhs: T = rhs` | explicit-type declaration | 0 |
-| `lhs => rhs`   | inline for `:=` but returns the assigned value instead of being void; the operands are inverted (variable goes on the right); creates an immutable variable by default *(See [Inline Binding](#Inline-Binding).)* | 0 |
 | `lhs += rhs`   | increment | 0 |
 | `lhs -= rhs`   | decrement | 0 |
 | `lhs *= rhs`   | multiplication assignment | 0 |
@@ -272,53 +272,22 @@ Some operators have assignment alternatives by adding an equals sign `=` after i
 
 All assignment operators *(except for `=>`)* are **void.** This is intentional to prevent bugs and difficult to read code. It's recommend to put all assignment statements on their own separate lines for clarity. 
 
-__On the choice of the unique operators...__
-
-Keywords bitwise operators use different symbols than their conventional `&|^~` in other languages because those symbols have different meanings by themselves in Mulang: `&` → tuples, `|` → pattern matching, `~` → type conversion. `&&` and `||` are usually Boolean operators and would also be ambiguous, even though those operations are handled by the keywords `and` and `or` instead. Bitwise-AND and bitwise-OR need to stay separate because their evaluation strategies differ from `and` / `or`, but NOT is unified `not` because it doesn't have that problem; it only differs by type. `/\`, `\/`, and `><` seem like the right blend of uniqueness without being too ambiguous. Being symbols, they also have assignment versions `/\=`, `\/=`, and `><=`—useful for low-level bit manipulation. Keywords such as `band`, `bor`, or `bxor` wouldn't work here. How would their assignment operators look?
+Keywords bitwise operators use different symbols than their conventional `&|^~` in other languages because those symbols have different meanings by themselves in Mulang: `&` → tuples, `|` → pattern matching, `~` → type conversion. `&&` and `||` are usually Boolean operators and would also be ambiguous, even though those operations are handled by the keywords `and` and `or` instead. Bitwise-AND and bitwise-OR need to stay separate because their evaluation strategies differ from `and` / `or`, but NOT is unified `not` because it doesn't have that problem; it only differs by type. `/\`, `\/`, and `><` seem like the right blend of uniqueness without being too ambiguous. Being symbols, they also have assignment versions `/\=`, `\/=`, and `><=`—useful for low-level bit manipulation. You can also use the more readable `band`, `bor`, and `xor` as alternatives.
 
 ```
-x band= 0b10  -- Did you mean `x: band = 0b10`?
-x /\= 0b10    -- Clearly an assignment operation.
+x = 5 /\ 6    -- x = 4
+x = 5 band 6  -- x = 4
+x = 5 \/ 6    -- x = 7
+x = 5 bor 6   -- x = 7
+x = 5 >< 6    -- x = 3
+x = 5 xor 6   -- x = 3
 ```
 
-That's why only non-keyword operators are allowed to have assignment forms.
+The operators are logically motivated — `/\` resembles ∧, `\/` resembles ∨, `><` looks like an X for XOR. The problem isn't that they're unmotivated. Bitwise operators resemble arrows which give them both visual and semantic unity.
 
-The operators are logically motivated — `/\` resembles ∧, `\/` resembles ∨, `><` looks like an X for XOR. The problem isn't that they're unmotivated, it's that the motivation isn't visible at a glance. Good syntax highlighting, inline hints, and a well-written guide would do more work here than any syntactic change. Bitwise operators resemble arrows which give them both visual and semantic unity.
+The important part is that these symbols exist so that they are first-class operators to the language itself so they can map directly with the compile code rather than as simulated computations.
 
-If these symbols seem too confusing, a standard library can implement named inlined versions of these operators to use instead.
-
-```
-@inlined
-band(ref a, ref b) = a /\ b
-
-@inlined
-bor(ref a, ref b) = a \/ b
-
-@inlined
-bxor(ref a, ref b) = a >< b
-
-@inlined
-setband(ref mu a, ref b) =
-    a /\= b
-
-@inlined
-setbor(ref mu a, ref b) =
-    a \/= b
-
-@inlined
-setbxor(ref mu a, ref b) =
-    a ><= b
-
-mu x = 1
-
-setband(x, 2)  -- Same as `x /\= 1`.
-
-print("{x}")   -- Prints "0".
-```
-
-The important part is that these symbols exist so that they are first-class operators to the language itself so they can map directly with the compile code rather than be simulated computations. 
-
-This may break some of the usual habits of other languages, but that frees the usual symbols to do novel things. This is an experimental language, so it's not obligated to follow normal conventions.
+This may break some of the usual habits of other languages, but that frees the usual symbols to do novel things. After all before C, `&|^~` had nothing to do with bitwise operations. Every convention had to start somewhere. This is an experimental language, so it's not obligated to follow the conventions before it.
 
 ### Pipelining `|>`
 
@@ -379,6 +348,24 @@ fetchA() |>:       -- Start with this context.
     fetchB($)      -- Same context `$`
     |> print("{$}"); fetchC($) |>:     -- Start another context, inline it.
         print("{$}")   -- Print the final results.
+```
+
+To pipeline into a variable, use `=>` after an expression. The order of assignment is reversed — varible name goes on the right.
+
+```
+|> fetchA()
+|> fetchB($)
+|> fetchC($) => x   -- Do these things and put them into `x`
+
+print("{x}")        -- Print the result.
+``` 
+
+The type must be inferred. This is to avoid ambiguities with `:`. You can change the mutability with the keyword `mu`. *(See [Mutability](#Mutability).)*
+
+```
+|> fetchA() => mu x |> fetchB(x) |>:  -- Create mutable variable `x`.
+    x += 1                            -- Mutate `x`.
+    print("{x}")                      -- Print `x`.
 ```
 
 This gives you a lot of flexability on how you want to format your code.
@@ -506,7 +493,7 @@ i = i + 1     -- Sets new `i` based on old `i`.
 i += 1        -- Does the same.
 ```
 
-Using the single equal-sign is a void statement. If you use it within an expression and not on its own, it's a syntax error. This helps prevent the common bug of using `=` when you meant `==`. For inline binding, use `let`/`then` or `=>` instead. *(See [Inline Binding](#Inline-binding).)*
+Using the single equal-sign is a void statement. If you use it within an expression and not on its own, it's a syntax error. This helps prevent the common bug of using `=` when you meant `==`. For inline binding, use `=>` instead. *(See [Pipelining(#Pipelining-).)*
 
 ```
 (-- Error:
@@ -742,7 +729,7 @@ setInt(x)
 print("{x}")    -- Prints "3"
 ```
 
-This works for mutable variables, but what if you wanted to make an immutable variable using `out`? You can write `out` while calling a function to declare an immutable variable in the current scope. This has the same rules that `=>` does. *(See [Inline Binding](#Inline-Binding).)
+This works for mutable variables, but what if you wanted to make an immutable variable using `out`? You can write `out` while calling a function to declare an immutable variable in the current scope. This has the same rules that `=>` does.  *(See [Pipelining(#Pipelining-).)*
 
 ```
 setInt(out n)   -- Declare a new variable `n` that gets set by `setInt`.
@@ -894,80 +881,6 @@ doThing(key: "foo", enabled: True)  -- Or passed like a named parameter.
 ```
 
 See [Tuples](#Tuples) for more details on the `&` operator.
-
-### Inline Binding
-
-You can also bind variables within an expression using `let`/`then` and `as`. `let`/`then` is used for a single expression, whereas `as` binds for the rest of the scope.
-
-#### `let`/`then`
-
-```
-squared = let x = getSomething() then x * x
-
-loop if next() => val != None:
-    print("{val}")
-```
-
-All variables after `let` are new declarations, much like variables in a non-capturing function; they cannot mutate any existing variables. In other words, they have an implicit `:=` even when they use `=`. 
-
-```mu
-mu x = 0
-y = let x = 1 then x + x   -- Or also `y = let x := 1 then x + x`, the same thing.
-print("x = {x}, y = {y}")  -- Prints "x = 0, y = 2".
-```
-
-Multiple variables can also be declared at once. You must surround the variables with parentheses like `let () then`. Each variable is separated by commas. 
-
-```
-sum = let (x = 1, y = 2) then x + y
-```
-
-#### Inline Assignment Operator `=>`
-
-The inline assignment operator `=>` sets a value within an expression as a variable within a block's scope. It returns the value of the left-hand side, the right-hand side should be a valid variable name. Like `let`, it's an explicit declaration like `:=`, so it can't mutate. Note that this is slightly different from but consistent with the `as` that's used for aliasing. *`=>` the operator* is only used in **expressions**; meanwhile, *`as` for aliases* is only used in **patterns.** *For information on how patterns work, see [Destructuring](#Destructuring).*
-
-The simplest use case for `=>` is to pair it with a `loop if` loop to get a value on each iteration.
-
-```
-loop if next() => val != None:
-    print("{val}")
-```
-
-This reads like an English sentence: "Loop if next value is not none…"
-
-*Note that `let` wouldn't work here because it only works on a single expression.*
-
-```
-loop if let value == getValue() then value != None:
-    print("{value}")   -- Error: `value` is not defined.
-```
-
-Another use case for `=>` is to use while method chaining to get a result of one of the methods. Note that `=>` has the same order of operations as `.` when using `[]`. This makes it possible to method chain without adding parentheses around it. `a() =>[b].c` is the same as `(a() => b).c`. *(See [Operation Chaining](#Operation-Chaining).)*
-
-```
-(object.method1()
-    .method2() =>[result]
-    .method3())
-print("{result}")
-```
-
-Type must be inferred. This is to avoid using `:` in an expression, which could be mistaken for the key name of a tuple or a declaration.
-
-```
-(-- Syntax Error:
-action(get() => result: int) -- Is this a named component? Did you forget the commas?
---)
-```
-
-However, mutability can be set with `=> mu` / `=>[mu]`.
-
-```
-(object.method1()
-    .method2() =>[mu result]   -- New mutable variable.
-    .method3())
-result += 1
-print("{result}")
-```
 
 ---
 
@@ -2725,45 +2638,47 @@ This is a work in progress though. How these decorators are implemented and thei
 1. `and`
 2. `as`
 3. `await`
-4. `break`
-5. `case`
-6. `continue`
-7. `defer`
-8. `do`
-9. `else`
-10. `end`
-11. `enum`
-12. `except`
-13. `fallthrough`
-14. `fn`
-15. `for`
-16. `if`
-17. `impl`
-18. `import`
-19. `inherit`
-20. `in`
-21. `let`
-22. `loop`
-23. `match`
-24. `mod`
-25. `mu`
-26. `not`
-27. `opt`
-28. `or`
-29. `out`
-30. `pass`
-31. `proto`
-32. `raise`
-33. `ref`
-34. `return`
-35. `self`
-36. `struct`
-37. `then`
-38. `try`
-39. `until`
-40. `when`
-41. `where`
-42. `yield`
+4. `band`
+5. `bor`
+6. `break`
+7. `case`
+8. `continue`
+9. `defer`
+10. `do`
+11. `else`
+12. `end`
+13. `enum`
+14. `except`
+15. `fallthrough`
+16. `fn`
+17. `for`
+18. `if`
+19. `impl`
+20. `import`
+21. `inherit`
+22. `in`
+23. `loop`
+24. `match`
+25. `mod`
+26. `mu`
+27. `not`
+28. `opt`
+29. `or`
+30. `out`
+31. `pass`
+32. `proto`
+33. `raise`
+34. `ref`
+35. `return`
+36. `self`
+37. `struct`
+38. `then`
+39. `try`
+40. `until`
+41. `when`
+42. `where`
+43. `xor`
+44. `yield`
 
 *NOTE: Built-in types, values, functions, and decorators like `int`, `True`, `Some`, `default`, `print`, `@memory` etc. are not considered keywords.*
 
