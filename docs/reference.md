@@ -285,11 +285,44 @@ That's why only non-keyword operators are allowed to have assignment forms.
 
 The operators are logically motivated — `/\` resembles ∧, `\/` resembles ∨, `><` looks like an X for XOR. The problem isn't that they're unmotivated, it's that the motivation isn't visible at a glance. Good syntax highlighting, inline hints, and a well-written guide would do more work here than any syntactic change. Bitwise operators resemble arrows which give them both visual and semantic unity.
 
+If these symbols seem too confusing, a standard library can implement named inlined versions of these operators to use instead.
+
+```
+@inlined
+band(ref a, ref b) = a /\ b
+
+@inlined
+bor(ref a, ref b) = a \/ b
+
+@inlined
+bxor(ref a, ref b) = a >< b
+
+@inlined
+setband(ref mu a, ref b) =
+    a /\= b
+
+@inlined
+setbor(ref mu a, ref b) =
+    a \/= b
+
+@inlined
+setbxor(ref mu a, ref b) =
+    a ><= b
+
+mu x = 1
+
+setbxor(x, 1)  -- Same as `x ><= 1`
+
+print("{x}")   -- Prints 0
+```
+
+The important part is that these symbols exist so that they are first-class operators to the language itself so they can map directly with the compile code rather than be simulated computations. 
+
 This may break some of the usual habits of other languages, but that frees the usual symbols to do novel things. This is an experimental language, so it's not obligated to follow normal conventions.
 
 ### Pipelining `|>`
 
-When placed at the start of a line in a block, the pipelining operator `|>` takes on a special meaning. It takes the value of the previous line and inserts it into into the next line as `$`. This symbol is known as the **contextual reference.** This symbol has several uses in Mulang, but for now just know that it represents the value of the previous line before `|>`. *(See [Contextual Reference (`$`)](#Contextual-Reference-$).)* This makes it easy to chain functions one after another in sequence.
+When placed at the start of a line in a block, the pipelining operator `|>` takes on a special meaning. It takes the value of the previous line and inserts it into into the next line as `$`. This symbol is known as the **contextual reference.** This symbol has several uses in Mulang, but for now just know that it represents the value of the previous line before `|>`. This makes it easy to chain functions one after another in sequence.
 
 ```
 print("{
@@ -316,6 +349,18 @@ This makes it easier to see what gets called in what order. It reads like a list
 - *then* `fetchB`
 - *then* `fetchC`
 - *then* `print`
+
+`$` has a special meaning. It holds the value of a context specific variable. Words in Mulang don't allow `$`, but this symbol is treated like one. You can put symbols next to it, and other words needs to be seperated by spaces next to it.
+
+```
+-$    -- This is okay, 1 symbol + 1 word: `-` + `$`.
+not$  -- This is one word, error since `not$` doesn't exist.
+not $ -- This is okay, 2 words: `not` + `$`.
+```
+
+Members of `$` can be accessed without a `.`, just write the member's name after the sign like a variable prefixed with `$`. This should be familiar to programmers who've used some languages where variables normally start with `$`. 
+
+- If `$` has a member called named `member`, `$.member` can be written as `$member`.
 
 ### Operation chaining `[]`
 
@@ -385,45 +430,6 @@ The transition from array indexing with `[]` in other languages to array indexin
 - `array[0][1]` → `array#[0]#[1]` → `array#0#1`
 
 This frees `name[]` to take on a new meaning in Mulang. *For more on that, see [Meta Functions](#Meta-Functions).* *For more information on array indexes, see [Arrays](#Arrays).*
-
-### Contextual Reference (`$`)
-
-`$` has a special meaning. It holds the value of a context specific variable. Words in Mulang don't allow `$`, but this symbol is treated like one. You can put symbols next to it, and other words needs to be seperated by spaces next to it.
-
-```
--$    -- This is okay, 1 symbol + 1 word: `-` + `$`.
-not$  -- This is one word, error since `not$` doesn't exist.
-not $ -- This is okay, 2 words: `not` + `$`.
-```
-
-Members of `$` can be accessed without a `.`, just write the member's name after the sign like a variable prefixed with `$`. This should be familiar to programmers who've used some languages where variables normally start with `$`. 
-
-- If `$` has a member called named `member`, `$.member` can be written as `$member`.
-
-The two main places you'll see `$` are in pipelining and `impl` blocks. *(See [Pipelining `|>`](#Pipelining-) or [Implementing](#Implementing-impl).)*
-
-```
-fetchA()
-|> fetchB($)
-|> fetchC($)
-|> print("{$}")
-```
-
-A method with `$` in the first parameter are callable as a method on the instance. `$` refers to the instance, analogous to `self` or `this` in other languages. You can give it an alias with `as`. 
-
-```
-MyType :: struct = foo: str
-
-MyType :: impl =
-    method1($) = $foo
-    method2($ as self) = self.foo      -- `$` can be aliased with `as`.
-    method3($ as myType) = myType.foo  -- Alias name can be any valid variable name.
-
-x = MyType(foo: "bar")
-print("{ x.method1() }")  -- Prints "foo"
-print("{ x.method2() }")  -- Prints "foo"
-print("{ x.method3() }")  -- Prints "foo"
-```
 
 ## Basic Bindings
 
@@ -2358,16 +2364,16 @@ except DBZ(x):
 
 #### Prototypes (`proto`)
 
-A `proto` is an abstract interface — a named contract with no data. It is equivalent to a `virtual class` (C++), `trait` (Rust), or `interface` (Java, TypeScript, etc.) in other languages. Each member is a function, also called a **method**. Methods that have a parameter named `$` at the beginning will be called like methods on the instance of that type, i.e. `$.method(…)`. This is equivalent to saying `typeof[$].method($, …)`.
+A `proto` is an abstract interface — a named contract with no data. It is equivalent to a `virtual class` (C++), `trait` (Rust), or `interface` (Java, TypeScript, etc.) in other languages. Each member is a function, also called a **method**. Methods that have a parameter named `self` at the beginning will be called like methods on the instance of that type, i.e. `self.method(…)`. This is equivalent to saying `typeof[self].method(self, …)`.
 
 ```
 MyPrototype :: proto =
-    speak($): str
+    speak(self): str
 ```
 
 #### Implementing (`impl`)
 
-Methods and trait implementations are added separately with `impl`. Much like `proto`, `$` in the first parameter of a method refers to the current instance. You can also add static values that are attached to the type itself. Use `.` to access static values and methods like with structs.
+Methods and trait implementations are added separately with `impl`. Much like `proto`, `self` in the first parameter of a method refers to the current instance. You can also add static values that are attached to the type itself. Use `.` to access static values and methods like with structs.
 
 ```
 MyStruct :: impl =
@@ -2378,6 +2384,22 @@ MyStruct :: impl =
 print("{MyStruct.staticValue}")
 ```
 
+A method with `self` in the first parameter are callable as a method on the instance. `self` refers to the instance, analogous to `self` or `this` in other languages. You can optionally give it another name with `as`. 
+
+```
+MyType :: struct = foo: str
+
+MyType :: impl =
+    method1(self) = self.foo              -- `self` is a `MyType`.
+    method2(self as this) = this.foo      -- Can be aliased with `as`.
+    method3(self as myType) = myType.foo  -- Alias name can be any valid variable name.
+
+x = MyType(foo: "bar")
+print("{ x.method1() }")  -- Prints "foo"
+print("{ x.method2() }")  -- Prints "foo"
+print("{ x.method3() }")  -- Prints "foo"
+```
+
 To implement from a prototype, add the proto's name in the square brackets. Each implementation gets their own `impl[]` block. 
 
 ```
@@ -2386,8 +2408,8 @@ MyStruct :: impl[MyPrototype] =
         "I am a MyStruct \{ name={self.name}, value={self.value} }"
 
 MyEnum :: impl[MyPrototype] =
-    speak($) =
-        match $ then
+    speak(self) =
+        match self then
         | First:
             "I am a MyEnum of First"
         | Second(x):
@@ -2687,13 +2709,14 @@ This is a work in progress though. How these decorators are implemented and thei
 32. `raise`
 33. `ref`
 34. `return`
-35. `struct`
-36. `then`
-37. `try`
-38. `until`
-39. `when`
-40. `where`
-41. `yield`
+35. `self`
+36. `struct`
+37. `then`
+38. `try`
+39. `until`
+40. `when`
+41. `where`
+42. `yield`
 
 *NOTE: Built-in types, values, functions, and decorators like `int`, `True`, `Some`, `default`, `print`, `@memory` etc. are not considered keywords.*
 
