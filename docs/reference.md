@@ -255,18 +255,18 @@ The philosophy of Mulang is that symbols should be easy to recognize and underst
 
 __Order of Operations:__
 
-12-  0. Assignment/Pipelining (Lowest)
-11-  1. Logical OR
-10-  2. Logical AND
-9 -  3. Comparisons/Membership
-8 -  4. Range/Interval Operators
-7 -  5. Bitwise Logic
-6 -  6. Additive/Vector Operators
-5 -  7. Multiplicative/Bit Shift Operators
-4 -  8. Exponentiation *(right-associative: `2**3**2` is `2**(3**2)`)*
-3 -  9. Unary Operators
-2 - 10. Primary/Postfix Operators
-1 - 11. Member Accessing/Inline-Binding (Highest)
+0. Assignment (Lowest)
+1. Logical OR / Pipelining
+2. Logical AND
+3. Comparisons/Membership
+4. Range/Interval Operators
+5. Bitwise Logic
+6. Additive / Vector Operators
+7. Multiplicative/Bit Shift Operators
+8. Exponentiation *(right-associative: `2**3**2` is `2**(3**2)`)*
+9. Unary Operators
+10. Primary / Postfix Operators
+11. Member Accessing/Inline-Binding (Highest)
 
 Some operators have assignment alternatives by adding an equals sign `=` after it. These are reserved for the operators that aren't keywords and return the same type that their left-hand side is. This sets a variable based on its previous value. The left-hand side must be an already defined variable. If it's immutable, then this shadows it. If it's mutable, then the value is mutated. *(See [Mutability(#Mutability-mu).)* All of these are void statements, i.e. they return nothing and should only be used in an expression by themselves.
 
