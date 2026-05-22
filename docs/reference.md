@@ -350,19 +350,21 @@ This makes it easier to see what gets called in what order. It reads like a list
 - *then* `fetchC`
 - *then* `print`
 
+The first line of a block can also start with `|>`, it's context `$` is an empty tuple `()`. Even if a line starts with `|>`, it does not have to have `$` in it. 
+
 Multiple expressions seperated by semi-colons `;` on one line will also use the same context `$`. The last expression will be pass to the next pipe.
 
 ```
-fetchA()                      -- Run fetchA,
+|> fetchA()                   -- Run fetchA,
 |> print("{$}"); fetchB($)    -- Print result, then fetchB
 |> print("{$}"); fetchC($)    -- Print result, then fetchC
 |> print("{$}")               -- Print result,
 ```
 
-You can also create a pipeline block with `|>:` at the end of a line or on its own line. `$` becomes the inputed value for the duration of the block.
+You can also create a **pipeline block** with `|>:` at the end of a line or on its own line. `$` becomes the inputed value for the duration of the block.
 
 ```
-fetchA()            -- Set up things.
+|> fetchA()         -- Set up things.
 |> fetchB($)        -- …
 |> fetchC($)        -- …
 |>:                 -- Set up done.
@@ -372,16 +374,16 @@ fetchA() |> fetchB($) |> fetchC($) |>:  -- Or in one line.
     print("{$}")                        -- Then print the result.
 
 -- Freely mix the two formats:
-fetchA() |>:
-    print("{$}")
-    fetchB($)
-    |> print("{$}"); fetchC($) |>:
-        print("{$}")
+fetchA() |>:       -- Start with this context.
+    print("{$}")   -- Use the same `$` for these two lines.
+    fetchB($)      -- Same context `$`
+    |> print("{$}"); fetchC($) |>:     -- Start another context, inline it.
+        print("{$}")   -- Print the final results.
 ```
 
 This gives you a lot of flexability on how you want to format your code.
 
-`$` has a special meaning. It holds the value of a context specific variable. Words in Mulang don't allow `$`, but this symbol is treated like one. You can put symbols next to it, and other words needs to be seperated by spaces next to it.
+`$` has a special meaning. It holds the value of a context specific variable. Words in Mulang don't allow `$` normally, but this symbol is treated like one. You can put symbols next to it, but other words needs to be seperated with a space next to it.
 
 ```
 -$    -- This is okay, 1 symbol + 1 word: `-` + `$`.
@@ -394,11 +396,11 @@ Members of `$` can be accessed without a `.`, just write the member's name after
 - If `$` has a member called named `member`, `$.member` can be written as `$member`.
 
 ```
-(x: 1)             -- Create a tuple with named member `x`.
-|>:                -- Pass to pipe block.
-    print("{$x}")  -- Prints "1".
+(x: 1)                      -- Create a tuple with named member `x`.
+|>:                         -- Pass to a pipeline block.
+    print("{$.x} is {$x}")  -- Prints "1 is 1".
 
-(x: 1) |> print("{$x}")  -- Or in-lined.
+(x: 1) |> print("{$.x} is {$x}")  -- Or in-lined.
 ```
 
 This pairs with the next concept of Mulang: *operation chaining.*
