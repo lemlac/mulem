@@ -224,7 +224,7 @@ The philosophy of Mulang is that symbols should be easy to recognize and underst
 | `& rhs`        | spread a tuple into another tuple | 10 |
 | __(Options)__  | — | — |
 | `lhs ?`        | returns the `Some` value if it's not `None`, otherwise propagate to the nearest `opt` keyword *(see [`opt` block](#opt))* | 10 |
-| `lhs || rhs`   | `None`-coalescing; if `lhs` is `Some(x)` then `x` else `rhs` | 1 |
+| `lhs \|\| rhs`   | `None`-coalescing; if `lhs` is `Some(x)` then `x` else `rhs` | 1 |
 | __(Results)__  | — | — |
 | `lhs !`        | returns the result value if it's not an exception, otherwise propagate to the nearest `try` keyword *(see [`try` block](#try--except))*        | 10 |
 | __(Pointers)__ | — | — |
