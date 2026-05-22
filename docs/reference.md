@@ -283,9 +283,18 @@ x = 5 >< 6    -- x = 3
 x = 5 xor 6   -- x = 3
 ```
 
-The operators are logically motivated — `/\` resembles ∧, `\/` resembles ∨, `><` looks like an X for XOR. The problem isn't that they're unmotivated. Bitwise operators resemble arrows which give them both visual and semantic unity.
+**Assigment operators with keyword operators is forbidden.**
 
-The important part is that these symbols exist so that they are first-class operators to the language itself so they can map directly with the compile code rather than as simulated computations.
+This is because it would create ambiguity. `x band= 0xFF` looks too close to `x: band= 0xFF`. Instead, you can explicitly assign to the variable.
+
+```
+x = x band 0xFF
+x = x bor 0xFF
+x = x xor 0xFF
+x = not x
+```
+
+The important part is that these operators exist so that they are first-class citiziens of the language itself. That way, they can map directly with the machine code rather than being virtualized.
 
 This may break some of the usual habits of other languages, but that frees the usual symbols to do novel things. After all before C, `&|^~` had nothing to do with bitwise operations. Every convention had to start somewhere. This is an experimental language, so it's not obligated to follow the conventions before it.
 
@@ -721,7 +730,7 @@ What each modifier means changes the functionality:
 Another type of parameter is `out`. This is like `ref mu` but is treated like `unset[_]` at the start of the function. Use it to set a variable that hasn't been set yet. The parameter must not be `unset[_]` in any branch within the function. This means either setting it within the function or passing it to another function with an `out` parameter. This ensures that the variable is set after the function has been called. 
 
 ```
-setInt(out i) =
+setInt(out i): void =
     i = 3
 
 x: mu int
@@ -729,10 +738,10 @@ setInt(x)
 print("{x}")    -- Prints "3"
 ```
 
-This works for mutable variables, but what if you wanted to make an immutable variable using `out`? You can write `out` while calling a function to declare an immutable variable in the current scope. This has the same rules that `=>` does.  *(See [Pipelining(#Pipelining-).)*
+This works for mutable variables, but what if you wanted to make an immutable variable using `out`? You can't pipe the return value with `=>` because it's in the paraemter, not the return of the function. `setInt() => n` would be an error. Not only use the `out` parameter not set, but it's not returning anything either. For this, we have a special rule: when `=>` is prefixed in a parameter, it has the same effect as using `=>` on the return value of a function. This way we can pipeline the `out` parameter of a function. *(See [Pipelining(#Pipelining-).)*
 
 ```
-setInt(out n)   -- Declare a new variable `n` that gets set by `setInt`.
+setInt(=> n)    -- Declare a new variable `n` that gets set by `setInt`.
 print("{n}")    -- Prints "3"
 ```
 
