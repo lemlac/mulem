@@ -311,9 +311,9 @@ setbxor(ref mu a, ref b) =
 
 mu x = 1
 
-setbxor(x, 1)  -- Same as `x ><= 1`
+setband(x, 2)  -- Same as `x /\= 1`.
 
-print("{x}")   -- Prints 0
+print("{x}")   -- Prints "0".
 ```
 
 The important part is that these symbols exist so that they are first-class operators to the language itself so they can map directly with the compile code rather than be simulated computations. 
@@ -2631,7 +2631,7 @@ expr             -- Modifies whatever this expression is.
 
 Decorators can be stacked and will run in reverse order. *Closest decorator to the expression runs, then the next one above that, then the next one, etc.*
 
-Built-in decorators demonstrated so far include `@capture`, `@opaque`, and `@memory`. More planned for the future.
+Built-in decorators demonstrated so far include `@inlined`, `@capture`, `@opaque`, and `@memory`. More planned for the future.
 
 ```
 @memory(Manual) -- Call it like a function to pass a variable.
@@ -2640,6 +2640,10 @@ mod myModule
 @opaque         -- No function needed if there are no arguments.
 Thing :: struct =
     value: int
+
+@inlined
+setband(ref mu a, ref b) =
+    a /\= b
 
 mu count = 0
 increment() =
