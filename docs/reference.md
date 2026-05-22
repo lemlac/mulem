@@ -206,9 +206,9 @@ The philosophy of Mulang is that symbols should be easy to recognize and underst
 | `and rhs`      | do `and` on each component of a tuple: `and (True, False, True)` → `True and False and True` → `False` | 9 |
 | `or rhs`       | do `or` on each component of a tuple: `or (True, False, True)` → `True or False or True` → `True` | 9 |
 | __(Bitwise)__  | — | — |
-|  `lhs /\ rhs` or `lhs band rhs` | bitwise-`AND` *(resembles a wedge ∧ , the symbol for logical AND; also resembles a capital A)* | 5 |
-| `lhs \/ rhs` or `lhs bor rhs`   | bitwise-`OR` *(resembles a vee ∨ , the symbol for logical OR; also invert of `/\`)* | 5 |
-| `lhs >< rhs` or `lhs xor rhs`  | bitwise-`XOR` *(resembles an X for XOR)* | 5 |
+|  `lhs band rhs` *or shorthand* `lhs /\ rhs` | bitwise-`AND` *(resembles a wedge ∧ , the symbol for logical AND; also resembles a capital A)* | 5 |
+| `lhs bor rhs` *or shorthand:* `lhs \/ rhs` | bitwise-`OR` *(resembles a vee ∨ , the symbol for logical OR; also invert of `/\`)* | 5 |
+| `lhs xor rhs` *or shorthand* `lhs >< rhs` | bitwise-`XOR` *(resembles an X for XOR)* | 5 |
 | `lhs << rhs`   | bitshift-left | 7 |
 | `lhs >> rhs`   | bitshift-right | 7 |
 | `lhs >>> rhs`  | bitshift-right (unsigned) | 7 |
@@ -387,7 +387,7 @@ not$  -- This is one word, error since `not$` doesn't exist.
 not $ -- This is okay, 2 words: `not` + `$`.
 ```
 
-Access members of the `$` variable by writing the member's name like a variable prefixed with `$`. This should be familiar to programmers who've used languages where variables normally start with `$`. 
+Variables prefixed with `$` come from the context reference. This lets you use the context to write expressive code. 
 
 ```
 (x: 1)             -- Create a tuple with named member `x`.
@@ -599,7 +599,7 @@ You might think the choice of the keyword `mu`—which is the same name that the
 
 #### References (`ref`/`ref mu`)
 
-A reference type points to the same spot in memory that another variable has. It's like a lightweight version of a pointer. *(See [Pointers](#Pointers).)* Lifetimes are inferred via borrow-checking when the memory model is set to `Borrow`. *(See [Memory Models](#Memory-Models).)* The right hand side has be something stored in memory, i.e. not a constant. References are immutable by default unless declared with `ref mu`. The syntax follows the same pattern that `mu` does:
+A reference type points to the same spot in memory that another variable has. It's like a lightweight version of a pointer. *(See [Pointers](#Pointers).)* The right hand side has be something stored in memory, i.e. not a constant. References are immutable by default unless declared with `ref mu`. The syntax follows the same pattern that `mu` does:
 
 * `x: ref T = y` = Immutable reference with explicit type.
 * `ref x = y` = Immutable reference with inferred type.
@@ -1238,13 +1238,13 @@ item = doubleArray#[1]#[0]  -- The 2nd row, 1st column
 print("{item}")             -- Prints "3"
 ```
 
-Habits can be hard to break. Many programmers have i internalized the `array[i]` format to mean "array index". To help with that, Mu allows the familiar `array[i]` format to be the same as `array#[i]`, but special care has to be taken into consideration to make sure it doesn't clash with [meta functions](#Meta-Functions). This rules out any tokens that looks like `name[]` or `name[a, b]` since array indexes normally only take one argument in other languages.
+Habits can be hard to break. Many programmers have i internalized the `array[i]` format to mean "array index". To help with that, Mu allows the familiar `array[i]` format to be the same as `array#[i]`, but special care has to be taken into consideration to make sure it doesn't clash with [meta functions](#Meta-Functions). This rules out any tokens that looks like `name[]` or `name[x, y]` since array indexes normally only take one argument in other languages.
 
-```
-metaOrArray[0]   -- Is this an array or a meta function?
-```
+- `name[x]` — could be array indexing, check the type to resolve
+- `name[]` — always a meta function
+- `name[x, y]` — always a meta function
 
-If Mulang thinks something might be an old-fashioned array index access like `metaOrArray[0]`, it will check the context to determine what the type of `metaOrArray` is to resolve it. If it's an array in this context, it will automatically treat it the same as `metaOrArray#[0]` without any fuss. This lets Mulang have the familiar syntax while also having the power and potential that comes with other features like *operation chaining* and *meta functions.*
+The fallback exists precisely for the one case where a programmer migrating from another language would instinctively write `array[i]`. If Mulang thinks something might be an old-fashioned array index access like that, it will check the context to determine what the type of that variable is to resolve it. If it's an array in this context, it will automatically treat it the same as `array#[i]` without any fuss. This lets Mulang have the familiar syntax while also having the power and potential that comes with other features like *operation chaining* and *meta functions.*
 
 You may want to do an operation with an array literal on the right hand side of an operation. In that case, you can either store the array in a variable or surround it in parentheses `()`.
 
