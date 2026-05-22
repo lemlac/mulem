@@ -350,6 +350,37 @@ This makes it easier to see what gets called in what order. It reads like a list
 - *then* `fetchC`
 - *then* `print`
 
+Multiple expressions seperated by semi-colons `;` on one line will also use the same context `$`. The last expression will be pass to the next pipe.
+
+```
+fetchA()                      -- Run fetchA,
+|> print("{$}"); fetchB($)    -- Print result, then fetchB
+|> print("{$}"); fetchC($)    -- Print result, then fetchC
+|> print("{$}")               -- Print result,
+```
+
+You can also create a pipeline block with `|>:` at the end of a line or on its own line. `$` becomes the inputed value for the duration of the block.
+
+```
+fetchA()            -- Set up things.
+|> fetchB($)        -- …
+|> fetchC($)        -- …
+|>:                 -- Set up done.
+    print("{$}")    -- Now print the result.
+
+fetchA() |> fetchB($) |> fetchC($) |>:  -- Or in one line.
+    print("{$}")                        -- Then print the result.
+
+-- Freely mix the two formats:
+fetchA() |>:
+    print("{$}")
+    fetchB($)
+    |> print("{$}"); fetchC($) |>:
+        print("{$}")
+```
+
+This gives you a lot of flexability on how you want to format your code.
+
 `$` has a special meaning. It holds the value of a context specific variable. Words in Mulang don't allow `$`, but this symbol is treated like one. You can put symbols next to it, and other words needs to be seperated by spaces next to it.
 
 ```
@@ -361,6 +392,16 @@ not $ -- This is okay, 2 words: `not` + `$`.
 Members of `$` can be accessed without a `.`, just write the member's name after the sign like a variable prefixed with `$`. This should be familiar to programmers who've used some languages where variables normally start with `$`. 
 
 - If `$` has a member called named `member`, `$.member` can be written as `$member`.
+
+```
+(x: 1)             -- Create a tuple with named member `x`.
+|>:                -- Pass to pipe block.
+    print("{$x}")  -- Prints "1".
+
+(x: 1) |> print("{$x}")  -- Or in-lined.
+```
+
+This pairs with the next concept of Mulang: *operation chaining.*
 
 ### Operation chaining `[]`
 
@@ -1242,11 +1283,11 @@ doubleArray: int#2#2 = [[1, 2], [3, 4]]
 This builds on the visible symmetry between type notation and their value expressions:
 
 | Type | Notation | Expression |
-|:--|:-:|:-:|
-| **Results** | `T!` | `x!` |
-| **Options** | `T?` | `x?` |
-| **Pointers** | `T^` | `x^` |
-| **Arrays** | `T#N` | `x#n` |
+|:---------|:------:|:--------:|
+| **Results**  | `T!`  | `x!`  |
+| **Options**  | `T?`  | `x?`  |
+| **Pointers** | `T^`  | `x^`  |
+| **Arrays**   | `T#N` | `x#n` |
 
 Other languages use `[]` for indexing, but that has another meaning in Mulang. Instead, you can use operation chaining to do the same thing like `[]` in other languages. *(See [Operation Chaining](#Operation-Chaining).)*
 
