@@ -387,16 +387,14 @@ not$  -- This is one word, error since `not$` doesn't exist.
 not $ -- This is okay, 2 words: `not` + `$`.
 ```
 
-Members of `$` can be accessed without a `.`, just write the member's name after the sign like a variable prefixed with `$`. This should be familiar to programmers who've used some languages where variables normally start with `$`. 
-
-- If `$` has a member called named `member`, `$.member` can be written as `$member`.
+Access members of the `$` variable by writing the member's name like a variable prefixed with `$`. This should be familiar to programmers who've used languages where variables normally start with `$`. 
 
 ```
-(x: 1)                      -- Create a tuple with named member `x`.
-|>:                         -- Pass to a pipeline block.
-    print("{$.x} is {$x}")  -- Prints "1 is 1".
+(x: 1)             -- Create a tuple with named member `x`.
+|>:                -- Pass to a pipeline block.
+    print("{$x}")  -- Prints "1".
 
-(x: 1) |> print("{$.x} is {$x}")  -- Or in-lined.
+(x: 1) |> print("{$x}")  -- Or in-lined.
 ```
 
 This pairs with the next concept of Mulang: *operation chaining.*
