@@ -1063,12 +1063,13 @@ unicode = '\uFFFF'
 
 #### Strings
 
-Strings are marked with quotation marks (`"…"`) *(also called double quotes)* and can be formatted with curly braces (`{expr}`) in the string. Use a backslash to write a literal opening curly brace (`\{`). Note that string insertion and named tuples both use curly braces. This shouldn't be an issue though since they're used in different contexts. Expression are implicitly converted to strings, so using `str()` or `~` isn't necessary.
+Strings are marked with quotation marks (`"…"`) *(also called double quotes)* and can be formatted with curly braces (`{expr}`) in the string. Use a backslash to write a literal opening curly brace (`\{`). Note that string insertion and named tuples both use curly braces. This shouldn't be an issue though since they're used in different contexts. Expression are implicitly converted to strings, so using `str()` or `~` isn't necessary. This string is only allowed on a single-line, but literal-line characters can be inserted with `\n`.
 
 ```
 name = "world"  
 hello = "Hello, {name}!"
 helloEscaped = "Hello, \{name}!"
+lines = "This \n string \n as \n linebreaks."
 ```
 
 Subsequent string literals will automatically concatenate, and the `++` operator can be used to concatenate non-literal strings.
@@ -1116,7 +1117,7 @@ But three quotation marks like """ need to be escaped.
 This is the last line because of the closing quotation marks below it.
 ```
 
-You can write a basic raw string with `''…''` (two apostrophes). Although apostrophes `'` are used for chars, an empty char isn't possible since the default char is written `'\0'` (null character). A common practice in programming languages uses the double quote `"` for formattable strings and the single quote mark `'` for raw strings, so it should be easy for any programmer to see the parallel. When you write `''`, every character after it (including whitespace and indentation) is in the string until the closing `''`. Escaping with backslashes `\` and insertion with curly braces `{}` are ignored.
+You can write a basic raw string with `''…''` (two apostrophes). Although apostrophes `'` are used for chars, an empty char isn't possible since the default char is written `'\0'` (null character). A common practice in programming languages uses the double quote `"` for formattable strings and the single quote mark `'` for raw strings, so it should be easy for any programmer to see the parallel. When you write `''`, every character after it **except for new-lines** is in the string until the closing `''`. Escaping with backslashes `\` and insertion with curly braces `{}` are disabled. This is for single-line raw strings only. *(See below for multi-line raw strings.)*
 
 ```
 rawString = ''It's okay to put an apostrophe (') in the string.''
@@ -1124,32 +1125,40 @@ filePath = ''C:\files\on\windows.txt''
 template = ''Insert here → {{variable}}''
 ```
 
-To escape `''` within a raw string, add an at sign `@` before and after the string. The number of `@`s must match to close the raw string. This symbol is also used for decorators such as `@capture`, so the two connect giving `@` the general meaning of a compile-time signal.
+To make a multi-line raw string, add an at sign `@` before and after triple quotation marks `"""`. The number of `@`s must match to close the raw string. This symbol is also used for decorators such as `@capture`, so the two connect giving `@` the general meaning of a compile-time signal.
+
+|  Opening | Closing  |
+|---------:|:---------|
+|   `@"""` | `"""@`   |
+|  `@@"""` | `"""@@`  |
+| `@@@"""` | `"""@@@` |
+
+*etc...*
 
 ```
--- Add a `@` to escape the `''` within the string.
-bigDocument = @''
-    This  '
-   is   ''      ''
-  all       ''
-  in  '         '
-   a     '''' '
+-- Add a `@` to escape the `"""` within the string.
+bigDocument = @"""
+    This  "
+   is   """      """
+  all       """
+  in  "         "
+   a     """" "
     string
-''@
+"""@
 -- Matching number of `@` closes the string.
 
--- `@@''` to escape the `''@` within the string.
-nestedDocument = @@''
-bigDocument = @''
-    This  '
-   is   ''      ''
-  all       ''
-  in  '         '
-   a     '''' '
+-- `@@"""` to escape the `"""@@` within the string.
+nestedDocument = @@"""
+bigDocument = @"""
+    This  "
+   is   """      """
+  all       """
+  in  "         "
+   a     """" "
     string
-''@               
-''@@
--- `''@@` closes the matching `@@''`.
+"""@      
+"""@@
+-- `"""@@` closes the matching `@@"""`.
 ```
 
 You can put a raw string enclosed in `@` signs at the start of a new line without breaking a block. Significant whitespace is temporarially disabled when the line starts with `@`-style raw string, and the parser ignores indentation significance while inside the raw string. All whitespace and characters are put into the string without formatting until it gets to the matching `''@` marker. Then, reident to resume the block. This is useful for when you really just want to copy and paste data directly into the code without indenting.  
@@ -1160,13 +1169,13 @@ block:
         block:
             block:
                 nestedRawString =  -- Put raw string on the next line without indenting.
-@@@''                       
+@"""                       
                        
     Indentation  
   doesn't matter     
  here.              
-                  
-   ''@@@  -- Right here: the string ends and the block resumes.
+
+"""@  -- Right here: the string ends and the block resumes.
                 print("{nestedRawString}")    -- Re-indent to return to the block.
 ```
 
@@ -1183,6 +1192,17 @@ What it prints:
 ```
 
 While this is possible, this is not recommended for the sake of legibility. For anything more complicated, it's recommended to save the string in a document and open the file inside your program, which will be handled by a separate library and lies outside the scope of this document.
+
+And `@"""…"""@` inherits the `"""` closing-position trim anchor, so if you *do* want controlled indentation trimming, you still get it from where you place the closing `"""@`. That makes the two systems consistent with each other rather than completely separate.
+
+__Quick Glance on Strings:__
+
+| Form | Purpose |
+|:--|:--|
+| `"…"` | Regular string with interpolation |
+| `"""…"""` | Multiline with interpolation, trim by closing position |
+| `''…''` | Inline raw, no interpolation |
+| `@"""…"""@` | Multiline raw, indentation suspended, `@` escalates if needed |
 
 #### Arrays
 
@@ -1290,14 +1310,14 @@ How dictionaries are implemented is yet to be determined. This document only foc
 
 #### Pointers
 
-Although most things can be achieved without manual manipulation of pointers, some low level code requires it. Raw pointers use the type `ptr`. This represents an opaque pointer where the type it represents is unknown. It's ideal for FFI where you need to pass a pointer a around and let an external library handle it. 
+Although most things can be achieved without manual manipulation of pointers, some low level code requires it. Opaque pointers use the type `ptr`. This represents a pointer where the type that it represents is unknown. It's ideal for FFI where you need to pass a pointer a around and let an external library handle it. 
 
 ```
 result: ptr = ExternalLib.getSomething()
 ExternalLib.doSomethingWith(result)
 ```
 
-You can manually check if the pointer is `Null` and give a help error message in scripts.
+You can manually check if the pointer is `Null` and give a help error message in scripts. `Null` is a `ptr` type that points to the NULL pointer. It's distinct from `None` which is an option type. 
 
 ```
 result: ptr = ExternalLib.getSomething()
@@ -1315,17 +1335,25 @@ xPtr.set(1)!         -- Safely set the pointer and branch if there's an error.
 print("{x}")         -- "1", the pointer successfully mutated `x`.
 ```
 
-Sometimes, it's necessary to dig deep into the unsafe territory. The `^` is the symbol associated with pointers, analogues to `?` for options, `!` for results, and `#` for arrays. It can be used in type notation, but it's also the operator to dereference a pointer. Thy type must be known at compile-time. Dereferencing an opaque pointer `ptr` is a compile-time error. In the type notation, `T^` prevents the pointer from mutating its memory or `T^mu` allows mutation with `^ =` (dereference + assignment). 
+Sometimes, it's necessary to dig deep into the unsafe territory. Mulang normally prevents you from doing this unless you put the code in an `unsafe:` block. The `^` is the symbol associated with pointers, analogues to `?` for options, `!` for results, and `#` for arrays. It can be used in type notation, but it's also the operator to dereference a pointer. Thy type must be known at compile-time. Dereferencing an opaque pointer `ptr` is a compile-time error. In the type notation, `T^` prevents the pointer from mutating its memory or `T^mu` allows mutation with `^ =` (dereference + assignment). 
 
 ```
-mu x = 0                 -- `ptr` type takes a reference and creates a generic pointer.
-xPtr: int^mu = ~ptr(x)   -- Convert `ptr` to `int^mu`, type is known.
-xPtr^ = 1                -- Mutate the memory.
-print("{xPtr^}")         -- Prints "1".
-print("{x}")             -- Prints "1".
+unsafe:                      -- Allow pointer manipulation here.
+    mu x = 0                 -- `ptr` type takes a reference and creates a generic pointer.
+    xPtr: int^mu = ~ptr(x)   -- Convert `ptr` to `int^mu`, type is known.
+    xPtr^ = 1                -- Mutate the memory.
+    print("{xPtr^}")         -- Prints "1".
+    print("{x}")             -- Prints "1".
 ```
 
-Please know that this is only an example and is subject to change. Some more testing is required to figure out the best way to handle pointers. Consider this a work in progress.
+Pointer types have 2 kinds of mutability: one for the reference, and one for the pointer variable itself. Here is a table of each kind and what it means.
+
+| Type | Can be set with `=` | Can be set with `^=` |
+|:----------|:-----|:-----|
+|    `T^`   |  No. | No.  |
+|    `T^mu` |  No. | Yes. |
+| `mu T^`   | Yes. | No.  |
+| `mu T^mu` | Yes. | Yes. |
 
 ---
 
