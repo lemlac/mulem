@@ -2487,7 +2487,7 @@ This is not required for all meta functions but is useful for defining what patt
 ```
 List[T, N] :: where =
     T: type           -- `type` refers to any literal type, i.e. not a value
-    N: int            -- A constant `int` that must be known at compile time
+    N: const int      -- A constant `int` that must be known at compile time
 
 List[T, N] :: struct =
     data: T#N
