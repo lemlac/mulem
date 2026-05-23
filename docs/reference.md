@@ -393,9 +393,11 @@ print("User: {user.name}, born: {user.dob}")  -- Prints "User: John Smith, born:
 
 This gives you a great deal of flexibility in how you choose to express your code.
 
-### Contextual Reference (`$`)
+### Pipeline Context (`$`)
 
-`$` has a special meaning in Mulang. It holds the values of the current context. Variable names in Mulang don't allow `$` inside them, but this symbol is treated like a name. You can put symbols next to it, but other words needs to be seperated with a space next to it.
+Any variable starting with `$` is a **context variable.** These are scoped variables that functions can see when they're called. 
+
+Variable names in Mulang don't allow `$` inside them, but this symbol is treated like a name. You can put symbols next to it, but other words needs to be seperated with a space next to it.
 
 ```
 -$    -- This is okay, 1 symbol + 1 word: `-` + `$`.
@@ -403,14 +405,14 @@ not$  -- This is one word, error since `not$` doesn't exist.
 not $ -- This is okay, 2 words: `not` + `$`.
 ```
 
-Variables prefixed with `$` come from the contextual reference. This lets you use the context to write expressive code. Named values use their names like `x` → `$x`, position values use numbers like `$0`, `$1`, `$2`, etc..
+Variables declared as `$x` and `$0` and such are context variables, and one context variable gets set during pipeline: `$` by itself also called the **pipeline context.** It holds the value of the previous pipeline expression.
 
 ```
 (0, x: 1)               -- Create a tuple with position member and named member `x`.
-|>:                     -- Pass to a pipeline block.
-    print("{$0 + $x}")  -- Prints "1".
+|>:                     -- Pass to a pipeline block, sets $ = (0, x: 1) 
+    print("{$.0 + $.x}")  -- Prints "1".
 
-(0, x: 1) |> print("{$0 + $x}")  -- Or in-lined.
+(0, x: 1) |> print("{$.0 + $.x}")  -- Or in-lined.
 ```
 
 Going back to the example in the previous section, we can make it even more concise like this:
@@ -511,6 +513,8 @@ printX() =      -- Function that requires `$x` to be defined.
 $x = 0
 printX()        -- Prints "0"
 ```
+
+*See [Contextual Parameters](#comtextual-parameters) for more details.*
 
 ### Mutability (`mu`)
 
@@ -893,7 +897,7 @@ isGreaterThan(1: 10, 0: 5)  -- a=5,  b=10 → False
 
 #### Contextual Parameters
 
-Functions may declare required context variables with `$name: type`. These are resolved from the calling scope rather than passed as arguments.
+Functions may require context variables by declaring them with `$name: type`. These are resolved from the calling scope rather than passed as arguments.
 
 ```
 addContext() =
@@ -916,8 +920,33 @@ isThereX() =
     | None:    print("No $x")
 ```
 
+*Note the difference..."
+
 - `$x: opt T` – Optional type `T` parameter
 - `$x: T?` - Required type `T?` parameter
+
+Declaring the pipeline context `$` will require that function to be pipelined with a certain type. 
+
+```
+AddArgs :: { a: 1, b: 2 }
+
+pipeAdd(): =
+    $: AddArgs
+    $.a + $.b
+
+result = AddArgs(a: 1, b: 2) |> pipeAdd()
+print("{result}")      -- Prints "3"
+```
+
+You can also destructure from the pipeline context to turn members into local variables.
+
+```
+pipeAdd(): =
+    {a, b}: AddArgs = $
+    a + b
+```
+
+If a function doesn't use the pipeline context, you can pass it in manually with `f($)` / `f($, x)` / `f(x, $)` or any other argument position, or you can spread it into all arguments with `f(&$)` or `f $`. 
 
 ---
 
