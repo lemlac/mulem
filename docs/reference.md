@@ -117,36 +117,36 @@ block:
     ...
 ```
 
-### Inline Blocks (`do` / `end`)
+### Inline Blocks (`{| … |}`)
 
 To switch from block mode to inline mode (and vice versa):
 
 ```
-do <construct>:
+{| block:
     <body>
-end
+|}
 ```
 
-`do` begins an inline block; `end` terminates the nearest open `do`.
-Significant whitespace makes it awkward to pass multi-line lambdas inline. `do`…`end` switches between block mode and inline mode. `end` always closes the nearest unclosed `do`.
+`{|` begins an inline block; `|}` terminates the nearest open `{|`.
+Significant whitespace makes it awkward to pass multi-line lambdas inline. `{|`…`|}` switches between block mode and inline mode. `|}` always closes the nearest unclosed `{|`.
 
 ```
-apiFetch(do fn(result) =
+apiFetch({| fn(result) =
     if result > 0:
         print("Success! {result}")
     else:
         print("Failure! {result}")
-end)
+|})
 ```
 
 `do` must be followed by a block keyword and a `:` or `=`. Nesting works freely.
 
 ```
-(do if x:
+({| if x:
     ...
 else:
     ...
-end)
+|})
 ```
 
 ### Inlining with `then`
@@ -890,23 +890,23 @@ end
 map(array, func) = [++loop x in array then func(x)]
 array0 = [1, 2, 3, 4]
 array1 = map(array0, fn(x) = x + 1)   -- Inline
-array2 = map(array0, do fn(x) =       -- Multi-line
+array2 = map(array0, {| fn(x) =       -- Multi-line
     if x < 2:
         x - 1
     else:
         x + 2
-end)
+|})
 ```
 
 A name is optional. Adding a name creates an immutable reference of the function itself.
 
 ```
-doThing(do fn callback(val) =
+doThing({| fn callback(val) =
     if val > 0:
         callback(val - 1)
     else:
         print("done")
-end)
+|})
 ```
 
 The same keyword for creating functions is also used for function type notation. If this seems confusing, just remember where the context is: if it's being used like a type, it means a *function pointer type*; if it's being used like a value, it's a *lambda function*.
@@ -938,10 +938,10 @@ Capturing also works inside lambda functions just like with named functions.
 
 ```
 mu count = 0
-forEach([1, 2, 3, 4], do fn(x) =
+forEach([1, 2, 3, 4], {| fn(x) =
     @capture(count)
     count += x
-end)
+|})
 ```
 
 #### Named Parameters
@@ -1505,22 +1505,22 @@ The presence of `:` signifies if a keyword is in block mode or inline mode. `the
 
 **Any variables created in the subject field shadow any variables in the parent scope.** This prevents accidental mutations and unintended side-effects. 
 
-#### `do` / `end`
+#### `{|` / `|}`
 
 Wraps a block inside an expression. Switches from inline mode to block mode.
 
 ```
-(do block:
+{| block:
     body
-end)
+|}
 ```
 
 The most common use case for this is for callback functions. *(See [Lambda Functions](#Lambda-Functions).)*
 
 ```
-apiFetch(do fn(result) =
+apiFetch({| fn(result) =
     print("{result}")
-end)
+|})
 ```
 
 #### `block`
