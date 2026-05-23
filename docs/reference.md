@@ -190,7 +190,7 @@ Symbols are grouped by meaning: `*`/`/` for math, `?` for options, `!` for resul
 | Operator       | Meaning                                             | Precedence |
 |:---------------|:----------------------------------------------------|:----------:|
 | `lhs . rhs`    | Member access                                       |     11     |
-| `lhs [ rhs ]`  | Array/dictionary index                              |     11     |
+| `lhs # rhs`    | Array/dictionary index                              |     11     |
 | `lhs ?`        | Unwrap option, propagate `None` to nearest `opt`    |     10     |
 | `lhs !`        | Unwrap result, propagate exception to nearest `try` |     10     |
 | `lhs ^`        | Dereference typed pointer                           |     10     |
@@ -1204,13 +1204,18 @@ While this is possible, this is not recommended for the sake of legibility. For 
 
 #### Arrays
 
-Array types are declared with the hash symbol (`#`). This was chosen because the `#` is commonly used for numbers. For example, `#1` is read `number 1`. A number after the `#` makes it a fixed length array `type#N`. Arrays are statically sized when written `type#N`; `type#` is the dynamic form. Items are separated with commas (`,`). The hash symbol is also used for accessing an array, giving a clear visible mirror between the two. 
+Array types are declared with the hash symbol (`#`). This was chosen because the `#` is commonly used for numbers. For example, `#1` is read `number 1`. A number after the `#` makes it a fixed length array `type#N`. Arrays are statically sized when written `type#N`; `type#` is the dynamic form. Items are separated with commas (`,`). Index is done with the `#[]` operator. When the index is a number literal, you can omit the `[]`, similar to `.` (member access) for tuples.
 
 ```
 list: int#4 = [1, 2, 3, 4]
 print("length of list: {len(list)}")
 compressedList = [list#0 + list#1, list#2 + list#3]
 doubleArray: int#2#2 = [[1, 2], [3, 4]]
+```
+
+```
+i = 2
+print("{list#[i]}")   -- Prints "3" because list#2 is 3
 ```
 
 This builds on the visible symmetry between type notation and their value expressions:
@@ -1223,15 +1228,9 @@ This builds on the visible symmetry between type notation and their value expres
 | **Arrays**   | `T#N` | `x#n` |
 
 ```
-item = doubleArray[1][0]  -- The 2nd row, 1st column
+item = doubleArray#1#0    -- The 2nd row, 1st column
 print("{item}")           -- Prints "3"
 ```
-
-Special care is taken into consideration to make sure ther `[]` operator doesn't clash with [meta functions](#Meta-Functions). This rules out any tokens that looks like `name[]` or `name[x, y]` since array indexes normally only take one argument in other languages.
-
-- `name[x]` — could be array indexing, check the type to resolve
-- `name[]` — always a meta function
-- `name[x, y]` — always a meta function
 
 If the left hand side of `++` isn't an array, it will automatically create one. A non-array on the right-hand side will push it to the end of the resulting array. In this way, you can abandon square brackets notation for array literals entirely and just use `++`.
 
@@ -1284,10 +1283,10 @@ dict: float#float = [
     [1.5]: 15.0,
     [2.0]: 20.0,
 ]
-print("{ dict[1.5] }")   -- Prints "15.0"
+print("{ dict#1.5 }")   -- Prints "15.0"
 ```
 
-If the key type is `str` and a key is a valid variable name, then the square brackets before `:` can be omitted. You can access it like a member with `.`.
+If the key type is `str` and a key is a valid variable name, then the square brackets before `:` can be omitted. You can access it like a member with `.` but with `#`. This makes it easier to distinguish compile-time access `.` and run-time access `#`. 
 
 ```
 dict: int#str = [
@@ -1296,11 +1295,9 @@ dict: int#str = [
     c: 3,
     ["invalid name"]: 127,
 ]
-print("{ dict["b"] }")   -- Prints "2"
-print("{ dict.b }")       -- Prints "2"
+print("{ dict#["b"] }")   -- Prints "2"
+print("{ dict#b }")       -- Prints "2"
 ```
-
-How dictionaries are implemented is yet to be determined. This document only focuses on their syntax in the language. 
 
 #### Pointers
 
@@ -1986,7 +1983,7 @@ Last
 
 ## Meta Bindings (`::`)
 
-Variable and functions primarily use the equals sign (`=`) and are for storing actual data within a program, but there's another type of binding used for abstract values for the compiler to know about like constants, types, inline-functions, and generics. This type of declaration is **constant**; in other words, they cannot be **mutated** or **shadowed**. Depending on what it is, subsequent `::` of the same name will modify its definition. The most common is `:: impl[]` with adds methods and static variables to a meta binding. 
+Variable and functions primarily use the equals sign (`=`) and are for storing actual data within a program, but there's another type of binding used for abstract values for the compiler to know about like constants, types, inline-functions, and generics. This type of declaration is **constant**; in other words, they cannot be **mutated** or **shadowed**. Depending on what it is, subsequent `::` of the same name will modify its definition. The most common is `:: impl` with adds methods and static variables to a meta binding. 
 
 Meta bindings are meant to resemble definitions. *"This is that."* Only when things get complicated should you have to expand on that. It should be easy and simple to define something. They are like the language file of your API, telling the compiler how to speak your own custom language—not just the language that you *speak* but the language that you *think* in.
 
