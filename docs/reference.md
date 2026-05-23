@@ -117,23 +117,21 @@ do:
     ...
 ```
 
-### Inline Blocks (`< … end`)
-
-Think of `<` as *"open inline block."* It's a bit unusual, but once you know what it means it's visually distinctive.
+### Inline Blocks (`@ … end`)
 
 To switch from block mode to inline mode (and vice versa):
 
 ```
-<do:
+@do:
     body
 end
 ```
 
-`<` prefix begins an inline block; `end` terminates the nearest open `<`.
-Significant whitespace makes it awkward to pass multi-line lambdas inline. `<`…`end` switches between block mode and inline mode. `end` always closes the nearest unclosed `<`.
+`@` prefix begins an inline block; `end` terminates the nearest open `@`.
+Significant whitespace makes it awkward to pass multi-line lambdas inline. `@`…`end` switches between block mode and inline mode. `end` always closes the nearest unclosed `@`.
 
 ```
-apiFetch(<fn(result) =   -- Switch to block mode.
+apiFetch(@fn(result) =   -- Switch to block mode.
     if result > 0:       -- Whitespace significant.
         print("Success! {result}")
     else:                -- No prefix for inside blocks.
@@ -141,10 +139,10 @@ apiFetch(<fn(result) =   -- Switch to block mode.
 end)   -- End block mode, switch back to the expression.
 ```
 
-`<` must be followed by a block keyword and then a `:` or `=` at the end of the line. Nesting works freely. Only the first keyword of the block needs it. This makes it visually clear to connect `<` and `end` together. 
+`@` must be followed by a block keyword and then a `:` or `=` at the end of the line. Nesting works freely. Only the first keyword of the block needs it. This makes it visually clear to connect `@` and `end` together. 
 
 ```
-<if x:
+@if x:
     block:
         ...
 else:
@@ -153,7 +151,7 @@ else:
 end
 ```
 
-Syntax highlighting could help by highlighting any keyword prefixed with `<` and its connecting `end`, making it clear where the inline block starts and ends.
+Syntax highlighting could help by highlighting any keyword prefixed with `@` and its connecting `end`, making it clear where the inline block starts and ends.
 
 ### Inlining with `then`
 
@@ -770,7 +768,7 @@ This highlights the flexibility of the language. It doesn't need a dedicated key
 
 #### Lambda Functions
 
-Define a function within an expression with the keyword `fn` in the pattern `fn(x) = x`. This is useful for passing functions to other functions. If the lambda function has multiple lines, it must be wrapped in `<fn`…`end`.
+Define a function within an expression with the keyword `fn` in the pattern `fn(x) = x`. This is useful for passing functions to other functions. If the lambda function has multiple lines, it must be wrapped in `@fn`…`end`.
 
 ```
 fn(arg) = ...
@@ -778,7 +776,7 @@ fn(arg) = ...
 fn(arg) =
     ...
 
-<fn(arg) =
+@fn(arg) =
     ...
 end
 ```
@@ -787,7 +785,7 @@ end
 map(array, func) = [++loop x in array then func(x)]
 array0 = [1, 2, 3, 4]
 array1 = map(array0, fn(x) = x + 1)   -- Inline
-array2 = map(array0, <fn(x) =       -- Multi-line
+array2 = map(array0, @fn(x) =       -- Multi-line
     if x < 2:
         x - 1
     else:
@@ -798,7 +796,7 @@ end)
 A name is optional. Adding a name creates an immutable reference of the function itself.
 
 ```
-doThing(<fn callback(val) =
+doThing(@fn callback(val) =
     if val > 0:
         callback(val - 1)
     else:
@@ -846,7 +844,7 @@ Capturing also works inside lambda functions just like with named functions.
 
 ```
 mu count = 0
-forEach([1, 2, 3, 4], <fn(x) =
+forEach([1, 2, 3, 4], @fn(x) =
     @capture(count)
     count += x
 end)
@@ -1438,7 +1436,7 @@ The presence of `:` signifies if a keyword is in block mode or inline mode. `the
 Terminates the previous inline block. Wraps a block inside an expression. Switches from block mode back to inline mode. The value of the block is the value in the expression at the point of `end`.
 
 ```
-<do:
+@do:
     body
 end
 ```
@@ -1446,7 +1444,7 @@ end
 The most common use case for this is for callback functions. *(See [Lambda Functions](#Lambda-Functions).)*
 
 ```
-apiFetch(<fn(result) =  -- Start a function.
+apiFetch(@fn(result) =  -- Start a function.
     print("{result}")
 end) -- Pass that function to apiFetch.
 ```
@@ -1534,7 +1532,7 @@ loop:
 until cond
 ```
 
-`else` after `loop <cond>` runs if the loop body never executed.
+`else` after `loop cond` runs if the loop body never executed.
 
 ```
 loop False:
@@ -1713,7 +1711,7 @@ match choice is
 #### `is` / `then`
 
 ```
-<expr> is <ptrn> then <expr>
+expr is ptrn then expr
 ```
 
 Extract a binding inline. Requires a guaranteed match or optional bindings.
