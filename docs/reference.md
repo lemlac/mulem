@@ -899,6 +899,8 @@ isGreaterThan(1: 10, 0: 5)  -- a=5,  b=10 → False
 
 Functions may require context variables by declaring them with `$name: type`. These are resolved from the calling scope rather than passed as arguments.
 
+Whenever you see `$` inside a function, think *"this comes from the surrounding context rather than a direct argument."*
+
 ```
 addContext() =
     $a: int
@@ -931,10 +933,10 @@ Declaring the pipeline context `$` will require that function to be pipelined wi
 AddArgs :: { a: 1, b: 2 }
 
 pipeAdd(): =
-    $: AddArgs
+    $: AddArgs    -- Needs an AddArgs object piped to it.
     $.a + $.b
 
-result = AddArgs(a: 1, b: 2) |> pipeAdd()
+result = AddArgs(a: 1, b: 2) |> pipeAdd()   -- This sets $ to an AddArgs
 print("{result}")      -- Prints "3"
 ```
 
@@ -942,7 +944,7 @@ You can also destructure from the pipeline context to turn members into local va
 
 ```
 pipeAdd(): =
-    {a, b}: AddArgs = $
+    {a, b}: AddArgs = $    -- Get a and b from the pipeline context.
     a + b
 ```
 
