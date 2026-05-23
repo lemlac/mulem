@@ -766,10 +766,10 @@ This highlights the flexibility of the language. It doesn't need a dedicated key
 Define a function within an expression with the keyword `fn` in the pattern `fn(x) = x`. This is useful for passing functions to other functions. If the lambda function has multiple lines, it must be wrapped in `do`…`end`.
 
 ```
-fn(<arg>) = <expr>
+fn(arg) = ...
 
-<fn(<arg>) =
-    <body>
+<fn(arg) =
+    ...
 <end
 ```
 
@@ -825,10 +825,10 @@ Capturing also works inside lambda functions just like with named functions.
 
 ```
 mu count = 0
-forEach([1, 2, 3, 4], do fn(x) =
+forEach([1, 2, 3, 4], <fn(x) =
     @capture(count)
     count += x
-end)
+<end)
 ```
 
 #### Named Parameters
@@ -1397,8 +1397,8 @@ apiFetch(<fn(result) =
 #### `do`
 
 ```
-do.<label>:
-    <body>
+do.label:
+    body
 ```
 
 Creates a new scope. Its value is the last expression evaluated.
@@ -1457,21 +1457,21 @@ The universal loop keyword. All loop forms share the same `loop` keyword.
 ```
 -- Unconditional (break manually):
 loop:
-    <body>
+    ...
     break
 
 -- While condition is true:
-loop <cond>:
-    <body>
+loop cond:
+    ...
 
 -- For-each:
-loop <x> in <expr>:
-    <body>
+loop x in expr:
+    ...
 
 -- Do-until (runs at least once):
 loop:
-    <body>
-until <cond>
+    body
+until cond
 ```
 
 `else` after `loop <cond>` runs if the loop body never executed.
@@ -1509,8 +1509,8 @@ loop Pattern(opt x) in listOfPatterns:
 Both accept an optional label to target an outer loop.
 
 ```
-block outer loop x in 0..100:
-    block inner loop y in 0..100:
+loop.outer x in 0..100:
+    loop.inner y in 0..100:
         if x * y >= 100:
             break inner
         if x * y == 77:
@@ -1533,13 +1533,12 @@ The next control flow methods are based on pattern match. Generally, you see the
 Enum/exception branching. Exhaustive by default. `| _:` for the default case.
 
 ```
-match <expr> is <ptrn>:
-    <body>
-| <ptrn>:
-    <body>
-    –
+match expr is ptrn:
+    ...
+| ptrn:
+    ...
 | _:
-    <body>
+    ...
 ```
 
 Each pattern starts with `|`. This was chosen because pattern matching is a core feature in Mulang and a core identity of functional programming. This keeps it much briefer than the usual `switch`/`case` statement, closer to the pattern matching found in functional programming languages. 
@@ -1677,45 +1676,16 @@ getValue()
 |> doSomethingWith($)
 ```
 
-#### `case` / `else`
-
-```
-case <ptrn> = <expr>
-case <ptrn> = <expr> else <expr>
-case <ptrn> = <expr> else:
-    <body>
-```
-
-This is like `is` / `then` but the extracted variables are created in the scope of the block. Like before, direct extraction is only possible if the pattern match can be guaranteed; otherwise, you must use a fallback in the pattern.
-
-```
-result = value is Pattern(opt x) then x  -- Creates variable `x` for this expression
-case Pattern(opt x) = value              -- Creates variable `x` for this block
-```
-
-Add an optional `else` to run when the pattern doesn't match. To force a guarentee, the `else` block must exit the current scope (`break`, `return`, `raise`, etc.).
-
-```
-case Pattern(x) = value else raise Error("Did not match")
-```
-
-```
-case Pattern(x) = value else:
-    -- `x` is undefined
-    print("Error!")
-    raise Error("Did not match")
-```
-
 #### `=>` / `else`
 
 ```
-<expr> => <ptrn>
-<expr> => <ptrn> else <expr>
-<expr> => <ptrn> else:
-    <body>
+expr => ptrn
+expr => ptrn else expr
+expr => ptrn else:
+    body
 ```
 
-The same thing as `case` can be done with any pipeline assignment operator `=>`. 
+The same thing as `is` but sets a variable in scope. This can be done with any pipeline assignment operator `=>`. 
 
 ```
 getStuff() => Pattern(opt x)
@@ -1733,11 +1703,11 @@ print("{x}")      -- x is guaranteed here
 #### `if` + `is`
 
 ```
-if <expr> is <ptrn> then <expr> else <expr>
-if <expr> is <ptrn>:
-    <body>
+if expr is ptrn then expr else expr
+if expr is ptrn:
+    ...
 else:
-    <body>
+    ...
 ```
 
 Combines the conditional branching of `if` with pattern matching of `is`. Useful if you want to destructure a single case of a sum type. This must be a pattern that matches the type of the value before `is`.
