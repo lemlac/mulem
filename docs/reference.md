@@ -174,7 +174,7 @@ else:
 
 Mu has a clean, consistent operator set with both symbolic and word forms.
 
-Symbols are grouped by meaning: `*`/`/` for math, `?` for options, `!` for results, `#` for arrays, `&` for tuples, `^` for pointers. Repeating an operator gives a more technical variant: `+` addition vs `++` concatenation, `*` multiplication vs `**` exponentiation, `/` division vs `//` floor division. Bitwise operators use `/\`, `\/`, and `><` rather than `&`, `|`, and `^` because those symbols have other meanings in Mu.
+Symbols are grouped by meaning: `*`/`/` for math, `?` for options, `!` for results, `#` for arrays, `&` for tuples, `^` for pointers. Repeating an operator gives a more technical variant: `+` addition vs `++` concatenation, `*` multiplication vs `**` exponentiation, `/` division vs `//` floor division. Bitwise operators use `band`, `bor`, and `xor` rather than `&`, `|`, and `^` because those symbols have other meanings in Mu.
 
 ### Precedence (Highest to Lowest)
 
@@ -186,7 +186,7 @@ Symbols are grouped by meaning: `*`/`/` for math, `?` for options, `!` for resul
 | 8     | Exponent                  | `**` (right-associative) |
 | 7     | Multiplicative / Shift    | `* / // % %% << >> >>>`  |
 | 6     | Additive / Concat         | `+ - ++`                 |
-| 5     | Bitwise                   | `/\ \/ ><`               |
+| 5     | Bitwise                   | `band bor xor`           |
 | 4     | Range                     | `.. ..=`                 |
 | 3     | Comparison                | `== != < > <= >=`        |
 | 2     | Logical AND               | `and`                    |
@@ -669,20 +669,22 @@ setInt(x)
 print("{x}")    -- Prints "3"
 ```
 
-This works for mutable variables, but what if you wanted to make an immutable variable using `out`? We can declare that a variable is being set **in** a function with the keyword `in`. This makes it clear that we are intentionally declaring a new variable and not passing and existing. It gives a clear connections: from `out` to `in`. 
+This works for mutable variables, but what if you wanted to make an immutable variable using `out`? We can declare that a variable is being set by a function with `as`. Just like how we use `as` for aliasing, this makes it clear that we're expecting a new variable at the call site. This makes it clear that we are intentionally declaring a new variable and not trying to pass an existing one. 
 
 ```
-setInt(in n)    -- Declare a new variable `n` that gets set by `setInt`.
+setInt(as n)    -- Declare a new variable as `n` that gets set by `setInt`.
 print("{n}")    -- Prints "3"
 ```
+
+`setInt(as n)` → "Set int as n"—This makes it clear what you're trying to do.
 
 Parameters can be made optional with the `opt` modifier. This distinguishes them from `T?` which means a required parameter that's an option type. The parameter must be unwrapped before it can be used.
 
 ```
 addOptional(a: opt int, b: opt int): int =
-    aVal = a || 0
-    bVal = b || 0
-    aVal + bVal
+    aVal = a || 0             -- Coalesce optional arguments with default value 0.
+    bVal = b || 0             -- This unwraps their value if they exist or set them to 0.
+    aVal + bVal               -- Add the unwrapped values.
 
 print("{addOptional()}")      -- Prints "0"
 print("{addOptional(1)}")     -- Prints "1"
@@ -692,7 +694,7 @@ print("{addOptional(1, 1)}")  -- Prints "2"
 Use `=` to to give an optional parameter a default value. This will make it a type `T` if it's used. 
 
 ```
-addOptional(opt a = 0, opt b = 0): int = a + b
+addOptional(opt a = 0, opt b = 0): int = a + b     -- `a` and `b` are always `int`s
 
 print("{addOptional()}")      -- Prints "0"
 print("{addOptional(1)}")     -- Prints "1"
@@ -1031,11 +1033,11 @@ y: int = ~x     -- `y` is expecting an int, so call `int(x)`
 print("{y}")    -- Prints "1"
 ```
 
-If the result type cannot be inferred, you can call a type like a function around it. The `~` before the argument distinguishes it from instantiation which also uses a function call. This only works if both the input type and output type are compatible.
+If the result type cannot be inferred, you can call a type like a function around it. This only works if both the input type and output type are compatible.
 
 ```
 x = 1
-y = float(~x)
+y = float(x)
 print("{y}")     -- Prints "1.0"
 ```
 
@@ -2554,7 +2556,7 @@ Thing :: struct =
 
 @inlined
 setBitAnd(ref mu a, ref b) =
-    a /\= b
+    a = a band b
 
 mu count = 0
 increment() =
