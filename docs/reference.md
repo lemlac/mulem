@@ -105,7 +105,7 @@ object.method1()
 A block wraps multiple expressions into one. A `:` or `=` followed by a newline and indentation starts a block. The last expression evaluated in a block is its value.
 
 ```
-block:
+do:
     <expr>
     <expr>    -- This is the block's value.
 ```
@@ -113,40 +113,42 @@ block:
 Use a literal `...` (3 periods) to leave a block empty.
 
 ```
-block:
+do:
     ...
 ```
 
-### Inline Blocks (`do … end`)
+### Inline Blocks (`< … <end`)
 
 To switch from block mode to inline mode (and vice versa):
 
 ```
-do block:
-    <body>
-end
+<do:
+    body
+<end
 ```
 
-`do` begins an inline block; `end` terminates the nearest open `do`.
-Significant whitespace makes it awkward to pass multi-line lambdas inline. `do`…`end` switches between block mode and inline mode. `end` always closes the nearest unclosed `do`.
+`<` prefix begins an inline block; `<end` terminates the nearest open `<`.
+Significant whitespace makes it awkward to pass multi-line lambdas inline. `<`…`<end` switches between block mode and inline mode. `<end` always closes the nearest unclosed `<`.
 
 ```
-apiFetch(do fn(result) =
-    if result > 0:
+apiFetch(<fn(result) =   -- Switch to block mode.
+    if result > 0:       -- Whitespace significant.
         print("Success! {result}")
-    else:
+    else:                -- No prefix for inside blocks.
         print("Failure! {result}")
-end)
+<end)   -- End block mode, switch back to the expression.
 ```
 
-`do` must be followed by a block keyword and a `:` or `=`. Nesting works freely.
+`<` must be followed by a block keyword and a `:` or `=`. Nesting works freely.
 
 ```
-(do if x:
-    ...
-else:
-    ...
-end)
+<if x:
+    block:
+        ...
+<else:
+    block:
+        ...
+<end
 ```
 
 ### Inlining with `then`
@@ -248,7 +250,7 @@ Operators may be called as functions. Prefix unary operators apply element-wise 
 ```
 not(a, b, c)             -- (not a, not b, not c)
 add(a, b, c)             -- a add b add c
-(<)(a, b, c, d)           -- (a < b, b < c, c < d)
+(<)(a, b, c, d)          -- (a < b, b < c, c < d)
 and(<)(a, b, c, d)       -- (a < b) and (b < c) and (c < d)
 ```
 
@@ -766,32 +768,32 @@ Define a function within an expression with the keyword `fn` in the pattern `fn(
 ```
 fn(<arg>) = <expr>
 
-do fn(<arg>) =
+<fn(<arg>) =
     <body>
-end
+<end
 ```
 
 ```
 map(array, func) = [++loop x in array then func(x)]
 array0 = [1, 2, 3, 4]
 array1 = map(array0, fn(x) = x + 1)   -- Inline
-array2 = map(array0, do fn(x) =       -- Multi-line
+array2 = map(array0, <fn(x) =       -- Multi-line
     if x < 2:
         x - 1
     else:
         x + 2
-end)
+<end)
 ```
 
 A name is optional. Adding a name creates an immutable reference of the function itself.
 
 ```
-doThing(do fn callback(val) =
+doThing(<fn callback(val) =
     if val > 0:
         callback(val - 1)
     else:
         print("done")
-end)
+<end)
 ```
 
 The same keyword for creating functions is also used for function type notation. If this seems confusing, just remember where the context is: if it's being used like a type, it means a *function pointer type*; if it's being used like a value, it's a *lambda function*.
@@ -1090,7 +1092,7 @@ print(str3)
 You can also write multi-line strings with `"""` (3 quotation marks). A common issue in programming languages is how to fix the issue of leading whitespace in a multi-line string. Mulang uses significant whitespace, so unindenting the string wouldn't work. We don't want all the leading whitespace to be in the string, but how do we solve this? To fix this issue, whitespace gets trimmed at compile-time based on the positions of the last `"""`. Any spaces before it is automatically trimmed. Much like blocks, having too little indentation is a syntax error inside multi-line strings. This helps keep things readable and consistent and solves the whitespace issue inside strings.
 
 ```
-block:
+do:
     myStr =
         """
         Hello.
@@ -1170,10 +1172,10 @@ bigDocument = @"""
 Sometimes, we just want to copy and paste string data without formatting it. To help with this, Mulang allows you to put a raw string enclosed in `@` signs at the start of a new line without breaking a block. Significant whitespace is temporarially disabled when the line starts with `@`-style raw string, and the parser ignores indentation significance while inside the raw string. All whitespace and characters are put into the string without formatting until it gets to the matching `''@` marker. Then, re-ident in the next line to resume the block. This is useful for debugging and embedding data in code.
 
 ```
-block:
-    block:
-        block:
-            block:
+do:
+    do:
+        do:
+            do:
                 nestedRawString =  -- Put raw string on the next line without indenting.
 @"""                       
                        
@@ -1374,28 +1376,28 @@ The presence of `:` signifies if a keyword is in block mode or inline mode. `the
 
 **Any variables created in the subject field shadow any variables in the parent scope.** This prevents accidental mutations and unintended side-effects. 
 
-#### `do` / `end`
+#### `end`
 
 Wraps a block inside an expression. Switches from inline mode to block mode.
 
 ```
-do block:
+<do:
     body
-end
+<end
 ```
 
 The most common use case for this is for callback functions. *(See [Lambda Functions](#Lambda-Functions).)*
 
 ```
-apiFetch(do fn(result) =
+apiFetch(<fn(result) =
     print("{result}")
-end)
+<end)
 ```
 
-#### `block`
+#### `do`
 
 ```
-block <label>:
+do.<label>:
     <body>
 ```
 
@@ -1403,7 +1405,7 @@ Creates a new scope. Its value is the last expression evaluated.
 
 ```
 x =
-    block:
+    do:
         y = 1
         y + 1       -- block's value is 2
 ```
@@ -1411,8 +1413,8 @@ x =
 Give it a label to enable `break`.
 
 ```
-block outer:
-    break outer
+do.outer:
+    break.outer
 ```
 
 #### `if` / `else`
