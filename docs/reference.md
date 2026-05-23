@@ -1625,6 +1625,14 @@ loop (x, y, z) in listOfTuples:
     print("{x}, {y}, {z}")
 ```
 
+Pattern matching works. All patterns must have fallbacks. *(See [Pattern Fallback](#pattern-fallbacks).)*
+
+```
+loop Pattern(x?) in listOfPatterns:
+    if x is Some(x):
+        print("Found match: {x}")
+```
+
 #### `break` / `continue`
 
 Both accept an optional label to target an outer loop.
