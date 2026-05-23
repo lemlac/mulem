@@ -117,7 +117,7 @@ do:
     ...
 ```
 
-### Inline Blocks (`@ … end`)
+### Inline Blocks (`@_: … end`)
 
 To switch from block mode to inline mode (and vice versa):
 
@@ -128,7 +128,7 @@ end
 ```
 
 `@` prefix begins an inline block; `end` terminates the nearest open `@`.
-Significant whitespace makes it awkward to pass multi-line lambdas inline. `@`…`end` switches between block mode and inline mode. `end` always closes the nearest unclosed `@`.
+Significant whitespace makes it awkward to pass multi-line lambdas inline. `@_:`…`end` switches between block mode and inline mode. `end` always closes the nearest unclosed `@`.
 
 ```
 apiFetch(@fn(result) =   -- Switch to block mode.
@@ -139,7 +139,7 @@ apiFetch(@fn(result) =   -- Switch to block mode.
 end)   -- End block mode, switch back to the expression.
 ```
 
-`@` must be followed by a block keyword and then a `:` or `=` at the end of the line. Nesting works freely. Only the first keyword of the block needs it. This makes it visually clear to connect `@` and `end` together. 
+`@` must be followed by a block keyword and then a `:` or `=` at the end of the line. Nesting works freely. Only the first keyword of the block needs it. This makes it visually clear to connect `@_:` and `end` together. 
 
 ```
 @if x:
