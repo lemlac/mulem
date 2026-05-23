@@ -777,10 +777,10 @@ setInt(=> n)    -- Declare a new variable `n` that gets set by `setInt`.
 print("{n}")    -- Prints "3"
 ```
 
-Parameters can be made optional by adding `?` to their name before the type. This distinguishes them from `T?` which means a required parameter that's an option type. The parameter must be unwrapped before it can be used.
+Parameters can be made optional by adding `opt` to their type. This distinguishes them from `T?` which means a required parameter that's an option type. The parameter must be unwrapped before it can be used.
 
 ```
-addOptional(a?: int, b?: int): int =
+addOptional(a: opt int, b: opt int): int =
     aVal = a || 0
     bVal = b || 0
     aVal + bVal
@@ -982,17 +982,17 @@ $b = 2
 result = addContext()   -- Uses $a and $b from context.
 ```
 
-Optional contextual parameters use `$x?`. This is distinct from `T?` which means a literal option type.
+Optional contextual parameters use `opt T`. This will wrap it in an option type `T?`.
 
 ```
 isThereX() =
-    $x?: int
+    $x: opt int
     match $x is
     | Some(_): print("$x exists")
     | None:    print("No $x")
 ```
 
-- `$x?: T` – Optional type `T` parameter
+- `$x: opt T` – Optional type `T` parameter
 - `$x: T?` - Required type `T?` parameter
 
 ---
@@ -1719,7 +1719,7 @@ match choice is First | Second | Third:
 
 ```
 -- Fallback, `val` is converted to option type `T?`:
-match choice is First | Second(val?) | Third{val?}:
+match choice is First | Second(opt val) | Third{opt val}:
     print("First, Second, or Third: {val || "None"}")
 ```
 
@@ -1732,7 +1732,7 @@ match choice is
 | First:
     print("First")
     fallthrough
-| Second(x?):            -- `x?` in pattern wraps the variable in an option
+| Second(opt x):            -- `opt x` in pattern wraps the variable in an option
     if x is Some(x):
         print("Definitely Second: {x}")
 ```
@@ -1741,7 +1741,7 @@ match choice is
 
 If a pattern can't be **guarenteed** for any reason, then you must have a **fallback.** There are two options available:
 
-- __Optional binding:__ `Pattern(x?)` — wraps `x` in type `T?`, `Some(x)` if it matched, `None` if it didn't
+- __Optional binding:__ `Pattern(opt x)` — wraps `x` in type `T?`, `Some(x)` if it matched, `None` if it didn't
 - __Default value:__ `Pattern(x || default)` — `x` is type `T`, if it didn't match `x` is set to `default`
 
 #### Pattern Guards
@@ -1774,8 +1774,8 @@ result = value is Pattern(x) then x
 
 ```
 -- With fallback (non-exhaustive):
-result = value is Pattern(x?) then x
-result = value is Pattern(x?) then x || "fallback"    -- Wrap in Some(x), then coalesce
+result = value is Pattern(opt x) then x
+result = value is Pattern(opt x) then x || "fallback"    -- Wrap in Some(x), then coalesce
 result = value is Pattern(x || "fallback") then x     -- Automatic fallback
 ```
 
@@ -1809,8 +1809,8 @@ case <ptrn> = <expr> else:
 This is like `is` / `then` but the extracted variables are created in the scope of the block. Like before, direct extraction is only possible if the pattern match can be guaranteed; otherwise, you must use a fallback in the pattern.
 
 ```
-result = value is Pattern(x?) then x  -- Creates variable `x` for this expression
-case Pattern(x?) = value              -- Creates variable `x` for this block
+result = value is Pattern(opt x) then x  -- Creates variable `x` for this expression
+case Pattern(opt x) = value              -- Creates variable `x` for this block
 ```
 
 Add an optional `else` to run when the pattern doesn't match. To force a guarentee, the `else` block must exit the current scope (`break`, `return`, `raise`, etc.).
@@ -1838,7 +1838,7 @@ case Pattern(x) = value else:
 The same thing as `case` can be done with any pipeline assignment operator `=>`. 
 
 ```
-getStuff() => Pattern(x?)
+getStuff() => Pattern(opt x)
 
 if x is Some(x):  -- unwrap x
     print("{x}")
@@ -1916,7 +1916,7 @@ If `break` is reachable inside the loop, optional bindings are required.
 loop:
     if earlyCondition:
         break
-until getValue() is Pattern(x?)
+until getValue() is Pattern(opt x)
 
 if x is Some(x):
     print("{x}")
