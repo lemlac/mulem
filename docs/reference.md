@@ -191,7 +191,7 @@ Symbols are grouped by meaning: `*`/`/` for math, `?` for options, `!` for resul
 | 3     | Comparison                | `== != < > <= >=`        |
 | 2     | Logical AND               | `and`                    |
 | 1     | Logical OR / Pipeline     | `or \|\| \|>`            |
-| 0     | Assignment / Spread       | `= := += => & ~&`        |
+| 0     | Assignment / Spread       | `= := += => &`           |
 
 | Operator       | Meaning                                             | Precedence |
 |:---------------|:----------------------------------------------------|:----------:|
@@ -203,7 +203,6 @@ Symbols are grouped by meaning: `*`/`/` for math, `?` for options, `!` for resul
 | `~ rhs`        | Inferred type conversion                            |     10     |
 | `++ rhs`       | Spread array into array                             |      0     |
 | `& rhs`        | Spread tuple into tuple (same type)                 |      0     |
-| `~& rhs`       | Spread tuple into tuple (new product type)          |      0     |
 | `lhs .. rhs`   | Exclusive range                                     |      4     |
 | `lhs ..= rhs`  | Inclusive range                                     |      4     |
 | `lhs \|> rhs`  | Pipeline                                            |      1     |
@@ -227,9 +226,9 @@ Symbols are grouped by meaning: `*`/`/` for math, `?` for options, `!` for resul
 | `lhs < rhs`    | Less than                                           |      3     |
 | `lhs >= rhs`   | Greater than or equal                               |      3     |
 | `lhs <= rhs`   | Less than or equal                                  |      3     |
-| `lhs band rhs`   | Bitwise AND                                         |      5     |
-| `lhs bor rhs`   | Bitwise OR                                          |      5     |
-| `lhs xor rhs`   | Bitwise XOR                                         |      5     |
+| `lhs band rhs`   | Bitwise AND                                       |      5     |
+| `lhs bor rhs`   | Bitwise OR                                         |      5     |
+| `lhs xor rhs`   | Bitwise XOR                                        |      5     |
 | `lhs << rhs`   | Shift left                                          |      7     |
 | `lhs >> rhs`   | Shift right                                         |      7     |
 | `lhs >>> rhs`  | Unsigned shift right                                |      7     |
