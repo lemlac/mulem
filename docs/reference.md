@@ -3215,11 +3215,45 @@ This is a work in progress though. How these decorators are implemented and thei
 
 ---
 
-# Mu (Mulang) Language Reference
 
-**Version 0.1 (Draft)**
 
-**Mu** (also called **Mulang**) is a general-purpose, multi-paradigm programming language that combines **significant whitespace** with powerful escape hatches for inline code. It is heavily **expression-oriented**, gives low-level control when needed, and emphasizes clarity, ergonomics, and explicitness.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Mu Language Reference
+
+*Version 0.1 (Draft)*
+
+Mu (also called *Mulang*) is a general-purpose, multi-paradigm language with significant whitespace. It is expression-oriented and gives programmers explicit control over evaluation strategy, memory model, and error handling. Mu is planned to be both compiled and interpreted within the same language, making it suitable for systems programming, AI, and game development.
 
 Mu targets developers who want Python-like readability, Rust-like control and safety features, and F#-style expressive pipelines — especially for domains like robotics, systems programming, AI, and games.
 
@@ -3231,7 +3265,6 @@ It aims to support both interpretation and compilation (including to shared libr
 
 - **Expression-oriented**: Almost everything is an expression and returns a value.
 - **Significant whitespace** with smart inline support via `do`/`end`.
-- **Thoughtful operators**: Clean symbols with word equivalents.
 - **Modern error & option handling**: `?` and `!` propagation, `||` coalescing.
 - **Flexible**: Multi-paradigm (functional, procedural, low-level).
 
@@ -3246,14 +3279,45 @@ It aims to support both interpretation and compilation (including to shared libr
   - Block: `(-- ... --)` (nesting allowed)
 - **Strings**:
   - `"double quotes"` with `{interpolation}`
-  - `'''raw strings'''`
+  - `''raw strings''`
   - `"""multi-line strings"""`
+
+### Whitespace and Indentation
+
+Whitespace is significant. Indentation marks where blocks begin and end. Four (4) spaces per level is recommended. Tabs and spaces may be mixed, but each expression within a block must have exactly the same indentation sequence — the same number of tabs and spaces in the same order.
+
+### Statement Separators
+
+Statements are separated by newlines or semicolons (`;`). The two are interchangeable. Newlines may be `\n`, `\r`, or `\r\n`.
+
+### Comments
+
+```
+-- Single-line comment.
+
+(--
+    Multi-line comment.
+--)
+
+(--
+    (-- Nesting is allowed. --)
+--)
+```
+
+### Lexical Categories
+
+| Category             | Examples                                            |
+|:---------------------|:----------------------------------------------------|
+| Words                | `x`, `PI`, `1`, `3.14`, `0xABCDEF`, `$`, `$x`, `$0` |
+| String/Char literals | `'a'`, `"foo"`, `"""big string"""`, `''raw''`       |
+| Delimiters           | `,` (tuples/arrays), `;` (expressions)              |
+| Symbols              | `~!@#%^&*-+=\|:<.>/?` (excluding `--`)              |
+| Brackets             | `()`, `[]`, `{}`                                    |
+| Whitespace           | spaces, tabs, newlines                              |
 
 ---
 
-## Basic Syntax
-
-### Expressions and Blocks
+## Expressions and Blocks
 
 A program is a sequence of expressions. Blocks are created with `:` after a construct, followed by indented content. The last expression in a block is its value.
 
@@ -3263,26 +3327,78 @@ if condition:
     result
 ```
 
-**Inline vs Block Mode**
-
-Mu uses `do` / `end` to switch between block mode (significant whitespace) and inline mode.
-
-```mu
-apiFetch(do fn(result):
-    if result > 0:
-        print("Success!")
-    else:
-        print("Failure!")
-end)
-```
-
 ### Expression Splitting
 
-You can split expressions across lines in these cases:
+A single expression may span multiple lines under these conditions:
 - Inside brackets: `()`, `[]`, `{}`
 - Lines starting with `.` (method chaining)
 - Lines starting with `|>` (pipelines)
-- Multi-line strings
+- Lines starting with `|` followed by a pattern continue a `match` block
+- Inside a multi-line string `"""..."""`
+- `;` ends the expression early.
+
+```
+-- Method chaining across lines:
+object.method1()
+      .method2()
+      .method3()
+
+-- object.method1();  ← semicolon disables splitting
+--       .method2()   ← SyntaxError
+```
+
+### Blocks
+
+A block wraps multiple expressions into one. A `:` or `=` followed by a newline and indentation starts a block. The last expression evaluated in a block is its value.
+
+```
+block:
+    expr
+    expr    -- This is the block's value.
+```
+
+Use `pass` to leave a block empty.
+
+```
+block:
+    pass
+```
+
+### Inline Blocks (`do` / `end`)
+
+Significant whitespace makes it awkward to pass multi-line lambdas inline. `do`…`end` switches between block mode and inline mode. `end` always closes the nearest unclosed `do`.
+
+```
+apiFetch(do fn(result) =
+    if result > 0:
+        print("Success! {result}")
+    else:
+        print("Failure! {result}")
+end)
+```
+
+`do` must be followed by a block keyword and a `:` or `=`. Nesting works freely.
+
+```
+(do if x:
+    expr
+else:
+    expr
+end)
+```
+
+### Inlining with `then`
+
+Any block that has a *subject* can be inlined using `then` instead of `:`.
+
+```
+if x then "True" else "False"
+
+if x:           -- Block form.
+    "True"
+else:
+    "False"
+```
 
 ---
 
@@ -3290,43 +3406,154 @@ You can split expressions across lines in these cases:
 
 Mu has a clean, consistent operator set with both symbolic and word forms.
 
+Symbols are grouped by meaning: `*`/`/` for math, `?` for options, `!` for results, `#` for arrays, `&` for tuples, `^` for pointers. Repeating an operator gives a more technical variant: `+` addition vs `++` concatenation, `*` multiplication vs `**` exponentiation, `/` division vs `//` floor division. Bitwise operators use `/\`, `\/`, and `><` rather than `&`, `|`, and `^` because those symbols have other meanings in Mu.
+
 ### Precedence (Highest to Lowest)
 
-| Level | Category                  | Operators |
-|-------|---------------------------|---------|
-| 11    | Member access             | `.` |
-| 10    | Postfix                   | `? ! ^ #` |
-| 9     | Unary                     | `+ - not ~` |
-| 8     | Exponent                  | `**` |
-| 7     | Multiplicative / Shift    | `* / // % %% << >> >>>` |
-| 6     | Additive / Concat         | `+ - ++` |
-| 5     | Bitwise                   | `/\ \/ ><` |
-| 4     | Range                     | `.. ..=` |
-| 3     | Comparison                | `== != < > <= >=` |
-| 2     | Logical AND               | `and` |
-| 1     | Logical OR / Pipeline     | `or \|> \|>=>` |
-| 0     | Assignment / Spread       | `= := += => & ~&` |
+| Level | Category                  | Operators                |
+|:------|:--------------------------|:-------------------------|
+| 11    | Member access             | `.`                      |
+| 10    | Postfix                   | `? ! ^ #`                |
+| 9     | Unary                     | `+ - not ~`              |
+| 8     | Exponent                  | `**` (right-associative) |
+| 7     | Multiplicative / Shift    | `* / // % %% << >> >>>`  |
+| 6     | Additive / Concat         | `+ - ++`                 |
+| 5     | Bitwise                   | `/\ \/ ><`               |
+| 4     | Range                     | `.. ..=`                 |
+| 3     | Comparison                | `== != < > <= >=`        |
+| 2     | Logical AND               | `and`                    |
+| 1     | Logical OR / Pipeline     | `or \|\| \|>`            |
+| 0     | Assignment / Spread       | `= := += => & ~&`        |
 
-### Key Operators
+| Operator       | Meaning                                             | Precedence |
+|:---------------|:----------------------------------------------------|:----------:|
+| `lhs . rhs`    | Member access                                       |     11     |
+| `lhs # rhs`    | Array index                                         |     10     |
+| `lhs ?`        | Unwrap option, propagate `None` to nearest `opt`    |     10     |
+| `lhs !`        | Unwrap result, propagate exception to nearest `try` |     10     |
+| `lhs ^`        | Dereference typed pointer                           |     10     |
+| `~ rhs`        | Inferred type conversion                            |     10     |
+| `++ rhs`       | Spread array into array                             |      0     |
+| `& rhs`        | Spread tuple into tuple (same type)                 |      0     |
+| `~& rhs`       | Spread tuple into tuple (new product type)          |      0     |
+| `lhs .. rhs`   | Exclusive range                                     |      4     |
+| `lhs ..= rhs`  | Inclusive range                                     |      4     |
+| `lhs \|> rhs`  | Pipeline                                            |      1     |
+| `lhs => rhs`   | Pipeline assignment                                 |      1     |
+| `lhs = rhs`    | Assignment or declaration                           |      0     |
+| `lhs := rhs`   | Explicit inferred-type declaration                  |      0     |
+| `lhs: T = rhs` | Explicit typed declaration                          |      0     |
+| `lhs + rhs`    | Addition                                            |      6     |
+| `lhs - rhs`    | Subtraction                                         |      6     |
+| `+ rhs`        | Unary positive                                      |      9     |
+| `- rhs`        | Sign flip                                           |      9     |
+| `lhs * rhs`    | Multiplication                                      |      7     |
+| `lhs / rhs`    | Exact division (float)                              |      7     |
+| `lhs // rhs`   | Floor division (int)                                |      7     |
+| `lhs % rhs`    | Modulo (sign matches `lhs`)                         |      7     |
+| `lhs %% rhs`   | Floor modulo (sign matches `rhs`)                   |      7     |
+| `lhs ** rhs`   | Exponentiation (right-associative)                  |      8     |
+| `lhs == rhs`   | Equality                                            |      3     |
+| `lhs != rhs`   | Inequality                                          |      3     |
+| `lhs > rhs`    | Greater than                                        |      3     |
+| `lhs < rhs`    | Less than                                           |      3     |
+| `lhs >= rhs`   | Greater than or equal                               |      3     |
+| `lhs <= rhs`   | Less than or equal                                  |      3     |
+| `lhs /\ rhs`   | Bitwise AND                                         |      5     |
+| `lhs \/ rhs`   | Bitwise OR                                          |      5     |
+| `lhs >< rhs`   | Bitwise XOR                                         |      5     |
+| `lhs << rhs`   | Shift left                                          |      7     |
+| `lhs >> rhs`   | Shift right                                         |      7     |
+| `lhs >>> rhs`  | Unsigned shift right                                |      7     |
+| `lhs ++ rhs`   | Concatenation                                       |      6     |
+| `lhs \|\| rhs` | None-coalescing                                     |      1     |
+| `lhs and rhs`  | Logical AND                                         |      2     |
+| `lhs or rhs`   | Logical OR                                          |      1     |
+| `not rhs`      | Logical NOT (or bitwise NOT for numbers)            |      9     |
 
-**Arithmetic & Bitwise**
-- `+ add`, `- sub`, `* mul`, `/ div`, `// fdiv`, `% mod`, `%% rem`, `** pow`
-- `/\ band`, `\/ bor`, `>< xor`, `<< shl`, `>> shr`, `>>> ushr`
+Symbol operators gain assignment forms with `=` and pipeline-assignment forms with `=>`.
 
-**Comparison & Logic**
-- `== eq`, `!= neq`, `> gt`, `< lt`, etc.
-- `and`, `or`, `not`
+```
+x += 1          -- x = x + 1
+x /\= 0xFF      -- x = x /\ 0xFF
+expr +=> x      -- pipeline: x = x + expr
+```
 
-**Special**
-- `lhs ?` — Option unwrap / propagate
-- `lhs !` — Error unwrap / propagate
-- `lhs || rhs` — None coalescing
-- `lhs |> rhs` — Pipeline
-- `lhs => var` — Pipeline assignment
-- `&` / `~&` — Tuple spreading
-- `..` / `..=` — Range
+### Prefix / Function Form
 
-Assignment variants (`+=`, `=>`, etc.) and prefix word forms are supported where applicable.
+Operators may be called as functions. Prefix unary operators apply element-wise to a tuple. Binary operators chain across all arguments. Comparison operators return a tuple of bools one shorter than the input.
+
+```
+not(a, b, c)             -- (not a, not b, not c)
+add(a, b, c)             -- a add b add c
+(<)(a, b, c, d)           -- (a < b, b < c, c < d)
+and(<)(a, b, c, d)       -- (a < b) and (b < c) and (c < d)
+```
+
+### Pipelining (`|>`)
+
+`|>` at the start of a line passes the previous line's value as `$` into the next expression.
+
+```
+fetchA()
+|> fetchB($)
+|> fetchC($)
+|> print("{$}")
+```
+
+`$` is the *contextual reference*. It may also appear multiple times on one line, and multiple semicolon-separated expressions share the same `$`.
+
+```
+|> fetchA()
+|> print("{$}"); fetchB($)   -- print result, then fetchB
+|> fetchC($)
+```
+
+A **pipeline block** begins with `|>:` and gives every expression inside it the same `$`.
+
+```
+fetchA() |> fetchB($) |>:
+    print("{$}")
+    fetchC($)
+```
+
+To store a pipeline result, use `=>` or its shorthand `|=>`.
+
+```
+fetchA()
+|> fetchB($)
+|> fetchC($) => result      -- store result mid-pipeline
+
+fetchA()
+|> fetchB($)
+|> fetchC($)
+|=> finalResult             -- shorthand for |> $ =>
+```
+
+### Operation Chaining (`op[]`)
+
+Any infix operator `op` may be written as `lhs op[rhs]`, at the same precedence as member access. This is primarily useful for array indexing and inline pipelining.
+
+```
+array#[0]#[1]                        -- ( (array # 0) # 1 )
+fn1() |>[fn2($)] |>[fn3($)]          -- fn3(fn2(fn1()))
+```
+
+Lines starting with `op[]` continue the previous expression, allowing operator chaining across lines.
+
+```
+bigString = "This"
+    ++[" string"]
+    ++[" is"]
+    ++[" split"]
+    ++[" across lines."]
+```
+
+If the brackets contain more than one value or named values, the result is a **tuple** rather than an operation.
+
+```
+x = (13, 5) |>[ $0 // $1, $0 %% $1 ]   -- (2, 3)
+```
 
 ---
 
@@ -3443,7 +3670,7 @@ do fn(x): ... end
 **Language Name**: Mu (Mulang)  
 **Status**: Experimental
 
-## 1. Introduction
+## Introduction
 
 Mu (also known as **Mulang**) is a general-purpose, multi-paradigm programming language designed for **readability**, **expressiveness**, and **low-level control**. It features significant whitespace while providing explicit mechanisms to escape into inline mode.
 
@@ -3519,43 +3746,7 @@ An expression may span multiple lines when:
 
 ### 4.1 Precedence (Highest to Lowest)
 
-| Precedence | Category                    | Operators |
-|-----------|-----------------------------|---------|
-| 11        | Member access               | `.` |
-| 10        | Postfix                     | `? ! ^ # ~` |
-| 9         | Unary                       | `+ - not` |
-| 8         | Exponentiation              | `**` (right-associative) |
-| 7         | Multiplicative / Shift      | `* / // % %% << >> >>>` |
-| 6         | Additive / Concat           | `+ - ++` |
-| 5         | Bitwise                     | `/\ \/ ><` |
-| 4         | Range                       | `.. ..=` |
-| 3         | Comparison                  | `== != < > <= >=` |
-| 2         | Logical AND                 | `and` |
-| 1         | Logical OR / Pipeline       | `or \|> =>` |
-| 0         | Assignment / Spread         | `= := += -= *= /= //= ++= =` `& ~&` |
-
 ### 4.2 Operator Forms
-
-**Symbol-only operators**:
-- `lhs # rhs` — indexing
-- `lhs . rhs` — member access
-- `lhs ?` — option unwrap/propagate
-- `lhs !` — error unwrap/propagate
-- `lhs ^` — pointer dereference
-- `lhs .. rhs`, `lhs ..= rhs` — ranges
-- `&rhs`, `~&rhs` — tuple spreading
-
-**Dual-form operators** (symbol + word):
-
-**Arithmetic**: `+ add`, `- sub`, `* mul`, `/ div`, `// fdiv`, `% mod`, `%% rem`, `** pow`
-
-**Comparison**: `== eq`, `!= neq`, `> gt`, `< lt`, `>= gte`, `<= lte`
-
-**Boolean**: `and`, `or`, `not`
-
-**Bitwise**: `/\ band`, `\/ bor`, `>< xor`, `<< shl`, `>> shr`, `>>> ushr`
-
-**Other**: `++ concat`, `|| orelse` (None coalescing)
 
 Assignment variants (`+=`, `=>`, etc.) and prefix word forms are supported for applicable operators.
 
@@ -3669,11 +3860,40 @@ Mu will expose explicit control over:
 
 ---
 
-# Mu Language Reference
 
-*Version 0.1 (Draft)*
 
-Mu (also called *Mulang*) is a general-purpose, multi-paradigm language with significant whitespace. It is expression-oriented and gives programmers explicit control over evaluation strategy, memory model, and error handling. Mu is planned to be both compiled and interpreted within the same language, making it suitable for systems programming, AI, and game development.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ---
 
@@ -3690,180 +3910,11 @@ Mu (also called *Mulang*) is a general-purpose, multi-paradigm language with sig
 
 ---
 
-## 1. Lexical Conventions
-
-### Whitespace and Indentation
-
-Whitespace is significant. Indentation marks where blocks begin and end. Four spaces per level is recommended. Tabs and spaces may be mixed, but each expression within a block must have exactly the same indentation sequence — the same number of tabs and spaces in the same order.
-
-### Statement Separators
-
-Statements are separated by newlines or semicolons (`;`). The two are interchangeable. Newlines may be `\n`, `\r`, or `\r\n`.
-
-### Comments
-
-```
--- Single-line comment.
-
-(--
-    Multi-line comment.
---)
-
-(--
-    (-- Nesting is allowed. --)
---)
-```
-
-### Lexical Categories
-
-| Category | Examples |
-|:---------|:---------|
-| Words | `x`, `PI`, `1`, `3.14`, `0xABCDEF`, `$`, `$x`, `$0` |
-| String/Char literals | `'a'`, `"foo"`, `"""big string"""`, `''raw''` |
-| Delimiters | `,` (tuples/arrays), `;` (expressions) |
-| Symbols | `~!@#%^&*-+=\|:<.>/?` (excluding `--`) |
-| Brackets | `()`, `[]`, `{}` |
-| Whitespace | spaces, tabs, newlines |
-
----
-
-## 2. Expressions and Blocks
-
-### Expression Splitting
-
-A single expression may span multiple lines under these conditions:
-
-- Inside open brackets `([{` — line breaks are ignored until the matching closing bracket. A `;` inside brackets ends the expression early.
-- Lines starting with `.` continue a method chain from the previous line.
-- Lines starting with `|>` continue a pipeline from the previous line.
-- Lines starting with `|` followed by a pattern continue a `match` block.
-- Inside a multi-line string `"""..."""`.
-
-```
--- Method chaining across lines:
-object.method1()
-      .method2()
-      .method3()
-
--- object.method1();  ← semicolon disables splitting
---       .method2()   ← SyntaxError
-```
-
-### Blocks
-
-A block wraps multiple expressions into one. A `:` or `=` followed by a newline and indentation starts a block. The last expression evaluated in a block is its value.
-
-```
-block:
-    expr
-    expr    -- This is the block's value.
-```
-
-Use `pass` to leave a block empty.
-
-```
-block:
-    pass
-```
-
-### Inline Blocks (`do` / `end`)
-
-Significant whitespace makes it awkward to pass multi-line lambdas inline. `do`…`end` switches between block mode and inline mode. `end` always closes the nearest unclosed `do`.
-
-```
-apiFetch(do fn(result) =
-    if result > 0:
-        print("Success! {result}")
-    else:
-        print("Failure! {result}")
-end)
-```
-
-`do` must be followed by a block keyword and a `:` or `=`. Nesting works freely.
-
-```
-(do if x:
-    expr
-else:
-    expr
-end)
-```
-
-### Inlining with `then`
-
-Any block that has a *subject* can be inlined using `then` instead of `:`.
-
-```
-if x then "True" else "False"
-
-if x:           -- Block form.
-    "True"
-else:
-    "False"
-```
-
----
-
 ## 3. Operators
 
 ### Design Philosophy
 
-Symbols are grouped by meaning: `*`/`/` for math, `?` for options, `!` for results, `#` for arrays, `&` for tuples, `^` for pointers. Repeating an operator gives a more technical variant: `+` addition vs `++` concatenation, `*` multiplication vs `**` exponentiation, `/` division vs `//` floor division.
-
-Bitwise operators use `/\`, `\/`, and `><` rather than `&`, `|`, and `^` because those symbols have other meanings in Mu. Word aliases (`band`, `bor`, `xor`) are always available. Linters may enforce one form or the other.
-
 ### Symbol-Only Operators
-
-| Operator | Meaning | Precedence |
-|:---------|:--------|:----------:|
-| `lhs . rhs` | Member access | 11 |
-| `lhs # rhs` | Array index | 10 |
-| `lhs ?` | Unwrap option, propagate `None` to nearest `opt` | 10 |
-| `lhs !` | Unwrap result, propagate exception to nearest `try` | 10 |
-| `lhs ^` | Dereference typed pointer | 10 |
-| `~ rhs` | Inferred type conversion | 10 |
-| `++ rhs` | Spread array into array | 0 |
-| `& rhs` | Spread tuple into tuple (same type) | 0 |
-| `~& rhs` | Spread tuple into tuple (new product type) | 0 |
-| `lhs .. rhs` | Exclusive range | 4 |
-| `lhs ..= rhs` | Inclusive range | 4 |
-| `lhs \|> rhs` | Pipeline | 1 |
-| `lhs => rhs` | Pipeline assignment | 1 |
-| `lhs = rhs` | Assignment or declaration | 0 |
-| `lhs := rhs` | Explicit inferred-type declaration | 0 |
-| `lhs: T = rhs` | Explicit typed declaration | 0 |
-
-### Dual-Form Operators (Symbol + Word)
-
-| Symbol | Word | Meaning | Precedence |
-|:-------|:-----|:--------|:----------:|
-| `lhs + rhs` | `lhs add rhs` | Addition | 6 |
-| `lhs - rhs` | `lhs sub rhs` | Subtraction | 6 |
-| `+ rhs` | `pos rhs` | Unary positive | 9 |
-| `- rhs` | `neg rhs` | Sign flip | 9 |
-| `lhs * rhs` | `lhs mul rhs` | Multiplication | 7 |
-| `lhs / rhs` | `lhs div rhs` | Exact division (float) | 7 |
-| `lhs // rhs` | `lhs fdiv rhs` | Floor division (int) | 7 |
-| `lhs % rhs` | `lhs mod rhs` | Modulo (sign matches `lhs`) | 7 |
-| `lhs %% rhs` | `lhs rem rhs` | Floor modulo (sign matches `rhs`) | 7 |
-| `lhs ** rhs` | `lhs pow rhs` | Exponentiation (right-associative) | 8 |
-| `lhs == rhs` | `lhs eq rhs` | Equality | 3 |
-| `lhs != rhs` | `lhs neq rhs` | Inequality | 3 |
-| `lhs > rhs` | `lhs gt rhs` | Greater than | 3 |
-| `lhs < rhs` | `lhs lt rhs` | Less than | 3 |
-| `lhs >= rhs` | `lhs gte rhs` | Greater than or equal | 3 |
-| `lhs <= rhs` | `lhs lte rhs` | Less than or equal | 3 |
-| `lhs /\ rhs` | `lhs band rhs` | Bitwise AND | 5 |
-| `lhs \/ rhs` | `lhs bor rhs` | Bitwise OR | 5 |
-| `lhs >< rhs` | `lhs xor rhs` | Bitwise XOR | 5 |
-| `lhs << rhs` | `lhs shl rhs` | Shift left | 7 |
-| `lhs >> rhs` | `lhs shr rhs` | Shift right | 7 |
-| `lhs >>> rhs` | `lhs ushr rhs` | Unsigned shift right | 7 |
-| `lhs ++ rhs` | `lhs concat rhs` | Concatenation | 6 |
-| `lhs \|\| rhs` | `lhs orelse rhs` | None-coalescing | 1 |
-| — | `lhs and rhs` | Logical AND | 2 |
-| — | `lhs or rhs` | Logical OR | 1 |
-| — | `not rhs` | Logical NOT (or bitwise NOT for numbers) | 9 |
 
 ### Order of Operations
 
@@ -3883,110 +3934,6 @@ Bitwise operators use `/\`, `\/`, and `><` rather than `&`, `|`, and `^` because
 | 11 | Member access (highest) |
 
 ### Assignment Variants
-
-Symbol operators gain assignment forms with `=` and pipeline-assignment forms with `=>`. Keyword operators (`band`, `bor`, etc.) do not — use the expanded form instead.
-
-```
-x += 1          -- x = x + 1
-x /\= 0xFF      -- x = x /\ 0xFF
-expr +=> x      -- pipeline: x = x + expr
-
--- Keyword operators: always write expanded form.
-x = x band 0xFF
-x = x bor 0xFF
-```
-
-### Prefix / Function Form
-
-Operators may be called as functions. Prefix unary operators apply element-wise to a tuple. Binary operators chain across all arguments. Comparison operators return a tuple of bools one shorter than the input.
-
-```
-not(a, b, c)             -- (not a, not b, not c)
-add(a, b, c)             -- a add b add c
-lt(a, b, c, d)           -- (a lt b, b lt c, c lt d)
-and lt(a, b, c, d)       -- (a lt b) and (b lt c) and (c lt d)
-```
-
-### Pipelining (`|>`)
-
-`|>` at the start of a line passes the previous line's value as `$` into the next expression.
-
-```
-fetchA()
-|> fetchB($)
-|> fetchC($)
-|> print("{$}")
-```
-
-`$` is the *contextual reference*. It may also appear multiple times on one line, and multiple semicolon-separated expressions share the same `$`.
-
-```
-|> fetchA()
-|> print("{$}"); fetchB($)   -- print result, then fetchB
-|> fetchC($)
-```
-
-A **pipeline block** begins with `|>:` and gives every expression inside it the same `$`.
-
-```
-fetchA() |> fetchB($) |>:
-    print("{$}")
-    fetchC($)
-```
-
-To store a pipeline result, use `=>` or its shorthand `|=>`.
-
-```
-fetchA()
-|> fetchB($)
-|> fetchC($) => result      -- store result mid-pipeline
-
-fetchA()
-|> fetchB($)
-|> fetchC($)
-|=> finalResult             -- shorthand for |> $ =>
-```
-
-### Operation Chaining (`op[]`)
-
-Any infix operator `op` may be written as `lhs op[rhs]`, at the same precedence as member access. This is primarily useful for array indexing and inline pipelining.
-
-```
-array#[0]#[1]                        -- ( (array # 0) # 1 )
-fn1() |>[fn2($)] |>[fn3($)]          -- fn3(fn2(fn1()))
-```
-
-Lines starting with `op[]` continue the previous expression, allowing operator chaining across lines.
-
-```
-bigString = "This"
-    ++[" string"]
-    ++[" is"]
-    ++[" split"]
-    ++[" across lines."]
-```
-
-If the brackets contain more than one value or named values, the result is a **tuple** rather than an operation.
-
-```
-x = (13, 5) |>[ $0 // $1, $0 %% $1 ]   -- (2, 3)
-```
-
-### Custom Operators
-
-Custom operators are declared with a meta binding (`::`) and the `op` keyword. They must be declared before use so the lexer can recognize them.
-
-```
-xor :: op(a: int, b: int): int = a >< b
-between :: op(a: int, lo: int, hi: int): bool = a >= lo and a <= hi
-```
-
-Precedence and associativity are specified in `[]`.
-
-```
-xor :: op[5](a: int, b: int): int = a >< b
-concat :: op[6, right](a: str, b: str): str = a ++ b
-```
 
 ---
 
