@@ -777,7 +777,7 @@ setInt(=> n)    -- Declare a new variable `n` that gets set by `setInt`.
 print("{n}")    -- Prints "3"
 ```
 
-Parameters can be made optional by adding `opt` to their type. This distinguishes them from `T?` which means a required parameter that's an option type. The parameter must be unwrapped before it can be used.
+Parameters can be made optional with the `opt` modifier. This distinguishes them from `T?` which means a required parameter that's an option type. The parameter must be unwrapped before it can be used.
 
 ```
 addOptional(a: opt int, b: opt int): int =
@@ -790,15 +790,20 @@ print("{addOptional(1)}")     -- Prints "1"
 print("{addOptional(1, 1)}")  -- Prints "2"
 ```
 
-Use `||` to also make a parameter optional. This will give it a default value if it's not used.
+Use `=` to to give an optional parameter a default value. This will make it a type `T` if it's used. 
 
 ```
-addOptional(a: int || 0, b: int || 0): int = a + b
+addOptional(opt a = 0, opt b = 0): int = a + b
 
 print("{addOptional()}")      -- Prints "0"
 print("{addOptional(1)}")     -- Prints "1"
 print("{addOptional(1, 1)}")  -- Prints "2"
 ```
+
+- `x: opt T` — `T?`
+- `opt x` — `T? *inferred*
+- `x: opt T = default` — `T`
+- `opt x = default` — `T` *inferred*
 
 Use `++` to collect all variables into a single variable. The variable should be type `T#` (an array).
 
@@ -1750,7 +1755,7 @@ match choice is
 If a pattern can't be **guarenteed** for any reason, then you must have a **fallback.** There are two options available:
 
 - __Optional binding:__ `Pattern(opt x)` — wraps `x` in type `T?`, `Some(x)` if it matched, `None` if it didn't
-- __Default value:__ `Pattern(x || default)` — `x` is type `T`, if it didn't match `x` is set to `default`
+- __Default value:__ `Pattern(opt x = default)` — `x` is type `T`, if it didn't match `x` is set to `default`
 
 #### Pattern Guards
 
@@ -1784,24 +1789,24 @@ result = value is Pattern(x) then x
 -- With fallback (non-exhaustive):
 result = value is Pattern(opt x) then x
 result = value is Pattern(opt x) then x || "fallback"    -- Wrap in Some(x), then coalesce
-result = value is Pattern(x || "fallback") then x     -- Automatic fallback
+result = value is Pattern(opt x = "fallback") then x     -- Automatic fallback
 ```
 
 ```
 -- Multiple bindings:
-result = value is Pattern(x || 0, y || 0) then (x, y)
+result = value is Pattern(opt x = 0, opt y = 0) then (x, y)
 ```
 
 ```
 -- Arbitrary expression over bindings:
-result = value is Pattern(x || 0, y || 0) then x + y
+result = value is Pattern(opt x = 0, opt y = 0) then x + y
 ```
 
 Pairs naturally with pipelining.
 
 ```
 getValue()
-|> $ is Pattern(x || "fallback") then x
+|> $ is Pattern(opt x = "fallback") then x
 |> doSomethingWith($)
 ```
 
