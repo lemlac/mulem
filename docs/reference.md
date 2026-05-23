@@ -70,7 +70,7 @@ Statements are separated by newlines or semicolons (`;`). The two are interchang
 
 A program is a sequence of expressions. Blocks are created with `:` after a construct, followed by indented content. The last expression in a block is its value.
 
-```mu
+```
 if condition:
     do_something()
     result
@@ -3133,7 +3133,7 @@ x = (13, 5) |>[ $0 // $1, $0 %% $1 ]   -- (2, 3)
 
 ## Variables and Declarations
 
-```mu
+```
 x = 42                  -- inferred
 y: Int = 42             -- explicit type
 z := 42                 -- always inferred declaration
@@ -3147,7 +3147,7 @@ z := 42                 -- always inferred declaration
 
 ### Conditionals
 
-```mu
+```
 if condition:
     ...
 else if other:
@@ -3157,7 +3157,7 @@ else:
 ```
 
 Inline form:
-```mu
+```
 if condition then expr else expr
 ```
 
@@ -3170,7 +3170,7 @@ if condition then expr else expr
 
 ### Pattern Matching
 
-```mu
+```
 match value is
 | Pattern1(x): ...
 | Pattern2(y || default): ...
@@ -3178,7 +3178,7 @@ match value is
 ```
 
 **Proposed `is ... then` sugar** (from our discussion):
-```mu
+```
 result = value is Ok(x || default) then x
 ```
 
@@ -3186,7 +3186,7 @@ result = value is Ok(x || default) then x
 
 ## Functions
 
-```mu
+```
 add(a, b) = a + b
 
 -- With block
@@ -3196,7 +3196,7 @@ process(data):
 ```
 
 Lambdas:
-```mu
+```
 fn(x) = x * 2
 do fn(x): ... end
 ```
@@ -3299,7 +3299,7 @@ A block is introduced by `:` (or `=` for definitions) followed by a newline and 
 ### 3.3 Inline-Block Mode (`do` / `end`)
 To switch from block mode to inline mode (and vice versa):
 
-```mu
+```
 do <construct>:
     ...
 end
@@ -3328,7 +3328,7 @@ Assignment variants (`+=`, `=>`, etc.) and prefix word forms are supported for a
 
 ## 5. Variables and Bindings
 
-```mu
+```
 x = 42                    -- inferred
 y: Int = 42               -- explicit type
 z := 42                   -- forced inference
@@ -3340,7 +3340,7 @@ mut counter = 0           -- mutable
 ## 6. Control Flow
 
 ### 6.1 Conditionals
-```mu
+```
 if condition:
     ...
 else if condition2:
@@ -3350,7 +3350,7 @@ else:
 ```
 
 Inline form:
-```mu
+```
 if condition then expr else expr
 ```
 
@@ -3361,7 +3361,7 @@ if condition then expr else expr
 - `loop:` (infinite)
 
 ### 6.3 Pattern Matching
-```mu
+```
 match expr is
 | Pattern1(x): expr
 | Pattern2(y || default): expr
@@ -3369,7 +3369,7 @@ match expr is
 ```
 
 **Proposed extraction sugar** (non-normative extension):
-```mu
+```
 value is Some(x || default) then x
 ```
 
@@ -3377,7 +3377,7 @@ value is Some(x || default) then x
 
 ## 7. Functions and Procedures
 
-```mu
+```
 add(a: Int, b: Int) = a + b
 
 process(data):
@@ -3386,7 +3386,7 @@ process(data):
 ```
 
 Lambda expressions:
-```mu
+```
 fn(x) = x * 2
 do fn(x): ... end
 ```
