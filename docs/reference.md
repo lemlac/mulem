@@ -669,10 +669,10 @@ setInt(x)
 print("{x}")    -- Prints "3"
 ```
 
-This works for mutable variables, but what if you wanted to make an immutable variable using `out`? You can't pipe the return value with `=>` because it's in the paraemter, not the return of the function. `setInt() => n` would be an error. Not only use the `out` parameter not set, but it's not returning anything either. For this, we have a special rule: when `=>` is prefixed in a parameter, it has the same effect as using `=>` on the return value of a function. This way we can pipeline the `out` parameter of a function. *(See [Pipelining(#Pipelining-).)*
+This works for mutable variables, but what if you wanted to make an immutable variable using `out`? We can declare that a variable is being set **in** a function with the keyword `in`. This makes it clear that we are intentionally declaring a new variable and not passing and existing. It gives a clear connections: from `out` to `in`. 
 
 ```
-setInt(=> n)    -- Declare a new variable `n` that gets set by `setInt`.
+setInt(in n)    -- Declare a new variable `n` that gets set by `setInt`.
 print("{n}")    -- Prints "3"
 ```
 
@@ -2593,6 +2593,8 @@ This is a work in progress though. How these decorators are implemented and thei
 1. `and`
 2. `as`
 3. `await`
+4. `band`
+5. `bor`
 4. `break`
 5. `continue`
 6. `defer`
@@ -2628,6 +2630,7 @@ This is a work in progress though. How these decorators are implemented and thei
 36. `try`
 37. `until`
 38. `where`
+39. `xor`
 39. `yield`
 
 *NOTE: Built-in types, values, functions, and decorators like `int`, `True`, `Some`, `default`, `print`, `@memory` etc. are not considered keywords.*
