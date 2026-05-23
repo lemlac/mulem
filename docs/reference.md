@@ -17,7 +17,7 @@ Key design goals:
 ## Core Design Philosophy
 
 - **Expression-oriented**: Almost everything is an expression and returns a value.
-- **Significant whitespace** with smart inline support via `do`/`end`.
+- **Significant whitespace** with smart inline support via `{|`/`|}`.
 - **Modern error & option handling**: `?` and `!` propagation, `||` coalescing.
 - **Flexible**: Multi-paradigm (functional, procedural, low-level).
 
@@ -139,7 +139,7 @@ apiFetch({| fn(result) =
 |})
 ```
 
-`do` must be followed by a block keyword and a `:` or `=`. Nesting works freely.
+`{|` must be followed by a block keyword and a `:` or `=`. Nesting works freely.
 
 ```
 ({| if x:
@@ -876,14 +876,14 @@ This highlights the flexibility of the language. It doesn't need a dedicated key
 
 #### Lambda Functions
 
-Define a function within an expression with the keyword `fn` in the pattern `fn(x) = x`. This is useful for passing functions to other functions. If the lambda function has multiple lines, it must be wrapped in `do`…`end`.
+Define a function within an expression with the keyword `fn` in the pattern `fn(x) = x`. This is useful for passing functions to other functions. If the lambda function has multiple lines, it must be wrapped in `{|`…`|}`.
 
 ```
 fn(<arg>) = <expr>
 
-do fn(<arg>) =
+{| fn(<arg>) =
     <body>
-end
+|}
 ```
 
 ```
@@ -2649,7 +2649,7 @@ This is a work in progress though. How these decorators are implemented and thei
 ## Design Philosophy
 
 - **Readability first** — significant whitespace and opinionated formatting.
-- **Patterns scale with complexity** — simple things like declaring a mutable variable (`mu`), making a function (`fn`), or wrapping a block (`do`+`end`) use short patterns, more complex things use bigger patterns.
+- **Patterns scale with complexity** — simple things like declaring a mutable variable (`mu`), making a function (`fn`), or wrapping a block (`{|`+`|}`) use short patterns, more complex things use bigger patterns.
 - **Performance on demand** — start with GC; change to a lower-level memory model where necessary.
 - **Explicit but ergonomic** — `!` for errors, attributes for memory models, same keywords used between inline and block expressions.
 - **Trace and auditability** — `import`, `inherit`, and `capture` require variables to be listed out to know where they're coming from; no glob-like imports.
@@ -2665,39 +2665,38 @@ This is a work in progress though. How these decorators are implemented and thei
 4. `break`
 5. `continue`
 6. `defer`
-7. `do`
-8. `else`
-9. `end`
-10. `enum`
-11. `except`
-12. `fallthrough`
-13. `fn`
-14. `if`
-15. `impl`
-16. `import`
-17. `in`
-18. `inherit`
-19. `is`
-20. `loop`
-21. `match`
-22. `mod`
-23. `mu`
-24. `never`
-25. `not`
-26. `opt`
-27. `or`
-28. `out`
-29. `proto`
-30. `raise`
-31. `ref`
-32. `return`
-33. `self`
-34. `struct`
-35. `then`
-36. `try`
-37. `until`
-38. `where`
-39. `yield`
+7. `else`
+8. `end`
+9. `enum`
+10. `except`
+11. `fallthrough`
+12. `fn`
+13. `if`
+14. `impl`
+15. `import`
+16. `in`
+17. `inherit`
+18. `is`
+19. `loop`
+20. `match`
+21. `mod`
+22. `mu`
+23. `never`
+24. `not`
+25. `opt`
+26. `or`
+27. `out`
+28. `proto`
+29. `raise`
+30. `ref`
+31. `return`
+32. `self`
+33. `struct`
+34. `then`
+35. `try`
+36. `until`
+37. `where`
+38. `yield`
 
 *NOTE: Built-in types, values, functions, and decorators like `int`, `True`, `Some`, `default`, `print`, `@memory` etc. are not considered keywords.*
 
