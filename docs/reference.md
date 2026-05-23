@@ -174,7 +174,7 @@ Symbols are grouped by meaning: `*`/`/` for math, `?` for options, `!` for resul
 
 | Level | Category                  | Operators                |
 |:------|:--------------------------|:-------------------------|
-| 11    | Member access             | `.` `[]`                 |
+| 11    | Member access/Function    | `.` `[]` `()`            |
 | 10    | Postfix                   | `? ! ^`                  |
 | 9     | Unary                     | `+ - not ~`              |
 | 8     | Exponent                  | `**` (right-associative) |
@@ -190,7 +190,7 @@ Symbols are grouped by meaning: `*`/`/` for math, `?` for options, `!` for resul
 | Operator       | Meaning                                             | Precedence |
 |:---------------|:----------------------------------------------------|:----------:|
 | `lhs . rhs`    | Member access                                       |     11     |
-| `lhs [ rhs ]`  | Array/dictionary index                              |     10     |
+| `lhs [ rhs ]`  | Array/dictionary index                              |     11     |
 | `lhs ?`        | Unwrap option, propagate `None` to nearest `opt`    |     10     |
 | `lhs !`        | Unwrap result, propagate exception to nearest `try` |     10     |
 | `lhs ^`        | Dereference typed pointer                           |     10     |
@@ -252,9 +252,21 @@ add(a, b, c)             -- a add b add c
 and(<)(a, b, c, d)       -- (a < b) and (b < c) and (c < d)
 ```
 
+### Function Calls
+
+Function can be called in 3 ways:
+
+```
+function(a, b, c)   -- positional
+function{a, b, c}   -- named, turns into {a: a, b: b, c: c}
+function x          -- spread tuple into function
+```
+
+`function x` is short for `function(&x)`, where `&` is the tuple spread operator.
+
 ### Pipelining `|>`
 
-When placed at the start of a line in a block, the pipelining operator `|>` takes on a special meaning. It takes the value of the previous line and inserts it into the next line as `$`. This symbol is known as the **contextual reference.** This symbol has several uses in Mulang, but for now just know that it represents the value of the previous line before `|>`. This makes it easy to chain functions one after another in sequence.
+When placed at the start of a line in a block, the pipelining operator `|>` takes on a special meaning: it takes the value of the previous line and makes it available in the next line as `$`. This symbol is known as the **contextual reference.** It has several uses in Mulang, but in the context of pipelines it simply represents the result of the previous line. This makes it easy to chain a sequence of calls and read them in order.
 
 ```
 print("{
@@ -270,113 +282,112 @@ print("{
 
 ```
 fetchA()
-|> fetchB($)
-|> fetchC($)
+|> fetchB $
+|> fetchC $
 |> print("{$}")
 ```
 
-This makes it easier to see what gets called in what order. It reads like a list written in plain English:
+This makes the order of operations easy to follow at a glance. It reads like a plain-English list:
 
 - `fetchA`
 - *then* `fetchB`
 - *then* `fetchC`
 - *then* `print`
 
-The first line of a block can also start with `|>`, it's context `$` is an empty tuple `()`. Even if a line starts with `|>`, it does not have to have `$` in it. Some functions also require a certain variables in the contextual reference to be defined. *(See [Function Declarations](#Function Declarations).)*
+The first line of a block may also start with `|>`, in which case its context `$` is an empty tuple `()`. A line starting with `|>` is not required to use `$`. Some functions also require certain variables to be defined in the contextual reference. *(See [Function Declarations](#Function-Declarations).)*
 
-Multiple expressions seperated by semi-colons `;` on one line will also use the same context `$`. The last expression will be passed to the next pipe.
+Multiple expressions separated by semicolons `;` on one line share the same context `$`. The last expression on the line is passed as the context to the next pipe.
 
 ```
 |> fetchA()                   -- Run fetchA,
-|> print("{$}"); fetchB($)    -- Print result, then fetchB
-|> print("{$}"); fetchC($)    -- Print result, then fetchC
-|> print("{$}")               -- Print result,
+|> print("{$}"); fetchB $     -- Print result, then fetchB
+|> print("{$}"); fetchC $     -- Print result, then fetchC
+|> print("{$}")               -- Print result.
 ```
 
-A **pipeline block** is started by the symbol `|>:`. It can be at the end of a line or on its own line. `$` becomes the inputed value for the duration of the block.
+A **pipeline block** is started with `|>:`, either at the end of a line or on its own line. Within the block, `$` holds the piped-in value for the duration of that block.
 
 ```
 |> fetchA()         -- Set up things.
-|> fetchB($)        -- …
-|> fetchC($)        -- …
-|>:                 -- Set up done.
-    print("{$}")    -- Now print the result.
+|> fetchB $         -- …
+|> fetchC $         -- …
+|>:                 -- Context is now ready.
+    print("{$}")    -- Use it here.
 
-fetchA() |> fetchB($) |> fetchC($) |>:  -- Or in one line.
-    print("{$}")                        -- Then print the result.
+fetchA() |> fetchB $ |> fetchC $ |>:  -- Or in one line.
+    print("{$}")                        -- Then use the result.
 
-               -- Freely mix the two formats:
-fetchA() |>:       -- Start with this context.
-    print("{$}")   -- Use the same `$` for these two lines.
-    fetchB($)      -- Same context `$`
-    |> print("{$}"); fetchC($) |>:     -- Start another context, inline it.
-        print("{$}")   -- Print the final results.
+-- Freely mix the two formats:
+fetchA() |>:           -- Start with this context.
+    print("{$}")       -- Use the same `$` for these two lines.
+    fetchB $           -- Same context `$`.
+    |> print("{$}"); fetchC $ |>:   -- Start a new context inline.
+        print("{$}")                 -- Print the final result.
 ```
 
-To set a variable in the middle of a pipeline expression, use `=>` or its variants after an expression. The order of assignment is reversed — varible name goes on the right.
+To capture a value in the middle of a pipeline, use `=>` after an expression. The assignment is written in reverse order — the variable name goes on the right.
 
 ```
 |> fetchA()
-|> fetchB($)
-|> fetchC($) => x   -- Do these things and put them into `x`
+|> fetchB $
+|> fetchC $  => x   -- Capture the result into `x`.
 
 print("{x}")        -- Print the result.
-``` 
+```
 
-This lets you freely extract the result of any expression in the middle of a pipeline by adding `=> name` at the end of a line.
+This lets you extract the result of any step in a pipeline simply by appending `=> name` to that line.
 
 ```
--- Get all the results
-|> fetchA()  => a
-|> fetchB($) => b
-|> fetchC($) => c
+-- Capture all results.
+|> fetchA() => a
+|> fetchB $ => b
+|> fetchC $ => c
 
--- Print each result.
 print("a = {a}, b = {b}, c = {c}")
 ```
 
-The type must be inferred. This is to avoid ambiguities with `:`. You can change the mutability with the keyword `mu`. *(See [Mutability](#Mutability).)*
+The variable type is always inferred, to avoid ambiguity with `:`. Mutability can be specified with `mu`. *(See [Mutability](#Mutability).)*
 
 ```
-|> fetchA() => mu x |> fetchB(x) |>:  -- Create mutable variable `x`.
-    x += 1                            -- Mutate `x`.
-    print("{x}")                      -- Print `x`.
+|> fetchA() => mu x |> fetchB(x) |>:  -- Create a mutable variable `x`.
+    x += 1                            -- Mutate it.
+    print("{x}")                      -- Print it.
 ```
 
-Get the final result of a pipeline expression put putting `|> $ =>` at the end. This gets the last context and puts it into a variable.
+To capture the final result of a pipeline into a variable, use `|> $ =>` at the end.
 
 ```
 fetchA()         -- Start.
-|> fetchB($)     -- Pass context.
-|> fetchC($)     -- Pass context.
-|> $ => result   -- Put context into result.
+|> fetchB $      -- Pass context.
+|> fetchC $      -- Pass context.
+|> $ => result   -- Capture the final context into `result`.
 
 print("{result}")
 ```
 
-The shorthand for `|> $ =>` is `| =>`, a pipe `|` followed by a pipeline assigment operator such as `=>`. The two symbols can be spaced apart or combined like `|=>`.
+The shorthand for `|> $ =>` is `|=>` — a pipe `|` followed by a pipeline assignment operator. The two symbols may be written with or without a space between them.
 
 ```
-fetchA()         -- Start.
-|> fetchB($)     -- Pass context.
-|> fetchC($)     -- Pass context.
-|=> result       -- Put context into result.
+fetchA()
+|> fetchB($)
+|> fetchC($)
+|=> result       -- Shorthand for `|> $ => result`.
 
 print("{result}")
 ```
 
-Another useful thing that `|>:` can do is set up an object and then pass it to an immutable variabe.
+`|>:` can also be used to configure an object before assigning it to an immutable variable.
 
 ```
 user = User.create() |>:
-    $.name = "John Smith"  -- Change properities of context.
-    $.dob = "1970-01-01"
-    $                      -- Pass context back.
+    $.name = "John Smith"  -- Set properties on the context.
+    $.dob  = "1970-01-01"
+    $                      -- Return the context.
 
-print("User: {user.name}, born: {user.dob}")   -- Prints "User: John Smith, born: 1970-01-01"
+print("User: {user.name}, born: {user.dob}")  -- Prints "User: John Smith, born: 1970-01-01"
 ```
 
-This gives you a lot of flexability on how you want to express your code.
+This gives you a great deal of flexibility in how you choose to express your code.
 
 ### Contextual Reference (`$`)
 
