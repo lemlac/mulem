@@ -1628,7 +1628,7 @@ loop (x, y, z) in listOfTuples:
 Pattern matching works. All patterns must have fallbacks. *(See [Pattern Fallback](#pattern-fallbacks).)*
 
 ```
-loop Pattern(x?) in listOfPatterns:
+loop Pattern(opt x) in listOfPatterns:
     if x is Some(x):
         print("Found match: {x}")
 ```
