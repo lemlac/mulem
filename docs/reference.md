@@ -106,8 +106,8 @@ A block wraps multiple expressions into one. A `:` or `=` followed by a newline 
 
 ```
 do:
-    <expr>
-    <expr>    -- This is the block's value.
+    expr
+    expr    -- This is the block's value.
 ```
 
 Use a literal `...` (3 periods) to leave a block empty.
@@ -139,17 +139,19 @@ apiFetch(<fn(result) =   -- Switch to block mode.
 <end)   -- End block mode, switch back to the expression.
 ```
 
-`<` must be followed by a block keyword and a `:` or `=`. Nesting works freely.
+`<` must be followed by a block keyword and a `:` or `=`. Nesting works freely. Only the first keyword of the block needs it. This makes it visually clear to connect `<` and `<` together. 
 
 ```
 <if x:
     block:
         ...
-<else:
+else:
     block:
         ...
 <end
 ```
+
+Syntax highlighting could help by highlighting any keyword prefixed with `<`, making it clear where the inline block starts and ends.
 
 ### Inlining with `then`
 
@@ -383,7 +385,7 @@ print("{result}")
 ```
 user = User.create() |>:
     $.name = "John Smith"  -- Set properties on the context.
-    $.dob  = "1970-01-01"
+    $.dob = "1970-01-01"
     $                      -- Return the context.
 
 print("User: {user.name}, born: {user.dob}")  -- Prints "User: John Smith, born: 1970-01-01"
@@ -410,6 +412,27 @@ Variables prefixed with `$` come from the contextual reference. This lets you us
 
 (0, x: 1) |> print("{$0 + $x}")  -- Or in-lined.
 ```
+
+Going back to the example in the previous section, we can make it even more concise like this:
+
+```
+user = User.create() |> {
+    &$,    -- Append properties of context to this object.
+    name: "John Smith",   -- Modify select properties below it.
+    dob: "1970-01-01",
+}
+```
+
+`&$` means to spread the context object in this tuple. This makes an object with new properties set below it. Because this is such a common action, we can abriviate with `&{}`. 
+
+```
+user = User.create() |> &{  -- Means to append to the pipes context.
+    name: "John Smith",
+    dob: "1970-01-01",
+}
+```
+
+A top level `&` will spread based on the current context. This makes it easier to pipe data and only change what you need. 
 
 ## Basic Bindings
 
