@@ -174,8 +174,8 @@ Symbols are grouped by meaning: `*`/`/` for math, `?` for options, `!` for resul
 
 | Level | Category                  | Operators                |
 |:------|:--------------------------|:-------------------------|
-| 11    | Member access             | `.`                      |
-| 10    | Postfix                   | `? ! ^ #`                |
+| 11    | Member access             | `.` `[]`                 |
+| 10    | Postfix                   | `? ! ^`                  |
 | 9     | Unary                     | `+ - not ~`              |
 | 8     | Exponent                  | `**` (right-associative) |
 | 7     | Multiplicative / Shift    | `* / // % %% << >> >>>`  |
@@ -190,7 +190,7 @@ Symbols are grouped by meaning: `*`/`/` for math, `?` for options, `!` for resul
 | Operator       | Meaning                                             | Precedence |
 |:---------------|:----------------------------------------------------|:----------:|
 | `lhs . rhs`    | Member access                                       |     11     |
-| `lhs # rhs`    | Array index                                         |     10     |
+| `lhs [ rhs ]`  | Array/dictionary index                              |     10     |
 | `lhs ?`        | Unwrap option, propagate `None` to nearest `opt`    |     10     |
 | `lhs !`        | Unwrap result, propagate exception to nearest `try` |     10     |
 | `lhs ^`        | Dereference typed pointer                           |     10     |
@@ -386,148 +386,6 @@ Variables prefixed with `$` come from the contextual reference. This lets you us
 
 (0, x: 1) |> print("{$0 + $x}")  -- Or in-lined.
 ```
-
-This pairs with the next concept of Mulang: *operation chaining.*
-
-### Operation chaining `[]`
-
-**Infix operator** are operators who have both an `lhs` and `rhs`. For any non-void infix operator `op`, you can write it like `lhs op[rhs]` (an operator + an array literal). This is shorthand for writing `((lhs) op (rhs))` and has the same precedence like accessing with `.` or wrapping parentheses around the expression. This is primarily used for arrays, but has many potential use cases which can be explored.
-
-Operation chaining has the same precedence has member accessing `.`. This allows you to treat any operator like a member access. The most useful use cases for this are for array indexing `#` and pipelining `|>`.
-
-```
-array#[0]#[1]                  -- → ( ( array # 0 ) # 1 )
-fn1() |> [fn2($)] |> [fn3($)]  -- → ( ( fn1() |> fn2($) ) |> fn3($) ) → fn3( fn2( fn1() ) )
-```
-
-Like with method chaining, operation chaining also allows expression splitting. Lines that start with an operator + square brackets `[]` continue the expression from the previous line.
-
-```
-bigString = "This"
-    ++[" string"]
-    ++[" is"]
-    ++[" split"]
-    ++[" into"]
-    ++[" seperate"]
-    ++[" lines."]
-
-print(bigString)   -- Prints "This string is split into seperate lines."
-```
-
-Pipelining can be particularly useful when combined with operation chaining. For example, you could reuse a repeated part of an expression or call another function in the middle of method-chaining.
-
-```
--- Repeated value:
-onePlusTwoCubed = (1+2) |> [ $ * $ * $ ]   -- Same as `( (1+2) * (1+2) * (1+2) )`
-print("{onePlusTwoCubed}")                 -- Prints "27"
-
--- Method chaining:
-object.method1() |> [ fn1($) ].method2() |> [ fn2($) ]   -- `|> []` has the same order of operations as `.`
--- Becomes…
-fn2( fn1( object.method1() ).method2() )
-```
-
-Although arrays and tuples are treated differently, their syntaxes are analogous to each other—one uses square brackets `[array]` and the other uses parentheses `(tuple)` or curly braces `{tuple}`. We can use this to our advantage to give operation chaining another feature: **tuple expressions**. If the array literal after an operation has more than one indexes (e.g. `[expr, expr]`) or one or more named indexes (e.g. `[name: expr]`), then it will return a **tuple.** *For more information on tuples, see [Tuples](#Tuples).*
-
-```
-x = (13, 5) |>[ $0 // $1, $0 %% $1 ]  -- Get 12 divmod 5 → (2, 3)
-print("12/5 = {x.0} and {x.1}/5")     -- Prints "12/5 = 2 and 3/5"
-
--- Apply `x ==` to each value, returns a tuple of bools.
--- Prefix `or` takes a tuple of bools and returns `True` if any member is `True`.
-if or x ==[0, 2, 5]:
-    print("x is 0 or 2 or 5")
-
--- That's the same as…
-if x == 0 or x == 2 or x == 5:
-    print("x is 0 or 2 or 5")
-```
-
-You can create an named tuple instead of a position tuple too. Members can have names by adding the name and a colon `:` in front of each index. It must be a valid variable name. If you define a member with `name:`, you can access it in the next expression with `$name`. 
-
-Combined with `&`, you can use this to set the values of an object. `lhs &[ rhs ]` is equvialent to spreading each side into a new tuple `( &lhs, &rhs )`. The resulting type is `lhs`, and `rhs` must be compatible, i.e. member names found in `lhs`. 
-
-```
-user = User.create()
-    &[name: "John Doe"]
-    &[dob: "1970-01-01"]
-
--- Or all in one go…
-
-user = User.create()&[
-    name: "John Doe",
-    dob: "1970-01-01",
-]
-```
-
-If you want to create a new type, you can use `~&[]` instead. `lhs ~&[ rhs ]` is equivalent to saying `(&lhs, &rhs)` — in other words: *create a new tuple and spread the members of each side in order.* The type is `typeof[lhs] & typeof[rhs]`, the **product type** of both sides.
-
-```
-tuple = ()    -- Create empty tuple.
-    ~&[a: 1]  -- Set ().a to 1.
-    ~&[b: 2]  -- Set (a: 1).b to 2.
-    ~&[c: 3]  -- Set (a: 1, b: 2).c to 3.
-              -- `tuple` is (a: 1, b: 2, c: 3).
-```
-
-The assignment variant of `&[]` is `&=` and `&=>`. This takes the members of the inputed value and assigns the same members to the outputed variable. Use `{}` or `()` to create a tuple of named members.
-
-```
-user &= {
-    name: "John Doe",
-    dob: "1970-01-01",
-}
-
--- Alternative format:
-(name: "John Doe", dob: "1970-01-01") &=> user
-
--- Is the same as…
-user.name = "John Doe"
-dob.dob = "1970-01-01"
-
--- Append a new member to a tuple.
-tuple ~&= (d: 4)
-
--- `tuple` is (a: 1, b: 2, c: 3, d: 4)
-```
-
-Another use for variables in operation chaining is to create temporary variables and then collect them into a result.
-
-```
--- Split `1` into 4 variables and collect.
-y = 1 |> [
-    a: $,
-    b: $ + 1,
-    c: $ + 2,
-    d: $ + 3,
-] |> [ $a * $b * $c + $d ]
-```
-
-`y` simplifies like this:
-
-1. `x` *pipe to* `[ a: $, b: $ + 1, c: $ + 2, d: $ + 3 ]` *pipe to* `[ $a * $b * $c + $d ]`
-2. `( a: x, b: x + 1, c: x + 2, d: x + 3 )` *pipe to* `[ $a * $b * $c + $d ]`
-3. `( x * (x + 1) * (x + 2) + (x + 3) )`
-4. `x` *is* `1` *so…*
-5. `( 1 * (1 + 1) * (1 + 2) + (1 + 3) )`
-6. `( 1 * 2 * 3 + 4 )`
-7. `( 10 )`
-
-Tuples are transparent by default, and a tuple with only one position component and no named components is equal to just its positional component. *For an explanation why, see [Tuples](#Tuples).* Semantically, this makes sese. If you have a parenthetical expressions, you essentially have a tuple of one. Some languages make a distinction between tuples and parenthetical expressions with syntax like `(10,)`, but this is not necessary in Mulang. 
-
-- `(10) == (10).0`
-- `(10).0 == 10`
-- _Therefore:_ `(10) == 10`
-
-**Mu the programming language is a novel and experimental one.** It has no obligation to follow normal conventions. Most other languages use `[]` by itself for indexing an array. While this is still possible in Mulang, operation chaining gives the coder a lot more options and ability to write expressive code. This is a break from the traditional style of programming, but it opens the door for more pragmatic and ergonomic code. This makes it instantly clear that when you see `#`, it's an array, just like `?` for options and `!` for results, staying consistent with itself rather than with other languages.
-
-The transition from array indexing with `[]` in other languages to array indexing with `#[]` in Mulang is simple: add `#` before each square bracket. In most cases, the square brackets aren't even needed, making the `#` pattern more compacted than the `[]` one.
-
-- `array[0][1]` → `array#[0]#[1]` → `array#0#1`
-
-This frees `name[]` to take on a new meaning in Mulang. *For more on that, see [Meta Functions](#Meta-Functions).*
-
-Mulang has a fallback for programmers who are used to arrays being written like `array[0][1]`. *For more information on array indexes, see [Arrays](#Arrays).*
 
 ## Basic Bindings
 
@@ -1342,29 +1200,16 @@ This builds on the visible symmetry between type notation and their value expres
 | **Pointers** | `T^`  | `x^`  |
 | **Arrays**   | `T#N` | `x#n` |
 
-Other languages use `[]` for indexing, but that has another meaning in Mulang. Instead, you can use operation chaining to do the same thing like `[]` in other languages. *(See [Operation Chaining](#Operation-Chaining).)*
-
 ```
-item = doubleArray#[1]#[0]  -- The 2nd row, 1st column
-print("{item}")             -- Prints "3"
+item = doubleArray[1][0]  -- The 2nd row, 1st column
+print("{item}")           -- Prints "3"
 ```
 
-Habits can be hard to break. Many programmers have internalized the `array[i]` format to always mean "array index i". To help with that, Mu allows the familiar `array[i]` format to be the same as `array#[i]`, but special care is taken into consideration to make sure it doesn't clash with [meta functions](#Meta-Functions). This rules out any tokens that looks like `name[]` or `name[x, y]` since array indexes normally only take one argument in other languages.
+Special care is taken into consideration to make sure ther `[]` operator doesn't clash with [meta functions](#Meta-Functions). This rules out any tokens that looks like `name[]` or `name[x, y]` since array indexes normally only take one argument in other languages.
 
 - `name[x]` — could be array indexing, check the type to resolve
 - `name[]` — always a meta function
 - `name[x, y]` — always a meta function
-
-The fallback exists precisely for the one case where a programmer migrating from another language would instinctively write `array[i]`. If Mulang thinks something might be an old-fashioned array index access like that, it will check the context to determine what the type of that variable is to resolve it. If it's an array in this context, it will automatically treat it the same as `array#[i]` without any fuss. Tooling can be made to warn users and make it easier to transisition from `array[i]` to `array#[i]` / `array#i`. This lets Mulang have the familiar syntax while also having the power and potential that comes with other features like *operation chaining* and *meta functions.*
-
-You may want to do an operation with an array literal on the right hand side of an operation. In that case, you can either surround the array literal in parentheses `()` store it in a variable first.
-
-```
-print("{ [1, 2, 3, 4] ==  [1, 2, 3, 4]  }")  -- Prints "(False, False, False, False)" because of operation chaining.
-print("{ [1, 2, 3, 4] == ([1, 2, 3, 4]) }")  -- Prints "True" because the two arrays are equal.
-a = [1, 2, 3, 4]                             -- Store array into variable.
-print("{ [1, 2, 3, 4] == a }")               -- Prints "True"
-```
 
 If the left hand side of `++` isn't an array, it will automatically create one. A non-array on the right-hand side will push it to the end of the resulting array. In this way, you can abandon square brackets notation for array literals entirely and just use `++`.
 
@@ -1417,7 +1262,7 @@ dict: float#float = [
     [1.5]: 15.0,
     [2.0]: 20.0,
 ]
-print("{ dict#[1.5] }")   -- Prints "15.0"
+print("{ dict[1.5] }")   -- Prints "15.0"
 ```
 
 If the key type is `str` and a key is a valid variable name, then the square brackets before `:` can be omitted. You can access it like a member with `.`.
@@ -1429,7 +1274,7 @@ dict: int#str = [
     c: 3,
     ["invalid name"]: 127,
 ]
-print("{ dict#["b"] }")   -- Prints "2"
+print("{ dict["b"] }")   -- Prints "2"
 print("{ dict.b }")       -- Prints "2"
 ```
 
