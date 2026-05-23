@@ -119,6 +119,8 @@ do:
 
 ### Inline Blocks (`< … end`)
 
+Think of `<` as *"open inline block."* It's a bit unusual, but once you know what it means it's visually distinctive.
+
 To switch from block mode to inline mode (and vice versa):
 
 ```
@@ -225,9 +227,9 @@ Symbols are grouped by meaning: `*`/`/` for math, `?` for options, `!` for resul
 | `lhs < rhs`    | Less than                                           |      3     |
 | `lhs >= rhs`   | Greater than or equal                               |      3     |
 | `lhs <= rhs`   | Less than or equal                                  |      3     |
-| `lhs /\ rhs`   | Bitwise AND                                         |      5     |
-| `lhs \/ rhs`   | Bitwise OR                                          |      5     |
-| `lhs >< rhs`   | Bitwise XOR                                         |      5     |
+| `lhs band rhs`   | Bitwise AND                                         |      5     |
+| `lhs bor rhs`   | Bitwise OR                                          |      5     |
+| `lhs xor rhs`   | Bitwise XOR                                         |      5     |
 | `lhs << rhs`   | Shift left                                          |      7     |
 | `lhs >> rhs`   | Shift right                                         |      7     |
 | `lhs >>> rhs`  | Unsigned shift right                                |      7     |
@@ -241,19 +243,7 @@ Symbol operators gain assignment forms with `=` and pipeline-assignment forms wi
 
 ```
 x += 1          -- x = x + 1
-x /\= 0xFF      -- x = x /\ 0xFF
 expr +=> x      -- pipeline: x = x + expr
-```
-
-### Prefix / Function Form
-
-Operators may be called as functions. Prefix unary operators apply element-wise to a tuple. Binary operators chain across all arguments. Comparison operators return a tuple of bools one shorter than the input.
-
-```
-not(a, b, c)             -- (not a, not b, not c)
-add(a, b, c)             -- a add b add c
-(<)(a, b, c, d)          -- (a < b, b < c, c < d)
-and(<)(a, b, c, d)       -- (a < b) and (b < c) and (c < d)
 ```
 
 ### Function Calls
@@ -907,9 +897,18 @@ addContext() =
     $b: int
     $a + $b
 
-$a = 1
-$b = 2
-result = addContext()   -- Uses $a and $b from context.
+do:                         -- Issolate parameters to this scope
+    $a = 1
+    $b = 2
+    result = addContext()   -- Uses $a and $b from context.
+    print("{result}")       -- Prints "3"
+    $a = 3                  -- Change a parameter.
+    result = addContext()   -- Uses new $a
+    print("{result}")       -- Prints "5"
+
+-- Exit scope.
+
+-- result = addContext() -- Error: $a and $b aren't defined.
 ```
 
 Optional contextual parameters use `opt T`. This will wrap it in an option type `T?`.
