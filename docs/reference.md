@@ -365,6 +365,17 @@ fetchA()         -- Start.
 print("{result}")
 ```
 
+Another useful thing that `|>:` can do is set up an object and then pass it to an immutable variabe.
+
+```
+user = User.create() |>:
+    $.name = "John Smith"  -- Change properities of context.
+    $.dob = "1970-01-01"
+    $                      -- Pass context back.
+
+print("User: {user.name}, born: {user.dob}")   -- Prints "User: John Smith, born: 1970-01-01"
+```
+
 This gives you a lot of flexability on how you want to express your code.
 
 ### Contextual Reference (`$`)
