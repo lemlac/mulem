@@ -347,10 +347,10 @@ The variable type is always inferred, to avoid ambiguity with `:`. Mutability ca
     print("{x}")                      -- Print it.
 ```
 
-To capture the final result of a pipeline into a variable, use `|> $ =>` at the end.
+To capture the final result of any pipeline into a variable, use `|> $ =>` at the end. This makes it easy to mix and match the pipes in between with `|> $ => result` collecting it all into a variable. 
 
 ```
-fetchA()         -- Start.
+|> fetchA()      -- Start.
 |> fetchB $      -- Pass context.
 |> fetchC $      -- Pass context.
 |> $ => result   -- Capture the final context into `result`.
@@ -358,18 +358,7 @@ fetchA()         -- Start.
 print("{result}")
 ```
 
-The shorthand for `|> $ =>` is `|=>` — a pipe `|` followed by a pipeline assignment operator. The two symbols may be written with or without a space between them.
-
-```
-fetchA()
-|> fetchB($)
-|> fetchC($)
-|=> result       -- Shorthand for `|> $ => result`.
-
-print("{result}")
-```
-
-`|>:` can also be used to configure an object before assigning it to an immutable variable.
+A use case for `|>:` is to configure an object before assigning it to an immutable variable.
 
 ```
 user = User.create() |>:
@@ -408,13 +397,13 @@ Going back to the example in the previous section, we can make it even more conc
 
 ```
 user = User.create() |> {
-    &$,    -- Append properties of context to this object.
+    &$,                   -- Append current pipeline context to this object.
     name: "John Smith",   -- Modify select properties below it.
     dob: "1970-01-01",
 }
 ```
 
-`&$` means to spread the context object in this tuple. This makes an object with new properties set below it. Because this is such a common action, we can abriviate with `&{}`. 
+`&$` means to spread the pipeline result in this tuple. This makes an object with new properties set below it. Because this is such a common action, we can abriviate with `&{}`. 
 
 ```
 user = User.create() |> &{  -- Means to append to the pipes context.
@@ -423,7 +412,7 @@ user = User.create() |> &{  -- Means to append to the pipes context.
 }
 ```
 
-A top level `&` will spread based on the current context. This makes it easier to pipe data and only change what you need. 
+A top level `&` will spread based on the current pipeline context `$`. This makes it easier to pipe data and only change what you need. 
 
 ## Basic Bindings
 
@@ -2107,27 +2096,23 @@ We say that a void function returns nothing. Well, that's what an empty tuple is
 
 ### Constants
 
-Pair `::` and `=` together to create a constant. This can be combined together as `::=` to mean the same thing. This distinguishes them from aliases and makes it clear that there's a value on the right hand side. A constant holds an unchangeable value that must be known at compile time. Set the type as `const T` where `T` is the type of the value.
+Constants are declared with type `const T`. The `const` makes it clear that we're defining a constant value and not an alias or another type of meta binding. After the type is an equals sign `=` and it's value. The type can be inferred with `:: =` or `::=`. 
 
 ```
 PI :: const float = 3.14159
-E  ::= 2.71828   -- Inferred
+E  ::= 2.71828                -- Inferred
 ```
 
-You can also bind a function to a constant. To do so, but the parameter before the `=` like you would with basic functions. When calling it, it would be the same as defining it inline and then calling that function. This can be useful if you need to pass a function multiple times but don't want it to be outputted when compiled.
+You can also bind a function to a constant with `const fn`. Define it like you would with basic functions. The `const fn` can is opitional for shorthand form, just `:: (param) =` is needed. This can be useful if you need to pass a function multiple times but don't want it to be outputted when compiled.
 
 ```
-IDENTITY :: (x) = x
-addOne :: (x) = x + 1
+IDENTITY :: const fn(x) = x     -- Full definition.
+addOne :: (x) = x + 1           -- Shorthand.
 value = addOne(2)               -- Means (fn(x) = x + 1)(2), result is 3.
 array = map([1, 2, 3, 4], addOne)
 ```
 
-### Definition Blocks
-
-Some keywords after `::` start a **definition block.** They can only be used in `::` definitions. These are special blocks used for abstract data like types and static members. 
-
-#### Structural Types (`struct`)
+### Structural Types (`struct`)
 
 Structs are product types—or in other words—plain data containers. They cannot extend other structs, but can inherit members of other structs. *(See [Inheritance and Visibility](#Inheritance-and-Visibility).)*
 
@@ -2172,7 +2157,7 @@ print("a: {o.a}, b: {o.b}")
 
 *(See [Decorators](#Decorators) for more informations on available decorators.)*
 
-#### Enumerable Types (`enum`)
+### Enumerable Types (`enum`)
 
 Enums are sum types. They define a closed set of variants. Variants may carry data turning them into a tagged union. Like with `struct`, place an `=` after `enum` before starting the block. 
 
@@ -2209,7 +2194,7 @@ match a is
     print("third!")
 ```
 
-#### Exception Types (`except`)
+### Exception Types (`except`)
 
 Exceptions are like enums but used for error handling. See "Error Handling" for more details. Instantiation works the same as enums.
 
@@ -2244,7 +2229,7 @@ except DBZ(x):
     print("Can't divide {x} by zero!")
 ```
 
-#### Prototypes (`proto`)
+### Prototypes (`proto`)
 
 A `proto` is an abstract interface — a named contract with no data. It is equivalent to a `virtual class` (C++), `trait` (Rust), or `interface` (Java, TypeScript, etc.) in other languages. Each member is a function, also called a **method**. Methods that have a parameter named `self` at the beginning will be called like methods on the instance of that type, i.e. `self.method(…)`. This is equivalent to saying `typeof[self].method(self, …)`.
 
@@ -2253,7 +2238,7 @@ MyPrototype :: proto =
     speak(self): str
 ```
 
-#### Implementing (`impl`)
+### Implementing (`impl`)
 
 Methods and trait implementations are added separately with `impl`. Much like `proto`, `self` in the first parameter of a method refers to the current instance. You can also add static values that are attached to the type itself. Use `.` to access static values and methods like with structs.
 
