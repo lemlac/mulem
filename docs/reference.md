@@ -232,7 +232,22 @@ end)            -- `end` finishes the inline-block expression.
 
 ## Operators
 
-The philosophy of Mulang is that symbols should be easy to recognize and understand. Good symbols can also help make code easier to both write and read at times. Many are semantically grouped based on their contextual usage, for example `*` and `/` relate to math, `?` relates to options, `&` relates to tuples, etc.. There's also a common pattern where repeating an operator gives you a more technical or complex version of that operator, for example: `+` addition vs `++` concatenation, `*` multiplication vs `**` exponentiation, `/` division vs `//` floor division, and `%` standard modulo vs `%%` floor division modulo.
+The philosophy of Mulang is that symbols should be easy to recognize and understand and that generally keywords are preferable over symbols. Good symbols can also help make code easier to both write and read at times. Some of the usual conventions in programming have been broken, but that's what 
+
+__Order of Operations:__
+
+0. Assignment / Spread (Lowest)
+1. Logical OR / Pipelining
+2. Logical AND
+3. Comparisons/Membership
+4. Range/Interval Operators
+5. Bitwise Logic
+6. Additive / Vector Operators
+7. Multiplicative/Bit Shift Operators
+8. Exponentiation *(right-associative: `2**3**2` is `2**(3**2)`)*
+9. Unary Operators
+10. Primary / Postfix Operators
+11. Member Accessing/Inline-Binding (Highest)
 
 These operators are tied with the language and so only have a symbol form.
 
@@ -246,6 +261,7 @@ These operators are tied with the language and so only have a symbol form.
 | `& rhs`        | spread a tuple into another tuple, same type as the surrounding tuple | 0 |
 | `~& rhs`       | spread a tuple into another tuple, making a new product type | 0 |
 | `lhs ?`        | returns the `Some` value if it's not `None`, otherwise propagate to the nearest `opt` keyword *(see [`opt` block](#opt))* | 10 |
+| `lhs \|\| rhs` | `None`-coalescing; if `lhs` is `Some(x)` then `x` else `rhs` | 1 |
 | `lhs !`        | returns the result value if it's not an exception, otherwise propagate to the nearest `try` keyword *(see [`try` block](#try--except))*        | 10 |
 | `lhs ^`        | dereferences a typed pointer | 10 |
 | `lhs \|> rhs`  | pipelining, disregards `lhs` and returns `rhs` | 1 |
@@ -257,8 +273,27 @@ These operators are tied with the language and so only have a symbol form.
 
 Some operations have two forms: symbol and word. Symbol have assignment varients, and words have prefix variants. This will be explained below.
 
-| Symbol Form    | Word Form        | Meaning | Order |
-|:---------------|:-----------------|:--|:--|
+| Symbol Form    | Meaning | Order |
+|:---------------|:--|:--|
+| __(Arithmetic)__ | — | — |
+| `lhs + rhs`    | addition | 6 |
+| `lhs - rhs`    | subtraction | 6 |
+| `+ rhs`        | keeps the sign the same; *so does nothing* | 9 |
+| `- rhs`        | sign-flip | 9 |
+| `lhs * rhs`    | multiplication | 7 |
+| `lhs / rhs`    | exact division; *returns a floating-point number* | 7 |
+| `lhs % rhs`    | modulo (sign matches `lhs`) | 7 |
+| __(Comparison)__ | —              | — | — |
+| `lhs == rhs`   | equality | 3 |
+| `lhs != rhs`   | inequality | 3 |
+| `lhs > rhs`    | greater than | 3 |
+| `lhs < rhs`    | less than | 3 |
+| `lhs >= rhs`   | greater than or equals to | 3 |
+| `lhs <= rhs`   | less than or equals to | 3 |
+| __(Other)__    | — | — |
+| `lhs ++ rhs`   | concatenation, returns a new array | 6 |
+
+
 | __(Arithmetic)__ | —              | — | — |
 | `lhs + rhs`    | `lhs add rhs`    | addition | 6 |
 | `lhs - rhs`    | `lhs sub rhs`    | subtraction | 6 |
@@ -282,30 +317,14 @@ Some operations have two forms: symbol and word. Symbol have assignment varients
 | *N/A*          | `lhs or rhs`     | true if any are true | 1 |
 | *N/A*          | `not rhs`        | inverts a boolean or bitwise-`NOT` when `rhs` is a number | 9 |
 | __(Bitwise)__  | —                | — | — |
-| `lhs /\ rhs`   | `lhs band rhs`   | bitwise-`AND` *(resembles a wedge ∧ , the symbol for logical AND; also resembles a capital A)* | 5 |
-| `lhs \/ rhs`   | `lhs bor rhs`    | bitwise-`OR` *(resembles a vee ∨ , the symbol for logical OR; also invert of `/\`)* | 5 |
-| `lhs >< rhs`   | `lhs xor rhs`    | bitwise-`XOR` *(resembles an X for XOR)* | 5 |
-| `lhs << rhs`   | `lhs shl rhs`    | bitshift-left | 7 |
-| `lhs >> rhs`   | `lhs shr rhs`    | bitshift-right | 7 |
-| `lhs >>> rhs`  | `lhs ushr rhs`   | bitshift-right (unsigned) | 7 |
+| *N/A*          | `lhs band rhs`   | bitwise-`AND` | 5 |
+| *N/A*          | `lhs bor rhs`    | bitwise-`OR` | 5 |
+| *N/A*          | `lhs xor rhs`    | bitwise-`XOR` | 5 |
+| *N/A*          | `lhs shl rhs`    | bitshift-left | 7 |
+| *N/A*          | `lhs shr rhs`    | bitshift-right | 7 |
+| *N/A*          | `lhs ushr rhs`   | bitshift-right (unsigned) | 7 |
 | __(Other)__    | —                | — | — |
 | `lhs ++ rhs`   | `lhs concat rhs` | concatenation, returns a new array | 6 |
-| `lhs \|\| rhs` | `lhs orelse rhs` | `None`/`None`-coalescing; if `lhs` is `Some(x)` then `x` else `rhs` | 1 |
-
-__Order of Operations:__
-
-0. Assignment / Spread (Lowest)
-1. Logical OR / Pipelining
-2. Logical AND
-3. Comparisons/Membership
-4. Range/Interval Operators
-5. Bitwise Logic
-6. Additive / Vector Operators
-7. Multiplicative/Bit Shift Operators
-8. Exponentiation *(right-associative: `2**3**2` is `2**(3**2)`)*
-9. Unary Operators
-10. Primary / Postfix Operators
-11. Member Accessing/Inline-Binding (Highest)
 
 Some operators have assignment alternatives by adding an equals sign `=` after it and the pipeline version by adding `=>` after it. These are reserved for the operators that **are not keywords**. This sets a variable based on its previous value. The left-hand side must be an already defined variable. If it's immutable, then this shadows it. If it's mutable, then the value is mutated. *(See [Mutability(#Mutability-mu).)* Regular assignements `=` are void *(i.e. they return nothing)*, and pipeline assignments return the value passed to them.
 
@@ -2741,6 +2760,101 @@ MyEnum :: impl[MyPrototype] =
         | Third{val}:
             "I am a MyEnum of Third \{ val={val} }"
 ```
+
+### Operators (`op`)
+
+__(WIP)__
+
+Mu is a flexable language. The language itself can be modified to suit the needs of the programmer. Even new operators can be defined or redefined to suit anyone's needs. One of the issues with defining custom operators is that they need to be defined before they're used. Functions are always in the form `f(x)`—the parentheses make it clear: this is a function. But if you have a sequence of words like `not a and b or c`, you would need to know ahead of time to figure out what `not` means and what `and` is, are they variables or keywords? And what order does it? If you can't tell why parsing the script, it just becomes a random sequence of words. We need a away to instruct the compiler during compilation what these words mean.
+
+The keyword `op` makes it easy to find any operator. Operators aren't like normal functions because they need to know where to go and in what order.
+
+- __Prefix:__ `op rhs`
+- __Infix:__ `lhs op rhs`
+- __Postfix:__ `lhs op`
+
+Prefix/postfix operators map easily to functions. It's just a single input and a single output. The 
+
+
+
+```
+add    / (+)  [T] :: op[  6 ](lhs:        T, rhs:    T): T    = ...
+sub    / (-)  [T] :: op[  6 ](lhs:        T, rhs:    T): T    = ...
+pos    / (+)  [T] :: op[  9 ](            _, rhs:    T): T    = ...
+neg    / (-)  [T] :: op[  9 ](            _, rhs:    T): T    = ...
+mul    / (*)  [T] :: op[  7 ](lhs:        T, rhs:    T): T    = ...
+div    / (/)  [T] :: op[  7 ](lhs:        T, rhs:    T): T    = ...
+fdiv   / (//) [T] :: op[  7 ](lhs:        T, rhs:    T): T    = ...
+mod    / (%)  [T] :: op[  7 ](lhs:        T, rhs:    T): T    = ...
+rem    / (%%) [T] :: op[  7 ](lhs:        T, rhs:    T): T    = ...
+pow    / (**) [T] :: op[ -8 ](lhs:        T, rhs:    T): T    = ...
+eq     / (==) [T] :: op[  3 ](lhs:        T, rhs:    T): bool = ...
+neq    / (!=) [T] :: op[  3 ](lhs:        T, rhs:    T): bool = ...
+gt     / (>)  [T] :: op[  3 ](lhs:        T, rhs:    T): bool = ...
+lt     / (<)  [T] :: op[  3 ](lhs:        T, rhs:    T): bool = ...
+gte    / (>=) [T] :: op[  3 ](lhs:        T, rhs:    T): bool = ...
+lte    / (<=) [T] :: op[  3 ](lhs:        T, rhs:    T): bool = ...
+and               :: op[  2 ](lhs:     bool, rhs: bool): bool = if lhs then (if rhs then True else False) else False
+or                :: op[  1 ](lhs:     bool, rhs: bool): bool = if lhs then True else (if rhs then True else False)
+not           [T] :: op[  9 ](            _, rhs:    T): T    = ...
+not        [bool] :: op[  9 ](            _, rhs: bool): bool = if rhs then False else True
+band          [T] :: op[  5 ](lhs:        T, rhs:    T): T    = ...
+bor           [T] :: op[  5 ](lhs:        T, rhs:    T): T    = ...
+xor           [T] :: op[  5 ](lhs:        T, rhs:    T): T    = ...
+shl   / (<<)  [T] :: op[  7 ](lhs:        T, rhs:    T): T    = ...
+shr   / (>>)  [T] :: op[  7 ](lhs:        T, rhs:    T): T    = ...
+ushr  / (>>>) [T] :: op[  7 ](lhs:        T, rhs:    T): T    = ...
+rem   / (%%)  [T] :: op[  7 ](lhs:        T, rhs:    T): T    = ...
+concat / (++) [T] :: op[  6 ](lhs:        T, rhs:    T): T    = ...
+spread / (++) [T] :: op[ 10 ](lhs: ref mu T, rhs:    T): void = ...
+exrange / (..) [T] :: op[ 4 ](lhs:        T, rhs: T): iter[T] = ...
+inrange / (..=) [T] :: op[ 4 ](lhs:       T, rhs: T): iter[T] = ...
+
+index / (#) [T, N: uint] :: op [ 10 ](lhs: T#N, rhs: uint): T = ...
+get   / (#) [T, U: type] :: op [ 10 ](lhs: T#U, rhs:    U): T = ...
+coalsc / (||) [T, U] :: op[ 1 ](lhs:   T[U], rhs:    U): U    = ... 
+(.) :: op ...
+(&) :: op ...
+(~&) :: op ...
+(?) :: op ...
+(!) :: op ...
+(^) :: op ...
+(|>) :: op ...
+(=>) :: op ...
+(~) :: op ...
+```
+
+- __OpType1:__ *Prefix* `lhs/rhs: T, ret: T`
+    - `+ rhs`
+    - `- rhs`
+    - `not rhs`
+- __OpType2:__ *Prefix* `lhs/rhs: T, ret: U`
+    - `deref rhs`
+- __OpType3:__ *Postfix* `lhs/rhs: T, ret: T`
+- __OpType4:__ *Postfix* `lhs/rhs: T, ret: V`
+- __OpType5:__ *Infix* `lhs: T`, `rhs: T`, `ret: T`
+- __OpType6:__ *Infix* `lhs: T`, `rhs: T`, `ret: bool`
+- __OpType7:__ *Infix* `lhs: T`, `rhs: W`, `ret: X`
+- __OpType8:__ *Infix* `lhs: T`, `rhs: key`, `ret: Y`
+
+__Order of Operations:__
+
+0. Assignment / Spread (Lowest)
+1. Logical OR / Pipelining
+2. Logical AND
+3. Comparisons/Membership
+4. Range/Interval Operators
+5. Bitwise Logic
+6. Additive / Vector Operators
+7. Multiplicative/Bit Shift Operators
+8. Exponentiation *(right-associative: `2**3**2` is `2**(3**2)`)*
+9. Unary Operators
+10. Primary / Postfix Operators
+11. Member Accessing/Inline-Binding (Highest)
+
+add :: op[6](op
+
+__(WIP)__
 
 ### Inheritance and Visibility
 
