@@ -117,18 +117,18 @@ do:
     ...
 ```
 
-### Inline Blocks (`< … <end`)
+### Inline Blocks (`< … end`)
 
 To switch from block mode to inline mode (and vice versa):
 
 ```
 <do:
     body
-<end
+end
 ```
 
-`<` prefix begins an inline block; `<end` terminates the nearest open `<`.
-Significant whitespace makes it awkward to pass multi-line lambdas inline. `<`…`<end` switches between block mode and inline mode. `<end` always closes the nearest unclosed `<`.
+`<` prefix begins an inline block; `end` terminates the nearest open `<`.
+Significant whitespace makes it awkward to pass multi-line lambdas inline. `<`…`end` switches between block mode and inline mode. `end` always closes the nearest unclosed `<`.
 
 ```
 apiFetch(<fn(result) =   -- Switch to block mode.
@@ -136,10 +136,10 @@ apiFetch(<fn(result) =   -- Switch to block mode.
         print("Success! {result}")
     else:                -- No prefix for inside blocks.
         print("Failure! {result}")
-<end)   -- End block mode, switch back to the expression.
+end)   -- End block mode, switch back to the expression.
 ```
 
-`<` must be followed by a block keyword and a `:` or `=`. Nesting works freely. Only the first keyword of the block needs it. This makes it visually clear to connect `<` and `<` together. 
+`<` must be followed by a block keyword and then a `:` or `=` at the end of the line. Nesting works freely. Only the first keyword of the block needs it. This makes it visually clear to connect `<` and `end` together. 
 
 ```
 <if x:
@@ -148,10 +148,10 @@ apiFetch(<fn(result) =   -- Switch to block mode.
 else:
     block:
         ...
-<end
+end
 ```
 
-Syntax highlighting could help by highlighting any keyword prefixed with `<`, making it clear where the inline block starts and ends.
+Syntax highlighting could help by highlighting any keyword prefixed with `<` and its connecting `end`, making it clear where the inline block starts and ends.
 
 ### Inlining with `then`
 
@@ -786,14 +786,17 @@ This highlights the flexibility of the language. It doesn't need a dedicated key
 
 #### Lambda Functions
 
-Define a function within an expression with the keyword `fn` in the pattern `fn(x) = x`. This is useful for passing functions to other functions. If the lambda function has multiple lines, it must be wrapped in `do`…`end`.
+Define a function within an expression with the keyword `fn` in the pattern `fn(x) = x`. This is useful for passing functions to other functions. If the lambda function has multiple lines, it must be wrapped in `<fn`…`end`.
 
 ```
 fn(arg) = ...
 
+fn(arg) =
+    ...
+
 <fn(arg) =
     ...
-<end
+end
 ```
 
 ```
@@ -805,7 +808,7 @@ array2 = map(array0, <fn(x) =       -- Multi-line
         x - 1
     else:
         x + 2
-<end)
+end)
 ```
 
 A name is optional. Adding a name creates an immutable reference of the function itself.
@@ -816,7 +819,7 @@ doThing(<fn callback(val) =
         callback(val - 1)
     else:
         print("done")
-<end)
+end)
 ```
 
 The same keyword for creating functions is also used for function type notation. If this seems confusing, just remember where the context is: if it's being used like a type, it means a *function pointer type*; if it's being used like a value, it's a *lambda function*.
@@ -851,7 +854,7 @@ mu count = 0
 forEach([1, 2, 3, 4], <fn(x) =
     @capture(count)
     count += x
-<end)
+end)
 ```
 
 #### Named Parameters
@@ -1304,11 +1307,11 @@ Dictionaries are a subtype of arrays. Instead of numbers, each item is given a *
 
 ```
 dict: float#float = [
-    [1.0]: 10.0,
-    [1.5]: 15.0,
-    [2.0]: 20.0,
+    [1.0f]: 10.0f,
+    [1.5f]: 15.0f,
+    [2.0f]: 20.0f,
 ]
-print("{ dict#1.5 }")   -- Prints "15.0"
+print("{ dict#1.5f }")   -- Prints "15.0"
 ```
 
 If the key type is `str` and a key is a valid variable name, then the square brackets before `:` can be omitted. You can access it like a member with `.` but with `#`. This makes it easier to distinguish compile-time access `.` and run-time access `#`. 
@@ -1401,27 +1404,30 @@ The presence of `:` signifies if a keyword is in block mode or inline mode. `the
 
 #### `end`
 
-Wraps a block inside an expression. Switches from inline mode to block mode.
+Terminates the previous inline block. Wraps a block inside an expression. Switches from block mode back to inline mode. The value of the block is the value in the expression at the point of `end`.
 
 ```
 <do:
     body
-<end
+end
 ```
 
 The most common use case for this is for callback functions. *(See [Lambda Functions](#Lambda-Functions).)*
 
 ```
-apiFetch(<fn(result) =
+apiFetch(<fn(result) =  -- Start a function.
     print("{result}")
-<end)
+end) -- Pass that function to apiFetch.
 ```
 
 #### `do`
 
 ```
+do:
+    ...
+
 do.label:
-    body
+    ...
 ```
 
 Creates a new scope. Its value is the last expression evaluated.
@@ -1433,21 +1439,21 @@ x =
         y + 1       -- block's value is 2
 ```
 
-Give it a label to enable `break`.
+Any starting block can be given a label. Use this to call `break` on a specific block.
 
 ```
-do.outer:
-    break.outer
+do.block:
+    break.block
 ```
 
 #### `if` / `else`
 
 ```
-if <cond> then <expr> else <expr>
-if <cod>:
-    <body>
+if cond then expr else expr
+if cond:
+    ...
 else:
-    <body>
+    ...
 ```
 
 Basic Boolean branching.
@@ -1535,9 +1541,9 @@ Both accept an optional label to target an outer loop.
 loop.outer x in 0..100:
     loop.inner y in 0..100:
         if x * y >= 100:
-            break inner
+            break.inner
         if x * y == 77:
-            break outer
+            break.outer
 ```
 
 ### Pattern Matching
@@ -1597,9 +1603,9 @@ The inline form keeps `:` after patterns. This makes it easier to read and take 
 ```
 tuple = (a: 1, b: 2)
 dict = [x: 3, y: 4]
-restult = match x is | Ptrn1: 5 | Ptrn2: 6 | _: 7
+restult = match x is Ptrn1: 5 | Ptrn2: 6 | _: 7
 --
-message = match e is | OpenError{filename}: "Open error: {filename}" | _: "Unknown error"
+message = match e is OpenError{filename}: "Open error: {filename}" | _: "Unknown error"
 ```
 
 You can have multiple patterns match to one case. If any of the patterns destructure with a variable, the same variable name and type must be in all patterns. If not, use a wildcard `_` in each pattern or omit the tuples part entirely to disable destructuring. Otherwise, use a fallback in the pattern.
@@ -1705,7 +1711,7 @@ getValue()
 expr => ptrn
 expr => ptrn else expr
 expr => ptrn else:
-    body
+    ...
 ```
 
 The same thing as `is` but sets a variable in scope. This can be done with any pipeline assignment operator `=>`. 
@@ -1713,14 +1719,13 @@ The same thing as `is` but sets a variable in scope. This can be done with any p
 ```
 getStuff() => Pattern(opt x)
 
-if x is Some(x):  -- unwrap x
-    print("{x}")
+print("{x?}")  -- unwrap x
 ```
 
 ```
 getStuff() => Pattern(x) else raise Error("No match")  -- branch out when match fails
 
-print("{x}")      -- x is guaranteed here
+print("{x}")   -- x is guaranteed here
 ```
 
 #### `if` + `is`
@@ -2457,7 +2462,7 @@ Mulang is multi-paradigm: different functions, structs, or modules can use diffe
 Modules define how memory is handled with the `@memory` decorator. *(See [Decorators](#Decorators) for more information on available decorators.)* By default, modules use a garbage collector. Some options include `Collect(GC)` (default),  `Count(ARC)` (reference counting), and `Manual`. `GC` and `ARC` represent the standard garbage collector and reference counter respectively, but others can be defined and used instead.
 
 ```
-import std.mem{memory, Count, ARC, _}
+import std.mem{memory, Count, ARC}
 
 @memory(Count(ARC))
 mod moduleThatUsesReferenceCounting
@@ -2472,14 +2477,14 @@ How this is implemented is outside of the scope of this document. That will be s
 There have been a few examples of decorators in this document like `@opaque` and `@memory`. These are compile-time functions that communicate to the compiler directly and can alter the behavior of things. The API for defining your own decorators is not set in stone yet. More information on them will be available in the future. The syntax for adding decorators goes like this:
 
 ```
-@<dec>
-@<dec>(<arg>)
-<expr>
+@dec
+@dec(arg)
+expr
 ```
 
 ```
-@<dec> <expr>
-@<dec>(<arg>) <expr>
+@dec expr
+@dec(arg) expr
 ```
 
 Decorators can be stacked and will run in reverse order. *Closest decorator to the expression runs, then the next one above that, then the next one, etc.*
