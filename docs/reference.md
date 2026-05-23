@@ -3206,3 +3206,457 @@ This is a work in progress though. How these decorators are implemented and thei
 ---
 
 *This document captures the current state of the Mulang design. The language is still evolving.*
+
+---
+
+---
+
+---
+
+---
+
+# Mu (Mulang) Language Reference
+
+**Version 0.1 (Draft)**
+
+**Mu** (also called **Mulang**) is a general-purpose, multi-paradigm programming language that combines **significant whitespace** with powerful escape hatches for inline code. It is heavily **expression-oriented**, gives low-level control when needed, and emphasizes clarity, ergonomics, and explicitness.
+
+Mu targets developers who want Python-like readability, Rust-like control and safety features, and F#-style expressive pipelines — especially for domains like robotics, systems programming, AI, and games.
+
+It aims to support both interpretation and compilation (including to shared libraries).
+
+---
+
+## Core Design Philosophy
+
+- **Expression-oriented**: Almost everything is an expression and returns a value.
+- **Significant whitespace** with smart inline support via `do`/`end`.
+- **Thoughtful operators**: Clean symbols with word equivalents.
+- **Modern error & option handling**: `?` and `!` propagation, `||` coalescing.
+- **Flexible**: Multi-paradigm (functional, procedural, low-level).
+
+---
+
+## Lexical Conventions
+
+- **Indentation**: Significant (4 spaces recommended).
+- **Line endings**: Newlines (`\n`, `\r`, or `\r\n`) or semicolons `;` separate expressions.
+- **Comments**:
+  - Single-line: `-- comment`
+  - Block: `(-- ... --)` (nesting allowed)
+- **Strings**:
+  - `"double quotes"` with `{interpolation}`
+  - `'''raw strings'''`
+  - `"""multi-line strings"""`
+
+---
+
+## Basic Syntax
+
+### Expressions and Blocks
+
+A program is a sequence of expressions. Blocks are created with `:` after a construct, followed by indented content. The last expression in a block is its value.
+
+```mu
+if condition:
+    do_something()
+    result
+```
+
+**Inline vs Block Mode**
+
+Mu uses `do` / `end` to switch between block mode (significant whitespace) and inline mode.
+
+```mu
+apiFetch(do fn(result):
+    if result > 0:
+        print("Success!")
+    else:
+        print("Failure!")
+end)
+```
+
+### Expression Splitting
+
+You can split expressions across lines in these cases:
+- Inside brackets: `()`, `[]`, `{}`
+- Lines starting with `.` (method chaining)
+- Lines starting with `|>` (pipelines)
+- Multi-line strings
+
+---
+
+## Operators
+
+Mu has a clean, consistent operator set with both symbolic and word forms.
+
+### Precedence (Highest to Lowest)
+
+| Level | Category                  | Operators |
+|-------|---------------------------|---------|
+| 11    | Member access             | `.` |
+| 10    | Postfix                   | `? ! ^ #` |
+| 9     | Unary                     | `+ - not ~` |
+| 8     | Exponent                  | `**` |
+| 7     | Multiplicative / Shift    | `* / // % %% << >> >>>` |
+| 6     | Additive / Concat         | `+ - ++` |
+| 5     | Bitwise                   | `/\ \/ ><` |
+| 4     | Range                     | `.. ..=` |
+| 3     | Comparison                | `== != < > <= >=` |
+| 2     | Logical AND               | `and` |
+| 1     | Logical OR / Pipeline     | `or \|> \|>=>` |
+| 0     | Assignment / Spread       | `= := += => & ~&` |
+
+### Key Operators
+
+**Arithmetic & Bitwise**
+- `+ add`, `- sub`, `* mul`, `/ div`, `// fdiv`, `% mod`, `%% rem`, `** pow`
+- `/\ band`, `\/ bor`, `>< xor`, `<< shl`, `>> shr`, `>>> ushr`
+
+**Comparison & Logic**
+- `== eq`, `!= neq`, `> gt`, `< lt`, etc.
+- `and`, `or`, `not`
+
+**Special**
+- `lhs ?` — Option unwrap / propagate
+- `lhs !` — Error unwrap / propagate
+- `lhs || rhs` — None coalescing
+- `lhs |> rhs` — Pipeline
+- `lhs => var` — Pipeline assignment
+- `&` / `~&` — Tuple spreading
+- `..` / `..=` — Range
+
+Assignment variants (`+=`, `=>`, etc.) and prefix word forms are supported where applicable.
+
+---
+
+## Variables and Declarations
+
+```mu
+x = 42                  -- inferred
+y: Int = 42             -- explicit type
+z := 42                 -- always inferred declaration
+```
+
+**Mutability**: Use `mut` keyword (details in full spec).
+
+---
+
+## Control Flow
+
+### Conditionals
+
+```mu
+if condition:
+    ...
+else if other:
+    ...
+else:
+    ...
+```
+
+Inline form:
+```mu
+if condition then expr else expr
+```
+
+### Loops
+
+- `while condition:`
+- `until condition:` (loop while *not* condition)
+- `for item in iterable:`
+- `loop: ...` (infinite, with `break` / `continue`)
+
+### Pattern Matching
+
+```mu
+match value is
+| Pattern1(x): ...
+| Pattern2(y || default): ...
+| _: ...
+```
+
+**Proposed `is ... then` sugar** (from our discussion):
+```mu
+result = value is Ok(x || default) then x
+```
+
+---
+
+## Functions
+
+```mu
+add(a, b) = a + b
+
+-- With block
+process(data):
+    ...
+    result
+```
+
+Lambdas:
+```mu
+fn(x) = x * 2
+do fn(x): ... end
+```
+
+---
+
+## Types
+
+- **Primitives**: `Int`, `Float`, `Bool`, `Char`, `String`
+- **Tuples**: `(a, b, c)`
+- **Arrays / Lists**
+- **Option**: `T?` or `opt T`
+- **Result / Error handling**
+- **Structs / Records**
+- **Enums / Sum types** (via pattern matching)
+
+**Tuple operations** (as discussed):
+- Element-wise when shapes match: `(a, b) + (c, d) → (a+c, b+d)`
+- Broadcasting for scalars
+
+---
+
+## Error and Option Handling
+
+- `?` — propagate on None/Error
+- `!` — propagate exceptions
+- `||` — coalescing
+- `opt` and `try` blocks
+
+---
+
+## Modules and Organization
+
+(Planned / to be detailed)
+
+---
+
+**Here's a more formal, specification-style rewrite of the Mu (Mulang) Language Reference.**
+
+---
+
+# Mu Language Specification
+
+**Version 0.1 (Draft)**  
+**Language Name**: Mu (Mulang)  
+**Status**: Experimental
+
+## 1. Introduction
+
+Mu (also known as **Mulang**) is a general-purpose, multi-paradigm programming language designed for **readability**, **expressiveness**, and **low-level control**. It features significant whitespace while providing explicit mechanisms to escape into inline mode.
+
+Key design goals:
+- Strong expression-orientation
+- Hybrid significant/insignificant whitespace model
+- Modern error and option handling
+- Support for both interpretation and compilation (including direct shared library output)
+- Suitable for systems programming, robotics, AI, games, and high-performance applications
+
+This document defines the formal syntax and semantics of the core language. Standard library features are out of scope.
+
+---
+
+## 2. Lexical Conventions
+
+### 2.1 Character Set
+Source code is UTF-8 encoded.
+
+### 2.2 Whitespace and Indentation
+- **Indentation is significant**.
+- Recommended indentation: 4 spaces.
+- All expressions in the same block must share identical indentation prefix (exact sequence of spaces and tabs).
+- Mixing tabs and spaces is permitted only if the entire prefix is consistent within a block.
+
+### 2.3 Comments
+- Line comment: `--` until end of line
+- Block comment: `(--` ... `--)`, nesting supported
+
+### 2.4 Literals
+- **Strings**:
+  - `"..."` — interpolated with `{expression}`
+  - `'''...'''` — raw string
+  - `"""..."""` — multi-line string
+- **Characters**: `'c'`
+- **Numbers**: Decimal, hexadecimal (`0x`), binary (`0b`), with underscores for readability
+
+### 2.5 Separators
+- Newlines (`\n`, `\r`, `\r\n`) or `;` separate expressions
+- `,` separates tuple and array elements
+
+---
+
+## 3. Syntax Fundamentals
+
+### 3.1 Expressions
+A Mu program is a sequence of expressions. Nearly all constructs are expressions and produce values.
+
+### 3.2 Blocks
+A block is introduced by `:` (or `=` for definitions) followed by a newline and increased indentation. The value of a block is the value of its last expression.
+
+### 3.3 Inline-Block Mode (`do` / `end`)
+To switch from block mode to inline mode (and vice versa):
+
+```mu
+do <construct>:
+    ...
+end
+```
+
+`do` begins an inline block; `end` terminates the nearest open `do`.
+
+### 3.4 Expression Continuation
+An expression may span multiple lines when:
+- Inside brackets: `()`, `[]`, `{}`
+- A line starts with `.` (method chaining)
+- A line starts with `|>` (pipeline)
+- Inside a multi-line string literal (`"""`)
+
+---
+
+## 4. Operators
+
+### 4.1 Precedence (Highest to Lowest)
+
+| Precedence | Category                    | Operators |
+|-----------|-----------------------------|---------|
+| 11        | Member access               | `.` |
+| 10        | Postfix                     | `? ! ^ # ~` |
+| 9         | Unary                       | `+ - not` |
+| 8         | Exponentiation              | `**` (right-associative) |
+| 7         | Multiplicative / Shift      | `* / // % %% << >> >>>` |
+| 6         | Additive / Concat           | `+ - ++` |
+| 5         | Bitwise                     | `/\ \/ ><` |
+| 4         | Range                       | `.. ..=` |
+| 3         | Comparison                  | `== != < > <= >=` |
+| 2         | Logical AND                 | `and` |
+| 1         | Logical OR / Pipeline       | `or \|> =>` |
+| 0         | Assignment / Spread         | `= := += -= *= /= //= ++= =` `& ~&` |
+
+### 4.2 Operator Forms
+
+**Symbol-only operators**:
+- `lhs # rhs` — indexing
+- `lhs . rhs` — member access
+- `lhs ?` — option unwrap/propagate
+- `lhs !` — error unwrap/propagate
+- `lhs ^` — pointer dereference
+- `lhs .. rhs`, `lhs ..= rhs` — ranges
+- `&rhs`, `~&rhs` — tuple spreading
+
+**Dual-form operators** (symbol + word):
+
+**Arithmetic**: `+ add`, `- sub`, `* mul`, `/ div`, `// fdiv`, `% mod`, `%% rem`, `** pow`
+
+**Comparison**: `== eq`, `!= neq`, `> gt`, `< lt`, `>= gte`, `<= lte`
+
+**Boolean**: `and`, `or`, `not`
+
+**Bitwise**: `/\ band`, `\/ bor`, `>< xor`, `<< shl`, `>> shr`, `>>> ushr`
+
+**Other**: `++ concat`, `|| orelse` (None coalescing)
+
+Assignment variants (`+=`, `=>`, etc.) and prefix word forms are supported for applicable operators.
+
+---
+
+## 5. Variables and Bindings
+
+```mu
+x = 42                    -- inferred
+y: Int = 42               -- explicit type
+z := 42                   -- forced inference
+mut counter = 0           -- mutable
+```
+
+---
+
+## 6. Control Flow
+
+### 6.1 Conditionals
+```mu
+if condition:
+    ...
+else if condition2:
+    ...
+else:
+    ...
+```
+
+Inline form:
+```mu
+if condition then expr else expr
+```
+
+### 6.2 Loops
+- `while condition:`
+- `until condition:` (loop while condition is false)
+- `for pattern in iterable:`
+- `loop:` (infinite)
+
+### 6.3 Pattern Matching
+```mu
+match expr is
+| Pattern1(x): expr
+| Pattern2(y || default): expr
+| _: expr
+```
+
+**Proposed extraction sugar** (non-normative extension):
+```mu
+value is Some(x || default) then x
+```
+
+---
+
+## 7. Functions and Procedures
+
+```mu
+add(a: Int, b: Int) = a + b
+
+process(data):
+    ...
+    final_result
+```
+
+Lambda expressions:
+```mu
+fn(x) = x * 2
+do fn(x): ... end
+```
+
+---
+
+## 8. Type System (Overview)
+
+- **Primitives**: `Int`, `Float`, `Bool`, `Char`, `String`
+- **Product types**: Tuples `(T, U)`, Records
+- **Sum types**: Enums (via pattern matching)
+- **Wrapper types**: `opt T` (or `T?`), `Result<T, E>`
+- **Pointer types**: Typed pointers with dereference `^`
+
+**Tuple arithmetic** (defined behavior):
+- Element-wise when shapes match
+- Broadcasting of scalars
+
+---
+
+## 9. Error and Option Handling
+
+- `expr?` — propagate `None` / error to nearest `opt` / `try`
+- `expr!` — propagate exception to nearest `try`
+- `expr || fallback` — None coalescing
+- `opt` and `try` blocks for scoped handling
+
+---
+
+## 10. Memory Model (Planned)
+
+Mu will expose explicit control over:
+- Ownership and borrowing
+- Stack vs heap allocation
+- Raw pointers and manual memory management
+- Shared library interop
+
+---
