@@ -847,6 +847,17 @@ curryAdd(a: int): fn(int): fn(int): int =
 curryAdd(1)(2)(3)
 ```
 
+Because this is a common practice, you can leave the `=` so that there isn't so much indententing. The rest of the scope at that point becomes the next function body.
+
+```
+curryAdd(a: int): =  -- Inferred return type.
+    fn(b: int)       -- No equals sign or identing.
+    fn(c: int)       -- Inside the second function.
+    a + b + c        -- Inside the last function, final return value.
+
+curryAdd(1)(2)(3)
+```
+
 Capturing also works inside lambda functions just like with named functions.
 
 ```
