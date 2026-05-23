@@ -2,7 +2,7 @@
 
 *Version 0.1 (Draft)*
 
-Mu (also called *Mulang*) is a general-purpose, multi-paradigm language with significant whitespace. It is expression-oriented and gives programmers explicit control over evaluation strategy, memory model, and error handling. Mu is planned to be both compiled and interpreted within the same language, making it suitable for systems programming, AI, and game development.
+Mu (also called *Mulang*) is a general-purpose, multi-paradigm language with significant whitespace. It is expression-oriented and gives programmers explicit control over evaluation strategy, memory model, and error handling. It funds the right balance between *conciseness* and *eloquence.* Mu is planned to be both compiled and interpreted within the same language, making it suitable for systems programming, AI, and game development.
 
 Mu targets developers who want Python-like readability, Rust-like control and safety features, and F#-style expressive pipelines — especially for domains like robotics, systems programming, AI, and games.
 
@@ -1545,6 +1545,18 @@ loop.outer x in 0..100:
         if x * y == 77:
             break.outer
 ```
+
+Pass a value to `break`, that becomes the value of the block, analogous to `return` for function.
+
+```
+x = do.block
+    if cond:
+        break.block 5
+    4
+
+print("{x}")     -- Prints either "4" or "5"
+`
+``
 
 ### Pattern Matching
 
