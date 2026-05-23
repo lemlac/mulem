@@ -76,7 +76,7 @@ A program is a sequence of expressions. Blocks are created with `:` after a cons
 
 ```
 if condition:
-    do_something()
+    action()
     result
 ```
 
