@@ -3660,3 +3660,1133 @@ Mu will expose explicit control over:
 - Shared library interop
 
 ---
+
+---
+
+---
+
+---
+
+---
+
+# Mu Language Reference
+
+*Version 0.1 (Draft)*
+
+Mu (also called *Mulang*) is a general-purpose, multi-paradigm language with significant whitespace. It is expression-oriented and gives programmers explicit control over evaluation strategy, memory model, and error handling. Mu is planned to be both compiled and interpreted within the same language, making it suitable for systems programming, AI, and game development.
+
+---
+
+## Table of Contents
+
+1. [Lexical Conventions](#1-lexical-conventions)
+2. [Expressions and Blocks](#2-expressions-and-blocks)
+3. [Operators](#3-operators)
+4. [Bindings](#4-bindings)
+5. [Types](#5-types)
+6. [Control Flow](#6-control-flow)
+7. [Pattern Matching](#7-pattern-matching)
+8. [Monadic Blocks](#8-monadic-blocks)
+
+---
+
+## 1. Lexical Conventions
+
+### Whitespace and Indentation
+
+Whitespace is significant. Indentation marks where blocks begin and end. Four spaces per level is recommended. Tabs and spaces may be mixed, but each expression within a block must have exactly the same indentation sequence — the same number of tabs and spaces in the same order.
+
+### Statement Separators
+
+Statements are separated by newlines or semicolons (`;`). The two are interchangeable. Newlines may be `\n`, `\r`, or `\r\n`.
+
+### Comments
+
+```
+-- Single-line comment.
+
+(--
+    Multi-line comment.
+--)
+
+(--
+    (-- Nesting is allowed. --)
+--)
+```
+
+### Lexical Categories
+
+| Category | Examples |
+|:---------|:---------|
+| Words | `x`, `PI`, `1`, `3.14`, `0xABCDEF`, `$`, `$x`, `$0` |
+| String/Char literals | `'a'`, `"foo"`, `"""big string"""`, `''raw''` |
+| Delimiters | `,` (tuples/arrays), `;` (expressions) |
+| Symbols | `~!@#%^&*-+=\|:<.>/?` (excluding `--`) |
+| Brackets | `()`, `[]`, `{}` |
+| Whitespace | spaces, tabs, newlines |
+
+---
+
+## 2. Expressions and Blocks
+
+### Expression Splitting
+
+A single expression may span multiple lines under these conditions:
+
+- Inside open brackets `([{` — line breaks are ignored until the matching closing bracket. A `;` inside brackets ends the expression early.
+- Lines starting with `.` continue a method chain from the previous line.
+- Lines starting with `|>` continue a pipeline from the previous line.
+- Lines starting with `|` followed by a pattern continue a `match` block.
+- Inside a multi-line string `"""..."""`.
+
+```
+-- Method chaining across lines:
+object.method1()
+      .method2()
+      .method3()
+
+-- object.method1();  ← semicolon disables splitting
+--       .method2()   ← SyntaxError
+```
+
+### Blocks
+
+A block wraps multiple expressions into one. A `:` or `=` followed by a newline and indentation starts a block. The last expression evaluated in a block is its value.
+
+```
+block:
+    expr
+    expr    -- This is the block's value.
+```
+
+Use `pass` to leave a block empty.
+
+```
+block:
+    pass
+```
+
+### Inline Blocks (`do` / `end`)
+
+Significant whitespace makes it awkward to pass multi-line lambdas inline. `do`…`end` switches between block mode and inline mode. `end` always closes the nearest unclosed `do`.
+
+```
+apiFetch(do fn(result) =
+    if result > 0:
+        print("Success! {result}")
+    else:
+        print("Failure! {result}")
+end)
+```
+
+`do` must be followed by a block keyword and a `:` or `=`. Nesting works freely.
+
+```
+(do if x:
+    expr
+else:
+    expr
+end)
+```
+
+### Inlining with `then`
+
+Any block that has a *subject* can be inlined using `then` instead of `:`.
+
+```
+if x then "True" else "False"
+
+if x:           -- Block form.
+    "True"
+else:
+    "False"
+```
+
+---
+
+## 3. Operators
+
+### Design Philosophy
+
+Symbols are grouped by meaning: `*`/`/` for math, `?` for options, `!` for results, `#` for arrays, `&` for tuples, `^` for pointers. Repeating an operator gives a more technical variant: `+` addition vs `++` concatenation, `*` multiplication vs `**` exponentiation, `/` division vs `//` floor division.
+
+Bitwise operators use `/\`, `\/`, and `><` rather than `&`, `|`, and `^` because those symbols have other meanings in Mu. Word aliases (`band`, `bor`, `xor`) are always available. Linters may enforce one form or the other.
+
+### Symbol-Only Operators
+
+| Operator | Meaning | Precedence |
+|:---------|:--------|:----------:|
+| `lhs . rhs` | Member access | 11 |
+| `lhs # rhs` | Array index | 10 |
+| `lhs ?` | Unwrap option, propagate `None` to nearest `opt` | 10 |
+| `lhs !` | Unwrap result, propagate exception to nearest `try` | 10 |
+| `lhs ^` | Dereference typed pointer | 10 |
+| `~ rhs` | Inferred type conversion | 10 |
+| `++ rhs` | Spread array into array | 0 |
+| `& rhs` | Spread tuple into tuple (same type) | 0 |
+| `~& rhs` | Spread tuple into tuple (new product type) | 0 |
+| `lhs .. rhs` | Exclusive range | 4 |
+| `lhs ..= rhs` | Inclusive range | 4 |
+| `lhs \|> rhs` | Pipeline | 1 |
+| `lhs => rhs` | Pipeline assignment | 1 |
+| `lhs = rhs` | Assignment or declaration | 0 |
+| `lhs := rhs` | Explicit inferred-type declaration | 0 |
+| `lhs: T = rhs` | Explicit typed declaration | 0 |
+
+### Dual-Form Operators (Symbol + Word)
+
+| Symbol | Word | Meaning | Precedence |
+|:-------|:-----|:--------|:----------:|
+| `lhs + rhs` | `lhs add rhs` | Addition | 6 |
+| `lhs - rhs` | `lhs sub rhs` | Subtraction | 6 |
+| `+ rhs` | `pos rhs` | Unary positive | 9 |
+| `- rhs` | `neg rhs` | Sign flip | 9 |
+| `lhs * rhs` | `lhs mul rhs` | Multiplication | 7 |
+| `lhs / rhs` | `lhs div rhs` | Exact division (float) | 7 |
+| `lhs // rhs` | `lhs fdiv rhs` | Floor division (int) | 7 |
+| `lhs % rhs` | `lhs mod rhs` | Modulo (sign matches `lhs`) | 7 |
+| `lhs %% rhs` | `lhs rem rhs` | Floor modulo (sign matches `rhs`) | 7 |
+| `lhs ** rhs` | `lhs pow rhs` | Exponentiation (right-associative) | 8 |
+| `lhs == rhs` | `lhs eq rhs` | Equality | 3 |
+| `lhs != rhs` | `lhs neq rhs` | Inequality | 3 |
+| `lhs > rhs` | `lhs gt rhs` | Greater than | 3 |
+| `lhs < rhs` | `lhs lt rhs` | Less than | 3 |
+| `lhs >= rhs` | `lhs gte rhs` | Greater than or equal | 3 |
+| `lhs <= rhs` | `lhs lte rhs` | Less than or equal | 3 |
+| `lhs /\ rhs` | `lhs band rhs` | Bitwise AND | 5 |
+| `lhs \/ rhs` | `lhs bor rhs` | Bitwise OR | 5 |
+| `lhs >< rhs` | `lhs xor rhs` | Bitwise XOR | 5 |
+| `lhs << rhs` | `lhs shl rhs` | Shift left | 7 |
+| `lhs >> rhs` | `lhs shr rhs` | Shift right | 7 |
+| `lhs >>> rhs` | `lhs ushr rhs` | Unsigned shift right | 7 |
+| `lhs ++ rhs` | `lhs concat rhs` | Concatenation | 6 |
+| `lhs \|\| rhs` | `lhs orelse rhs` | None-coalescing | 1 |
+| — | `lhs and rhs` | Logical AND | 2 |
+| — | `lhs or rhs` | Logical OR | 1 |
+| — | `not rhs` | Logical NOT (or bitwise NOT for numbers) | 9 |
+
+### Order of Operations
+
+| Level | Category |
+|:-----:|:---------|
+| 0 | Assignment, spread (lowest) |
+| 1 | Logical OR, pipelining |
+| 2 | Logical AND |
+| 3 | Comparisons |
+| 4 | Range operators |
+| 5 | Bitwise logic |
+| 6 | Additive |
+| 7 | Multiplicative, bit shifts |
+| 8 | Exponentiation (right-associative) |
+| 9 | Unary |
+| 10 | Postfix (unwrap, deref, index) |
+| 11 | Member access (highest) |
+
+### Assignment Variants
+
+Symbol operators gain assignment forms with `=` and pipeline-assignment forms with `=>`. Keyword operators (`band`, `bor`, etc.) do not — use the expanded form instead.
+
+```
+x += 1          -- x = x + 1
+x /\= 0xFF      -- x = x /\ 0xFF
+expr +=> x      -- pipeline: x = x + expr
+
+-- Keyword operators: always write expanded form.
+x = x band 0xFF
+x = x bor 0xFF
+```
+
+### Prefix / Function Form
+
+Operators may be called as functions. Prefix unary operators apply element-wise to a tuple. Binary operators chain across all arguments. Comparison operators return a tuple of bools one shorter than the input.
+
+```
+not(a, b, c)             -- (not a, not b, not c)
+add(a, b, c)             -- a add b add c
+lt(a, b, c, d)           -- (a lt b, b lt c, c lt d)
+and lt(a, b, c, d)       -- (a lt b) and (b lt c) and (c lt d)
+```
+
+### Pipelining (`|>`)
+
+`|>` at the start of a line passes the previous line's value as `$` into the next expression.
+
+```
+fetchA()
+|> fetchB($)
+|> fetchC($)
+|> print("{$}")
+```
+
+`$` is the *contextual reference*. It may also appear multiple times on one line, and multiple semicolon-separated expressions share the same `$`.
+
+```
+|> fetchA()
+|> print("{$}"); fetchB($)   -- print result, then fetchB
+|> fetchC($)
+```
+
+A **pipeline block** begins with `|>:` and gives every expression inside it the same `$`.
+
+```
+fetchA() |> fetchB($) |>:
+    print("{$}")
+    fetchC($)
+```
+
+To store a pipeline result, use `=>` or its shorthand `|=>`.
+
+```
+fetchA()
+|> fetchB($)
+|> fetchC($) => result      -- store result mid-pipeline
+
+fetchA()
+|> fetchB($)
+|> fetchC($)
+|=> finalResult             -- shorthand for |> $ =>
+```
+
+### Operation Chaining (`op[]`)
+
+Any infix operator `op` may be written as `lhs op[rhs]`, at the same precedence as member access. This is primarily useful for array indexing and inline pipelining.
+
+```
+array#[0]#[1]                        -- ( (array # 0) # 1 )
+fn1() |>[fn2($)] |>[fn3($)]          -- fn3(fn2(fn1()))
+```
+
+Lines starting with `op[]` continue the previous expression, allowing operator chaining across lines.
+
+```
+bigString = "This"
+    ++[" string"]
+    ++[" is"]
+    ++[" split"]
+    ++[" across lines."]
+```
+
+If the brackets contain more than one value or named values, the result is a **tuple** rather than an operation.
+
+```
+x = (13, 5) |>[ $0 // $1, $0 %% $1 ]   -- (2, 3)
+```
+
+### Custom Operators
+
+Custom operators are declared with a meta binding (`::`) and the `op` keyword. They must be declared before use so the lexer can recognize them.
+
+```
+xor :: op(a: int, b: int): int = a >< b
+between :: op(a: int, lo: int, hi: int): bool = a >= lo and a <= hi
+```
+
+Precedence and associativity are specified in `[]`.
+
+```
+xor :: op[5](a: int, b: int): int = a >< b
+concat :: op[6, right](a: str, b: str): str = a ++ b
+```
+
+---
+
+## 4. Bindings
+
+There are two kinds of bindings: basic (`=`) and meta (`::`). Meta bindings are compile-time declarations such as types, protocol implementations, and custom operators.
+
+### Variable Declarations
+
+```
+a = 0               -- Implicit declaration, type inferred.
+b: int = 1          -- Explicit type.
+c := 2              -- Explicit declaration, inferred type.
+d: = 4              -- Same as above, space between `:` and `=` is fine.
+```
+
+A newline after `=` starts a block. The last expression is the variable's value.
+
+```
+lunch =
+    if getDayOfWeek() == "Tuesday":
+        "tacos"
+    else:
+        "sandwich"
+```
+
+Variables are immutable by default. Redeclaring with the same name **shadows** it; the type does not need to match.
+
+```
+a = 1
+a = 2           -- New variable, shadows previous `a`.
+a = "hello"     -- Type can change when shadowing.
+```
+
+`=` is a void statement and may not be used inside expressions. Use `==` for comparison and `=>` for inline assignment.
+
+```
+-- Error:
+if x = 0: ...
+
+-- Correct:
+if x == 0: ...
+```
+
+### Mutability (`mu`)
+
+Mutable variables are declared with `mu`. Setting them later mutates the value rather than shadowing it.
+
+```
+mu count = 0
+count += 1          -- Mutates count.
+count := 0          -- Shadows count with a new immutable variable.
+```
+
+A mutable variable may be declared without an initial value, but cannot be used until it is set.
+
+```
+x: mu int
+x = 1
+doSomething(x)      -- OK now.
+```
+
+Functions do not automatically capture mutable variables. Any assignment inside a function to an outer mutable variable creates a new local variable unless explicitly captured.
+
+```
+mu count = 0
+
+addCount() =
+    @capture(count)
+    count += 1
+
+addCount()
+print("{count}")    -- "1"
+```
+
+### References (`ref` / `ref mu`)
+
+A reference points to the same memory location as another variable.
+
+```
+mu x = 0
+ref mu xRef = x
+xRef = 1
+print("{x}")        -- "1"
+```
+
+| Syntax | Meaning |
+|:-------|:--------|
+| `ref x = y` | Immutable reference, inferred type |
+| `x: ref T = y` | Immutable reference, explicit type |
+| `ref mu x = y` | Mutable reference, inferred type |
+| `x: ref mu T = y` | Mutable reference, explicit type |
+
+### Destructuring
+
+```
+(a, b) = (0, 1)                         -- Positional.
+{x} = {x: 2}                            -- Named.
+(a, b) & {x} = (0, 1, x: 2)            -- Mixed.
+{x as y} = {x: 2}                       -- Alias.
+{x as y: int} = {x: 2}                  -- Alias with type.
+{0 as a, 1 as b} = (3, 4)              -- Positional by index.
+(_, b, _) & {x, _} = (0, 1, 2, x: 3, y: 4)  -- Skip with `_`.
+```
+
+When destructuring a named type, the type may be placed after the last tuple.
+
+```
+Thing :: {x: int, y: int}
+{x, y}: Thing = thing
+{x, y} = thing              -- Or infer.
+```
+
+### Function Declarations
+
+```
+add(a: int, b: int): int = a + b
+add(a, b) = a + b           -- Inferred types.
+```
+
+Block body — last expression is the return value.
+
+```
+fib(n) =
+    if n < 1:
+        0
+    else if n < 2:
+        1
+    else:
+        fib(n - 1) + fib(n - 2)
+```
+
+Function pointer type and assignment.
+
+```
+action: mu fn(int, int): int
+action = fn(a, b) = a + b
+```
+
+#### Parameter Modifiers
+
+| Modifier | Copies/References | Mutable in function |
+|:---------|:-----------------|:--------------------|
+| *(none)* | Copy | No |
+| `mu` | Copy | Yes |
+| `ref` | Reference | No |
+| `ref mu` | Reference | Yes |
+| `out` | Reference | Yes, must be set |
+
+`out` parameters treat the variable as unset on entry and guarantee it is set before the function returns.
+
+```
+setInt(out i): void =
+    i = 3
+
+x: mu int
+setInt(x)
+
+-- Or use `=>` in the parameter to declare inline:
+setInt(=> n)
+print("{n}")    -- "3"
+```
+
+#### Lambda Functions
+
+```
+map(array0, fn(x) = x + 1)
+
+map(array0, do fn(x) =
+    if x < 2: x - 1
+    else: x + 2
+end)
+```
+
+A name is optional; naming a lambda creates an immutable self-reference for recursion.
+
+#### Named Parameters
+
+```
+add{ a: int, b: int }: int = a + b
+add(b: 1, a: 2)             -- Order doesn't matter.
+```
+
+Mixed positional and named.
+
+```
+add(x: int) & {a: int, b: int}: int = x + a + b
+add(1, a: 2, b: 3)
+add(a: 2, 1, b: 3)          -- Named params can go anywhere.
+```
+
+Positional parameters may be set by number at the call site.
+
+```
+isGreaterThan(a, b) = a > b
+isGreaterThan(0: 10, 1: 5)  -- a=10, b=5 → True
+isGreaterThan(1: 10, 0: 5)  -- a=5,  b=10 → False
+```
+
+#### Contextual Parameters
+
+Functions may declare required context variables with `$name: type`. These are resolved from the calling scope rather than passed as arguments.
+
+```
+addContext() =
+    $a: int
+    $b: int
+    $a + $b
+
+$a = 1
+$b = 2
+result = addContext()   -- Uses $a and $b from context.
+```
+
+Optional contextual parameters use `T?`.
+
+```
+isThereX() =
+    $x: int?
+    match $x is
+    | Some(_): print("$x exists")
+    | None:    print("No $x")
+```
+
+### Meta Bindings (`::`)
+
+`::` declares compile-time structural information. All `::` bindings share the same signal: *this is structural, not runtime.*
+
+| Form | Meaning |
+|:-----|:--------|
+| `Name :: { ... }` | Type definition |
+| `Name :: (...)` | Tuple type definition |
+| `Name :: impl[P] =` | Protocol implementation |
+| `name :: op(a, b) =` | Custom operator |
+| `name :: const =` | Compile-time constant |
+
+---
+
+## 5. Types
+
+### Type Notation
+
+| Notation | Meaning |
+|:---------|:--------|
+| `T` | Plain type |
+| `T?` | Option (may be `None`) |
+| `T!` or `T!E` | Result (may be exception `E`) |
+| `T#` | Dynamic array |
+| `T#N` | Fixed array of length N |
+| `T##` | 2D array (one `#` per dimension) |
+| `V#K` | Dictionary with key type K |
+| `T^` | Immutable typed pointer |
+| `T^mu` | Mutable typed pointer |
+| `fn(T, T): T` | Function pointer |
+
+### Built-in Types
+
+`int`, `uint`, `float`, `bool`, `char`, `str`, `ptr`, `void`
+
+These are not keywords — they follow the naming convention of lowercase for built-in types. User-defined types should use capitalized names.
+
+### Compile-Time Functions
+
+```
+typeof[x]           -- Type of x at compile time.
+sizeof[T]           -- Size of T in bytes.
+default[T]          -- Default value of T.
+default[]           -- Infer T from context.
+```
+
+### Type Conversion
+
+Use `~` when the target type can be inferred.
+
+```
+x: float = 1.5
+y: int = ~x         -- Calls int(x) → 1
+```
+
+When the target type cannot be inferred, call it explicitly with `~` on the argument.
+
+```
+y = float(~x)       -- Convert x to float.
+```
+
+### Booleans
+
+`bool` is a built-in enum with members `True` and `False`.
+
+### Numbers
+
+| Type | Meaning | Suffix | Examples |
+|:-----|:--------|:------:|:---------|
+| `int` | Signed integer | `i` | `1`, `2i`, `0xabcdef` |
+| `uint` | Unsigned integer | `u` | `0u`, `5u` |
+| `float` | Floating point | `f` | `1.0`, `1.5f`, `2.0e100` |
+
+Numbers are case-insensitive. Underscores may be placed anywhere for readability. Leading zeros are allowed without changing the base.
+
+```
+1_234_567
+0b1111_0000
+0o777
+0xFF
+2.0e-10
+```
+
+Space operators correctly when adjacent to `++` or `--`.
+
+```
+1+ +1   -- Addition: 2
+1++1    -- Array: [1, 1]
+1- -1   -- Subtraction: 2
+1--1    -- Just 1 (with a comment)
+```
+
+### Characters
+
+Single-byte values written with apostrophes. Arithmetic is allowed.
+
+```
+a = 'a'
+b = a + 1       -- 'b'
+tab = '\t'
+unicode = '\uFFFF'
+```
+
+### Strings
+
+| Form | Purpose |
+|:-----|:--------|
+| `"…"` | Regular string with `{expr}` interpolation |
+| `"""…"""` | Multiline with interpolation; whitespace trimmed at closing `"""` position |
+| `''…''` | Inline raw string, no interpolation or escaping |
+| `@"""…"""@` | Multiline raw string; `@` count must match to close |
+
+```
+name = "world"
+hello = "Hello, {name}!"
+escaped = "Literal brace: \{"
+
+path = ''C:\files\on\windows.txt''
+
+doc = """
+    Line one.
+    Line two.
+    """
+```
+
+Subsequent string literals are automatically concatenated. Use `++` for runtime concatenation.
+
+```
+str1 = "Hello" ", " "world"
+str2 = str1 ++ "!"
+```
+
+### Arrays
+
+```
+list: int#4 = [1, 2, 3, 4]
+grid: int#2#2 = [[1, 2], [3, 4]]
+item = grid#1#0         -- Row 1, column 0 → 3
+```
+
+Spread into an array with `++`.
+
+```
+a = [1, 2, 3]
+b = [0, ++a, 4]     -- [0, 1, 2, 3, 4]
+c = 1 ++ 2 ++ 3     -- [1, 2, 3]
+```
+
+The familiar `array[i]` form is also accepted. The compiler resolves it to `array#[i]` based on type. Tooling will suggest migrating to the `#` form.
+
+### Dictionaries
+
+A subtype of arrays where each item has a key. Type notation is `V#K`.
+
+```
+dict: int#str = [
+    a: 1,
+    b: 2,
+    ["invalid name"]: 127,
+]
+print("{dict.b}")           -- "2" (string keys that are valid names allow `.`)
+print("{dict#["b"]}")       -- "2"
+```
+
+### Tuples
+
+Positional tuples use `()`, named tuples use `{}`. A tuple with only one positional member and no named members is equal to that member.
+
+```
+(10) == 10      -- True.
+```
+
+Mixed tuples combine both with `&`.
+
+```
+(a, b) & {x: 1} = (0, 1, x: 1)
+```
+
+Use `&[]` to update named members of a tuple in place.
+
+```
+user = User.create()&[
+    name: "John Doe",
+    dob:  "1970-01-01",
+]
+```
+
+Use `~&[]` to create a new product type by spreading both sides.
+
+```
+tuple = ()
+    ~&[a: 1]
+    ~&[b: 2]
+    ~&[c: 3]
+-- tuple is (a: 1, b: 2, c: 3)
+```
+
+### Pointers
+
+Opaque pointers use `ptr`. Typed pointers use `T^` or `T^mu`. Dereferencing and pointer arithmetic require an `unsafe:` block.
+
+```
+result: ptr = ExternalLib.getSomething()
+if result == Null:
+    raise NotFound
+
+unsafe:
+    mu x = 0
+    xPtr: int^mu = ~ptr(x)
+    xPtr^ = 1
+    print("{x}")    -- "1"
+```
+
+| Type | Can reassign pointer | Can mutate memory |
+|:-----|:--------------------:|:-----------------:|
+| `T^` | No | No |
+| `T^mu` | No | Yes |
+| `mu T^` | Yes | No |
+| `mu T^mu` | Yes | Yes |
+
+---
+
+## 6. Control Flow
+
+All branching constructs share a consistent pattern:
+
+```
+-- Block form (`:` after subject)
+keyword subject:
+    body
+
+-- Inline form (`then` after subject)
+keyword subject then expr
+```
+
+Variables created in the subject field shadow the parent scope.
+
+### `pass`
+
+Leaves a block empty.
+
+```
+block:
+    pass
+```
+
+### `block`
+
+Creates a new scope. Its value is the last expression evaluated.
+
+```
+x = block:
+    y = 1
+    y + 1       -- block's value is 2
+```
+
+Give it a label to enable `break`.
+
+```
+block outer:
+    break outer
+```
+
+### `if` / `else`
+
+```
+x = if x > 0 then x else -x
+
+if a and b:
+    print("both")
+else if a or b:
+    print("one")
+else:
+    print("neither")
+```
+
+### `loop`
+
+The universal loop keyword. All loop forms share the same `loop` keyword.
+
+```
+-- Unconditional (break manually):
+loop:
+    body
+    break
+
+-- While condition is true:
+loop cond:
+    body
+
+-- For-each:
+loop x in collection:
+    body
+
+-- Do-until (runs at least once):
+loop:
+    body
+until cond
+```
+
+`else` after `loop cond` runs if the loop body never executed.
+
+```
+loop False:
+    pass
+else:
+    print("Never ran")
+```
+
+Inlined `loop x in` returns a lazy iterator collected with `++`.
+
+```
+doubled = [++ loop x in list then x * 2]
+```
+
+Destructuring works in loop variables.
+
+```
+loop (x, y, z) in listOfTuples:
+    print("{x}, {y}, {z}")
+```
+
+### `break` / `continue`
+
+Both accept an optional label to target an outer loop.
+
+```
+block outer loop x in 0..100:
+    block inner loop y in 0..100:
+        if x * y >= 100:
+            break inner
+        if x * y == 77:
+            break outer
+```
+
+---
+
+## 7. Pattern Matching
+
+Wherever you see `is`, a pattern follows.
+
+### Pattern Binding Modifiers
+
+| Form | Meaning |
+|:-----|:--------|
+| `P(x)` | Guaranteed match — `x` is `T` |
+| `P(x?)` | Possible non-match — `x` is `T?` |
+| `P(x \|\| fallback)` | Possible non-match — `x` is `T`, defaults to `fallback` |
+
+`x?` is required when the compiler cannot guarantee the pattern always matches (e.g., a loop with a reachable `break`). `x || fallback` is sugar for `x?` with an immediate unwrap.
+
+### `match` / `is`
+
+Exhaustive by default. Use `| _:` for a catch-all.
+
+```
+match choice is
+| First:
+    print("First")
+| Second(x):
+    print("Second: {x}")
+| Third{val}:
+    print("Third: {val}")
+| _:
+    print("Other")
+```
+
+Inline form.
+
+```
+result = match x is | A: 1 | B: 2 | _: 0
+```
+
+Multiple patterns per case — all must bind the same variable names and types.
+
+```
+match choice is
+| Second(val) | Third{val}:
+    print("val = {val}")
+```
+
+#### `fallthrough`
+
+Proceeds to the next case. The next case must not destructure new values, unless optional bindings are used.
+
+```
+match choice is
+| First:
+    print("First")
+    fallthrough
+| Second(x?):
+    if x is Some(x):
+        print("Definitely Second: {x}")
+```
+
+#### Pattern Guards
+
+Add `if` inside a pattern to conditionally match.
+
+```
+match choice is
+| Second(x if x > 0):
+    print("Positive: {x}")
+| Second(x if x < 0):
+    print("Negative: {x}")
+| Second(x):
+    print("Zero")
+```
+
+### `if` / `is`
+
+Pattern match a single case with an optional `else`.
+
+```
+if getStuff() is Pattern(x):
+    print("{x}")
+else:
+    print("No match")
+
+something = if getSomething() is Some(x) then x else "fallback"
+```
+
+### `is` / `then`
+
+Extract a binding inline. Requires a guaranteed match or optional bindings.
+
+```
+-- Guaranteed match (exhaustive type):
+result = value is Pattern(x) then x
+
+-- With fallback (non-exhaustive):
+result = value is Pattern(x || "fallback") then x
+
+-- Multiple bindings:
+result = value is Pattern(x || 0, y || 0) then (x, y)
+
+-- Arbitrary expression over bindings:
+result = value is Pattern(x || 0, y || 0) then x + y
+```
+
+Pairs naturally with pipelining.
+
+```
+getValue()
+|> $ is Pattern(x || "fallback") then x
+|> doSomethingWith($)
+```
+
+### `loop` / `is`
+
+Loop while a pattern matches.
+
+```
+loop nextValue() is Some(x):
+    print("{x}")
+```
+
+### `until` / `is`
+
+Loop until a pattern matches. Bindings are in scope below the loop.
+
+```
+loop:
+    value = getValue()
+until value is Some(x)
+
+print("{x}")    -- x is guaranteed set here.
+```
+
+If `break` is reachable inside the loop, optional bindings are required.
+
+```
+loop:
+    if earlyCondition:
+        break
+until getValue() is Some(x?)
+
+if x is Some(x):
+    print("{x}")
+```
+
+### `=>` / `else`
+
+Extract a pattern into scope. The `else` block must exit the current scope (`break`, `return`, `raise`, etc.), guaranteeing the binding exists after it.
+
+```
+getStuff() => Pattern(x) else:
+    raise Error("No match")
+
+print("{x}")    -- x is guaranteed here.
+```
+
+With a guard.
+
+```
+getStuff() => Pattern(x if x >= 100) else:
+    raise Error("x is less than 100")
+
+print("{x}")    -- x is >= 100 here.
+```
+
+---
+
+## 8. Monadic Blocks
+
+### `try` / `except`
+
+Unwrap result types with `!` inside a `try` block. Unhandled exceptions propagate upward.
+
+```
+try:
+    a = doSomething1(x)!
+    b = doSomething2(a)!
+    b
+except Exception(e):
+    print("Error: {e}")
+    0
+```
+
+Inline form.
+
+```
+result = try divide(1, 0)! except _ then 0.0
+```
+
+Using `!` inside a function automatically infers a result return type.
+
+```
+riskyFn(a: int): int! =
+    b = step1(a)!
+    c = step2(b)!
+    c
+```
+
+### `opt`
+
+Unwrap option types with `?` inside an `opt` block. If any `?` returns `None`, the block short-circuits.
+
+```
+opt:
+    a = getA()?
+    b = getB()?
+    c = getC() || 0
+    print("{a + b + c}")
+else:
+    print("Didn't work")
+```
+
+Inline form.
+
+```
+x = opt f(a?) || "fallback"
+```
+
+Using `?` inside a function automatically infers an option return type.
+
+```
+addStuff(a: int, b: int): int? =
+    x = getA()?
+    y = getB()?
+    x + y
+```
+
+Nested options unwrap with multiple `?`.
+
+```
+unnest(x: int??): int? = x??
+```
+
+Chain `||` to try multiple options with a final fallback.
+
+```
+getFirst(a: int, b: int, c: int): int =
+    getA(a) || getB(b) || getC(c) || 0
+```
+
+---
+
+*This document covers the core language. Standard library features, FFI, the compilation model, and asynchronous programming are outside this scope.*
