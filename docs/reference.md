@@ -429,13 +429,12 @@ z := 42                   -- forced inference
 mu counter = 0            -- mutable
 ```
 
-Variables are declared with just the equals sign (`=`). Type is inferred, but can be declared with a colon (`:`). You can also use the `: =` or `:=` operator instead to declare and infer the type at the same time. This is useful for shadowing mutable variables. *(See [Mutability](#Mutability).)* For now, just know that anytime you see `:` before `=`, *it always declares a new variable,* and if you see just `=`, *it's either declaring or mutating a variable.*
+Variables are declared with just the equals sign (`=`). Type is inferred, but can be declared with a colon (`:`). You can also use the `:=` operator instead to declare and infer the type at the same time. This is useful for shadowing mutable variables. *(See [Mutability](#Mutability).)* For now, just know that anytime you see `:` before `=`, *it always declares a new variable,* and if you see just `=`, *it's either declaring or mutating a variable.*
 
 ```
 a = 0               -- Implicit declaration, type inferred.
 b: int = 1          -- Explicit type.
 c := 2              -- Explicit declaration, inferred type.
-d: = 4              -- Same as above, space between `:` and `=` is fine.
 ```
 
 Adding a new line and indentation after the `=` starts a block. The last expression evaluated in the block is the value of that variable.
@@ -696,10 +695,10 @@ print("{addOptional(1, 1)}")  -- Prints "2"
 - `x: opt T = default` — `T`
 - `opt x = default` — `T` *inferred*
 
-Use `++` to collect all variables into a single variable. The variable should be type `T#` (an array).
+Use `...` to collect all variables into a single variable. The variable should be type `T#` (an array).
 
 ```
-addAll(++nums: int#): int =
+addAll(...nums: int#): int =
     sum: mu int = 0
     loop n in nums:
         sum += n
@@ -711,14 +710,14 @@ print("{addAll(1, 2)}")     -- Prints "3"
 print("{addAll(1, 2, 3)}")  -- Prints "6"
 ```
 
-A name is optional after `++`. You can use the symbol by itself to pass it to another function or itself in a functional loop. Use `else` immediately after a function defintion. This will go when the parameter signature above it doesn't match. 
+A name is optional after `...`. You can use the symbol by itself to pass it to another function or itself in a functional loop. Use `| () = ` immediately after a function defintion. The first parameter to match will go.
 
 ```
-addAll(x: int, ++): int =
-    x + addAll(++)
-else(x: int): int =
+addAll(x: int, ...): int =
+    x + addAll(...)
+| (x: int): int =
     a
-else(): int =
+| (): int =
     0
 
 print("{addAll()}")         -- Prints "0"
@@ -2079,11 +2078,11 @@ We say that a void function returns nothing. Well, that's what an empty tuple is
 
 ### Constants
 
-Constants are declared with type `const T`. The `const` makes it clear that we're defining a constant value and not an alias or another type of meta binding. After the type is an equals sign `=` and it's value. The type can be inferred with `:: =` or `::=`. 
+Constants are declared with type `const T`. The `const` makes it clear that we're defining a constant value and not an alias or another type of meta binding. After the type is an equals sign `=` and it's value. The type can be inferred with `:: =`. 
 
 ```
 PI :: const float = 3.14159
-E  ::= 2.71828                -- Inferred
+E  :: = 2.71828                -- Inferred
 ```
 
 You can also bind a function to a constant with `const fn`. Define it like you would with basic functions. The `const fn` can is opitional for shorthand form, just `:: (param) =` is needed. This can be useful if you need to pass a function multiple times but don't want it to be outputted when compiled.
@@ -2315,14 +2314,14 @@ Adding a parameter before the double colon (`::`) turns it into a **meta functio
 You can define a meta function by adding a parameter before the double colons and writing an expression after it. Like constants, they don't output a value in memory when compiled, useful for collecting repeated code. Unlike regular functions, meta function cannot be passed to another function. They only exist at compile-time. Each parameter is a variable within the expression, so you don't need to wrap them in parentheses `()` like with C macros. 
 
 ```
-max[a, b] ::= if a > b then a else b
-min[a, b] ::= if a < b then a else b
+max[a, b] :: = if a > b then a else b
+min[a, b] :: = if a < b then a else b
 ```
 
 You can also have multi-line meta function like regular functions. Each meta function creates a new scope. Defining variables that could bleed into the surrounding scope is not allowed. The last expression is the return value. Call it like a function using `[]`. 
 
 ```
-doSomethingComplicated[x] ::=
+doSomethingComplicated[x] :: =
     x = x + 1
     x = x / 2
     x * x
@@ -2342,15 +2341,15 @@ value =
 Some more examples using the `[]` notation:
 
 ```
-max[a, b] ::= if a > b then a else b
-min[a, b] ::= if a < b then a else b
+max[a, b] :: = if a > b then a else b
+min[a, b] :: = if a < b then a else b
 print("{ max[0, 1] }")           -- Prints "1"
 print("{ min[0, 1] }")           -- Prints "0"
 print("{ max[1+2, 3+4] }")       -- Prints "7"
 
 f(x) = x * x
 g(x) = x + 2
-maxAdd[a, b] ::= if a > b then fn(c) = a + c else fn(c) = b + c
+maxAdd[a, b] :: = if a > b then fn(c) = a + c else fn(c) = b + c
 print("{ maxAdd[ f(0), g(0) ] (1) }")
 ```
 
