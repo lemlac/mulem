@@ -503,7 +503,7 @@ To put the final result of any pipeline into a variable, use `|> $ => x` at the 
 |> fetchA()      -- Start.
 |> fetchB $      -- Pass context.
 |> fetchC $      -- Pass context.
-|> $ => x        -- Put the final context into `result`.
+|> $ => x        -- Put the pipeline context into `x`.
 
 print("{x}")
 ```
@@ -556,7 +556,7 @@ user = User.create() |> {
 `&$` means to spread the pipeline result in this tuple. This makes an object with new properties set below it. Because this is such a common action, we can abriviate with `&{}`. 
 
 ```
-user = User.create() |> &{  -- Means to append to the pipes context.
+user = User.create() |> &{  -- Means to append to the pipe's context.
     name: "John Smith",
     dob: "1970-01-01",
 }
