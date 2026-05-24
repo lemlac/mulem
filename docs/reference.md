@@ -744,7 +744,7 @@ A name is optional after `...`. You can use the symbol by itself to pass it to a
 addAll(x: int, ...): int =
     x + addAll(...)
 | (x: int): int =
-    a
+    x
 | (): int =
     0
 
