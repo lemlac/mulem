@@ -1650,21 +1650,21 @@ print("{x}")     -- Prints either "4" or "5"
 match expr is
 | Pattern1(x): expr
 | Pattern2(y || default): expr
-| _: expr
+| else: expr
 ```
 
 The next control flow methods are based on pattern match. Generally, you see the word `is`, you next thing to expect after it is a pattern: `value is Pattern(x)`.
 
 #### `match` / `is`
 
-Enum/exception branching. Exhaustive by default. `| _:` for the default case.
+Enum/exception branching. Exhaustive by default. `| else:` for the default case.
 
 ```
 match expr is ptrn:
     _
 | ptrn:
     _
-| _:
+| else:
     _
 ```
 
@@ -1681,7 +1681,7 @@ match choice is First:     -- Each pattern case starts its on block.
     print("Second({x})")   -- ……
 | Third{val}:              -- ……
     print("Third \{ val={val} }")
-                           -- All choices were exhausted, so no `| _:` is necessary.
+                           -- All choices were exhausted, so no `| else:` is necessary.
 ```
 
 The first case can also be put on the next like this, making it easy to line up all the patterns:
@@ -1701,9 +1701,9 @@ The inline form keeps `:` after patterns. This makes it easier to read and take 
 ```
 tuple = (a: 1, b: 2)
 dict = [x: 3, y: 4]
-restult = match x is Ptrn1: 5 | Ptrn2: 6 | _: 7
+restult = match x is Ptrn1: 5 | Ptrn2: 6 | else: 7
 --
-message = match e is OpenError{filename}: "Open error: {filename}" | _: "Unknown error"
+message = match e is OpenError{filename}: "Open error: {filename}" | else: "Unknown error"
 ```
 
 You can have multiple patterns match to one case. If any of the patterns destructure with a variable, the same variable name and type must be in all patterns. If not, use a wildcard `_` in each pattern or omit the tuples part entirely to disable destructuring. Otherwise, use a fallback in the pattern.
@@ -1762,7 +1762,7 @@ match choice is
     print("Negative: {x}")
 | Second(x):
     print("Zero")
-| _: _
+| else: _
 ```
 
 #### `is` / `then`
