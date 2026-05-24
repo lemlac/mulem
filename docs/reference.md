@@ -2522,6 +2522,112 @@ List[T, N] :: impl =
         List[T, N](data: data)
 ```
 
+Types can require a certain `proto` to have been implemented:
+
+```
+sort[T] :: where =
+    T: impl[Comparable]      -- This type T needs to have implemented `Comparable`.
+
+sort[T] :: (arr: T#): T# = _
+```
+
+This is the bread and butter of generic programming. Without it, you can't write a generic `sort`, `min`, `max`, or any algorithm that requires behavior from its type parameter. 
+
+*"Types can also have multiple `proto` requirments."*
+
+```
+serialize[T] :: where =
+    T: impl[Serializable] & impl[Comparable]     -- This type T needs both `Serializable` and `Comparable`.
+```
+
+*"The key type of this dictionary must implement Hashable."*
+
+```
+lookup[V, K] :: where =
+    V: impl[Hashable]    -- V is a type T#K
+    K: keyof[V]
+
+--       V  = T#K
+-- keyof[V] = K
+-- valof[V] = T
+lookup[V, K] :: (dict: V, key: K): valof[V]? = _
+```
+
+*"The return type of this function must match the element type of the array."*
+
+```
+transform[T, U] :: where =
+    U: typeof[fn(T): U]  -- U is whatever the mapping function returns
+
+transform[T, U] :: (arr: T#, f: fn(T): U): U# = ...
+```
+
+```
+Matrix[T, R, C] :: where =
+    T: impl[Numeric]
+    R: const int & (R > 0)    -- Must be positive
+    C: const int & (C > 0)
+
+-- Constraint across parameters:
+Slice[T, Start, End] :: where =
+    Start: const int
+    End: const int
+    End >= Start            -- Relationship between parameters
+```
+
+```
+-- A generic pair type
+Pari[A, B] :: where =
+    A: impl[Comparable]
+    B: impl[Comparable]
+
+Pair[A, B] :: struct =
+    first: A
+    second: B
+
+-- Pair is only Comparable if both A and B are
+Pair[A, B] :: impl[Comparable] =
+    compare(self, other: Pair[A, B]): int =
+        r = self.first.compare(other.first)
+        if r != 0 then r else self.second.compare(other.second)
+```
+
+*"These two type parameters must be the same type."*
+
+```
+zip[A, B, C] :: where =
+    C == (A, B)     -- C must be exactly a tuple of A and B
+```
+
+*"This parameter must be a specific projection of another."*
+
+```
+flatten[T] :: where =
+    T: T##          -- T must be a 2D array, inner type inferred
+```
+
+```
+sort[T] :: where =
+    T: impl[Comparable] else "sort requires T to implement Comparable — define `compare(self, other: T): int` on your type"
+```
+
+The `else` on a constraint provides the error message when the constraint fails. This is a developer experience feature more than a type theory feature, but it pays enormous dividends in practice. 
+
+```
+groupBy[T, K] :: where =
+    T: type
+    K: impl[Hashable] & impl[Comparable]
+    K: typeof[fn(T): K]
+        else "groupBy key function must return a Hashable, Comparable type"
+
+groupBy[T, K] :: (arr: T#, keyFn: fn(T): K): T##K =
+    result: mu T##K = [:]
+    loop item in arr:
+        key = keyFn(item)
+        result#key = (result#key || []) ++ item
+    result
+```
+
 ### Manual Implementation
 
 Generics will automatically generate code based on their parameters, but you can also implement them by hand using pattern matching. If you only want to use the manual implementations for a generic function, you can set its body to `never`. This creates a virtual function that can be overloaded later. If you use a function that is defined with `never`, it will throw a compile-time error.
