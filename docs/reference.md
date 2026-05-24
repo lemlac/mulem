@@ -141,8 +141,10 @@ Otherwise, a semicolon always ends an expression. New lines have special rules t
 object.method1()
       .method2()
       .method3()
+
 -- Is the same as:
 object.method1() .method2() .method3()
+
 -- object.method1();  ← semicolon disables splitting
 --       .method2()   ← SyntaxError
 ```
