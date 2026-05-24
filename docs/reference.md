@@ -92,13 +92,13 @@ Commas have lower presedence than semicolons. So in an expression like this…
 (a, b; c, d; e)
 ```
 
-…It would be evaluated as `(a, (b; c), (d; e))` and **not** `((a, b); (c, d); e)`. The result is a tuple: `(a, c, e)`.
+…It would be evaluated as `(a, (b; c), (d; e))` and **not** `((a, b); (c, d); e)`. The result is a tuple: `(a, c, e)`. The commas divide slots, and within each slot the semicolons sequence expressions left to right, discarding all but the last.
 
 - Slot 1: `a`
 - Slot 2: `b` *then* `c` — value is `c`
 - Slot 3: `d` *then* `e` — value is `e`
 
-The use case worth leading with is probably side effects — you want to do something and produce a tuple value at that position:
+The use case for this is that you want to do something and produce a tuple value at that position:
 
 ```
 (getX(), log("fetching y"); getY())
