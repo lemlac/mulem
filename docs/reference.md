@@ -101,7 +101,7 @@ Commas have lower presedence than semicolons. So in an expression like this…
 …And **not** `((a, b); (c, d); e)`. The result is a tuple:
 
 ```
-`(a, c, e)`
+(a, c, e)
 ```
 
 The commas divide slots, and within each slot the semicolons sequence expressions left to right, discarding all but the last.
