@@ -197,7 +197,7 @@ Symbols are grouped by meaning: `*`/`/` for math, `?` for options, `!` for resul
 | 3     | Comparison                | `== != < > <= >=`        |
 | 2     | Logical AND               | `and`                    |
 | 1     | Logical OR / Pipeline     | `or \|\| \|>`            |
-| 0     | Assignment / Spread       | `= := += => &`           |
+| 0     | Assignment / Spread       | `= := += => & ...`       |
 
 | Operator       | Meaning                                             | Precedence |
 |:---------------|:----------------------------------------------------|:----------:|
@@ -207,7 +207,7 @@ Symbols are grouped by meaning: `*`/`/` for math, `?` for options, `!` for resul
 | `lhs !`        | Unwrap result, propagate exception to nearest `try` |     10     |
 | `lhs ^`        | Dereference typed pointer                           |     10     |
 | `~ rhs`        | Inferred type conversion                            |     10     |
-| `++ rhs`       | Spread array into array                             |      0     |
+| `... rhs`      | Spread array into array                             |      0     |
 | `& rhs`        | Spread tuple into tuple (same type)                 |      0     |
 | `lhs .. rhs`   | Exclusive range                                     |      4     |
 | `lhs ..= rhs`  | Inclusive range                                     |      4     |
@@ -265,7 +265,7 @@ function x          -- spread tuple into function
 
 ### Pipelining `|>`
 
-When placed at the start of a line in a block, the pipelining operator `|>` takes on a special meaning: it takes the value of the previous line and makes it available in the next line as `$`. This symbol is known as the **contextual reference.** It has several uses in Mulang, but in the context of pipelines it simply represents the result of the previous line. This makes it easy to chain a sequence of calls and read them in order.
+When placed at the start of a line in a block, the pipelining operator `|>` takes on a special meaning: it takes the value of the previous line and makes it available in the next line as `$`. This symbol is known as the **pipeline context.** It has several uses in Mulang, but in the context of pipelines it simply represents the result of the previous line. This makes it easy to chain a sequence of calls and read them in order.
 
 ```
 print("{
@@ -293,7 +293,7 @@ This makes the order of operations easy to follow at a glance. It reads like a p
 - *then* `fetchC`
 - *then* `print`
 
-The first line of a block may also start with `|>`, in which case its context `$` is an empty tuple `()`. A line starting with `|>` is not required to use `$`. Some functions also require certain variables to be defined in the contextual reference. *(See [Function Declarations](#Function-Declarations).)*
+The first line of a block may also start with `|>`, in which case its pipeline context `$` is an empty tuple `()`. A line starting with `|>` is not required to use `$`. Some functions also require certain variables to be defined in the pipeline context. *(See [Function Declarations](#Function-Declarations).)*
 
 Multiple expressions separated by semicolons `;` on one line share the same context `$`. The last expression on the line is passed as the context to the next pipe.
 
@@ -324,12 +324,12 @@ fetchA() |>:           -- Start with this context.
         print("{$}")                 -- Print the final result.
 ```
 
-To capture a value in the middle of a pipeline, use `=>` after an expression. The assignment is written in reverse order — the variable name goes on the right.
+To get a value within a pipeline, use `=> x` after any step to store it into a local variable. The assignment is written in reverse order — the variable name goes on the right.
 
 ```
 |> fetchA()
 |> fetchB $
-|> fetchC $  => x   -- Capture the result into `x`.
+|> fetchC $ => x    -- Put the result into `x`.
 
 print("{x}")        -- Print the result.
 ```
@@ -337,7 +337,7 @@ print("{x}")        -- Print the result.
 This lets you extract the result of any step in a pipeline simply by appending `=> name` to that line.
 
 ```
--- Capture all results.
+-- Put all results of each step into variables.
 |> fetchA() => a
 |> fetchB $ => b
 |> fetchC $ => c
@@ -353,13 +353,13 @@ The variable type is always inferred, to avoid ambiguity with `:`. Mutability ca
     print("{x}")                      -- Print it.
 ```
 
-To capture the final result of any pipeline into a variable, use `|> $ => x` at the end, where `x` is any variable name. This makes it easy to mix and match the pipes in between with `|> $ => x` collecting it all into a variable. 
+To put the final result of any pipeline into a variable, use `|> $ => x` at the end, where `x` is any variable name. This makes it easy to mix and match the pipes in between with `|> $ => x` at the end to collect it all into a variable. 
 
 ```
 |> fetchA()      -- Start.
 |> fetchB $      -- Pass context.
 |> fetchC $      -- Pass context.
-|> $ => x        -- Capture the final context into `result`.
+|> $ => x        -- Put the final context into `result`.
 
 print("{x}")
 ```
@@ -528,8 +528,7 @@ Functions do not automatically capture mutable variables. Any assignment inside 
 ```
 mu count = 0
 
-addCount() =
-    @capture(count)
+addCount() use count =
     count += 1
 
 addCount()
@@ -758,7 +757,7 @@ print("{addAll(1, 2, 3)}")  -- Prints "6"
 
 #### Capturing
 
-Immutable variables can be captured without an issue. If you try to set it within a function, it will get shadowed within the scope of the function. This also includes other functions which are also immutable by default.
+Immutable variables can be captured without any issue. They can't change, so they can't affect the output of the function. And if you try to set an immutable variable within a function, it will only get shadowed within the scope of the function. This includes capturing other functions which are also immutable by default.
 
 **By default, functions cannot capture mutable variables.**
 
@@ -778,16 +777,16 @@ cannotChangeX(2) -- Prints "2"
 print("{x}")     -- Prints "1"
 ```
 
-To capture a mutable variable, you can write `@capture` at the top of the function body and capture multiple variables at once. This helps make it easy to see which functions can mutate other variables and which don't. This follows the same practice that `import` and `inherit` where all words in a given context are listed out clearly so that there are no accident name collisions or hidden gotchas.
+To capture a mutable variable, write `use` at the end of the function signature. This goes after the return type `: T` *(or after the parameter if inferred)* and before the equals sign `=`. List each *multiple* `mu` variables that the function *uses.* This helps make it easy to see which functions depend on mutable variables and which ones don't. This follows the same practice that `import` and `inherit` where all words in a given context are listed out clearly so that there are no accident name collisions or hidden gotchas.
 
 ```
-mu count = 0
+amount = 1                 -- Immutable variable, doesn't need `use`.
+mu count = 0               -- Mutable variables, must be captured with `use`.
 mu squared = 1
 mu cubed = 1
    
-addCount() =
-    @capture(count, squared, cubed)    -- Capture 3 variables at once.
-    count += 1
+addCount(): int use count, squared, cube =       -- Capture 3 variables at once.
+    count += amount                              -- Mutate captured variables inside the function.
     squared = count * count
     cubed = squared * count
 
@@ -797,7 +796,7 @@ addCount()
 print("{count}, {squared}, {cubed}") -- Prints "3, 9, 27"
 ```
 
-This highlights the flexibility of the language. It doesn't need a dedicated keyword like `capture`. Compiler behavior can be dictated using decorators, changing the language itself. *(See [Decorators](#Decorators).)* 
+Some languages use the words `use` or `using` to resolve namespaces, but this won't clash with this version of `use` since it can only go in the function signature. It makes it clear that the *return value* of a function is type with these mutable variables. You can think of it like *"the output of this function relies on these outside variables."*
 
 #### Lambda Functions
 
@@ -815,7 +814,7 @@ fn(arg) =
 ```
 
 ```
-map(array, func) = [++loop x in array then func(x)]
+map(array, func) = [...loop x in array then func(x)]
 array0 = [1, 2, 3, 4]
 array1 = map(array0, fn(x) = x + 1)   -- Inline
 array2 = map(array0, fn(x) =          -- Multi-line
@@ -877,8 +876,7 @@ Capturing also works inside lambda functions just like with named functions.
 
 ```
 mu count = 0
-forEach([1, 2, 3, 4], fn(x) =
-    @capture(count)
+forEach([1, 2, 3, 4], fn(x) use count =
     count += x
 )
 ```
@@ -1231,7 +1229,7 @@ filePath = ''C:\files\on\windows.txt''
 template = ''Insert here → {{variable}}''
 ```
 
-To make a multi-line raw string, add an at sign `@` before and after triple quotation marks `"""`. The number of `@`s must match to close the raw string. This symbol is also used for decorators such as `@capture`, so the two connect giving `@` the general syntactical meaning of a compile-time signal.
+To make a multi-line raw string, add an at sign `@` before and after triple quotation marks `"""`. The number of `@`s must match to close the raw string. This symbol is also used for decorators such as `@unsafe`, so the two connect giving `@` the general syntactical meaning of a compile-time signal.
 
 |  Opening | Closing  |
 |---------:|:---------|
@@ -1356,40 +1354,38 @@ b = 0 ++ a ++ 5       -- == [0, 1, 2, 3, 4, 5]
 c = b ++ 6 ++ 7 ++ 8  -- == [0, 1, 2, 3, 4, 5, 6, 7, 8]
 ```
 
-Another use for `++` is to spread an array into another array. This was chosen because it's also used for concatenation, giving the two operations an obvious syntactical connection. 
+Use the spread operator `...` to spread an array into another array. This must be the first prefix operator in an expression, and it must be in a compatiable array or tuple literal. It alwasy goes last in the slot's expression, so extra parentheses aren't necessary: `...a ++ b` == `...(a ++ b)`.
 
 ```
 a = [1, 2, 3]
-b = [0, ++a, 4]    -- == [0, 1, 2, 3, 4]
-c = a ++ b         -- == [1, 2, 3, 0, 1, 2, 3, 4]
+b = [0, ...a, 4]                -- == [0, 1, 2, 3, 4]
+c = a ++ b                      -- == [1, 2, 3, 0, 1, 2, 3, 4]
+d = [0, ...a ++ b, 5, ...c, 6]  -- == [0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 1, 2, 3, 0, 1, 2, 3, 4, 6]
 ```
 
-This means that you can either spread or concatenate just by putting the right-hand side inside or outside of the array literal.
+If you spread an array into a tuple, the type must be known at compile-time and the tuple must have compatible components. Positional components will map to array indexes or iterator yields based on where the spread is placed inside the tuple. If the tuple runs out of space, the spread will be truncated. This works similar to variadic parameters in functions.
 
 ```
-a = [ 4, 5 ]
-b = [ 1, 2, 3 ] ++a   -- == [1, 2, 3, 4, 5]
-c = [ 1, 2, 3, ++a ]  -- == [1, 2, 3, 4, 5]
-b == c                -- True.
+ThreeInts :: (int, int, int)
+
+list = [1, 2, 3]
+a: ThreeInts = (...list)      -- == (1, 2, 3)
+b: ThreeInts = (0, ...list)   -- == (0, 1, 2), truncated at the end
 ```
 
-Spread operators `++` and `&` have the lowest precedence in the order of operations. This is so that you can write any expression to the right of it without needing to surrounding it in brackets. Spread operators only work at the start of positional expressions: `[]` for `++` ; `()` or `{}` for `&`.
+Tuples may also collect any remaining positional components into an array, just like variadic parameters in functions.
 
 ```
-d = [++ 1 ++ 2 ++ 3, 4, 5] -- Becomes [++ [1, 2, 3], 4, 5] first, then, spread [1, 2, 3, 4, 5]
-b == c == d                -- True.
+TwoOrMoreInts :: (int, int, ...int#)
+
+list = [1, 2]
+a: TwoOrMoreInts = (...list)              -- == (1, 2, [])
+b: TwoOrMoreInts = (0, ...list)           -- == (0, 1, [2])
+c: TwoOrMoreInts = (-1, 0, ...list)       -- == (-1, 0, [1, 2])
+d: TwoOrMoreInts = (-2, -1, 0, ...list)   -- == (-2, -1, [0, 1, 2])
 ```
 
-Some languages use `...`, but this visually conflicts with the range `..` operator. `++` conveys the meaning better without any issues. *What if you wanted to spread a range into an array?* 
-
-```
-tenDigits = [...0..10 ]  -- Huh? . + range + 0 + range + 10? 
-tenDigits = [ ++0..10 ]  -- Oh! Spread + 0 + range + 10!
-```
-
-The second makes it clear that it's two operations: spread (`++`) and range (`..`). 
-
-*Mulang separates tuple and array spread to preserve type safety and avoid Python‑style runtime surprises. `&` always preserves tuple structure; `++` always preserves array structure.*
+*Mulang separates tuple and array spread to preserve =type safety and avoid Python‑style runtime surprises. `&` always preserves tuple structure; `...` always preserves array structure.*
 
 #### Dictionaries
 
@@ -1528,7 +1524,7 @@ x =
         y + 1       -- block's value is 2
 ```
 
-Any starting block can be given a label. Use this to call `break` on a specific block.
+Any starting block can be given a label. Use this to call `break` on a specific block. This uses the same convention as membership access `.`. The distinction is that this only comes after a keyword such as `do.`, `loop.`, or `break.`. 
 
 ```
 do.block:
@@ -1614,12 +1610,19 @@ loop (x, y, z) in listOfTuples:
     print("{x}, {y}, {z}")
 ```
 
-Pattern matching works. All patterns must have fallbacks. *(See [Pattern Fallback](#pattern-fallbacks).)*
+Pattern matching works. All patterns must have fallbacks. *(See [Pattern Fallback](#pattern-fallbacks).)* This is because if you have an array/iterator of enums, it would be hard to determine if they're all a particular pattern. This ensures an mismatches are handled inside the loop. 
 
 ```
 loop Pattern(opt x) in listOfPatterns:
     if x is Some(x):
         print("Found match: {x}")
+```
+
+This can be combined with `then opt` to automatically skip when there's a mismatch.
+
+```
+loop Pattern(opt x) in listOfPatterns then opt:    -- Add `then opt` to the end of the loop's subject.
+    print("Found match: {x?}")                     -- If `x` is None, the loop skips to the next iteration
 ```
 
 #### `break` / `continue`
@@ -2708,9 +2711,17 @@ In this example, you would import `addThing` like this (assuming the file is inc
 import myModule.addThing
 ```
 
+This connects the same explicit-list convention as `inherit` and `use` — *no hidden dependencies, everything that can affect behavior is named.* The three together form a consistent rule across the language:
+
+| Keyword   | "I am explicitly pulling in…"       |
+|:----------|:------------------------------------|
+| `import`  | Names from another module.          |
+| `inherit` | Members from another struct.        |
+| `use`     | Mutable variables from outer scope. |
+
 ### Base Context / Command Line Arguments
 
-The context reference `$` holds the command-line arguments passed to your program when it's called. This is a tuple of optional strings `str?`. The first argument `$0` is either the filepath to the main script when in interpreated mode or `None` when running as a compiled programm. You can use this to check if your running as a script or not.
+Some context variables are defined when a module starts that hold the command-line arguments passed to your program when it's called. These are all type optional string `str?`. The first argument `$0` is either the filepath to the main script when in interpreated mode or `None` when running as a compiled programm. You can use this to check if your running as a script or not.
 
 ```
 if $0 is Some(x):
@@ -2762,7 +2773,7 @@ expr
 
 Decorators can be stacked and will run in reverse order. *Closest decorator to the expression runs, then the next one above that, then the next one, etc.*
 
-Built-in decorators demonstrated so far include `@unsafe`, `@inlined`, `@capture`, `@opaque`, `@from`, and `@memory`. More planned for the future.
+Built-in decorators demonstrated so far include `@unsafe`, `@inlined`, `@opaque`, `@from`, and `@memory`. More planned for the future.
 
 ```
 @memory(Manual) -- Call it like a function to pass a variable.
@@ -2775,21 +2786,15 @@ Thing :: struct =
 @inlined
 setBitAnd(ref mu a, ref b) =
     a = a band b
-
-mu count = 0
-increment() =
-    @capture(count)
-    count += 1   -- In-lined decorator.
 ```
 
 Some other ideas for built-in decorators include:
 
-- `@nonlocal` - assign to a non-local variable like a one-off `@capture()`
 - `@private` — locks a symbol to only be used within its module.
 - `@static` — make a variable global but only available within the scope that it was defined in.
 - `@inline` — marks that a regular function should inline itself like a meta function.
 - `@comptime` — run a function at compile-time, return it's value as a constant.
-- `@pure` — enforces pure function programming practices: *no `ref mu`, no `capture`, no `out`, etc.*
+- `@pure` — enforces pure function programming practices: *no `ref mu`, no `use`, no `out`, etc.*
 - `@safe` — enforces borrow-checking at compile time for this module or function.
 - `@override` — marks that a previously implemented method will be overridden.
 
@@ -2803,8 +2808,8 @@ This is a work in progress though. How these decorators are implemented and thei
 - **Patterns scale with complexity** — simple things like declaring a mutable variable (`mu`), making a function (`fn`), or wrapping a block (`(…: …)`) use short patterns, more complex things use bigger patterns.
 - **Performance on demand** — start with GC; change to a lower-level memory model where necessary.
 - **Explicit but ergonomic** — `!` for errors, attributes for memory models, same keywords used between inline and block expressions.
-- **Trace and auditability** — `import`, `inherit`, and `capture` require variables to be listed out to know where they're coming from; no glob-like imports.
-- **Unified concepts** — `@capture` for scope capture; `inherit` for member visibility; `::` for all top-level definitions.
+- **Trace and auditability** — `import`, `inherit`, and `use` require variables to be listed out to know where they're coming from; no glob-like imports.
+- **Unified concepts** — `use` for scope capture; `inherit` for member visibility; `::` for all top-level definitions.
 
 ---
 
@@ -2848,9 +2853,10 @@ This is a work in progress though. How these decorators are implemented and thei
 36. `then`
 37. `try`
 38. `until`
-39. `where`
-40. `xor`
-41. `yield`
+39. `use`
+40. `where`
+41. `xor`
+42. `yield`
 
 *NOTE: Built-in types, values, functions, and decorators like `int`, `True`, `Some`, `default`, `print`, `@memory` etc. are not considered keywords.*
 
