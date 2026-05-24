@@ -1597,10 +1597,10 @@ else:
     print("Never ran")
 ```
 
-Inlined `loop x in` returns a lazy iterator collected with `++`.
+Inlined `loop x in` returns a lazy iterator collected with `...`.
 
 ```
-doubled = [++ loop x in list then x * 2]
+doubled = [...loop x in list then x * 2]
 ```
 
 Destructuring works in loop variables.
@@ -2542,7 +2542,7 @@ List[T, N] :: struct =
 
 List[T, N] :: impl =
     init() =
-        data: T#N = [++loop _ in 0..N then default]
+        data: T#N = [...loop _ in 0..N then default]
         List[T, N](data: data)
 ```
 
