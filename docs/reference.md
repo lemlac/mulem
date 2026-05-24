@@ -476,7 +476,7 @@ This gives you a great deal of flexibility in how you choose to express your cod
 
 ### Pipeline Context (`$`)
 
-Any variable starting with `$` is a **context variable.** These are scoped variables that functions can see when they're called. 
+Any variable starting with `$` is a **context variable.** These are scoped variables that functions can see when they're called. They must be declared in the function's signature with captured variables to see them. *(See [Function Declarations](#function-declarations).)*
 
 Variable names in Mulang don't allow `$` inside them, but this symbol is treated like a name. You can put symbols next to it, but other words needs to be seperated with a space next to it.
 
@@ -1020,6 +1020,20 @@ do:                         -- Issolate parameters to this scope
 -- Exit scope.
 
 -- result = addContext() -- Error: $a and $b aren't defined.
+```
+
+The type can be inferred like other parameters. 
+
+```
+addContext() / $a / $b =
+    $a + $b
+```
+
+Sometimes it's hard to tell where contextual variables are coming from. In that case, you could use a decorator like `@defined` to assert that variables are defined in a the scope.
+
+```
+@defined($a, $b)    -- Will throw at compile-time if $a or $b are undefined.
+addContext()
 ```
 
 The contextual variable prefix makes it clear that anything with `$` is a contextual variables that's shared with functions in the *same scope.* `$` by itself is just one specific variable which gets set by the return value of a *pipeline* expression.
@@ -1577,12 +1591,12 @@ do:
 
 Pointer types have 2 kinds of mutability: one for the reference, and one for the pointer variable itself. Here is a table of each kind and what it means.
 
-|    Type   | Can reassign pointer | Can mutate memory |
-|:---------:|:--------------------:|:-----------------:|
-|    `T^`   |       **No**         |      **No**       |
-|    `T^mu` |       **No**         |        Yes        |
-| `mu T^`   |         Yes          |      **No**       |
-| `mu T^mu` |         Yes          |        Yes        |
+|    Type   | What It Means                         | Can reassign pointer | Can mutate memory | *Think…* |
+|:---------:|:--------------------------------------|:--------------------:|:-----------------:|:---------|
+|    `T^`   | immutable pointer to immutable memory |       **No**         |      **No**       | *This will never change.* |
+|    `T^mu` | immutable pointer to mutable memory   |       **No**         |        Yes        | *Like a more low-level `ref mu`.* |
+| `mu T^`   | mutable pointer to immutable memory   |         Yes          |      **No**       | *I need to switch what I'm looking at.* |
+| `mu T^mu` | mutable pointer to mutable memory     |         Yes          |        Yes        | *I need full control.* |
 
 ---
 
