@@ -145,6 +145,7 @@ object.method1()
 -- Is the same as:
 object.method1() .method2() .method3()
 
+-- Semicolons disables this
 -- object.method1();  ← semicolon disables splitting
 --       .method2()   ← SyntaxError
 ```
