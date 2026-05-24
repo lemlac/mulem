@@ -1069,7 +1069,7 @@ curryAdd(a: int): fn(int): fn(int): int =
 curryAdd(1)(2)(3)
 ```
 
-Because this is a common practice, you can leave the `=` so that there isn't so much indententing. The rest of the scope at that point becomes the next function body.
+Functions that return functions are common in programming, but the indentation can make it hard to read. To help with this, you can leave the `=` and keep the indentation the same. The rest of the scope at that point becomes the next function body.
 
 ```
 curryAdd(a: int) =          -- Inferred return type.
@@ -1078,6 +1078,24 @@ curryAdd(a: int) =          -- Inferred return type.
     a + b + c               -- Inside the last function, final return value.
 
 curryAdd(1)(2)(3)
+
+curryTest(b: bool) =
+    print("In function 1")
+    if bool:                -- New block.
+        return fn()         -- Return function.
+        print("In function 2")
+        return fn()
+        print("In function 3")
+    print("Didn't go")      -- This doesn't run if b is True.
+curryTest(True)()()         -- Call all three functions.
+```
+
+Prints:
+
+```
+In function 1
+In function 2
+In function 3
 ```
 
 Capturing also works inside lambda functions just like with named functions.
