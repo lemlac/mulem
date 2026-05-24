@@ -1221,6 +1221,30 @@ result = AddArgs(a: 1, b: 2) |> add $     -- Pass to add directly.
 print("{result}")      -- Prints "3"
 ```
 
+__Use case for contextual parameters…__
+
+That contextual parameters solve the problem of **threading variables through a call chain without passing them explicitly at every step.**
+
+The canonical example would be something like a logger, a configuration object, or a user session — values that many functions in a scope need access to, but which would clutter every function signature if passed as regular arguments. Instead of:
+
+```
+doA(config, logger)
+doB(config, logger)
+doC(config, logger)
+```
+
+You declare them once in the scope as `$config` and `$logger`, and any function that needs them just declares `/ $config / $logger` in its signature. The call sites stay clean:
+
+```
+$config = getConfig()
+$logger = getLogger()
+doA()
+doB()
+doC()
+```
+
+So it's essentially **implicit dependency injection scoped to the lexical scope** — with a more explicit declaration at the function definition side and a visible `$` sigil to signal *"this comes from context, not from a direct argument."*
+
 ---
 
 ## Types
