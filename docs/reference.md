@@ -1292,6 +1292,22 @@ item = doubleArray#1#0    -- The 2nd row, 1st column
 print("{item}")           -- Prints "3"
 ```
 
+Raw indexing is generally frowned upon. Mu prevents you from accessing an array unless can be guaranteed to be within range. If you wish to access an index without safety, mark your code with `@unsafe`. 
+
+```
+@unsafe                     -- Allow raw indexing.
+do:
+    list: int# = getData()
+    print("{list#100}")     -- Might fail.
+```
+
+In general, you'll mostly be using arrays by iterating or piping them. 
+
+```
+loop x in list:
+    print("{x}")     -- No need to use `#`
+```
+
 If the left hand side of `++` isn't an array, it will automatically create one. A non-array on the right-hand side will push it to the end of the resulting array. In this way, you can abandon square brackets notation for array literals entirely and just use `++`.
 
 ```
@@ -1359,6 +1375,22 @@ print("{ dict#["b"] }")   -- Prints "2"
 print("{ dict#b }")       -- Prints "2"
 ```
 
+Like with arrays, you can't access dictionaries directly unless it's guarenteed to succeed. If not, you should mark it in a block with `@unsafe`. 
+
+```
+@unsafe                      -- Allow raw dictionary accessing
+do:
+    dict: int#str = getData()
+    print("{dict#data}")     -- Might fail.
+```
+
+You can iterate through a dictioary like with arrays.
+
+```
+loop (val, key) in dict:
+    print("{key} = {val}")
+```
+
 #### Pointers
 
 Although most things can be achieved without manual manipulation of pointers, some low level code requires it. Opaque pointers use the type `ptr`. This represents a pointer where the type that it represents is unknown. It's ideal for FFI where you need to pass a pointer a around and let an external library handle it. 
@@ -1392,10 +1424,11 @@ xPtr.set(1)!         -- Safely set the pointer and branch if there's an error.
 print("{x}")         -- "1", the pointer successfully mutated `x`.
 ```
 
-Sometimes, it's necessary to dig deep into the unsafe territory. Mulang normally prevents you from doing this unless you put the code in an `unsafe:` block. The `^` is the symbol associated with pointers, analogues to `?` for options, `!` for results, and `#` for arrays. It can be used in type notation, but it's also the operator to dereference a pointer. Thy type must be known at compile-time. Dereferencing an opaque pointer `ptr` is a compile-time error. In the type notation, `T^` prevents the pointer from mutating its memory or `T^mu` allows mutation with `^ =` (dereference + assignment). 
+Sometimes, it's necessary to dig deep into the unsafe territory. Mulang normally prevents you from doing this unless you mark the code with `@unsafe`. The `^` is the symbol associated with pointers, analogues to `?` for options, `!` for results, and `#` for arrays. It can be used in type notation, but it's also the operator to dereference a pointer. Thy type must be known at compile-time. Dereferencing an opaque pointer `ptr` is a compile-time error. In the type notation, `T^` prevents the pointer from mutating its memory or `T^mu` allows mutation with `^ =` (dereference + assignment). 
 
 ```
-unsafe:                      -- Allow pointer manipulation here.
+@unsafe                      -- Allow pointer manipulation in this block.
+do:
     mu x = 0                 -- `ptr` type takes a reference and creates a generic pointer.
     xPtr: int^mu = ~ptr(x)   -- Convert `ptr` to `int^mu`, type is known.
     xPtr^ = 1                -- Mutate the memory.
@@ -2570,7 +2603,7 @@ expr
 
 Decorators can be stacked and will run in reverse order. *Closest decorator to the expression runs, then the next one above that, then the next one, etc.*
 
-Built-in decorators demonstrated so far include `@inlined`, `@capture`, `@opaque`, `@from`, and `@memory`. More planned for the future.
+Built-in decorators demonstrated so far include `@unsafe`, `@inlined`, `@capture`, `@opaque`, `@from`, and `@memory`. More planned for the future.
 
 ```
 @memory(Manual) -- Call it like a function to pass a variable.
