@@ -117,7 +117,7 @@ do:
     _
 ```
 
-### Inline Blocks (`( …: … )`)
+### Inline Blocks `( …: … )`
 
 To switch from block mode to inline mode (and vice versa):
 
