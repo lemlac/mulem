@@ -1827,7 +1827,7 @@ if x is Some(x):
 
 ### Monadic Control Flow
 
-This blocks are for wrapping and unwrapping monadic types such as options `type?` and results `type!`. 
+Error and null handling is done through the `try` and `opt` keywords. These blocks are for wrapping and unwrapping monadic types such as options `type?` and results `type!`. 
 
 #### `try` / `except`
 
@@ -1843,13 +1843,26 @@ except Exception(e):
     0
 ```
 
+```
+try:
+    data = riskyOperation()!
+    data2 = anotherRisky()!
+    final = process(data, data2)
+    final
+except IOError(e):
+    print("IO failed: {e}")
+    defaultValue
+except ValidationError(e):
+    raise Err(e)
+```
+
 Inline form.
 
 ```
 result = try divide(1, 0)! except _ then 0.0
 ```
 
-Using `!` inside a function automatically infers a result return type.
+Using `!` inside a function automatically infers a result return type `T!`.
 
 ```
 riskyFn(a: int): int! =
@@ -1878,7 +1891,7 @@ Inline form.
 x = opt f(a?) || "fallback"
 ```
 
-Using `?` inside a function automatically infers an option return type.
+Using `?` inside a function automatically infers an option return type `T?`.
 
 ```
 addStuff(a: int, b: int): int? =
@@ -1887,7 +1900,7 @@ addStuff(a: int, b: int): int? =
     x + y
 ```
 
-Nested options unwrap with multiple `?`.
+Nested options unwrap with multiple `??`.
 
 ```
 unnest(x: int??): int? = x??
