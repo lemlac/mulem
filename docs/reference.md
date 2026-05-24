@@ -145,6 +145,10 @@ apiFetch(fn(result) =    -- Switch to block mode.
                          -- All brackets closed, next line.
 ```
 
+- *Line ends with ":" or "=" → Enter block mode*
+- *Dangling "(" "[" "{" on same line → Inline mode until closed*
+- *All brackets closed → Return to block mode*
+
 If a bracket has a line ending in `:` or `=`, it will start an **inline-block.** Nesting works freely. You only need to worry about closing the bracket when you're done with the block. 
 
 ```
@@ -493,6 +497,12 @@ $x = 0
 printX()        -- Prints "0"
 ```
 
+| Channel    | Meaning                       | Lifetime          |
+|:-----------|:------------------------------|:------------------|
+| `$`        | pipeline value                | per pipeline step |
+| `$name`    | shared contextual variable    | lexical scope     |
+| `$name: T` | required contextual parameter | function call     |
+
 *See [Contextual Parameters](#comtextual-parameters) for more details.*
 
 ### Mutability (`mu`)
@@ -647,7 +657,14 @@ What each modifier means changes the functionality:
 | `ref mu` | Reference         | Yes                 |
 | `out`    | Reference         | *Yes, must be set*  |
 
-Another type of parameter is `out`. This is like `ref mu` but is treated like `unset[T]` at the start of the function. Use it to set a variable that hasn't been set yet. The parameter must not be `unset[T]` in any branch within the function. This means either setting it within the function or passing it to another function with an `out` parameter. This ensures that the variable is set after the function has been called. 
+Another type of parameter is `out`. `out` parameters are guaranteed‑set references. They behave like `ref mu`, except they begin the function in an *unset* state. Use an `out` parameter when a function’s job is to produce a value rather than consume one.
+
+An out parameter must not remain unset in any branch of the function. It must either be:
+
+- Assigned directly, *or*
+- Passed to another function that also takes an out parameter.
+
+This guarantees that the variable is initialized after the call completes.
 
 ```
 setInt(out i): void =
@@ -658,7 +675,7 @@ setInt(x)
 print("{x}")    -- Prints "3"
 ```
 
-This works for mutable variables, but what if you wanted to make an immutable variable using `out`? We can declare that a variable is being set by a function with `as`. Just like how we use `as` for aliasing, this makes it clear that we're expecting a new variable at the call site. This makes it clear that we are intentionally declaring a new variable and not trying to pass an existing one. 
+This is fine, but what if you just wanted to grab the `out` variable in one go? Normally you could just write `n = setInt()` — but `out` parameters don’t return values. We can inline a variable from the `out` parameter with the keyword `as`. Just like how we use `as` for aliasing, this makes it clear that we're expecting a new variable at the call site. That way it's *explicit* that we're intentionally declaring a new variable instead of passing in an existing one.
 
 ```
 setInt(as n)    -- Declare a new variable as `n` that gets set by `setInt`.
@@ -666,6 +683,8 @@ print("{n}")    -- Prints "3"
 ```
 
 `setInt(as n)` → "Set int as n"—This makes it clear what you're trying to do.
+
+Using `as` makes the intent unambiguous: you are creating a variable, not passing an existing one.
 
 Parameters can be made optional with the `opt` modifier. This distinguishes them from `T?` which means a required parameter that's an option type. The parameter must be unwrapped before it can be used.
 
@@ -1349,6 +1368,8 @@ tenDigits = [ ++0..10 ]  -- Oh! Spread + 0 + range + 10!
 
 The second makes it clear that it's two operations: spread (`++`) and range (`..`). 
 
+*Mulang separates tuple and array spread to preserve type safety and avoid Python‑style runtime surprises. `&` always preserves tuple structure; `++` always preserves array structure.*
+
 #### Dictionaries
 
 Dictionaries are a subtype of arrays. Instead of numbers, each item is given a **key.** A dictionary's type is the type of the value `V` and the type of the key `K` join with a hash `#` in between: `V#K`. This makes it semantically clear that they are a subtype of arrays. Dictionaries also use the same operator to access items. The type passed to the `#` operator must match the key type. Each key is marked with `[]:` in the array.
@@ -1858,37 +1879,48 @@ if x is Some(x):
     print("{x}")
 ```
 
-### Monadic Control Flow
+### Error/Optional Control Flow
 
-Error and null handling is done through the `try` and `opt` keywords. These blocks are for wrapping and unwrapping monadic types such as options `type?` and results `type!`. 
+Error and null handling is done through the `try` and `opt` keywords. These blocks are for unwrapping the 2 monadic types in Mulang: *optionals* `T?` and *results* `T!`. When resolving a monadic, you go in *reverse order* that was notated by the type. Think of it like a box: you start from the outside and work your way in.
 
-__How monad types work…__
+- `T?` is an *optional:* it may contain a value or be `None`.
+- `T!E` is a *result:* it may contain a value or an error of type `E`.
 
-Think of each `?` or `!` on a *type* as a **layer.** When you call the same `?` or `!` on an *expression,* you **unwrap** that layer.
+| Mu's Type | Other Languages           | In Plain English                                              | Layers | Resolve Order             |
+|:----------|:--------------------------|:--------------------------------------------------------------|-------:|:--------------------------|
+| `T?`      | `Option<T>`               | An optional                                                   |      1 | `?`                       |
+| `T!E`     | `Result<T, E>`            | A result with 1 possible error                                |      1 | `!`                       |
+| `T?!E`    | `Result<Option<T>, E>`    | A result with 1 possible error of an optional                 |      2 | `!` *then* `?`            |
+| `T??`     | `Option<Option<T>>`       | An optional of an optional                                    |      2 | `?` *then* `?`            |
+| `T?!E!F`  | `Result<Option<T>, E\|F>` | A result with 2 possible errors of an optional                |      2 | `!` *then* `?`            |
+| `T!E?`    | `Option<Result<T, E>>`    | An optional of a result with 1 possible error                 |      2 | `?` *then* `!`            |
+| `T?!E?`   | `Option<Result<T, E>>`    | An optional of a result with 1 possible error of an optional  |      3 | `?` *then* `!` *then* `?` |
+
+Think of each `?` or `!` on a *type* as a **layer.** When you call the same `?` or `!` in an *expression,* you **unwrap** that layer.
 
 ```
-x: int? = getMaybeInt()   -- Get wrapped value.
-y: int = x?               -- Unwrap it.
--- Becomes…
+x: int!Error = getRiskyInt()             -- Get wrapped result value.
+y: int = x!                              -- Unwrap the result.
+                                         -- Which is equivalent to…
 y = (match x is
-    | Some(x): x
-    | None: return None   -- Exit block, return None if a function
+    | Ok(val): val                       -- Get the Ok value.
+    | Exception(e): return Exception(e)  -- Exit block, return Exception if a function
 )
 ```
 
 ```
-x: int! = getRiskyInt()   -- Get wrapped value.
-y: int = x!               -- Unwrap it.
--- Becomes…
+x: int? = getMaybeInt()   -- Get wrapped optional value.
+y: int = x?               -- Unwrap the optional.
+                          -- Which is equivalent to…
 y = (match x is
-    | Ok(x): x
-    | Exception(e): return Exception(e)  -- Exit block, return Exception if a function
+    | Some(val): val      -- Get the Some value.
+    | None: return None   -- Exit block, return None if a function
 )
 ```
 
 #### `try` / `except`
 
-Unwrap result types with `!` inside a `try` block. Unhandled exceptions propagate upward.
+Error handling. Unwrap result types with `!` inside a `try` block. Unhandled exceptions propagate upward.
 
 ```
 try:
@@ -1942,7 +1974,7 @@ riskyFn(a: int): int! =
 
 #### `opt`
 
-Unwrap option types with `?` inside an `opt` block. If any `?` returns `None`, the block short-circuits.
+None-coalescing. Unwrap option types with `?` inside an `opt` block. If any `?` returns `None`, the block short-circuits.
 
 ```
 opt:
@@ -2402,7 +2434,7 @@ A subtype cannot accidentally expose or clash with a private inherited member be
 
 ## Meta Functions
 
-Adding a parameter before the double colon (`::`) turns it into a **meta function** which combines the concepts of **inline functions**, **macros**, and **generics**. Parameters are put in square brackets `[]` to distinguish them from regular functions which use parentheses `()`. The result is treated like a constant for run-time code. 
+Adding a parameter before the double colon (`::`) turns it into a **meta function.** *A meta‑function is a compile‑time function that returns code, types, or values.* Parameters are put in square brackets `[]` to distinguish them from regular functions which use parentheses `()`. The result is treated like a constant for run-time code. 
 
 You can define a meta function by adding a parameter before the double colons and writing an expression after it. Like constants, they don't output a value in memory when compiled, useful for collecting repeated code. Unlike regular functions, meta function cannot be passed to another function. They only exist at compile-time. Each parameter is a variable within the expression, so you don't need to wrap them in parentheses `()` like with C macros. 
 
