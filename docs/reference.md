@@ -92,7 +92,19 @@ Commas have lower presedence than semicolons. So in an expression like this…
 (a, b; c, d; e)
 ```
 
-…It would be evaluated as `(a, (b; c), (d; e))` and **not** `((a, b); (c, d); e)`. The result is a tuple: `(a, c, e)`. The commas divide slots, and within each slot the semicolons sequence expressions left to right, discarding all but the last.
+…It would be evaluated as…
+
+```
+(a, (b; c), (d; e))
+```
+
+…And **not** `((a, b); (c, d); e)`. The result is a tuple:
+
+```
+`(a, c, e)`
+```
+
+The commas divide slots, and within each slot the semicolons sequence expressions left to right, discarding all but the last.
 
 - Slot 1: `a`
 - Slot 2: `b` *then* `c` — value is `c`
