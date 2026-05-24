@@ -1610,7 +1610,7 @@ loop (x, y, z) in listOfTuples:
     print("{x}, {y}, {z}")
 ```
 
-Pattern matching works. All patterns must have fallbacks. *(See [Pattern Fallback](#pattern-fallbacks).)* This is because if you have an array/iterator of enums, it would be hard to determine if they're all a particular pattern. This ensures an mismatches are handled inside the loop. 
+Pattern matching works. All patterns must have fallbacks. *(See [Pattern Fallback](#pattern-fallbacks).)* This is because if you have an array/iterator of enums, it would be hard to determine if they're all a particular pattern. This ensures any mismatches are handled inside the loop. 
 
 ```
 loop Pattern(opt x) in listOfPatterns:
