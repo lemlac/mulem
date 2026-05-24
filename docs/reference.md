@@ -1615,13 +1615,15 @@ dict: int#str = [
     ["invalid name"]: 127,
 ]
 print("{ dict#["b"] }")   -- Prints "2"
-print("{ dict#b }")       -- Prints "2"
+print("{ dict#b }")       -- Prints "2",
 ```
+
+`#b` is the same as `#["b"]`. Member names of a dictionary get converted to string literals. If it's not a valid variable name (alphanumeric), them it needs to be in a true string literal like `#["invalid name"]`.
 
 Like with arrays, you can't access dictionaries directly unless it's guarenteed to succeed. If not, you should mark it in a block with `@unsafe`. 
 
 ```
-@unsafe                      -- Allow raw dictionary accessing
+@unsafe                      -- Allow raw dictionary access.
 do:
     dict: int#str = getData()
     print("{dict#data}")     -- Might fail.
