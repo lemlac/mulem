@@ -800,7 +800,9 @@ Languages that use return values for this kind of thing (`n = setInt()`) imply t
 
 Parameters can be made optional with the `opt` modifier. This distinguishes them from `T?` which means a required parameter that's an option type. The parameter must be unwrapped before it can be used.
 
-`||` is `None` coalescing operation. It unwrsapa a `T?` into a `T`. In other languages, this means `or`. However, None/null coalescing isn't much different from a logical OR. They both have the same order of operations, and most languages who don't have it just use `||` instead. Mulang makes `or` and `||` distinct so that the intention is clear. Other languages use `??` or `?:`, but these would conflict with `?` so `||` was chosen instead.
+When calling a function with `T?`, you give it a value of `T?`. When calling a function with `opt T`, you give it a value of `T`. 
+
+`||` is the *`None`-coalescing operation.* It unwraps a `T?` into a `T`. In other languages, this means `or`. However, None/null coalescing isn't much different from a logical OR. They both have the same order of operations, and most languages who don't have it just use `||` instead. Mulang makes `or` and `||` distinct so that the intention is clear. Other languages use `??` or `?:`, but these would conflict with `?` so `||` was chosen instead.
 
 ```
 addOptional(a: opt int, b: opt int): int =
@@ -811,6 +813,33 @@ addOptional(a: opt int, b: opt int): int =
 print("{addOptional()}")      -- Prints "0"
 print("{addOptional(1)}")     -- Prints "1"
 print("{addOptional(1, 1)}")  -- Prints "2"
+```
+
+- `T?` describes the **type of the value** — the caller is passing in an option and is responsible for handling `None`.
+- `opt T` describes the **presence of the argument** — the caller can omit it entirely, and the function handles the absence.
+
+When calling a function with `T?`, you give it a value of `T?`. When calling a function with `opt T`, you give it a value of `T`. 
+
+```
+optionalParam(val: opt int) =
+    if val is Some(x):
+        print("Some({x})")
+    else:
+        print("None")
+
+requiredParam(val: int?) =
+    if val is Some(x):
+        print("{x}")
+    else:
+        print("None")
+
+x: int = 5
+optionalParam(x)         -- Prints "Some(5)"
+optionalParam()          -- Prints "None"
+requiredParam(Some(x))   -- Prints "Some(5)"
+requiredParam(None)      -- Prints "None"
+-- requiredParam(x)      -- Error: `x` is not `int?`
+-- requiredParam()       -- Error: missing parameter `val: int?`
 ```
 
 `opt` parameters can aslo have default values. Use `=` to to give an optional parameter a default value. This will make it a type `T` if it's used. 
