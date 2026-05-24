@@ -39,9 +39,7 @@ Key design goals:
 
 Whitespace is significant. Indentation marks where blocks begin and end. Four (4) spaces per level is recommended. Tabs and spaces may be mixed, but each expression within a block must have exactly the same indentation sequence — the same number of tabs and spaces in the same order.
 
-### Statement Separators
-
-Statements are separated by newlines or semicolons (`;`). The two are interchangeable. Newlines may be `\n`, `\r`, or `\r\n`.
+Statements are separated by newlines or semicolons (`;`). The two are interchangeable *in most cases.* The one thing to know is that if you see a semiclon (`;`) outside of a string or comment, then the expression **always** ends. Newlines may be `\n`, `\r`, or `\r\n` and have special rules that will be explained further.
 
 ### Comments
 
@@ -72,7 +70,7 @@ Statements are separated by newlines or semicolons (`;`). The two are interchang
 
 ## Expressions and Blocks
 
-A program is a sequence of expressions. Blocks are created with `:` after a construct, followed by indented content. The last expression in a block is its value.
+A program is a sequence of expressions. The golden rule in Mulang is that *any line ending in `:` or `=` starts a block.* Blocks are created with `:` after a construct, followed by indented content. The last expression in a block is its value.
 
 ```
 if condition:
@@ -80,15 +78,39 @@ if condition:
     result
 ```
 
+Each block or bracket statement (`()`/`[]`/`{}`) starts a new scope. For example:
+
+```
+(x = 0; x + 1)
+```
+
+`x` is isolated to inside the parentheses, and the result of the expression is `x + 1`. 
+
+Commas have lower presedence than semicolons. So in an expression like this…
+
+```
+(a, b; c, d; e)
+```
+
+…It would be evaluated as `(a, (b; c), (d; e))` and **not** `((a, b); (c, d); e)`. The result is a tuple: `(a, c, e)`.
+
 ### Expression Splitting
 
-A single expression may span multiple lines under these conditions:
-- Inside brackets: `()`, `[]`, `{}`
-- Lines starting with `.` (method chaining)
-- Lines starting with `|>` (pipelines)
-- Lines starting with `|` followed by a pattern continue a `match` block
-- Inside a multi-line string `"""…"""`
-- `;` ends the expression early.
+Semicolons and newlines are ignored for expressions when they are inside a multi-line string `"""…"""` or comment `(-- --)`. 
+
+```
+x = 1 + (-- New lines and semicolons ignored here;
+   --) 2
+```
+
+```
+str = """
+      Big
+      string;
+      """
+```
+
+Otherwise, a semicolon always ends an expression. New lines have special rules that any line starting with a `.` continues from the previous line. This is known as **expression splitting.** 
 
 ```
 -- Method chaining across lines:
@@ -100,21 +122,38 @@ object.method1()
 --       .method2()   ← SyntaxError
 ```
 
+It works similarly to a backslash `\` in other languages but offers more advantages. With backslashes, they all go at the end of the a line and are unaligned in mosts cases without formatting.
+
+```
+x = 1 \
+    + 2 + 3 \
+    + 4 \
+    + 5 + 6
+```
+
+With Mulang's expression splitting, this becomes much more readable. 
+
+```
+x = 1
+. + 2 + 3
+. + 4
+. + 5 + 6
+```
+
+The periods (`.`) become like dots in a bullet-point list, and it also takes on the appearance of an elipses (…) making it apparent that you have one long expression. There are special rules in regard to periods before operators. *For more information, see [Operators](#Operators).*
+
 ### Blocks
 
-A block wraps multiple expressions into one. A `:` or `=` followed by a newline and indentation starts a block. The last expression evaluated in a block is its value.
+A block wraps multiple expressions into one. A `:` or `=` followed by a newline and indentation starts a block. The last expression evaluated in a block is its value. Use `_` (wildcard) to leave a block empty.
+
 
 ```
 do:
     expr
     expr    -- This is the block's value.
-```
 
-Use `_` (wildcard) to leave a block empty.
-
-```
 do:
-    _
+    _       -- Empty block.
 ```
 
 ### Inline Blocks `( …: … )`
@@ -129,14 +168,14 @@ To switch from block mode to inline mode (and vice versa):
 
 Mulang takes special care when switching between block mode and inline mode, allowing coders to format their code naturally and elegantly. No special keywords or extra brackets are needs, and once you see it, you'll realize it's quite intuitive. 
 
-There are 3 golden rules that Mulang follows:
+There are 3 rules that Mulang follows:
 
 1. Any line ending in `:` or `=` starts a block (significant whitespace).
-2. If the line that started that block has a dangling open bracket `(`/`[`/`{` in it, the matching bracket `)`/`]`/`}` switches back to inline mode (insignificant whitespace)
-3. If all brackets are closed, return to block mode.
+2. When inside a bracket `(`/`[`/`{`, the matching bracket `)`/`]`/`}` or comma `,` ends the block and switches back to inline mode (insignificant whitespace)
+3. If all brackets are closed, return to block mode at the end of a line.
 
 ```
-apiFetch(fn(result) =    -- Switch to block mode.
+apiFetch(fn(result) =    -- Start a block for the function.
     if result > 0:       -- Whitespace is significant here.
         print("Success! {result}")
     else:
@@ -251,6 +290,47 @@ x += 1          -- x = x + 1
 expr +=> x      -- pipeline: x = x + expr
 ```
 
+All infix operators (symbolic or keyword) may have a period in front of them. This doesn't affect order of operations.
+
+```
+a   + b   * c   - d   / e   % f   band g
+a . + b . * c . - d . / e . % f . band g    -- These statements are equivalent.
+```
+
+This allows you to use *expression splitting* to split an expression into multiple lines. 
+
+```
+a           -- Add newlines before each period.
+. + b
+. * c
+. - d
+. / e
+. % f
+. band g
+```
+
+Indentation is more leanient with expression splitting. As long as the line starts with a period (`.`), then it belongs to the same expression.
+
+```
+do:
+    a
+        . + b
+      . * c
+        . - d
+    . / e
+  . % f                -- Indenting less than the start works too.
+      . band g
+```
+
+This rule also applies to the range operator `..`, making `..` and `...` equivalent. Only the `=` affects if it's exclusive or inclusive.
+
+```
+0..1  ==  0...1    -- Exclusive range
+0..=1 ==  0...=1   -- Inclusive range
+```
+
+Note that the period inside of number literals such as `3.14` is treated differently. *For more information, see [Numbers](#Numbers).*
+
 ### Function Calls
 
 Function can be called in 3 ways:
@@ -304,7 +384,24 @@ Multiple expressions separated by semicolons `;` on one line share the same cont
 |> print("{$}")               -- Print result.
 ```
 
-A **pipeline block** is started with `|>:`, either at the end of a line or on its own line. Within the block, `$` holds the piped-in value for the duration of that block.
+Note that `|>` at the beginning of a line is different from `. |>` which is a split expression on the next line. The pipe will continue after it.
+
+```
+|> fetchA()
+. |> fetchB $
+|> fetchC $
+|> print("{$}")
+```
+
+*Is the same as...*
+
+```
+|> fetchA() . |> fetchB $    -- The period doesn't effect this statement.
+|> fetchC $                  -- Pipe from the previous statement.
+|> print("{$}")
+```
+
+A **pipeline block** is started with `|>:`, either at the end of a line or on its own line. Within the block, `$` holds the piped-in value within the scope of that block.
 
 ```
 |> fetchA()         -- Set up things.
@@ -348,9 +445,9 @@ print("a = {a}, b = {b}, c = {c}")
 The variable type is always inferred, to avoid ambiguity with `:`. Mutability can be specified with `mu`. *(See [Mutability](#Mutability).)*
 
 ```
-|> fetchA() => mu x |> fetchB(x) |>:  -- Create a mutable variable `x`.
-    x += 1                            -- Mutate it.
-    print("{x}")                      -- Print it.
+fetchA() => mu x |> fetchB(x) |>:  -- Create a mutable variable `x`.
+    x += 1                          -- Mutate it.
+    print("{x}")                    -- Print it.
 ```
 
 To put the final result of any pipeline into a variable, use `|> $ => x` at the end, where `x` is any variable name. This makes it easy to mix and match the pipes in between with `|> $ => x` at the end to collect it all into a variable. 
@@ -469,7 +566,7 @@ i + 1 => i    ---\
 1 +=> i       ---- Does the same thing.
 ```
 
-`=` is a void statement and may not be used inside expressions. Use `==` for comparison and `=>` for inline assignment.
+`=` is a void statement and may not be used inside expressions that expect a non-void value. Use `==` for comparison and `=>` for inline assignment.
 
 ```
 -- Error:
@@ -528,7 +625,7 @@ Functions do not automatically capture mutable variables. Any assignment inside 
 ```
 mu count = 0
 
-addCount() use count =
+addCount() / count =
     count += 1
 
 addCount()
@@ -777,16 +874,18 @@ cannotChangeX(2) -- Prints "2"
 print("{x}")     -- Prints "1"
 ```
 
-To capture a mutable variable, write `use` at the end of the function signature. This goes after the return type `: T` *(or after the parameter if inferred)* and before the equals sign `=`. List each *multiple* `mu` variables that the function *uses.* This helps make it easy to see which functions depend on mutable variables and which ones don't. This follows the same practice that `import` and `inherit` where all words in a given context are listed out clearly so that there are no accident name collisions or hidden gotchas.
+To capture a mutable variable, write `/` at the end of the function signature. This goes after the return type `: T` *(or after the parameter if inferred)* and before the equals sign `=`. List each *mutable* (`mu`) variables that the function uses. This helps make it easy to see which functions depend on mutable variables and which ones don't since `/` doesn't appear in type notation or anywhere else to the left of the equals sign `=` in function signatures except for captures. You can think of it like division where `1/0` is an error. In this case it means that this function depends on these variables or else there will be an error, so the program will take special care to make sure they remain in scope for the functon.
+
+This follows the same practice that `import` and `inherit` where all words in a given context are listed out clearly so that there are no accident name collisions or hidden gotchas.
 
 ```
-amount = 1                 -- Immutable variable, doesn't need `use`.
-mu count = 0               -- Mutable variables, must be captured with `use`.
+amount = 1                 -- Immutable variable, doesn't need to be captured.
+mu count = 0               -- Mutable variables, must be captured with `/`.
 mu squared = 1
 mu cubed = 1
    
-addCount(): int use count, squared, cube =       -- Capture 3 variables at once.
-    count += amount                              -- Mutate captured variables inside the function.
+addCount(): int / count, squared, cube =       -- Capture 3 variables at once.
+    count += amount                            -- Mutate captured variables inside the function.
     squared = count * count
     cubed = squared * count
 
@@ -795,8 +894,6 @@ addCount()
 addCount()
 print("{count}, {squared}, {cubed}") -- Prints "3, 9, 27"
 ```
-
-Some languages use the words `use` or `using` to resolve namespaces, but this won't clash with this version of `use` since it can only go in the function signature. It makes it clear that the *return value* of a function is type with these mutable variables. You can think of it like *"the output of this function relies on these outside variables."*
 
 #### Lambda Functions
 
@@ -843,7 +940,7 @@ action: mu fn(int, int): int    -- Declaring a variable with a function type.
 action = fn(a, b) = a + b       -- Passing to the variable with a function value.
 ```
 
-Note that if you try to declare a function with the name `fn`, it will throw an error. This prevents potential gotchas and silent errors. The exception is if it's the last value in a block, then the return value of that block is a function.
+Note that if you try to declare a function with the name `fn`, it will throw an error. This prevents potential gotchas and silent errors. In order to return a function, you need to write out `return fn` at the start of the line so that it's clear you aren't trying to declare a function.
 
 ```
 (-- This is an error because you are trying to declare a function with the name `fn`:
@@ -854,8 +951,8 @@ fn(1, 2)
 
 -- This is not an error; it's a function that returns another function:
 curryAdd(a: int): fn(int): fn(int): int =
-    fn(b) =
-        fn(c) =
+    return fn(b) =
+        return fn(c) =
             a + b + c
 
 curryAdd(1)(2)(3)
@@ -864,10 +961,10 @@ curryAdd(1)(2)(3)
 Because this is a common practice, you can leave the `=` so that there isn't so much indententing. The rest of the scope at that point becomes the next function body.
 
 ```
-curryAdd(a: int) =  -- Inferred return type.
-    fn(b: int)       -- No equals sign or identing.
-    fn(c: int)       -- Inside the second function.
-    a + b + c        -- Inside the last function, final return value.
+curryAdd(a: int) =          -- Inferred return type.
+    return fn(b: int)       -- No equals sign or identing.
+    return fn(c: int)       -- Inside the second function.
+    a + b + c               -- Inside the last function, final return value.
 
 curryAdd(1)(2)(3)
 ```
@@ -876,7 +973,7 @@ Capturing also works inside lambda functions just like with named functions.
 
 ```
 mu count = 0
-forEach([1, 2, 3, 4], fn(x) use count =
+forEach([1, 2, 3, 4], fn(x) / count =
     count += x
 )
 ```
@@ -1100,6 +1197,10 @@ There are several number types. More may be added in the future, but for now we'
 
 A number literal starts with a digit `0123456789` followed by zero or more other digits, letters, or underscores `_`. All number literals are case-insensitive, so `1.0f == 1.0F`.
 
+You can place underscores `_` anywhere in a number to break it up into segments. This doesn't change the value.
+
+- Examples: `1_234`, `1_000_000`, `0b1111_0000`, `0xab_cd_ef`
+
 The sign is considered an operator and not a part of the constant itself. This gets automatically calculated in constant expressions at compile-time so that it seems like it's a part of the constant.
 
 - `- 1` → `minus` + `1` → `signflip(1)` → `-1`
@@ -1108,9 +1209,12 @@ The exception to this rule is in scientific notation: the sign after `e` is a pa
 
 - Examples: `2e-100`, `5.0e+76`, `6.8E-128`, `10e3`
 
-You can place underscores `_` anywhere in a number to break it up into segments. This doesn't change the value.
+Another rule is that if there's a period in a place where a decimal is expected, then it's part of the number literal and not `.` for member/component access. This is space sensitive.
 
-- Examples: `1_234`, `1_000_000`, `0b1111_0000`, `0xab_cd_ef`
+- `1.0` is a float `1.0`.
+- `1. 0` is a float `1.` followed by int `0`.
+- `1 .0` is an int `1` followed by access `.` to its `0`th component.
+- `1.0.0` is a float `1.0`  followed by access `.` to its `0`th component.
 
 Leading zeros are allowed also and don't affect the value. Unless there's a base letter, it's still in base 10, unlike in most C languages where a leading 0 switches to base 8.
 
@@ -1166,7 +1270,7 @@ unicode = '\uFFFF'
 |   `''…''`   | Inline raw string, no interpolation or escaping                            |
 | `@"""…"""@` | Multiline raw string; `@` count must match to close                        |
 
-Strings are marked with quotation marks (`"…"`) *(also called double quotes)* and can be formatted with curly braces (`{expr}`) in the string. Use a backslash to write a literal opening curly brace (`\{`). Note that string insertion and named tuples both use curly braces. This shouldn't be an issue though since they're used in different contexts. Expressions are implicitly converted to strings, so using `str()` or `~` isn't necessary. This string is only allowed on a single-line, but literal-line characters can be inserted with `\n`.
+Strings are marked with quotation marks (`"…"`) *(also called double quotes)* and can be formatted with curly braces (`{expr}`) in the string. Use a backslash to write a literal opening curly brace (`\{`). Note that string insertion and named tuples both use curly braces. This shouldn't be an issue though since they're used in different contexts. Inserted expressions are implicitly converted to strings, so using `str()` or `~` isn't necessary. This string is only allowed on a single-line, but literal-line characters can be inserted with `\n`.
 
 ```
 name = "world"  
@@ -1354,7 +1458,7 @@ b = 0 ++ a ++ 5       -- == [0, 1, 2, 3, 4, 5]
 c = b ++ 6 ++ 7 ++ 8  -- == [0, 1, 2, 3, 4, 5, 6, 7, 8]
 ```
 
-Use the spread operator `...` to spread an array into another array. This must be the first prefix operator in an expression, and it must be in a compatiable array or tuple literal. It alwasy goes last in the slot's expression, so extra parentheses aren't necessary: `...a ++ b` == `...(a ++ b)`.
+Use the spread operator `...` to spread an array into another array. This must be the first prefix operator in an expression, and it must be in a compatiable array or tuple literal. It always goes last in the slot's expression, so extra parentheses aren't necessary: `...a ++ b` == `...(a ++ b)`.
 
 ```
 a = [1, 2, 3]
@@ -1919,6 +2023,7 @@ Error and null handling is done through the `try` and `opt` keywords. These bloc
 | `T?!E!F`  | `Result<Option<T>, E\|F>` | A result with 2 possible errors of an optional                |      2 | `!` *then* `?`            |
 | `T!E?`    | `Option<Result<T, E>>`    | An optional of a result with 1 possible error                 |      2 | `?` *then* `!`            |
 | `T?!E?`   | `Option<Result<T, E>>`    | An optional of a result with 1 possible error of an optional  |      3 | `?` *then* `!` *then* `?` |
+| `T!E?!F`  | `Option<Option<Option<<T, E>, F>` | An reesult with 1 possible error of an optional of result with 1 possible error | 3 | `!` *then* `?` *then* `!` |
 
 Think of each `?` or `!` on a *type* as a **layer.** When you call the same `?` or `!` in an *expression,* you **unwrap** that layer.
 
@@ -2126,6 +2231,14 @@ asyncCollect(n): async[int#] =
     ret
 ```
 
+Unlike in other languages where *promises* or *futures* can either resolve **or reject,** async types in Mulang **only resolve.** Instead you can use a result type `T!E` inside an `async[T!E]` function. Unwrap it like you would a result type. Because this is common, `await` has special rules in regards to the `!` and `?` opeerators when placed after it.
+
+```
+await! x == (await x)!      -- Unwrap an `async[T!E]`
+await? x == (await x)?      -- Unwrap an `async[T?]`
+await!? x == (await x)!?    -- Unwrap an `async[T?!E]`
+```
+
 #### `defer`
 
 Runs after a function done. For iterator functions, this is when the iterator was broken or exhausted. For asynchronous functions, this is when the asynchronous type is resolved or rejected. Each `defer` statement go in reverse order: *first-in last-out*. It can be one line `defer _` or a block `defer:`. Generally though it's just one line like `defer cleanUp()`. 
@@ -2209,7 +2322,7 @@ So `&` has different commutativity rules depending on what's being combined:
 
 This makes the algebra quite principled. The only cases where order matters are also the cases where a conflict is actually possible — two positional slots or two named slots with the same key. When there's no possible conflict, order is irrelevant.
 
-It also means the shorthand `(0, 1, x: 2)` isn't really special syntax. It's the natural representation of a tuple that has both dimensions populated, which any `&` expression across the two types would produce anyway.
+It also means the shorthand `(0, 1, x: 2)` isn't really special syntax. It's the natural representation of a tuple that has both dimensions populated.
 
 Opaque types like primitives and enums coerce into a tuple of one, so creating a product type of them creates a positional tuple, e.g. `int & float & char` becomes `(int, float, char)`. Structs convert to named tuples unless declared with an `@opaque` decorator, in which case they behave like opaque types. The `void` type coerces to an empty tuple `()`. *(See [Decorators](#Decorators)* for more informations on available decorators.)
 
@@ -2807,7 +2920,7 @@ This is a work in progress though. How these decorators are implemented and thei
 - **Readability first** — significant whitespace and opinionated formatting.
 - **Patterns scale with complexity** — simple things like declaring a mutable variable (`mu`), making a function (`fn`), or wrapping a block (`(…: …)`) use short patterns, more complex things use bigger patterns.
 - **Performance on demand** — start with GC; change to a lower-level memory model where necessary.
-- **Explicit but ergonomic** — `!` for errors, attributes for memory models, same keywords used between inline and block expressions.
+- **Explicit but ergonomic** — `!` for errors, `?` for options, same keywords used between inline and block expressions.
 - **Trace and auditability** — `import`, `inherit`, and `use` require variables to be listed out to know where they're coming from; no glob-like imports.
 - **Unified concepts** — `use` for scope capture; `inherit` for member visibility; `::` for all top-level definitions.
 
