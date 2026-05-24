@@ -571,7 +571,7 @@ i = 0
 i = i + 1     -- Sets new `i` based on old `i`.
 i += 1        --\ 
 i + 1 => i    ---\
-1 +=> i       ---- Does the same thing.
+1 +=> i       ---- All do the same thing.
 ```
 
 `=` is a void statement and may not be used inside expressions that expect a non-void value. Use `==` for comparison and `=>` for inline assignment.
@@ -1122,10 +1122,12 @@ isThereX() / $x: opt int =
 
 *Note the difference…"
 
-- `$x: opt T` – Optional type `T` parameter
-- `$x: T?` - Required type `T?` parameter
+- `$x: opt T` – Optional type `T` parameter.
+- `$x: T?` - **Required** type `T?` parameter.
 
-Declaring the pipeline context `$` in the function will require that function to be pipelined with a certain type. Recall that `$` on its own variable. 
+Declaring the pipeline context `$` in the function will require that function to be pipelined with a certain type. Recall that `$` on its own is a variable. This makes it easy to see pipeline functions. When calling them, pass the `$` argument to `|>`
+
+* `x |> f()` → `$` is `x`
 
 ```
 AddArgs :: { a: 1, b: 2 }
@@ -1147,12 +1149,15 @@ pipeAdd() / $: AddArgs =
 
 pipeAdd() / $ as {a, b}: AddArgs =   -- Get a and b from the pipeline context.
     a + b
+
+pipeAdd() / $ as ctx: AddArgs =   -- Or create alias for context
+    ctx.a + ctx.b
 ```
 
 If a function doesn't use the pipeline context, you can pass it in manually with `f($)` / `f($, x)` / `f(x, $)` or any other argument position, or you can spread it into all arguments with `f(&$)` or `f $`. 
 
 ```
-add() & AddArgs{a, b}=   -- Regular function with named parameterrs
+add() & AddArgs{a, b} =   -- Regular function with named parameterrs
     a + b
 
 result = AddArgs(a: 1, b: 2) |> add $     -- Pass to add directly.
