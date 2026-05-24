@@ -1849,7 +1849,7 @@ y: int = x!               -- Unwrap it.
 -- Becomes…
 y = (match x is
     | Ok(x): x
-    | Err(e): return Err(e)  -- Exit block, return None if a function
+    | Exception(e): return Exception(e)  -- Exit block, return Exception if a function
 )
 ```
 
