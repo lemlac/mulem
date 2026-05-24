@@ -1583,8 +1583,7 @@ print("{item}")           -- Prints "3"
 Raw indexing is generally frowned upon. Mu prevents you from accessing an array unless can be guaranteed to be within range. If you wish to access an index without safety, mark your code with `@unsafe`. 
 
 ```
-@unsafe                     -- Allow raw indexing.
-do:
+@unsafe do:                 -- Allow raw indexing.
     list: int# = getData()
     print("{list#100}")     -- Might fail.
 ```
@@ -1668,8 +1667,7 @@ print("{ dict#b }")       -- Prints "2",
 Like with arrays, you can't access dictionaries directly unless it's guarenteed to succeed. If not, you should mark it in a block with `@unsafe`. 
 
 ```
-@unsafe                      -- Allow raw dictionary access.
-do:
+@unsafe do:                  -- Allow raw dictionary access.
     dict: int#str = getData()
     print("{dict#data}")     -- Might fail.
 ```
@@ -1717,8 +1715,7 @@ print("{x}")         -- "1", the pointer successfully mutated `x`.
 Sometimes, it's necessary to dig deep into the unsafe territory. Mulang normally prevents you from doing this unless you mark the code with `@unsafe`. The `^` is the symbol associated with pointers, analogues to `?` for options, `!` for results, and `#` for arrays. It can be used in type notation, but it's also the operator to dereference a pointer. Thy type must be known at compile-time. Dereferencing an opaque pointer `ptr` is a compile-time error. In the type notation, `T^` prevents the pointer from mutating its memory or `T^mu` allows mutation with `^ =` (dereference + assignment). 
 
 ```
-@unsafe                      -- Allow pointer manipulation in this block.
-do:
+@unsafe do:                  -- Allow pointer manipulation in this block.
     mu x = 0                 -- `ptr` type takes a reference and creates a generic pointer.
     xPtr: int^mu = ~ptr(x)   -- Convert `ptr` to `int^mu`, type is known.
     xPtr^ = 1                -- Mutate the memory.
