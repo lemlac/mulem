@@ -2077,8 +2077,8 @@ Error and null handling is done through the `try` and `opt` keywords. These bloc
 | `T??`     | `Option<Option<T>>`       | An optional of an optional                                    |      2 | `?` *then* `?`            |
 | `T?!E!F`  | `Result<Option<T>, E\|F>` | A result with 2 possible errors of an optional                |      2 | `!` *then* `?`            |
 | `T!E?`    | `Option<Result<T, E>>`    | An optional of a result with 1 possible error                 |      2 | `?` *then* `!`            |
-| `T?!E?`   | `Option<Result<T, E>>`    | An optional of a result with 1 possible error of an optional  |      3 | `?` *then* `!` *then* `?` |
-| `T!E?!F`  | `Option<Option<Option<<T, E>, F>` | An reesult with 1 possible error of an optional of result with 1 possible error | 3 | `!` *then* `?` *then* `!` |
+| `T?!E?`   | `Option<Result<Option<T>, E>`    | An optional of a result with 1 possible error of an optional  |      3 | `?` *then* `!` *then* `?` |
+| `T!E?!F`  | `Result<Option<Result<T, E>>, F>` | An reesult with 1 possible error of an optional of result with 1 possible error | 3 | `!` *then* `?` *then* `!` |
 
 Think of each `?` or `!` on a *type* as a **layer.** When you call the same `?` or `!` in an *expression,* you **unwrap** that layer.
 
