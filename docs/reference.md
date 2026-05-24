@@ -283,6 +283,14 @@ Symbols are grouped by meaning: `*`/`/` for math, `?` for options, `!` for resul
 | `lhs or rhs`   | Logical OR                                          |      1     |
 | `not rhs`      | Logical NOT (or bitwise NOT for numbers)            |      9     |
 
+Mulang doesn't have a `--` decrement operator. It uses `-=`. 
+
+Different uses of `|`:
+
+- `|` — pattern match cases
+- `|>` — pipeline operator
+- `||` — None-coalescing
+
 Symbol operators gain assignment forms with `=` and pipeline-assignment forms with `=>`.
 
 ```
@@ -619,7 +627,7 @@ x = 1
 doSomething(x)      -- OK now.
 ```
 
-Functions do not automatically capture mutable variables. Any assignment inside a function to an outer mutable variable creates a new local variable unless explicitly captured.
+Functions do not automatically capture mutable variables. Any assignment inside a function to an outer mutable variable creates a new local variable unless explicitly captured. *(See [Capturing](#capturing).)*
 
 ```
 mu count = 0
@@ -893,6 +901,42 @@ addCount()
 addCount()
 print("{count}, {squared}, {cubed}") -- Prints "3, 9, 27"
 ```
+
+Error messages will highlight cases where someone would be confused about `/` in a function signature:
+
+**Forgot to capture a mutable variable:**
+```
+mu count = 0
+addCount() =
+    count += 1  -- Error here
+```
+> `count` is mutable but not captured. Did you mean `addCount() / count =`?
+
+**Accidentally tried to capture an immutable:**
+```
+x = 1
+f() / x =
+    x + 1
+```
+> `x` is immutable and is captured automatically — remove `/ x` from the signature.
+
+**Captured a variable that doesn't exist in scope:**
+```
+f() / ghost =
+    ghost + 1
+```
+> `ghost` is not defined in the enclosing scope. Captures must refer to mutable variables in the outer scope.
+
+**Mutated without capturing, inside a lambda:**
+```
+mu count = 0
+forEach([1,2,3], fn(x) =
+    count += x
+)
+```
+> `count` is mutable but not captured by this lambda. Did you mean `fn(x) / count =`?
+
+**The error should appear at the mutation site, not the signature**, and always suggest the fix explicitly. 
 
 #### Lambda Functions
 
@@ -2940,6 +2984,7 @@ Some choices in Mulang are unconventional, but ask yourself…
 - *Why does array indexes need to be `name[i]`?*
 - *Why do bitwise operators need to be `&`, `|`, `^`?*
 - *Why does bitwise not need to be separated from logical not?*
+- *Why is `--` for comments and not the decrement operator?*
 
 Just because it's different doesn't mean it's bad. Mulang as a new language is free to explore new conventions for the sake of experimentation and progress. 
 
