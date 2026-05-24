@@ -586,8 +586,7 @@ if x => 0: _
 Contextual variables are declared with `$` at the start of their name. This is used for functions with contextual parameters, letting you to share variables between functions without passing them directly. *(See [Contextual Parameters](#contextual-parameters).)*
 
 ```
-printX() =      -- Function that requires `$x` to be defined.
-    $x: int
+printX() / $x: int =   -- Function that requires `$x` to be defined.
     print("{x}")
 
 $x = 0
@@ -884,7 +883,7 @@ mu count = 0               -- Mutable variables, must be captured with `/`.
 mu squared = 1
 mu cubed = 1
    
-addCount(): int / count, squared, cube =       -- Capture 3 variables at once.
+addCount(): int / count / squared / cube =     -- Capture 3 variables at once.
     count += amount                            -- Mutate captured variables inside the function.
     squared = count * count
     cubed = squared * count
@@ -1003,14 +1002,10 @@ isGreaterThan(1: 10, 0: 5)  -- a=5,  b=10 → False
 
 #### Contextual Parameters
 
-Functions may require context variables by declaring them with `$name: type`. These are resolved from the calling scope rather than passed as arguments.
-
-Whenever you see `$` inside a function, think *"this comes from the surrounding context rather than a direct argument."*
+Functions may require context variables by declaring them with `$name: type`. These are resolved from the calling scope rather than passed as arguments. Whenever you see `$` inside a function, think *"this comes from the surrounding context rather than a direct argument."* They are declared like captured variables using `/`. You can think of it like a variadic capture that's based on the *context* at function call.
 
 ```
-addContext() =
-    $a: int
-    $b: int
+addContext() / $a: int / $b: int =
     $a + $b
 
 do:                         -- Issolate parameters to this scope
@@ -1032,8 +1027,7 @@ The contextual variable prefix makes it clear that anything with `$` is a contex
 Optional contextual parameters use `opt T`. This will wrap it in an option type `T?` if it doesn't exit or match the type. 
 
 ```
-isThereX() =
-    $x: opt int
+isThereX() / $x: opt int =
     match $x is
     | Some(_): print("$x exists")
     | None:    print("No $x")
@@ -1049,8 +1043,7 @@ Declaring the pipeline context `$` in the function will require that function to
 ```
 AddArgs :: { a: 1, b: 2 }
 
-pipeAdd() =
-    $: AddArgs    -- Needs an AddArgs object piped to it.
+pipeAdd() / $: AddArgs =    -- Needs an AddArgs object piped to it.
     $.a + $.b
 
 result = AddArgs(a: 1, b: 2) |> pipeAdd()   -- This sets $ to an AddArgs
@@ -1060,8 +1053,12 @@ print("{result}")      -- Prints "3"
 You can also destructure from the pipeline context to turn members into local variables.
 
 ```
-pipeAdd()=
-    {a, b}: AddArgs = $    -- Get a and b from the pipeline context.
+pipeAdd() / $: AddArgs =
+    {a, b} = $        -- Get a and b from the pipeline context.
+    a + b
+
+
+pipeAdd() / $ as {a, b}: AddArgs =   -- Get a and b from the pipeline context.
     a + b
 ```
 
@@ -2907,7 +2904,7 @@ Some other ideas for built-in decorators include:
 - `@static` — make a variable global but only available within the scope that it was defined in.
 - `@inline` — marks that a regular function should inline itself like a meta function.
 - `@comptime` — run a function at compile-time, return it's value as a constant.
-- `@pure` — enforces pure function programming practices: *no capturing, no `ref mu`, no `out`, etc.*
+- `@pure` — enforces pure function programming practices: *no capturing, no context, no `ref mu`, no `out`, etc.*
 - `@safe` — enforces borrow-checking at compile time for this module or function.
 - `@override` — marks that a previously implemented method will be overridden.
 
@@ -2923,6 +2920,14 @@ This is a work in progress though. How these decorators are implemented and thei
 - **Explicit but ergonomic** — `!` for errors, `?` for options, same keywords used between inline and block expressions.
 - **Trace and auditability** — `import`, `inherit`, and capture require variables to be listed out to know where they're coming from; no glob-like imports.
 - **Unified concepts** — `/` for scope capture; `inherit` for member visibility; `::` for all top-level definitions.
+
+Some choices in Mulang are unconventional, but ask yourself…
+
+- *Why does array indexes need to be `name[i]`?*
+- *Why do bitwise operators need to be `&`, `|`, `^`?*
+- *Why does bitwise not need to be separated from logical not?*
+
+Just because it's different doesn't mean it's bad. Mulang as a new language is free to explore new conventions for the sake of experimentation and progress. 
 
 ---
 
