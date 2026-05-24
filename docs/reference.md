@@ -1829,6 +1829,30 @@ if x is Some(x):
 
 Error and null handling is done through the `try` and `opt` keywords. These blocks are for wrapping and unwrapping monadic types such as options `type?` and results `type!`. 
 
+__How monad types work…__
+
+Think of each `?` or `!` on a *type* as a **layer.** When you call the same `?` or `!` on an *expression,* you **unwrap** that layer.
+
+```
+x: int? = getMaybeInt()   -- Get wrapped value.
+y: int = x?               -- Unwrap it.
+-- Becomes…
+y = (match x is
+    | Some(x): x
+    | None: return None   -- Exit block, return None if a function
+)
+```
+
+```
+x: int! = getRiskyInt()   -- Get wrapped value.
+y: int = x!               -- Unwrap it.
+-- Becomes…
+y = (match x is
+    | Ok(x): x
+    | Err(e): return Err(e)  -- Exit block, return None if a function
+)
+```
+
 #### `try` / `except`
 
 Unwrap result types with `!` inside a `try` block. Unhandled exceptions propagate upward.
@@ -1854,6 +1878,18 @@ except IOError(e):
     defaultValue
 except ValidationError(e):
     raise Err(e)
+```
+
+```
+result: int = try:
+    data = riskyOperation()!
+    data2 = anotherRisky()!
+    process(data, data2)
+except IOError(e):
+    print("IO failed: {e}")
+    0              -- fallback value
+except ValidationError(e):
+    raise Err(e)   -- Escape function with error
 ```
 
 Inline form.
@@ -1911,6 +1947,17 @@ Chain `||` to try multiple options with a final fallback.
 ```
 getFirst(a: int, b: int, c: int): int =
     getA(a) || getB(b) || getC(c) || 0
+```
+
+Other examples:
+
+```
+crunchData(): int?!Error!CustomError =    -- Multiple error types
+    value: int? = someFunc()?
+    -- Option to Result
+    data: int = value || raise CustomError("Not found")      -- Exist function on fallback
+    data
+
 ```
 
 ### Function Control Flow
