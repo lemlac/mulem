@@ -2824,13 +2824,13 @@ In this example, you would import `addThing` like this (assuming the file is inc
 import myModule.addThing
 ```
 
-This connects the same explicit-list convention as `inherit` and `use` — *no hidden dependencies, everything that can affect behavior is named.* The three together form a consistent rule across the language:
+This connects the same explicit-list convention as `inherit` and capturing — *no hidden dependencies, everything that can affect behavior is named.* The three together form a consistent rule across the language:
 
 | Keyword   | "I am explicitly pulling in…"       |
 |:----------|:------------------------------------|
 | `import`  | Names from another module.          |
 | `inherit` | Members from another struct.        |
-| `use`     | Mutable variables from outer scope. |
+| `() / =`  | Mutable variables from outer scope. |
 
 ### Base Context / Command Line Arguments
 
@@ -2907,7 +2907,7 @@ Some other ideas for built-in decorators include:
 - `@static` — make a variable global but only available within the scope that it was defined in.
 - `@inline` — marks that a regular function should inline itself like a meta function.
 - `@comptime` — run a function at compile-time, return it's value as a constant.
-- `@pure` — enforces pure function programming practices: *no `ref mu`, no `use`, no `out`, etc.*
+- `@pure` — enforces pure function programming practices: *no capturing, no `ref mu`, no `out`, etc.*
 - `@safe` — enforces borrow-checking at compile time for this module or function.
 - `@override` — marks that a previously implemented method will be overridden.
 
@@ -2921,8 +2921,8 @@ This is a work in progress though. How these decorators are implemented and thei
 - **Patterns scale with complexity** — simple things like declaring a mutable variable (`mu`), making a function (`fn`), or wrapping a block (`(…: …)`) use short patterns, more complex things use bigger patterns.
 - **Performance on demand** — start with GC; change to a lower-level memory model where necessary.
 - **Explicit but ergonomic** — `!` for errors, `?` for options, same keywords used between inline and block expressions.
-- **Trace and auditability** — `import`, `inherit`, and `use` require variables to be listed out to know where they're coming from; no glob-like imports.
-- **Unified concepts** — `use` for scope capture; `inherit` for member visibility; `::` for all top-level definitions.
+- **Trace and auditability** — `import`, `inherit`, and capture require variables to be listed out to know where they're coming from; no glob-like imports.
+- **Unified concepts** — `/` for scope capture; `inherit` for member visibility; `::` for all top-level definitions.
 
 ---
 
@@ -2966,10 +2966,9 @@ This is a work in progress though. How these decorators are implemented and thei
 36. `then`
 37. `try`
 38. `until`
-39. `use`
-40. `where`
-41. `xor`
-42. `yield`
+39. `where`
+40. `xor`
+41. `yield`
 
 *NOTE: Built-in types, values, functions, and decorators like `int`, `True`, `Some`, `default`, `print`, `@memory` etc. are not considered keywords.*
 
