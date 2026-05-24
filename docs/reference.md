@@ -17,7 +17,7 @@ Key design goals:
 ## Core Design Philosophy
 
 - **Expression-oriented**: Almost everything is an expression and returns a value.
-- **Significant whitespace** with smart inline support via `do`/`end`.
+- **Significant whitespace** with smart inline support.
 - **Modern error & option handling**: `?` and `!` propagation, `||` coalescing.
 - **Flexible**: Multi-paradigm (functional, procedural, low-level).
 
@@ -110,48 +110,52 @@ do:
     expr    -- This is the block's value.
 ```
 
-Use a literal `...` (3 periods) to leave a block empty.
+Use `_` (wildcard) to leave a block empty.
 
 ```
 do:
-    ...
+    _
 ```
 
-### Inline Blocks (`@_: … end`)
+### Inline Blocks (`( …: … )`)
 
 To switch from block mode to inline mode (and vice versa):
 
 ```
-@do:
-    body
-end
+(do:
+    _
+)
 ```
 
-`@` prefix begins an inline block; `end` terminates the nearest open `@`.
-Significant whitespace makes it awkward to pass multi-line lambdas inline. `@_:`…`end` switches between block mode and inline mode. `end` always closes the nearest unclosed `@`.
+Mulang takes special care when switching between block mode and inline mode, allowing coders to format their code naturally and elegantly. No special keywords or brackets are needs, and once you see it, it starts to make sense.
+
+There are 3 golden rules that Mulang follows:
+
+1. Any line ending in `:` or `=` starts a block (significant whitespace).
+2. If the line the block starts on has a dangling open bracket `(`/`[`/`{`, the matching bracket `)`/`]`/`}` switches back to inline mode (insignificant whitespace)
+3. If all brackets are closes, return to block mode.
 
 ```
-apiFetch(@fn(result) =   -- Switch to block mode.
-    if result > 0:       -- Whitespace significant.
+apiFetch(fn(result) =    -- Switch to block mode.
+    if result > 0:       -- Whitespace is significant here.
         print("Success! {result}")
-    else:                -- No prefix for inside blocks.
+    else:
         print("Failure! {result}")
-end)   -- End block mode, switch back to the expression.
+)                        -- Bracket match, switch back to the inline mode.
+                         -- All brackets closed, next line.
 ```
 
-`@` must be followed by a block keyword and then a `:` or `=` at the end of the line. Nesting works freely. Only the first keyword of the block needs it. This makes it visually clear to connect `@_:` and `end` together. 
+If a bracket has a line ending in `:` or `=`, it will start an **inline-block.** Nesting works freely. You only need to worry about closing the bracket when you're done with the block. 
 
 ```
-@if x:
-    block:
-        ...
+(if x:
+    do:
+        _
 else:
-    block:
-        ...
-end
+    do:
+        _
+)
 ```
-
-Syntax highlighting could help by highlighting any keyword prefixed with `@` and its connecting `end`, making it clear where the inline block starts and ends.
 
 ### Inlining with `then`
 
@@ -345,15 +349,15 @@ The variable type is always inferred, to avoid ambiguity with `:`. Mutability ca
     print("{x}")                      -- Print it.
 ```
 
-To capture the final result of any pipeline into a variable, use `|> $ =>` at the end. This makes it easy to mix and match the pipes in between with `|> $ => result` collecting it all into a variable. 
+To capture the final result of any pipeline into a variable, use `|> $ => x` at the end, where `x` is any variable name. This makes it easy to mix and match the pipes in between with `|> $ => x` collecting it all into a variable. 
 
 ```
 |> fetchA()      -- Start.
 |> fetchB $      -- Pass context.
 |> fetchC $      -- Pass context.
-|> $ => result   -- Capture the final context into `result`.
+|> $ => x        -- Capture the final context into `result`.
 
-print("{result}")
+print("{x}")
 ```
 
 A use case for `|>:` is to configure an object before assigning it to an immutable variable.
@@ -768,40 +772,40 @@ This highlights the flexibility of the language. It doesn't need a dedicated key
 
 #### Lambda Functions
 
-Define a function within an expression with the keyword `fn` in the pattern `fn(x) = x`. This is useful for passing functions to other functions. If the lambda function has multiple lines, it must be wrapped in `@fn`…`end`.
+Define a function within an expression with the keyword `fn` in the pattern `fn(x) = x`. This is useful for passing functions to other functions.
 
 ```
-fn(arg) = ...
+fn(arg) = _
 
 fn(arg) =
-    ...
+    _
 
-@fn(arg) =
-    ...
-end
+(fn(arg) =
+    _
+)
 ```
 
 ```
 map(array, func) = [++loop x in array then func(x)]
 array0 = [1, 2, 3, 4]
 array1 = map(array0, fn(x) = x + 1)   -- Inline
-array2 = map(array0, @fn(x) =       -- Multi-line
+array2 = map(array0, fn(x) =          -- Multi-line
     if x < 2:
         x - 1
     else:
         x + 2
-end)
+)
 ```
 
 A name is optional. Adding a name creates an immutable reference of the function itself.
 
 ```
-doThing(@fn callback(val) =
+doThing(fn callback(val) =
     if val > 0:
         callback(val - 1)
     else:
         print("done")
-end)
+)
 ```
 
 The same keyword for creating functions is also used for function type notation. If this seems confusing, just remember where the context is: if it's being used like a type, it means a *function pointer type*; if it's being used like a value, it's a *lambda function*.
@@ -844,10 +848,10 @@ Capturing also works inside lambda functions just like with named functions.
 
 ```
 mu count = 0
-forEach([1, 2, 3, 4], @fn(x) =
+forEach([1, 2, 3, 4], fn(x) =
     @capture(count)
     count += x
-end)
+)
 ```
 
 #### Named Parameters
@@ -1430,24 +1434,6 @@ keyword expr
 The presence of `:` signifies if a keyword is in block mode or inline mode. `then` is used to separate a subject and expression when a keyword block is in-lined. 
 
 **Any variables created in the subject field shadow any variables in the parent scope.** This prevents accidental mutations and unintended side-effects. 
-
-#### `end`
-
-Terminates the previous inline block. Wraps a block inside an expression. Switches from block mode back to inline mode. The value of the block is the value in the expression at the point of `end`.
-
-```
-@do:
-    body
-end
-```
-
-The most common use case for this is for callback functions. *(See [Lambda Functions](#Lambda-Functions).)*
-
-```
-apiFetch(@fn(result) =  -- Start a function.
-    print("{result}")
-end) -- Pass that function to apiFetch.
-```
 
 #### `do`
 
@@ -2564,7 +2550,7 @@ This is a work in progress though. How these decorators are implemented and thei
 ## Design Philosophy
 
 - **Readability first** — significant whitespace and opinionated formatting.
-- **Patterns scale with complexity** — simple things like declaring a mutable variable (`mu`), making a function (`fn`), or wrapping a block (`do`+`end`) use short patterns, more complex things use bigger patterns.
+- **Patterns scale with complexity** — simple things like declaring a mutable variable (`mu`), making a function (`fn`), or wrapping a block (`(…: …)`) use short patterns, more complex things use bigger patterns.
 - **Performance on demand** — start with GC; change to a lower-level memory model where necessary.
 - **Explicit but ergonomic** — `!` for errors, attributes for memory models, same keywords used between inline and block expressions.
 - **Trace and auditability** — `import`, `inherit`, and `capture` require variables to be listed out to know where they're coming from; no glob-like imports.
@@ -2584,38 +2570,37 @@ This is a work in progress though. How these decorators are implemented and thei
 8. `defer`
 9. `do`
 10. `else`
-11. `end`
-12. `enum`
-13. `except`
-14. `fallthrough`
-15. `fn`
-16. `if`
-17. `impl`
-18. `import`
-19. `in`
-20. `inherit`
-21. `is`
-22. `loop`
-23. `match`
-24. `mod`
-25. `mu`
-26. `never`
-27. `not`
-28. `opt`
-29. `or`
-30. `out`
-31. `proto`
-32. `raise`
-33. `ref`
-34. `return`
-35. `self`
-36. `struct`
-37. `then`
-38. `try`
-39. `until`
-40. `where`
-41. `xor`
-42. `yield`
+11. `enum`
+12. `except`
+13. `fallthrough`
+14. `fn`
+15. `if`
+16. `impl`
+17. `import`
+18. `in`
+19. `inherit`
+20. `is`
+21. `loop`
+22. `match`
+23. `mod`
+24. `mu`
+25. `never`
+26. `not`
+27. `opt`
+28. `or`
+29. `out`
+30. `proto`
+31. `raise`
+32. `ref`
+33. `return`
+34. `self`
+35. `struct`
+36. `then`
+37. `try`
+38. `until`
+39. `where`
+40. `xor`
+41. `yield`
 
 *NOTE: Built-in types, values, functions, and decorators like `int`, `True`, `Some`, `default`, `print`, `@memory` etc. are not considered keywords.*
 
