@@ -127,7 +127,7 @@ To switch from block mode to inline mode (and vice versa):
 )
 ```
 
-Mulang takes special care when switching between block mode and inline mode, allowing coders to format their code naturally and elegantly. No special keywords or brackets are needs, and once you see it, it starts to make sense.
+Mulang takes special care when switching between block mode and inline mode, allowing coders to format their code naturally and elegantly. No special keywords or extra brackets are needs, and once you see it, it starts to make sense.
 
 There are 3 golden rules that Mulang follows:
 
