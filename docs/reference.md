@@ -104,10 +104,10 @@ x = 1 + (-- New lines and semicolons ignored here;
 ```
 
 ```
-str = """
-      Big
-      string;
-      """
+s = """
+    Big
+    string;
+    """
 ```
 
 Otherwise, a semicolon always ends an expression. New lines have special rules that any line starting with a `.` continues from the previous line. This is known as **expression splitting.** 
@@ -117,18 +117,19 @@ Otherwise, a semicolon always ends an expression. New lines have special rules t
 object.method1()
       .method2()
       .method3()
-
+-- Is the same as:
+object.method1() .method2() .method3()
 -- object.method1();  ← semicolon disables splitting
 --       .method2()   ← SyntaxError
 ```
 
-It works similarly to a backslash `\` in other languages but offers more advantages. With backslashes, they all go at the end of the a line and are unaligned in mosts cases without formatting.
+This is natural for method chaining, but can we apply this to other operations? It's not always clear if `- 1` means *subtract 1* or *negative 1.* Some languages use a backslash `\` for this, but that has its downsides. With backslashes, they all go at the end of the a line which are hardly ever aligned without manual formatting.
 
 ```
 x = 1 \
-    + 2 + 3 \
-    + 4 \
-    + 5 + 6
+  + 2 + 3 \
+  + 4 \
+  + 5 + 6
 ```
 
 With Mulang's expression splitting, this becomes much more readable. 
@@ -140,7 +141,7 @@ x = 1
 . + 5 + 6
 ```
 
-The periods (`.`) become like dots in a bullet-point list, and it also takes on the appearance of an elipses (…) making it apparent that you have one long expression. There are special rules in regard to periods before operators. *For more information, see [Operators](#Operators).*
+The periods (`.`) become like dots in a bullet-point list, and it also takes on the appearance of an elipses (…) making it apparent that you have one long expression. There are special rules in regard to periods before operators to make this possible. *For more information, see [Operators](#Operators).*
 
 ### Blocks
 
@@ -328,6 +329,17 @@ do:
     . / e
   . % f                -- Indenting less than the start works too.
       . band g
+```
+
+It's recommended to keep the indentation the same similar to pipeline `|>` or `match` patterns `|`. This is especially useful for long `if` statement.
+
+```
+if a or b
+. and c or d        -- Each `.` is in the `if` condition.
+. and e or f:       -- Block starts here.
+    print("True")
+else:
+    print("False")
 ```
 
 This rule also applies to the range operator `..`, making `..` and `...` equivalent. Only the `=` affects if it's exclusive or inclusive.
