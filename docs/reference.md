@@ -94,6 +94,18 @@ Commas have lower presedence than semicolons. So in an expression like this…
 
 …It would be evaluated as `(a, (b; c), (d; e))` and **not** `((a, b); (c, d); e)`. The result is a tuple: `(a, c, e)`.
 
+- Slot 1: `a`
+- Slot 2: `b` *then* `c` — value is `c`
+- Slot 3: `d` *then* `e` — value is `e`
+
+The use case worth leading with is probably side effects — you want to do something and produce a tuple value at that position:
+
+```
+(getX(), log("fetching y"); getY())
+```
+
+Slot 1 is `getX()`, slot `2` calls log for its side effect then `getY()` for the actual value. The result is `(x, y)`.
+
 ### Expression Splitting
 
 Semicolons and newlines are ignored for expressions when they are inside a multi-line string `"""…"""` or comment `(-- --)`. 
