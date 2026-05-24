@@ -952,7 +952,7 @@ Declaring the pipeline context `$` in the function will require that function to
 ```
 AddArgs :: { a: 1, b: 2 }
 
-pipeAdd(): =
+pipeAdd() =
     $: AddArgs    -- Needs an AddArgs object piped to it.
     $.a + $.b
 
@@ -963,7 +963,7 @@ print("{result}")      -- Prints "3"
 You can also destructure from the pipeline context to turn members into local variables.
 
 ```
-pipeAdd(): =
+pipeAdd()=
     {a, b}: AddArgs = $    -- Get a and b from the pipeline context.
     a + b
 ```
@@ -971,7 +971,7 @@ pipeAdd(): =
 If a function doesn't use the pipeline context, you can pass it in manually with `f($)` / `f($, x)` / `f(x, $)` or any other argument position, or you can spread it into all arguments with `f(&$)` or `f $`. 
 
 ```
-add() & AddArgs{a, b}: =   -- Regular function with named parameterrs
+add() & AddArgs{a, b}=   -- Regular function with named parameterrs
     a + b
 
 result = AddArgs(a: 1, b: 2) |> add $     -- Pass to add directly.
