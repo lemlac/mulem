@@ -684,7 +684,16 @@ print("{n}")    -- Prints "3"
 
 `setInt(as n)` → "Set int as n"—This makes it clear what you're trying to do.
 
-Using `as` makes the intent unambiguous: you are creating a variable, not passing an existing one.
+Using `as` makes the intent unambiguous: you are creating a variable, not passing an existing one. `as` already means "bind this to a name" throughout the language:
+
+```
+{x as y} = {x: 2}                 -- destructuring
+match choice is Second(x as val)  -- pattern matching
+method(self as this)              -- self aliasing
+setInt(as n)                      -- out parameter
+```
+
+Languages that use return values for this kind of thing (`n = setInt()`) imply the value comes out of the function through the normal return channel, which is misleading when the mechanism is actually a reference parameter. `setInt(as n)` makes the call-site declaration explicit without requiring you to pre-declare a `mu` variable just to hand it in.
 
 Parameters can be made optional with the `opt` modifier. This distinguishes them from `T?` which means a required parameter that's an option type. The parameter must be unwrapped before it can be used.
 
@@ -921,7 +930,9 @@ do:                         -- Issolate parameters to this scope
 -- result = addContext() -- Error: $a and $b aren't defined.
 ```
 
-Optional contextual parameters use `opt T`. This will wrap it in an option type `T?`.
+The contextual variable prefix makes it clear that anything with `$` is a contextual variables that's shared with functions in the *same scope.* `$` by itself is just one specific variable which gets set by the return value of a *pipeline* expression.
+
+Optional contextual parameters use `opt T`. This will wrap it in an option type `T?` if it doesn't exit or match the type. 
 
 ```
 isThereX() =
@@ -936,7 +947,7 @@ isThereX() =
 - `$x: opt T` – Optional type `T` parameter
 - `$x: T?` - Required type `T?` parameter
 
-Declaring the pipeline context `$` will require that function to be pipelined with a certain type. 
+Declaring the pipeline context `$` in the function will require that function to be pipelined with a certain type. Recall that `$` on its own variable. 
 
 ```
 AddArgs :: { a: 1, b: 2 }
@@ -958,6 +969,14 @@ pipeAdd(): =
 ```
 
 If a function doesn't use the pipeline context, you can pass it in manually with `f($)` / `f($, x)` / `f(x, $)` or any other argument position, or you can spread it into all arguments with `f(&$)` or `f $`. 
+
+```
+add() & AddArgs{a, b}: =   -- Regular function with named parameterrs
+    a + b
+
+result = AddArgs(a: 1, b: 2) |> add $     -- Pass to add directly.
+print("{result}")      -- Prints "3"
+```
 
 ---
 
