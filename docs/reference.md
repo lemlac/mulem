@@ -127,13 +127,13 @@ To switch from block mode to inline mode (and vice versa):
 )
 ```
 
-Mulang takes special care when switching between block mode and inline mode, allowing coders to format their code naturally and elegantly. No special keywords or extra brackets are needs, and once you see it, it starts to make sense.
+Mulang takes special care when switching between block mode and inline mode, allowing coders to format their code naturally and elegantly. No special keywords or extra brackets are needs, and once you see it, you'll realize it's quite intuitive. 
 
 There are 3 golden rules that Mulang follows:
 
 1. Any line ending in `:` or `=` starts a block (significant whitespace).
-2. If the line the block starts on has a dangling open bracket `(`/`[`/`{`, the matching bracket `)`/`]`/`}` switches back to inline mode (insignificant whitespace)
-3. If all brackets are closes, return to block mode.
+2. If the line that started that block has a dangling open bracket `(`/`[`/`{` in it, the matching bracket `)`/`]`/`}` switches back to inline mode (insignificant whitespace)
+3. If all brackets are closed, return to block mode.
 
 ```
 apiFetch(fn(result) =    -- Switch to block mode.
@@ -162,9 +162,9 @@ else:
 Any block that has a *subject* can be inlined using `then` instead of `:`.
 
 ```
-if x then "True" else "False"
+if x then "True" else "False"   -- Inline form.
 
-if x:           -- Block form.
+if x:                           -- Block form.
     "True"
 else:
     "False"
@@ -470,17 +470,17 @@ i + 1 => i    ---\
 
 ```
 -- Error:
-if x = 0: ...
+if x = 0: _
 
 -- Correct:
-if x == 0: ...
+if x == 0: _
 ```
 
 Reversing the normal order of assignment for `=>` operators helps with programmers who might confuse `=>` for `>=` (greater than or equals).
 
 ```
 -- Error: did you mean `x >= 0`?
-if x => 0: ...
+if x => 0: _
 ```
 
 Contextual variables are declared with `$` at the start of their name. This is used for functions with contextual parameters, letting you to share variables between functions without passing them directly. *(See [Contextual Parameters](#contextual-parameters).)*
@@ -913,7 +913,7 @@ isThereX() =
     | None:    print("No $x")
 ```
 
-*Note the difference..."
+*Note the difference…"
 
 - `$x: opt T` – Optional type `T` parameter
 - `$x: T?` - Required type `T?` parameter
@@ -1200,7 +1200,7 @@ To make a multi-line raw string, add an at sign `@` before and after triple quot
 |  `@@"""` | `"""@@`  |
 | `@@@"""` | `"""@@@` |
 
-*etc...*
+*etc…*
 
 ```
 -- Add a `@` to escape the `"""` within the string.
@@ -1439,10 +1439,10 @@ The presence of `:` signifies if a keyword is in block mode or inline mode. `the
 
 ```
 do:
-    ...
+    _
 
 do.label:
-    ...
+    _
 ```
 
 Creates a new scope. Its value is the last expression evaluated.
@@ -1466,9 +1466,9 @@ do.block:
 ```
 if cond then expr else expr
 if cond:
-    ...
+    _
 else:
-    ...
+    _
 ```
 
 Basic Boolean branching.
@@ -1501,16 +1501,16 @@ The universal loop keyword. All loop forms share the same `loop` keyword.
 ```
 -- Unconditional (break manually):
 loop:
-    ...
+    _
     break
 
 -- While condition is true:
 loop cond:
-    ...
+    _
 
 -- For-each:
 loop x in expr:
-    ...
+    _
 
 -- Do-until (runs at least once):
 loop:
@@ -1570,8 +1570,7 @@ x = do.block
     4
 
 print("{x}")     -- Prints either "4" or "5"
-`
-``
+```
 
 ### Pattern Matching
 
@@ -1590,11 +1589,11 @@ Enum/exception branching. Exhaustive by default. `| _:` for the default case.
 
 ```
 match expr is ptrn:
-    ...
+    _
 | ptrn:
-    ...
+    _
 | _:
-    ...
+    _
 ```
 
 Each pattern starts with `|`. This was chosen because pattern matching is a core feature in Mulang and a core identity of functional programming. This keeps it much briefer than the usual `switch`/`case` statement, closer to the pattern matching found in functional programming languages. 
@@ -1691,7 +1690,7 @@ match choice is
     print("Negative: {x}")
 | Second(x):
     print("Zero")
-| _: ...
+| _: _
 ```
 
 #### `is` / `then`
@@ -1738,7 +1737,7 @@ getValue()
 expr => ptrn
 expr => ptrn else expr
 expr => ptrn else:
-    ...
+    _
 ```
 
 The same thing as `is` but sets a variable in scope. This can be done with any pipeline assignment operator `=>`. 
@@ -1760,9 +1759,9 @@ print("{x}")   -- x is guaranteed here
 ```
 if expr is ptrn then expr else expr
 if expr is ptrn:
-    ...
+    _
 else:
-    ...
+    _
 ```
 
 Combines the conditional branching of `if` with pattern matching of `is`. Useful if you want to destructure a single case of a sum type. This must be a pattern that matches the type of the value before `is`.
