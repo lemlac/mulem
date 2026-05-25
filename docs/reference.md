@@ -692,10 +692,10 @@ Variables declared as `$x` and `$0` and such are context variables, and one cont
 
 ```
 (0, x: 1)               -- Create a tuple with position member and named member `x`.
-|>:                     -- Pass to a pipeline block, sets $ = (0, x: 1) 
+|>                      -- Pass to a pipeline block, sets $ = (0, x: 1) 
     print("{$.0 + $.x}")  -- Prints "1".
 
-(0, x: 1) |> print("{$.0 + $.x}")  -- Or in-lined.
+(0, x: 1) |> print("{$.0 + $.x}")  -- Or in one line.
 ```
 
 Going back to the example in [Pipelining](#pipelining), we can make it even more concise like this:
@@ -734,7 +734,7 @@ count := 0          -- Shadows count with a new immutable variable.
 A mutable variable may be declared without an initial value, but cannot be used until it is set.
 
 ```
-x: mu int
+mu x: int
 x = 1
 doSomething(x)      -- OK now.
 ```
@@ -751,23 +751,16 @@ addCount()
 print("{count}")    -- "1"
 ```
 
-### References (`ref` / `ref mu`)
+### References (`ref`)
 
-A reference points to the same memory location as another variable.
+A reference points to the same memory location as another variable. It's mutability is carried over.
 
 ```
 mu x = 0
-ref mu xRef = x
+ref xRef = x
 xRef = 1
 print("{x}")        -- "1"
 ```
-
-| Syntax            | Meaning                            |
-|:------------------|:-----------------------------------|
-| `ref x = y`       | Immutable reference, inferred type |
-| `x: ref T = y`    | Immutable reference, explicit type |
-| `ref mu x = y`    | Mutable reference, inferred type   |
-| `x: ref mu T = y` | Mutable reference, explicit type   |
 
 #### Destructuring
 
@@ -792,7 +785,7 @@ Thing :: {x: int, y: int}
 ### Function Declarations
 
 * __Basic:__ `add(a, b) = a + b`
-* __Parameter Modifiers:__ `mu` / `ref mu` / `out` / `opt`
+* __Parameter Modifiers:__ `mu` / `ref` / `out` / `opt`
 * __Lambdas:__ `fn(x) = x + 1`. Use `fn` for both lambda creation and function pointer types.
 * __Currying:__ Use `return fn` to avoid deep nesting and explicitly declare curried chains.
 * __Context Parameters:__ Prefix arguments with `$` (e.g., `/$config`). The function resolves these implicitly from the calling lexical scope, acting as clean dependency injection.
@@ -844,10 +837,10 @@ add3(,1,2, ,3,,) -- This is not okay.
 --)
 ```
 
-Functions can also be declared with type `fn` / `mu fn` to be set later. This type is called a **function pointer.** It lets you treat functions that same way you do with variables.
+Functions can also be declared with `mu` to be set later. This type is called a **function pointer.** It lets you treat functions that same way you do with variables.
 
 ```
-action: mu fn(int, int): int
+mu action(int, int): int
 add(a, b) = a + b
 sub(a, b) = a - b
 action = add
@@ -862,21 +855,22 @@ print("1 - 1 = {action(1, 1)}")  -- Prints "0".
 |:-----------------|:------------------|:-----------------------------------|
 | *(none)*         | Pass by copy      | No                                 |
 | `mu`             | Pass by copy      | Yes                                |
-| `ref` / `ref mu` | Pass by reference | No / Yes                           |
+| `ref`            | Pass by reference | No / Yes                           |
+| `in`             | Pass by reference | Yes                           |
 | `out`            | Unset reference   | Yes (Must be assigned)             |
 | `opt`            | Optional argument | Wraps in `T?`. Coalesce with `||`. |
 
 Function parameters can be declared like variables. Likewise, you can modify their mutability and reference-ness the same way.
 
 ```
-increment(x: ref mu int) =
+increment(in x: int) =
     x += 1
 
 mu y = 0
 increment(y)
 ```
 
-Another type of parameter is `out`. `out` parameters are guaranteed‑set references. They behave like `ref mu`, except they begin the function in an *unset* state. Use an `out` parameter when a function’s job is to produce a value rather than consume one.
+Another type of parameter is `out`. `out` parameters are guaranteed‑set references. They behave like `in`, except they begin the function in an *unset* state. Use an `out` parameter when a function’s job is to produce a value rather than consume one.
 
 An out parameter must not remain unset in any branch of the function. It must either be:
 
@@ -889,7 +883,7 @@ This guarantees that the variable is initialized after the call completes.
 setInt(out i): void =
     i = 3
 
-x: mu int
+mu x: int
 setInt(x)
 print("{x}")    -- Prints "3"
 ```
@@ -914,16 +908,14 @@ setInt(as n)                      -- out parameter
 
 Languages that use return values for this kind of thing (`n = setInt()`) imply the value comes out of the function through the normal return channel, which is misleading when the mechanism is actually a reference parameter. `setInt(as n)` makes the call-site declaration explicit without requiring you to pre-declare a `mu` variable just to hand it in.
 
-Parameters can be made optional with the `opt` modifier. This distinguishes them from `T?` which means a required parameter that's an option type. The parameter must be unwrapped before it can be used.
+### Optional Parameters
 
-When calling a function with `T?`, you give it a value of `T?`. When calling a function with `opt T`, you give it a value of `T`. 
-
-`||` is the *`None`-coalescing operation.* It unwraps a `T?` into a `T`. In other languages, this means `or`. However, None/null coalescing isn't much different from a logical OR. They both have the same order of operations, and most languages who don't have it just use `||` instead. Mulang makes `or` and `||` distinct so that the intention is clear. Other languages use `??` or `?:`, but these would conflict with `?` so `||` was chosen instead.
+Parameters can be made optional with the `opt` modifier. This wraps the variable is type `T?`. If the parameter is missing, it will be set to `None`.
 
 ```
-addOptional(a: opt int, b: opt int): int =
-    aVal = a || 0             -- Coalesce optional arguments with default value 0.
-    bVal = b || 0             -- This unwraps their value if they exist or set them to 0.
+addOptional(opt a: int, opt b: int): int =
+    aVal = opt a? else 0      -- Coalesce optional arguments with default value 0.
+    bVal = opt b? else 0      -- This unwraps their value if they exist or set them to 0.
     aVal + bVal               -- Add the unwrapped values.
 
 print("{addOptional()}")      -- Prints "0"
@@ -931,13 +923,10 @@ print("{addOptional(1)}")     -- Prints "1"
 print("{addOptional(1, 1)}")  -- Prints "2"
 ```
 
-- `T?` describes the **type of the value** — the caller is passing in an option and is responsible for handling `None`.
-- `opt T` describes the **presence of the argument** — the caller can omit it entirely, and the function handles the absence.
-
-When calling a function with `T?`, you give it a value of `T?`. When calling a function with `opt T`, you give it a value of `T`. 
+When calling a function with an explicit `T?`, you give it a value of `T?`. When calling a function with `opt T`, you give it a value of `T`. 
 
 ```
-optionalParam(val: opt int) =
+optionalParam(opt val: int) =
     if val is Some(x):
         print("Some({x})")
     else:
@@ -967,11 +956,6 @@ print("{addOptional()}")      -- Prints "0"
 print("{addOptional(1)}")     -- Prints "1"
 print("{addOptional(1, 1)}")  -- Prints "2"
 ```
-
-- `x: opt T` — `T?`
-- `opt x` — `T? *inferred*
-- `x: opt T = default` — `T`
-- `opt x = default` — `T` *inferred*
 
 Use `...` to collect all variables into a single variable. The variable should be type `T#` (an array).
 
