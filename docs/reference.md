@@ -1913,7 +1913,7 @@ color = match status is
 -- Inside another expression
 result = process(data) |> match $ is
 | Success(v) then v * 2
-| Failure(e) then (log(e); 0)
+| Failure(e) then (print("Failure: {e}"); 0)
 ```
 
 The patterns map to the type passed in after `match`, so you only need to reference the members of that type in each pattern.
