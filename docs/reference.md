@@ -97,7 +97,7 @@ Each block or bracket statement (`()`/`[]`/`{}`) starts a new scope. For example
 
 `x` is isolated to inside the parentheses, and the result of the expression is `x + 1`. 
 
-Commas have lower presedence than newlines or semicolons. So in an expression like this…
+**Commas divide slots. Semicolons sequence within a slot.** That means that commas have *lower* presedence than newlines or semicolons. So in an expression like this…
 
 ```
 (a, b; c, d; e)
