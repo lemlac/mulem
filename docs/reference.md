@@ -523,8 +523,8 @@ A **pipeline block** is started with `|> do` and a new line, either at the end o
 |> do               -- Context is now ready.
     print("{$}")    -- Use it here.
 
-fetchA() |> fetchB $ |> fetchC $ |>    -- Or in one line.
-    print("{$}")                       -- Then use the result.
+fetchA() |> fetchB $ |> fetchC $ |> do   -- Or in one line.
+    print("{$}")                         -- Then use the result.
 
 -- Freely mix the two formats:
 fetchA() |>            -- Start with this context.
