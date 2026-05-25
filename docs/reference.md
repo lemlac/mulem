@@ -367,37 +367,6 @@ else
 
 Note that the period inside of number literals such as `3.14` is treated differently. *For more information, see [Numbers](#numbers).*
 
-__Remainder vs. Modulo:__
-
-- **`rem` is "remainder"** *(C-style modulo)* — what's left over after truncating toward zero. The result takes the sign of what you started with.
-
-```
- 7 rem  3 ==  1    -- positive because 7 is positive
--7 rem  3 == -1    -- negative because -7 is negative
- 7 rem -3 ==  1    -- positive because 7 is positive
--7 rem -3 == -1    -- negative because -7 is negative
-```
-
-- **`mod` is "true modulo"** — the mathematical kind where the result always lives in the range `[0, divisor)`. The result takes the sign of what you're dividing *by*.
-
-```
- 7 mod  3 ==  1    -- same as above, no difference here
--7 mod  3 ==  2    -- "wraps around": -7 mod 3 = 2 in math
- 7 mod -3 == -2    -- wraps the other way
--7 mod -3 == -1    -- same as % here
-```
-
-The practical case where it matters is things like clock arithmetic, array wrapping, or anything where you want `(-1) mod n` to give you `n - 1` instead of `-1`. With `rem` you'd have to write `((x rem n) + n) rem n` — the classic defensive idiom.
-
-### Key Type Modifiers & Postfix Operators
-
-| Syntax     | Meaning            | Note                                                     |
-|:-----------|:-------------------|:---------------------------------------------------------|
-| `T?`, `x?` | Optional           | Unwraps an optional; propagates `None` to nearest `opt`. |
-| `T!`, `x!` | Result / Exception | Unwraps a result; propagates error to nearest `try`.     |
-| `T#`, `x#` | Array / Dict Index | `T#N` is fixed-size. Access: `array#index`.              |
-| `T^`, `x^` | Pointer            | Dereference a pointer. Requires `@unsafe`.               |
-
 ### Function Calls
 
 Function can be called in 3 ways:
@@ -3169,6 +3138,37 @@ Mu has 42 reserved keywords. Note that built-in types (`int`, `str`), boolean va
 | `lhs and rhs`  | Logical AND                                         |
 |  `lhs or rhs`  | Logical OR                                          |
 |     `not rhs`  | Logical NOT (or bitwise NOT for numbers)            |
+
+__Remainder vs. Modulo:__
+
+- **`rem` is "remainder"** *(C-style modulo)* — what's left over after truncating toward zero. The result takes the sign of what you started with.
+
+```
+ 7 rem  3 ==  1    -- positive because 7 is positive
+-7 rem  3 == -1    -- negative because -7 is negative
+ 7 rem -3 ==  1    -- positive because 7 is positive
+-7 rem -3 == -1    -- negative because -7 is negative
+```
+
+- **`mod` is "true modulo"** — the mathematical kind where the result always lives in the range `[0, divisor)`. The result takes the sign of what you're dividing *by*.
+
+```
+ 7 mod  3 ==  1    -- same as above, no difference here
+-7 mod  3 ==  2    -- "wraps around": -7 mod 3 = 2 in math
+ 7 mod -3 == -2    -- wraps the other way
+-7 mod -3 == -1    -- same as % here
+```
+
+The practical case where it matters is things like clock arithmetic, array wrapping, or anything where you want `(-1) mod n` to give you `n - 1` instead of `-1`. With `rem` you'd have to write `((x rem n) + n) rem n` — the classic defensive idiom.
+
+### Key Type Modifiers & Postfix Operators
+
+| Syntax     | Meaning            | Note                                                     |
+|:-----------|:-------------------|:---------------------------------------------------------|
+| `T?`, `x?` | Optional           | Unwraps an optional; propagates `None` to nearest `opt`. |
+| `T!`, `x!` | Result / Exception | Unwraps a result; propagates error to nearest `try`.     |
+| `T#`, `x#` | Array / Dict Index | `T#N` is fixed-size. Access: `array#index`.              |
+| `T^`, `x^` | Pointer            | Dereference a pointer. Requires `@unsafe`.         |
 
 ---
 
