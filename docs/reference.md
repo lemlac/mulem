@@ -208,7 +208,6 @@ __Keywords that can start a block:__
 
 __Symbols that can start a block:__
 - `=` *(for assignment or functions)*
-- `->` *(for `match` blocks)*
 - `|>` *(for pipelining)*
 - *Opening brackets:* `(`/`[`/`{`
 
