@@ -1891,7 +1891,7 @@ The next control flow methods are based on pattern match. Generally, you see the
 
 #### `match` / `is`
 
-Enum/exception branching. Exhaustive by default. `| else:` for the default case.
+Enum/exception branching. Exhaustive by default. `| then` for the default case.
 
 ```
 match expr is
