@@ -59,7 +59,7 @@ Statements are separated by newlines or semicolons (`;`). The two are interchang
 
 | Category             | Examples                                            |
 |:---------------------|:----------------------------------------------------|
-| Words                | `x`, `PI`, `1`, `3.14`, `0xABCDEF`, `$`, `$x`, `$0` |
+| Words                | `x`, `PI`, `1`, `3.14`, `0xABCDEF`, `$x`, `$0`      |
 | String/Char literals | `'a'`, `"foo"`, `"""big string"""`, `''raw''`       |
 | Delimiters           | `,` (tuples/arrays), `;` (expressions)              |
 | Symbols              | `~!@#%^&*-+=\|:<.>/?` (excluding `--`)              |
@@ -168,7 +168,7 @@ x = 1
 . + 5 + 6
 ```
 
-The periods (`.`) become like dots in a bullet-point list, and it also takes on the appearance of an elipses (…) making it apparent that you have one long expression. There are special rules in regard to periods before operators to make this possible. *For more information, see [Operators](#Operators).*
+The periods (`.`) become like dots in a bullet-point list, and it also takes on the appearance of an elipses (…) making it apparent that you have one long expression. There are special rules in regard to periods before operators to make this possible. *For more information, see [Operators](#operators).*
 
 ### Blocks
 
@@ -428,7 +428,7 @@ This rule also applies to the range operator `..`, making `..` and `...` equival
 0..=1 ==  0...=1   -- Inclusive range
 ```
 
-Note that the period inside of number literals such as `3.14` is treated differently. *For more information, see [Numbers](#Numbers).*
+Note that the period inside of number literals such as `3.14` is treated differently. *For more information, see [Numbers](#numbers).*
 
 __Remainder vs. Modulo:__
 
@@ -470,7 +470,7 @@ function x          -- spread tuple into function
 
 ### Pipelining `|>`
 
-When placed at the start of a line in a block, the pipelining operator `|>` takes on a special meaning: it takes the value of the previous line and makes it available in the next line as `$`. This symbol is known as the **pipeline context.** It has several uses in Mulang, but in the context of pipelines it simply represents the result of the previous line. This makes it easy to chain a sequence of calls and read them in order.
+When placed at the start of a line in a block, the pipelining operator `|>` takes on a special meaning: it takes the value of the previous line and makes it available in the next line as `$`. This symbol is known as the **pipeline context.** *(See [Pipeline Context](#pipeline-context).)* It has several uses in Mulang, but in the context of pipelines it simply represents the result of the previous line. This makes it easy to chain a sequence of calls and read them in order.
 
 ```
 print("{
@@ -498,7 +498,7 @@ This makes the order of operations easy to follow at a glance. It reads like a p
 - *then* `fetchC`
 - *then* `print`
 
-The first line of a block may also start with `|>`, in which case its pipeline context `$` is an empty tuple `()`. A line starting with `|>` is not required to use `$`. Some functions also require certain variables to be defined in the pipeline context. *(See [Function Declarations](#Function-Declarations).)*
+The first line of a block may also start with `|>`, in which case its pipeline context `$` is an empty tuple `()`. A line starting with `|>` is not required to use `$`. Some functions also require certain variables to be defined in the pipeline context. *(See [Function Declarations](#function-declarations).)*
 
 Multiple expressions separated by semicolons `;` on one line share the same context `$`. The last expression on the line is passed as the context to the next pipe.
 
@@ -567,7 +567,7 @@ This lets you extract the result of any step in a pipeline simply by appending `
 print("a = {a}, b = {b}, c = {c}")
 ```
 
-The variable type is always inferred, to avoid ambiguity with `:`. Mutability can be specified with `mu`. *(See [Mutability](#Mutability).)*
+The variable type is always inferred, to avoid ambiguity with `:`. Mutability can be specified with `mu`. *(See [Mutability](#mutability).)*
 
 ```
 fetchA() => mu x |> fetchB(x) |>:  -- Create a mutable variable `x`.
@@ -599,52 +599,9 @@ print("User: {user.name}, born: {user.dob}")  -- Prints "User: John Smith, born:
 
 This gives you a great deal of flexibility in how you choose to express your code.
 
-### Pipeline Context (`$`)
-
-Any variable starting with `$` is a **context variable.** These are scoped variables that functions can see when they're called. They must be declared in the function's signature with captured variables to see them. *(See [Function Declarations](#function-declarations).)*
-
-Variable names in Mulang don't allow `$` inside them, but this symbol is treated like a name. You can put symbols next to it, but other words needs to be seperated with a space next to it.
-
-```
--$    -- This is okay, 1 symbol + 1 word: `-` + `$`.
-not$  -- This is one word, error since `not$` doesn't exist.
-not $ -- This is okay, 2 words: `not` + `$`.
-```
-
-Variables declared as `$x` and `$0` and such are context variables, and one context variable gets set during pipeline: `$` by itself also called the **pipeline context.** It holds the value of the previous pipeline expression.
-
-```
-(0, x: 1)               -- Create a tuple with position member and named member `x`.
-|>:                     -- Pass to a pipeline block, sets $ = (0, x: 1) 
-    print("{$.0 + $.x}")  -- Prints "1".
-
-(0, x: 1) |> print("{$.0 + $.x}")  -- Or in-lined.
-```
-
-Going back to the example in the previous section, we can make it even more concise like this:
-
-```
-user = User.create() |> {
-    &$,                   -- Append current pipeline context to this object.
-    name: "John Smith",   -- Modify select properties below it.
-    dob: "1970-01-01",
-}
-```
-
-`&$` means to spread the pipeline result in this tuple. This makes an object with new properties set below it. Because this is such a common action, we can abriviate with `&{}`. 
-
-```
-user = User.create() |> &{  -- Means to append to the pipe's context.
-    name: "John Smith",
-    dob: "1970-01-01",
-}
-```
-
-A top level `&` will spread based on the current pipeline context `$`. This makes it easier to pipe data and only change what you need. 
-
 ## Basic Bindings
 
-There are two types of bindings: basic `=` and meta `::`. See [Meta Bindings](#Meta-Bindings-) below for details about `::`.
+There are two types of bindings: basic `=` and meta `::`. See [Meta Bindings](#meta-bindings-) below for details about `::`.
 
 ### Variable Declarations
 
@@ -655,7 +612,7 @@ z := 42                   -- forced inference
 mu counter = 0            -- mutable
 ```
 
-Variables are declared with just the equals sign (`=`). Type is inferred, but can be declared with a colon (`:`). You can also use the `:=` operator instead to declare and infer the type at the same time. This is useful for shadowing mutable variables. *(See [Mutability](#Mutability).)* For now, just know that anytime you see `:` before `=`, *it always declares a new variable,* and if you see just `=`, *it's either declaring or mutating a variable.*
+Variables are declared with just the equals sign (`=`). Type is inferred, but can be declared with a colon (`:`). You can also use the `:=` operator instead to declare and infer the type at the same time. This is useful for shadowing mutable variables. *(See [Mutability](#mutability).)* For now, just know that anytime you see `:` before `=`, *it always declares a new variable,* and if you see just `=`, *it's either declaring or mutating a variable.*
 
 ```
 a = 0               -- Implicit declaration, type inferred.
@@ -735,6 +692,49 @@ getValue()      -- Start pipeline.
 |> $ + $x       -- `$` is the pipeline value; `$x` is the contextual variable
 |> print("{$}") -- `$` is equal to the previous `$` + `$x`
 ```
+
+### Pipeline Context (`$`)
+
+Any variable starting with `$` is a **context variable.** These are scoped variables that functions can see when they're called. They must be declared in the function's signature with captured variables to see them. *(See [Function Declarations](#function-declarations).)*
+
+Variable names in Mulang don't allow `$` inside them, but this symbol is treated like a name. You can put symbols next to it, but other words needs to be seperated with a space next to it.
+
+```
+-$    -- This is okay, 1 symbol + 1 word: `-` + `$`.
+not$  -- This is one word, error since `not$` doesn't exist.
+not $ -- This is okay, 2 words: `not` + `$`.
+```
+
+Variables declared as `$x` and `$0` and such are context variables, and one context variable gets set during pipeline: `$` by itself also called the **pipeline context.** It holds the value of the previous pipeline expression.
+
+```
+(0, x: 1)               -- Create a tuple with position member and named member `x`.
+|>:                     -- Pass to a pipeline block, sets $ = (0, x: 1) 
+    print("{$.0 + $.x}")  -- Prints "1".
+
+(0, x: 1) |> print("{$.0 + $.x}")  -- Or in-lined.
+```
+
+Going back to the example in the previous section, we can make it even more concise like this:
+
+```
+user = User.create() |> {
+    &$,                   -- Append current pipeline context to this object.
+    name: "John Smith",   -- Modify select properties below it.
+    dob: "1970-01-01",
+}
+```
+
+`&$` means to spread the pipeline result in this tuple. This makes an object with new properties set below it. Because this is such a common action, we can abriviate with `&{}`. 
+
+```
+user = User.create() |> &{  -- Means to append to the pipe's context.
+    name: "John Smith",
+    dob: "1970-01-01",
+}
+```
+
+A top level `&` will spread based on the current pipeline context `$`. This makes it easier to pipe data and only change what you need. 
 
 *See [Contextual Parameters](#comtextual-parameters) for more details.*
 
@@ -1181,7 +1181,7 @@ The word `fn` appearing in both lines reinforces that these two things are about
 
 **The error case is handled explicitly.**
 
-`name(x) = ` is a function declaration and `fn(x) = ` is a lambda expression, and the two look visually similar. That can be a problem like when your trying to return a function from another function. Using an implicit `return` would look like declaring a function named `fn`. The two look similar by themselves, but `return fn` makes it explicit. If you try to declare a function with the name `fn`, it will throw an error. This prevents potential gotchas and silent errors. In order to return a function, you need to write out `return fn` at the start of the line so that it's clear you aren't trying to declare a new function named `fn`.
+`name(x) = ` is a function declaration and `fn(x) = ` is a lambda expression, and the two look visually similar. That can be a problem like when your trying to return a function from another function. Using an implicit `return` would look like declaring a function named `fn`. The two look similar by themselves, but `return fn` makes it explicit. If you try to declare a function with the name `fn`, it will throw an error. This prevents potential gotchas and silent errors. In order to return a function, you need to write out `return fn` at the start of the line so that it's clear you aren't trying to declare a new function named `fn`. `fn(x) = …` at the statement level genuinely looks like a function declaration. *Something* has to resolve that, and `return fn` is at least explicit.
 
 ```
 (-- This is an error because you are trying to declare a function with the name `fn`:
@@ -1227,6 +1227,26 @@ In function 1
 In function 2
 In function 3
 ```
+
+*Where it's useful:* The flattening trick is useful for deeply curried functions:
+
+```
+pipeline(config) =
+    return fn(input)
+    return fn(transform)
+    transform(input, config)
+```
+
+vs. the nested alternative:
+
+```
+pipeline(config) =
+    return fn(input) =
+        return fn(transform) =
+            transform(input, config)
+```
+
+The flat version keeps all parameter names at the same indentation level, which is genuinely more readable at a glance. Middleware chains, builder patterns, and continuation-passing style would all benefit. You gain a readability win for currying. 
 
 #### Named Parameters
 
@@ -1395,7 +1415,7 @@ myStr: str = "Hello"
 myPtr: ptr = ExternalLib.getSomething()
 ```
 
-You can get the type of any variable with the compile-time function `typeof`. This fetches the type of that symbol at that point during compile time. *(See [Meta Functions](#Meta-Functions).)*
+You can get the type of any variable with the compile-time function `typeof`. This fetches the type of that symbol at that point during compile time. *(See [Meta Functions](#meta-functions).)*
 
 ```
 x = 0
@@ -2572,7 +2592,7 @@ Assigning a type after `::` creates an alias.
 numberType :: int
 ```
 
-This alias is unique to the scope. Modifying it only affects the alias and not the original type. This prevents accidental conflictions between modules. *(See [Implementation](#Implementing-impl).)*
+This alias is unique to the scope. Modifying it only affects the alias and not the original type. This prevents accidental conflictions between modules. *(See [Implementation](#implementing-impl).)*
 
 You can also create aliases for basic product types or sum types.
 
@@ -2589,7 +2609,7 @@ sumUnion     ::  int | float | char                    -- Is the size of the lar
 
 Every opaque type by itself is its own tuple, so for example `char` and `(char)` are the same. This means that in the example, `int & float & char` is the equal to `(int, float, char)`.
 
-Tuples use commas (`,`) to separate components for both positional (`()`) and named (`{}`) tuples. This follows the same rules that function parameters does. *(See [Function Declarations](#Function-Declarations).)*
+Tuples use commas (`,`) to separate components for both positional (`()`) and named (`{}`) tuples. This follows the same rules that function parameters does. *(See [Function Declarations](#function-declarations).)*
 
 Product unions with the `&` operator can be used for both types and values. When combining two or more positional tuples, the positions of subsequent tuples get bumped up by the number of positions in the previous tuples, i.e. `(a, b) & (c, d)` becomes `(a, b, c, d)`. When you combine two or more named tuples, conflicting named parameters override each other with the last tuple taking priority—much like how shadowing works. So if you have `{x: 1} & {x: 2}`, the result is just `{x: 2}` since it overrides the `x` of the previous tuple. Positional tuples and named tuples can be combined together for example `(0, 1) & {x: 2}`. The shorthand for this is to write named parameters in a positional tuple like `(0, 1, x: 2)`. 
 
@@ -2614,7 +2634,7 @@ This makes the algebra quite principled. The only cases where order matters are 
 
 It also means the shorthand `(0, 1, x: 2)` isn't really special syntax. It's the natural representation of a tuple that has both dimensions populated.
 
-Opaque types like primitives and enums coerce into a tuple of one, so creating a product type of them creates a positional tuple, e.g. `int & float & char` becomes `(int, float, char)`. Structs convert to named tuples unless declared with an `@opaque` decorator, in which case they behave like opaque types. The `void` type coerces to an empty tuple `()`. *(See [Decorators](#Decorators)* for more informations on available decorators.)
+Opaque types like primitives and enums coerce into a tuple of one, so creating a product type of them creates a positional tuple, e.g. `int & float & char` becomes `(int, float, char)`. Structs convert to named tuples unless declared with an `@opaque` decorator, in which case they behave like opaque types. The `void` type coerces to an empty tuple `()`. *(See [Decorators](#decorators)* for more informations on available decorators.)
 
 Combining empty tuples produces an empty tuple `() & () == ()`. The same is true for empty named tuples `{} & {} == {}`. This also means that empty positional tuples and empty named tuples are equivalent `() == {}`. Both tuples have zero dimensions in both positional and named components; therefore they are equivalent. Saying `() & {} & ()` or `{} & ()` and any combination of empty tuples all produce an empty tuple. If you think about it, this makes sense. They all represent nothing, like a cup that can holds 0mL of water. If you stacked a bunch of 0mL cups, you would still not be able to hold any water in it. Is it even a cup then? That's why empty tuples are treated like `void`, which verbally represents nothing, because they're all nothing. Therefore `void == () == {}`. The 3 types are all the same. 
 
@@ -2648,7 +2668,7 @@ array = map([1, 2, 3, 4], addOne)
 
 ### Structural Types (`struct`)
 
-Structs are product types—or in other words—plain data containers. They cannot extend other structs, but can inherit members of other structs. *(See [Inheritance and Visibility](#Inheritance-and-Visibility).)*
+Structs are product types—or in other words—plain data containers. They cannot extend other structs, but can inherit members of other structs. *(See [Inheritance and Visibility](#inheritance-and-visibility).)*
 
 Put an equals sign after the `struct`. This makes it easier to tell type definitions from aliases and lets the parser know that it's starting a block since a block always starts after a `:` or `=`. `=` was chosen over `:` to show that the block is some sort of data rather than control flow. This makes it clear that when you see `=` at the end of a line, something is being defined. It also resembles the familiar `var: type = value` but the `::` makes it clear that this isn't a run-time value. 
 
@@ -2689,7 +2709,7 @@ o = OpaqueThing(a: 1, b: 2)
 print("a: {o.a}, b: {o.b}")
 ```
 
-*(See [Decorators](#Decorators) for more informations on available decorators.)*
+*(See [Decorators](#decorators) for more informations on available decorators.)*
 
 ### Enumerable Types (`enum`)
 
@@ -2821,7 +2841,7 @@ MyEnum :: impl[MyPrototype] =
 
 ### Inheritance and Visibility
 
-Even though structs cannot be extended the usual way, they can **inherit** from other structs using the `inherit` keyword. This works similarly to **importing.** It marks members that map to members of another struct, making conversion possible. It follows the same convention for pattern matching like destructuring. *(See [Destructuring](#Destructuring).)* The struct being inherited must not be `@opaque` or else it's a compile-time error. *(See [Decorators](#Decorators) for more information on available decorators.)*
+Even though structs cannot be extended the usual way, they can **inherit** from other structs using the `inherit` keyword. This works similarly to **importing.** It marks members that map to members of another struct, making conversion possible. It follows the same convention for pattern matching like destructuring. *(See [Destructuring](#destructuring).)* The struct being inherited must not be `@opaque` or else it's a compile-time error. *(See [Decorators](#decorators) for more information on available decorators.)*
 
 ```
 Vector2 :: struct =
@@ -3088,7 +3108,7 @@ increment(b)   -- T is inferred bool which has no implementation, compile-time e
 
 ## Importing and Modules
 
-Use `import` to import something, optionally giving the import an alias with `as`. You can either import a single export like `import a.b.c` or multiple at once using destructuring rules `import a.b{c, d}`. *(See [Destructuring](#Destructuring).)* Note that there is no `.` before the `{`. This follows the same convention that destructuring with tuples does. All imports must be **explicitly** declared—no `import a.b._`. This helps prevent naming conflicts and track where things have been defined.
+Use `import` to import something, optionally giving the import an alias with `as`. You can either import a single export like `import a.b.c` or multiple at once using destructuring rules `import a.b{c, d}`. *(See [Destructuring](#destructuring).)* Note that there is no `.` before the `{`. This follows the same convention that destructuring with tuples does. All imports must be **explicitly** declared—no `import a.b._`. This helps prevent naming conflicts and track where things have been defined.
 
 The most common import will likely be the `print` function, which will be defined somewhere in a standard library.
 
@@ -3146,7 +3166,7 @@ Hello, world!
 
 Mulang is multi-paradigm: different functions, structs, or modules can use different memory strategies in the same program. The model is controlled per-module via decorators. Boundary crossing between models follows FFI-like rules — automatic marshalling where possible, explicit escapes otherwise.
 
-Modules define how memory is handled with the `@memory` decorator. *(See [Decorators](#Decorators) for more information on available decorators.)* By default, modules use a garbage collector. Some options include `Collect(GC)` (default),  `Count(ARC)` (reference counting), and `Manual`. `GC` and `ARC` represent the standard garbage collector and reference counter respectively, but others can be defined and used instead.
+Modules define how memory is handled with the `@memory` decorator. *(See [Decorators](#decorators) for more information on available decorators.)* By default, modules use a garbage collector. Some options include `Collect(GC)` (default),  `Count(ARC)` (reference counting), and `Manual`. `GC` and `ARC` represent the standard garbage collector and reference counter respectively, but others can be defined and used instead.
 
 ```
 import std.mem{memory, Count, ARC}
