@@ -638,17 +638,17 @@ i += 1        -- Does the same thing.
 
 ```
 -- Error:
-if x = 0: _
+if x = 0 then _
 
 -- Correct:
-if x == 0: _
+if x == 0 then _
 ```
 
 Reversing the normal order of assignment for `=>` operators helps with programmers who might confuse `=>` for `>=` (greater than or equals).
 
 ```
 -- Error: did you mean `x >= 0`?
-if x => 0: _
+if x => 0 then _
 ```
 
 ### Context Variables
