@@ -708,7 +708,7 @@ Variables declared as `$x` and `$0` and such are context variables, and one cont
 
 ```
 (0, x: 1)               -- Create a tuple with position member and named member `x`.
-|>                      -- Pass to a pipeline block, sets $ = (0, x: 1) 
+|> do                   -- Pass to a pipeline block, sets $ = (0, x: 1) 
     print("{$.0 + $.x}")  -- Prints "1".
 
 (0, x: 1) |> print("{$.0 + $.x}")  -- Or in one line.
