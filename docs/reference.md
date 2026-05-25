@@ -1438,6 +1438,19 @@ doC()
 
 So it's essentially **implicit dependency injection scoped to the lexical scope** — with a more explicit declaration at the function definition side and a visible `$` sigil to signal *"this comes from context, not from a direct argument."*
 
+The main advantage of using contextual parameters is that you can make dedicated pipelune functions that have `/ $` in their function signature and then you only need to write `|> f()` instead of passing in the `$` variable directly.
+
+`$` and `$x` are both about the same core idea — functions declaring what they need from the environment rather than having it passed explicitly — just at different levels:
+
+- `/ $x` says "I need this named thing from the surrounding scope"
+- `/ $` says "I need the pipeline value, and I'm designed to be used with `|>`"
+
+They're the same dependency injection concept applied consistently to both lexical scope and pipeline context. 
+
+It also means pipeline functions are self-documenting in a nice way. When you see `/ $: SomeType` in a signature, you immediately know that function is meant to live inside a pipeline and expects a specific type flowing into it. 
+
+The shared sigil is *intentional communication* — both mean "this comes from context, not a direct argument." The distinction between them is clear from syntax alone. In that way, they're not really unrelated at all.
+
 ---
 
 ## Types
