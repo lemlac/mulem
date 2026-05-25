@@ -4,12 +4,6 @@
 
 __The Mu programming language__ *(also Mulang)* is a general-purpose, expression-oriented language designed to balance conciseness and eloquence. It delivers highly readable syntax, robust safety mechanisms, granular execution control, and expressive data pipelining. Supporting both interpretation and compilation, Mu is ideally suited for systems programming, AI, and game development.
 
-Key design goals:
-- Strong expression-orientation
-- Hybrid significant/insignificant whitespace model
-- Modern error and option handling
-- Support for both interpretation and compilation (including direct shared library output)
-
 ---
 
 ## Core Design Philosophy
@@ -18,8 +12,6 @@ Key design goals:
 - **Significant whitespace** with smart inline support.
 - **Modern error & option handling**: `?` and `!` propagation, `||` coalescing.
 - **Flexible**: Multi-paradigm (functional, procedural, low-level).
-
----
 
 ## Lexical Conventions
 
@@ -68,12 +60,33 @@ Statements are separated by newlines or semicolons (`;`). The two are interchang
 
 ## Expressions and Blocks
 
-A program is a sequence of expressions. The golden rule in Mulang is that *any line ending in `:` or `=` starts a block.* Blocks are created with `:` after a construct, followed by indented content. The last expression in a block is its value.
+A program is a sequence of expressions. Each expression is seperated by lines or grouped together on one line and delimitted with semicolons (`;`).
 
 ```
-if condition:
-    action()
-    result
+expr
+expr
+
+expr; expr
+```
+
+Whitespace is significant. When expressions are sperated by lines, the indentation can't be higher unless it's the start of a new block. 
+
+```
+expr
+    expr     -- Error: unexpected indentation at line 2.
+```
+
+Certain keywords and symbols such as `do` or `then` start a block when they are at the end of a line. Increased indentation is expected on the next line, and decreasing indentation exits the block.
+
+```
+do         -- Line ends with `do`, expecting a new block.
+expr       -- Error: expected indentation missing at line 2.
+
+do
+    expr   -- Start of the new block.
+    expr   -- Both expressions are in the same block.
+
+expr       -- Decreasing indentation exits the block.
 ```
 
 Each block or bracket statement (`()`/`[]`/`{}`) starts a new scope. For example:
@@ -84,13 +97,13 @@ Each block or bracket statement (`()`/`[]`/`{}`) starts a new scope. For example
 
 `x` is isolated to inside the parentheses, and the result of the expression is `x + 1`. 
 
-Commas have lower presedence than semicolons. So in an expression like this…
+Commas have lower presedence than newlines or semicolons. So in an expression like this…
 
 ```
 (a, b; c, d; e)
 ```
 
-…It would be evaluated as…
+…It would be evaluated to…
 
 ```
 (a, (b; c), (d; e))
@@ -118,7 +131,7 @@ Slot 1 is `getX()`, slot `2` calls log for its side effect then `getY()` for the
 
 ### Expression Splitting
 
-Semicolons and newlines are ignored for expressions when they are inside a multi-line string `"""…"""` or comment `(-- --)`. 
+Semicolons and newlines are ignored—as far as syntax is concerned—when they are inside a multi-line comment `(-- --)` or string `"""…"""`. 
 
 ```
 x = 1 + (-- New lines and semicolons ignored here;
@@ -132,7 +145,9 @@ s = """
     """
 ```
 
-Otherwise, a semicolon always ends an expression. New lines have special rules that any line starting with a `.` continues from the previous line. This is known as **expression splitting.** 
+Otherwise, a semicolon always ends an expression.
+
+New lines have a special rule: any line starting with a `.` gets appended to the end of the previous line. This is known as **expression splitting.** 
 
 ```
 -- Method chaining across lines:
@@ -142,13 +157,9 @@ object.method1()
 
 -- Is the same as:
 object.method1() .method2() .method3()
-
--- Semicolons disables this
--- object.method1();  ← semicolon disables splitting
---       .method2()   ← SyntaxError
 ```
 
-This is natural for method chaining, but can we apply this to other operations? It's not always clear if `- 1` means *subtract 1* or *negative 1.* Some languages use a backslash `\` for this, but that has its downsides. With backslashes, they all go at the end of the a line which are hardly ever aligned without manual formatting.
+This is useful for method chaining, but can we use this for other applications? It's not always clear if `- 1` at the start of a line means *subtract 1* or *negative 1.* Some languages use a backslash `\` for this, but that has its downsides. With backslashes, they all go at the end of the a line which hardly ever line up without manual formatting.
 
 ```
 x = 1 \
@@ -168,128 +179,107 @@ x = 1
 
 The periods (`.`) become like dots in a bullet-point list, and it also takes on the appearance of an elipses (…) making it apparent that you have one long expression. There are special rules in regard to periods before operators to make this possible. *For more information, see [Operators](#operators).*
 
-### Blocks
+### Block Expressions
 
-A block wraps multiple expressions into one. A `:` or `=` followed by a newline and indentation starts a block. The last expression evaluated in a block is its value. Use `_` (wildcard) to leave a block empty.
+A block wraps multiple expressions into one. Each block is a new scope. Newline after certain keywords or symbols and indentation starts a block. The last expression evaluated in a block is its value. Use `_` (wildcard) to leave a block empty.
 
 
 ```
-do:
+x =
+    expr
+    expr    -- Value that x gets set to.
+
+do
     expr
     expr    -- This is the block's value.
 
-do:
+do
     _       -- Empty block.
 ```
 
-### Inlining with `then`
+__Keywords that can start a block:__
 
-Any block that has a *subject* can be inlined using `then` instead of `:`.
+- `do`
+- `then`
+- `else`
+- `try`
+- `opt`
+
+__Symbols that can start a block:__
+- `=` *(for assignment or functions)*
+- `->` *(for `match` blocks)*
+- `|>` *(for pipelining)*
+- *Opening brackets:* `(`/`[`/`{`
+
+### Inline Expressions
+
+Any block keyword or symbol is inlined when a new line is abscent after it.
 
 ```
 if x then "True" else "False"   -- Inline form.
 
-if x:                           -- Block form.
+if x then                        -- Block form.
     "True"
-else:
+else
     "False"
 ```
 
 ### Inline Mode / Block Mode
 
+- **Block mode** — indentation is meaningful, newlines end expressions
+- **Inline mode** — indentation is ignored, brackets determine structure
+
 To switch from block mode to inline mode (and vice versa):
 
 ```
-(do:
-    _
-)
+(if cond then    -- Start a block inside inline expression
+    expr
+else
+    expr
+) + expr         -- Close block and continue inline expression
 ```
 
-Mulang takes special care when switching between block mode and inline mode, allowing coders to format their code naturally and elegantly. No special keywords or extra brackets are needs, and once you see it, you'll realize it's quite intuitive. 
+Mulang takes special care when switching between block mode and inline mode, allowing coders to format their code naturally and elegantly. No special keywords like `do…end` or curly braces `{}` are needs, and once you see it, you'll realize it's quite intuitive. 
 
 There are 3 rules that Mulang follows:
 
-1. Any line ending in `:` or `=` starts a block (significant whitespace).
+1. Any line ending in certain keywords/symbols starts a block (significant whitespace).
 2. When inside a bracket `(`/`[`/`{`, the matching bracket `)`/`]`/`}` or comma `,` ends the block and switches back to inline mode (insignificant whitespace)
 3. If all brackets are closed, return to block mode at the end of a line.
 
 ```
-apiFetch(fn(result) =    -- Start a block for the function.
-    if result > 0:       -- Whitespace is significant here.
+apiFetch(fn(result) =    -- This starts a block for the function.
+    if result > 0 then   -- Whitespace is significant here.
         print("Success! {result}")
-    else:
+    else
         print("Failure! {result}")
 )                        -- Bracket match, switch back to the inline mode.
-                         -- All brackets closed, next line.
+                         -- New line ends then inline expression, switch to block mode and continue to next line.
 ```
 
-- *Line ends with ":" or "=" → Enter block mode*
-- *Dangling "(" "[" "{" on same line → Inline mode until closed*
-- *All brackets closed → Return to block mode*
-
-If a bracket has a line ending in `:` or `=`, it will start an **inline-block.** Nesting works freely. You only need to worry about closing the bracket when you're done with the block. 
+Nesting works freely. You only need to worry about closing the bracket when you're done with the block. 
 
 ```
-(if x:
-    do:
+-- Complicated logic...
+f1(if cond then
+    try
+        f2(do
+            expr
+            expr
+        )
+    expect _ then
         _
-else:
-    do:
-        _
-)
+else
+    f3(fn() =
+        expr
+        expr
+        expr
+    )
+, expr)
+-- But it all makes sense following the 3 rules.
 ```
 
 *The core idea…* Mulang let's you write code that looks like the structure it describes. Blocks of logic get indentation. Inline expressions stay on one line. The switching rules exist so you never have to fight the formatter to achieve either one.
-
-There are two modes:
-
-- **Block mode** — indentation is meaningful, newlines end expressions
-- **Inline mode** — indentation is ignored, brackets determine structure
-
-And one simple trigger for each:
-
-- **Entering block mode:** a line ends with `:` or `=`
-- **Entering inline mode:** you open a bracket `(` `[` `{`
-
-That's it. The third rule *("if all brackets are closed, return to block mode")* isn't really a separate rule; it's just what happens when inline mode ends.
-
-*A way to visualize it:* Think of brackets as a bubble. Inside the bubble, whitespace doesn't matter. Outside the bubble, it does. Opening a bracket blows the bubble open. Closing the last bracket pops it.
-
-```
-apiFetch(fn(result) =    -- bubble opens here (
-    if result > 0:       -- inside the bubble, but `:` starts a sub-block
-        print("yes")
-    else:
-        print("no")
-)                        -- bubble pops here
-```
-
-The sub-blocks inside the bubble follow normal indentation rules — but only relative to each other, not to the surrounding code. The bubble insulates them.
-
-*The one thing worth a dedicated callout:* `:` or `=` inside a bracket starts a *sub-block within inline mode* — it doesn't pop back out to full block mode. The bubble analogy handles this naturally: you can have structure inside a bubble without the bubble caring about the outside world.
-
-A before/after comparison is probably the clearest way to make this stick:
-
-```
--- Without the rules, you'd need extra syntax:
-apiFetch(fn(result) => {
-    if (result > 0) {
-        print("yes")
-    } else {
-        print("no")
-    }
-})
-
--- With the rules, the structure speaks for itself:
-apiFetch(fn(result) =
-    if result > 0:
-        print("yes")
-    else:
-        print("no")
-)
-```
-
-The second version has no extra delimiters. The structure is entirely communicated by indentation and the bracket boundary. That's the payoff the rules are designed to deliver, and leading with that payoff makes the rules feel inevitable rather than arbitrary.
 
 ---
 
@@ -314,74 +304,78 @@ Mu has a clean, consistent operator set with both symbolic and word forms.
 | 1     | Logical OR / Pipeline     | `or \|\| \|>`               |
 | 0     | Assignment / Spread       | `= := += => & ...`          |
 
-| Operator       | Meaning                                             | Precedence |
-|:---------------|:----------------------------------------------------|:----------:|
-| `lhs . rhs`    | Member access                                       |     11     |
-| `lhs # rhs`    | Array/dictionary index                              |     11     |
-| `lhs ?`        | Unwrap option, propagate `None` to nearest `opt`    |     10     |
-| `lhs !`        | Unwrap result, propagate exception to nearest `try` |     10     |
-| `lhs ^`        | Dereference typed pointer                           |     10     |
-| `~ rhs`        | Inferred type conversion                            |     10     |
-| `... rhs`      | Spread array into array                             |      0     |
-| `& rhs`        | Spread tuple into tuple (same type)                 |      0     |
-| `lhs .. rhs`   | Exclusive range                                     |      4     |
-| `lhs ..= rhs`  | Inclusive range                                     |      4     |
-| `lhs \|> rhs`  | Pipeline                                            |      1     |
-| `lhs => rhs`   | Pipeline assignment                                 |      1     |
-| `lhs = rhs`    | Assignment or declaration                           |      0     |
-| `lhs := rhs`   | Explicit inferred-type declaration                  |      0     |
-| `lhs: T = rhs` | Explicit typed declaration                          |      0     |
-| `lhs + rhs`    | Addition                                            |      6     |
-| `lhs - rhs`    | Subtraction                                         |      6     |
-| `+ rhs`        | Unary positive                                      |      9     |
-| `- rhs`        | Sign flip                                           |      9     |
-| `lhs * rhs`    | Multiplication                                      |      7     |
-| `lhs / rhs`    | Exact division (float)                              |      7     |
-| `lhs // rhs`   | Floor division (int)                                |      7     |
-| `lhs rem rhs`  | Modulo (sign matches `lhs`)                         |      7     |
-| `lhs mod rhs`  | Floor modulo (sign matches `rhs`)                   |      7     |
-| `lhs ** rhs`   | Exponentiation (right-associative)                  |      8     |
-| `lhs == rhs`   | Equality                                            |      3     |
-| `lhs != rhs`   | Inequality                                          |      3     |
-| `lhs > rhs`    | Greater than                                        |      3     |
-| `lhs < rhs`    | Less than                                           |      3     |
-| `lhs >= rhs`   | Greater than or equal                               |      3     |
-| `lhs <= rhs`   | Less than or equal                                  |      3     |
-| `lhs band rhs`   | Bitwise AND                                       |      5     |
-| `lhs bor rhs`   | Bitwise OR                                         |      5     |
-| `lhs xor rhs`   | Bitwise XOR                                        |      5     |
-| `lhs << rhs`   | Shift left                                          |      7     |
-| `lhs >> rhs`   | Shift right                                         |      7     |
-| `lhs >>> rhs`  | Unsigned shift right                                |      7     |
-| `lhs ++ rhs`   | Concatenation                                       |      6     |
-| `lhs \|\| rhs` | None-coalescing                                     |      1     |
-| `lhs and rhs`  | Logical AND                                         |      2     |
-| `lhs or rhs`   | Logical OR                                          |      1     |
-| `not rhs`      | Logical NOT (or bitwise NOT for numbers)            |      9     |
+| Operator       | Meaning                                             |
+|:--------------:|:----------------------------------------------------|
+|   `lhs . rhs`  | Member access                                       |
+|   `lhs # rhs`  | Array/dictionary index                              |
+|   `lhs ?`      | Unwrap option, propagate `None` to nearest `opt`    |
+|   `lhs !`      | Unwrap result, propagate exception to nearest `try` |
+|   `lhs ^`      | Dereference typed pointer                           |
+|       `~ rhs`  | Inferred type conversion                            |
+|     `... rhs`  | Spread array into array                             |
+|       `& rhs`  | Spread tuple into tuple (same type)                 |
+|  `lhs .. rhs`  | Exclusive range                                     |
+| `lhs ..= rhs`  | Inclusive range                                     |
+| `lhs \|> rhs`  | Pipeline                                            |
+|  `lhs => rhs`  | Pipeline assignment                                 |
+|   `lhs = rhs`  | Assignment or declaration                           |
+|  `lhs += rhs`  | Increment                                           |
+|  `lhs -= rhs`  | Decrement                                           |
+|  `lhs := rhs`  | Explicit inferred-type declaration                  |
+| `lhs: T = rhs` | Explicit typed declaration                          |
+|   `lhs + rhs`  | Addition                                            |
+|   `lhs - rhs`  | Subtraction                                         |
+|       `+ rhs`  | Unary positive                                      |
+|       `- rhs`  | Sign flip                                           |
+|   `lhs * rhs`  | Multiplication                                      |
+|   `lhs / rhs`  | Exact division (float)                              |
+|  `lhs // rhs`  | Floor division (int)                                |
+|  `lhs rem rhs` | Modulo (sign matches `lhs`)                         |
+|  `lhs mod rhs` | Floor modulo (sign matches `rhs`)                   |
+|  `lhs ** rhs`  | Exponentiation (right-associative)                  |
+|  `lhs == rhs`  | Equality                                            |
+|  `lhs != rhs`  | Inequality                                          |
+|   `lhs > rhs`  | Greater than                                        |
+|   `lhs < rhs`  | Less than                                           |
+|  `lhs >= rhs`  | Greater than or equal                               |
+|  `lhs <= rhs`  | Less than or equal                                  |
+| `lhs band rhs` | Bitwise AND                                         |
+| `lhs bor rhs`  | Bitwise OR                                          |
+| `lhs xor rhs`  | Bitwise XOR                                         |
+|  `lhs << rhs`  | Shift left                                          |
+|  `lhs >> rhs`  | Shift right                                         |
+| `lhs >>> rhs`  | Unsigned shift right                                |
+|  `lhs ++ rhs`  | Concatenation                                       |
+| `lhs \|\| rhs` | None-coalescing                                     |
+| `lhs and rhs`  | Logical AND                                         |
+|  `lhs or rhs`  | Logical OR                                          |
+|     `not rhs`  | Logical NOT (or bitwise NOT for numbers)            |
 
-*Note: Mulang doesn't have a `--` decrement operator. It uses `-=`. `--` is reserved for comments.* 
-
-Different uses of `|`:
-
-- `|` — pattern match cases
-- `|>` — pipeline operator
-- `||` — None-coalescing
-
-Symbol operators gain assignment forms with `=` and pipeline-assignment forms with `=>`.
+Increment and decrement are the same as assignement:
 
 ```
-x += 1          -- x = x + 1
-expr +=> x      -- pipeline: x = x + expr
+i += 1   -- i = i + 1
+i -= 1   -- i = i - 1
 ```
 
-All infix operators (symbolic or keyword) may have a period in front of them. This doesn't affect order of operations.
+*Note: Mulang doesn't have a `--` (decrement by 1) operator. `--` is reserved for comments.* 
+
+The range operator can be 2 periods `..` or 3 periods `...`. Only the equals sign `=` changes if its exclusive or inclusive.
 
 ```
-a   + b   * c   - d   / e   % f   band g
-a . + b . * c . - d . / e . % f . band g    -- These statements are equivalent.
+0..1  ==  0...1    -- Exclusive range
+0..=1 ==  0...=1   -- Inclusive range
 ```
 
-This allows you to use *expression splitting* to split an expression into multiple lines. The following is the same as the above example:
+All infix operators (symbolic or keyword) may have a period in front of them. This doesn't affect order of operations. The following expressions are equivalent:
+
+```
+a + b * c - d / e rem f band g
+```
+
+```
+a . + b . * c . - d . / e . rem f . band g
+```
 
 ```
 a
@@ -389,14 +383,14 @@ a
 . * c
 . - d
 . / e
-. % f
+. rem f
 . band g
 ```
 
 Indentation is leanient with expression splitting. As long as the line starts with a period (`.`), then it belongs to the same expression.
 
 ```
-do:
+do
     a
         . + b
       . * c
@@ -406,56 +400,50 @@ do:
       . band g
 ```
 
-It's recommended to keep the indentation the same similar to pipeline `|>` or `match` patterns `|`. This is especially useful for long `if` statement.
+It's recommended to keep the indentation the same. This is especially useful for long `if` statement.
 
 ```
 if a or b
 . and c or d        -- Each `.` is in the `if` condition.
-. and e or f:       -- Block starts here.
+. and e or f
+. then              -- Block starts here.
     print("True")
-else:
+else
     print("False")
-```
-
-This rule also applies to the range operator `..`, making `..` and `...` equivalent. Only the `=` affects if it's exclusive or inclusive.
-
-```
-0..1  ==  0...1    -- Exclusive range
-0..=1 ==  0...=1   -- Inclusive range
 ```
 
 Note that the period inside of number literals such as `3.14` is treated differently. *For more information, see [Numbers](#numbers).*
 
 __Remainder vs. Modulo:__
 
-- **`rem` is "remainder"** — what's left over after truncating toward zero. The result takes the sign of what you started with.
+- **`rem` is "remainder"** *(C-style modulo)* — what's left over after truncating toward zero. The result takes the sign of what you started with.
 
 ```
- 7 rem 3 ==  1    -- positive because 7 is positive
--7 rem 3 == -1    -- negative because -7 is negative
- 7 rem -3 ==  1   -- positive because 7 is positive
--7 rem -3 == -1   -- negative because -7 is negative
+ 7 rem  3 ==  1    -- positive because 7 is positive
+-7 rem  3 == -1    -- negative because -7 is negative
+ 7 rem -3 ==  1    -- positive because 7 is positive
+-7 rem -3 == -1    -- negative because -7 is negative
 ```
 
 - **`mod` is "true modulo"** — the mathematical kind where the result always lives in the range `[0, divisor)`. The result takes the sign of what you're dividing *by*.
 
 ```
- 7 mod 3 ==  1    -- same as above, no difference here
--7 mod 3 ==  2    -- "wraps around": -7 mod 3 = 2 in math
- 7 mod -3 == -2   -- wraps the other way
--7 mod -3 == -1   -- same as % here
+ 7 mod  3 ==  1    -- same as above, no difference here
+-7 mod  3 ==  2    -- "wraps around": -7 mod 3 = 2 in math
+ 7 mod -3 == -2    -- wraps the other way
+-7 mod -3 == -1    -- same as % here
 ```
 
-The practical case where it matters is things like clock arithmetic, array wrapping, or anything where you want `(-1) mod n` to give you `n - 1` instead of `-1`. With `rem` you'd have to write `((x rem n) + n) rem n` — the classic defensive idiom. `mod` just does that for you.
+The practical case where it matters is things like clock arithmetic, array wrapping, or anything where you want `(-1) mod n` to give you `n - 1` instead of `-1`. With `rem` you'd have to write `((x rem n) + n) rem n` — the classic defensive idiom.
 
 ### Key Type Modifiers & Postfix Operators
 
-| Syntax | Meaning | Note |
-| --- | --- | --- |
-| `T?`, `x?` | Optional | Unwraps an optional; propagates `None` to nearest `opt`. |
-| `T!`, `x!` | Result / Exception | Unwraps a result; propagates error to nearest `try`. |
-| `T#`, `x#` | Array / Dict Index | `T#N` is fixed-size. Access: `array#index`. |
-| `T^`, `x^` | Pointer | Dereference a pointer. Requires `@unsafe`. |
+| Syntax     | Meaning            | Note                                                     |
+|:-----------|:-------------------|:---------------------------------------------------------|
+| `T?`, `x?` | Optional           | Unwraps an optional; propagates `None` to nearest `opt`. |
+| `T!`, `x!` | Result / Exception | Unwraps a result; propagates error to nearest `try`.     |
+| `T#`, `x#` | Array / Dict Index | `T#N` is fixed-size. Access: `array#index`.              |
+| `T^`, `x^` | Pointer            | Dereference a pointer. Requires `@unsafe`.               |
 
 ### Function Calls
 
@@ -471,7 +459,7 @@ function x          -- spread tuple into function
 
 ### Pipelining `|>`
 
-When placed at the start of a line in a block, the pipelining operator `|>` takes on a special meaning: it takes the value of the previous line and makes it available in the next line as `$`. This symbol is known as the **pipeline context.** *(See [Pipeline Context](#pipeline-context).)* It has several uses in Mulang, but in the context of pipelines it simply represents the result of the previous line. This makes it easy to chain a sequence of calls and read them in order.
+When placed at the start of a line in a block, the pipelining operator `|>` takes on a special meaning: it takes the value of the previous line and makes it available in the next line as `$`. This symbol is known as the **pipeline context.** *(See [Context Variables](#context-variables).)* This makes it easy to chain a sequence of calls and read them in order.
 
 ```
 print("{
@@ -499,9 +487,9 @@ This makes the order of operations easy to follow at a glance. It reads like a p
 - *then* `fetchC`
 - *then* `print`
 
-The first line of a block may also start with `|>`, in which case its pipeline context `$` is an empty tuple `()`. A line starting with `|>` is not required to use `$`. Some functions also require certain variables to be defined in the pipeline context. *(See [Function Declarations](#function-declarations).)*
+The first line of a block may also start with `|>`, in which case its pipeline context is an empty tuple `()`. A line starting with `|>` is not required to use the pipeline context. Some functions also require the pipeline context as a contextual parameter. *(See [Contextual Parameters](#contextual-parameters).)*
 
-Multiple expressions separated by semicolons `;` on one line share the same context `$`. The last expression on the line is passed as the context to the next pipe.
+Multiple expressions separated by semicolons `;` on one line share the same pipeline context. The last expression on the line is passed as the context to the next pipe.
 
 ```
 |> fetchA()                   -- Run fetchA,
@@ -527,23 +515,23 @@ Note that `|>` at the beginning of a line is different from `. |>` which is a sp
 |> print("{$}")
 ```
 
-A **pipeline block** is started with `|>:`, either at the end of a line or on its own line. Within the block, `$` holds the piped-in value within the scope of that block.
+A **pipeline block** is started with `|>` and a new line, either at the end of a line or on its own line. Within the block, `$` holds the piped-in value within the scope of that block.
 
 ```
 |> fetchA()         -- Set up things.
 |> fetchB $         -- …
 |> fetchC $         -- …
-|>:                 -- Context is now ready.
+|>                  -- Context is now ready.
     print("{$}")    -- Use it here.
 
-fetchA() |> fetchB $ |> fetchC $ |>:  -- Or in one line.
-    print("{$}")                        -- Then use the result.
+fetchA() |> fetchB $ |> fetchC $ |>    -- Or in one line.
+    print("{$}")                       -- Then use the result.
 
 -- Freely mix the two formats:
-fetchA() |>:           -- Start with this context.
+fetchA() |>            -- Start with this context.
     print("{$}")       -- Use the same `$` for these two lines.
     fetchB $           -- Same context `$`.
-    |> print("{$}"); fetchC $ |>:   -- Start a new context inline.
+    |> print("{$}"); fetchC $ |>    -- Start a new context inline.
         print("{$}")                 -- Print the final result.
 ```
 
@@ -571,7 +559,7 @@ print("a = {a}, b = {b}, c = {c}")
 The variable type is always inferred, to avoid ambiguity with `:`. Mutability can be specified with `mu`. *(See [Mutability](#mutability).)*
 
 ```
-fetchA() => mu x |> fetchB(x) |>:  -- Create a mutable variable `x`.
+fetchA() => mu x |> fetchB(x) |>    -- Create a mutable variable `x`.
     x += 1                          -- Mutate it.
     print("{x}")                    -- Print it.
 ```
@@ -587,10 +575,10 @@ To put the final result of any pipeline into a variable, use `|> $ => x` at the 
 print("{x}")
 ```
 
-A use case for `|>:` is to configure an object before assigning it to an immutable variable.
+One use case for `|>` block is to configure an object before assigning it to an immutable variable.
 
 ```
-user = User.create() |>:
+user = User.create() |>
     $.name = "John Smith"  -- Set properties on the context.
     $.dob = "1970-01-01"
     $                      -- Return the context.
@@ -607,10 +595,10 @@ There are two types of bindings: basic `=` and meta `::`. See [Meta Bindings](#m
 ### Variable Declarations
 
 ```
-x = 42                    -- inferred
-y: int = 42               -- explicit type
-z := 42                   -- forced inference
-mu counter = 0            -- mutable
+x = 42          -- inferred
+y: int = 42     -- explicit type
+z := 42         -- forced inference
+mu counter = 0  -- mutable
 ```
 
 Variables are declared with just the equals sign (`=`). Type is inferred, but can be declared with a colon (`:`). You can also use the `:=` operator instead to declare and infer the type at the same time. This is useful for shadowing mutable variables. *(See [Mutability](#mutability).)* For now, just know that anytime you see `:` before `=`, *it always declares a new variable,* and if you see just `=`, *it's either declaring or mutating a variable.*
@@ -631,7 +619,7 @@ lunch =
         "sandwich"
 ```
 
-Variables are immutable, but declaring it again shadows it. Any subsequent `=` of an immutable variable is an implicit declaration. Redeclaring a variable with the same name is called **shadowing.** This makes Mulang flexible while still having the advantages of being statically typed.
+Variables are immutable, but declaring it again shadows it. Any subsequent `=` on an immutable variable is an implicit declaration. Redeclaring a variable with the same name is called **shadowing.** This makes Mulang flexible while still having the advantages of being statically typed.
 
 ```
 a = 1
