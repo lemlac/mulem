@@ -204,7 +204,7 @@ __Keywords that can start a block:__
 - `else`
 - `loop`
 - `try`
-- `opt`
+- `maybe`
 
 __Symbols that can start a block:__
 - `=` *(for assignment or functions)*
@@ -781,10 +781,10 @@ print("1 - 1 = {action(1, 1)}")  -- Prints "0".
 |:-----------------|:------------------|:-----------------------------------|
 | *(none)*         | Pass by copy      | No                                 |
 | `mu`             | Pass by copy      | Yes                                |
-| `in`             | Pass by reference | No                           |
-| `ref`             | Pass by reference | Yes                           |
+| `in`             | Pass by reference | No                                 |
+| `ref`            | Pass by reference | Yes                                |
 | `out`            | Unset reference   | Yes (Must be assigned)             |
-| `opt`            | Optional argument | Wraps in T?` |
+| `opt`            | Optional argument | Wraps in T?`                       |
 
 Function parameters can be declared like variables. Likewise, you can modify their mutability and reference-ness the same way.
 
@@ -838,8 +838,8 @@ Parameters can be made optional with the `opt` modifier. This wraps the variable
 
 ```
 addOptional(opt a: int, opt b: int): int =
-    aVal = opt a? else 0      -- Coalesce optional arguments with default value 0.
-    bVal = opt b? else 0      -- This unwraps their value if they exist or set them to 0.
+    aVal = maybe a? else 0    -- Coalesce optional arguments with default value 0.
+    bVal = maybe b? else 0    -- This unwraps their value if they exist or set them to 0.
     aVal + bVal               -- Add the unwrapped values.
 
 print("{addOptional()}")      -- Prints "0"
@@ -847,7 +847,7 @@ print("{addOptional(1)}")     -- Prints "1"
 print("{addOptional(1, 1)}")  -- Prints "2"
 ```
 
-When calling a function with an explicit `T?`, you give it a value of `T?`. When calling a function with `opt T`, you give it a value of `T`. 
+When calling a function with an explicit `T?`, you give it a value of `T?`. When calling a function with `opt`, you give it a value of `T`. 
 
 ```
 optionalParam(opt val: int) =
@@ -871,7 +871,7 @@ requiredParam(None)      -- Prints "None"
 -- requiredParam()       -- Error: missing parameter `val: int?`
 ```
 
-`opt` parameters can aslo have default values. Use `=` to to give an optional parameter a default value. This will make it a type `T`, so unwrapping is unnecessary.
+`opt` parameters can also have default values. Use `=` to to give an optional parameter a default value. This will make it a type `T`, so unwrapping is unnecessary.
 
 ```
 addOptional(opt a = 0, opt b = 0): int = a + b     -- `a` and `b` are always `int`s
@@ -1006,9 +1006,9 @@ map(array, action) = [...loop x in array then action(x)]
 array0 = [1, 2, 3, 4]
 array1 = map(array0, fn(x) = x + 1)   -- Inline
 array2 = map(array0, fn(x) =          -- Multi-line
-    if x < 2:
+    if x < 2 then
         x - 1
-    else:
+    else
         x + 2
 )
 ```
@@ -1161,7 +1161,7 @@ Sometimes it's hard to tell where contextual variables are coming from. In that 
 addContext()
 ```
 
-Optional contextual parameters use `opt`. This will wrap it in an option type `T?` if it doesn't exit or match the type. 
+Optional contextual parameters use `opt`. This will wrap it in a maybe type `T?` if it doesn't exit or match the type. 
 
 ```
 isThereX() \ (opt $x: int) =
@@ -1226,8 +1226,8 @@ Notation:
 
 - **Basic**: `x: T`
 - **Functions**: `f(x: T): T`
-- **Options**: `T?`
-- **Results**: `T!` or T!E` where `E` is an exception type
+- **Maybes**: `T?`
+- **Results**: `T!` or T!E` where `E` is an `error` type
 - **Arrays**: `T#` or `T#N` where `N` is the length
 - **Multi-dimensional Arrays**: `T##`, an extra `#` for each dimension, each dimension can be fixed or dynamic: `T#N#`, `T##N`, `T#N#N`, `T#N##`, etc.
 - **Dictionaries**: `T#U`
@@ -1546,7 +1546,7 @@ This builds on the visible symmetry between type notation and their value expres
 | Type | Notation | Expression |
 |:---------|:------:|:--------:|
 | **Results**  | `T!`  | `x!`  |
-| **Options**  | `T?`  | `x?`  |
+| **Maybes**   | `T?`  | `x?`  |
 | **Pointers** | `T^`  | `x^`  |
 | **Arrays**   | `T#N` | `x#n` |
 
@@ -1663,7 +1663,7 @@ result: ptr = ExternalLib.getSomething()
 ExternalLib.doSomethingWith(result)
 ```
 
-You can manually check if the pointer is `Null` and give a helpful error message in scripts. `Null` is a `ptr` type that points to the NULL pointer. It's distinct from `None` which is an varied option type `T?`. 
+You can manually check if the pointer is `Null` and give a helpful error message in scripts. `Null` is a `ptr` type that points to the NULL pointer. It's distinct from `None` which is an varied maybe type `T?`. 
 
 ```
 result: ptr = ExternalLib.getSomething()
@@ -1676,12 +1676,12 @@ A standard library will be made to safely handle pointer dereferencing and do po
 
 ```
 mu x = 0             -- Create a local mutable variable.
-xPtr = getMuPtr(x)?  -- Map `Null` to a option type, branch if it's `None`, return `Some(ptr)` if it's not and unwrap it with `?`.
+xPtr = getMuPtr(x)?  -- Map pointer to a maybe type `T?`.
 xPtr.set(1)!         -- Safely set the pointer and branch if there's an error.
 print("{x}")         -- "1", the pointer successfully mutated `x`.
 ```
 
-Sometimes, it's necessary to dig deep into the unsafe territory. Mulang normally prevents you from doing this unless you mark the code with `@unsafe`. The `^` is the symbol associated with pointers, analogues to `?` for options, `!` for results, and `#` for arrays. It can be used in type notation, but it's also the operator to dereference a pointer. Thy type must be known at compile-time. Dereferencing an opaque pointer `ptr` is a compile-time error. In the type notation, `T^` prevents the pointer from mutating its memory or `T^mu` allows mutation with `^ =` (dereference + assignment). 
+Sometimes, it's necessary to dig deep into the unsafe territory. Mulang normally prevents you from doing this unless you mark the code with `@unsafe`. The `^` is the symbol associated with pointers, analogues to `?` for maybes, `!` for results, and `#` for arrays. It can be used in type notation, but it's also the operator to dereference a pointer. Thy type must be known at compile-time. Dereferencing an opaque pointer `ptr` is a compile-time error. In the type notation, `T^` prevents the pointer from mutating its memory or `T^mu` allows mutation with `^ =` (dereference + assignment). 
 
 ```
 @unsafe do                   -- Allow pointer manipulation in this block.
@@ -1713,7 +1713,7 @@ Pointer types have 2 kinds of mutability: one for the reference, and one for the
   * _For-each:_ `loop x in array then _`
   * _Do-while-not:_ `loop _ until cond`
 * [__`try` / `catch`__](#try-catch): Resolves Results (`T!`).
-* [__`opt`__](#opt): Resolves Optionals (`T?`). If any `?` inside fails, the block short-circuits.
+* [__`maybe`__](#maybe-else): Resolves maybes (`T?`). If any `?` inside fails, the block short-circuits.
 
 All branching constructs share the same block / inline pattern:
 
@@ -1889,7 +1889,7 @@ The next control flow methods are based on pattern match. Generally, you see the
 
 #### `match` / `is`
 
-Enum/exception branching. Exhaustive by default. `| then` for the default case.
+Enum/error branching. Exhaustive by default. `| then` for the default case.
 
 ```
 match expr is
@@ -1957,10 +1957,10 @@ match choice is
 ```
 
 ```
--- Fallback, `val` is converted to option type `T?`:
+-- Fallback, `val` is converted to maybe type `T?`:
 match choice is
 | First | Second(opt val) | Third{opt val} then
-    print("First, Second, or Third: {opt val? else "None"}")
+    print("First, Second, or Third: {maybe val? else "None"}")
 ```
 
 #### `fallthrough`
@@ -1972,7 +1972,7 @@ match choice is
 | First then
     print("First")
     fallthrough
-| Second(opt x) then    -- `opt x` in pattern wraps the variable in an option
+| Second(opt x) then    -- `opt x` in pattern wraps the variable in a maybe
     if x is Some(x) then
         print("Definitely Second: {x}")
     -- Implicit break.
@@ -2019,8 +2019,8 @@ result = value is Pattern(x) then x
 ```
 -- With fallback (non-exhaustive):
 result = value is Pattern(opt x) then x
-result = value is Pattern(opt x) then opt x? else "fallback"    -- Wrap in Some(x), then coalesce
-result = value is Pattern(opt x = "fallback") then x        -- Automatic fallback
+result = value is Pattern(opt x) then maybe x? else "fallback"    -- Wrap in Some(x), then coalesce
+result = value is Pattern(opt x = "fallback") then x              -- Automatic fallback
 ```
 
 ```
@@ -2103,7 +2103,7 @@ if value is
 if nestedPattern is Pattern(Pattern(Pattern(Pattern(x if x >= 0)))) then
     print("Phew! That was a lot of unwrapping for {x}!")
 else
-    print("Either none of those nested options matched or x is negative.")
+    print("Either none of those nested patterns matched or x is negative.")
 ```
 
 ### `loop` + `is`
@@ -2141,23 +2141,23 @@ if x is Some(x) then
     print("{x}")
 ```
 
-### Error/Optional Control Flow
+### Error/Maybe Control Flow
 
-Error and null handling is done through the `try` and `opt` keywords. These blocks are for unwrapping the 2 monadic types in Mulang: *optionals* `T?` and *results* `T!`. When resolving a monadic, you go in *reverse order* that was notated by the type. Think of it like a box: you start from the outside and work your way in.
+Error and null handling is done through the `try` and `maybe` keywords. These blocks are for unwrapping the 2 monadic types in Mulang: *maybes* `T?` and *results* `T!`. When resolving a monadic, you go in *reverse order* that was notated by the type. Think of it like a box: you start from the outside and work your way in.
 
-- `T?` is an *optional:* it may contain a value or be `None`.
+- `T?` is a *maybe:* it may contain a value or be `None`.
 - `T!E` is a *result:* it may contain a value or an error of type `E`.
 
-| Mu's Type | Other Languages           | In Plain English                                              | Layers | Resolve Order             |
-|:----------|:--------------------------|:--------------------------------------------------------------|-------:|:--------------------------|
-| `T?`      | `Option<T>`               | An optional                                                   |      1 | `?`                       |
-| `T!E`     | `Result<T, E>`            | A result with 1 possible error                                |      1 | `!`                       |
-| `T?!E`    | `Result<Option<T>, E>`    | A result with 1 possible error of an optional                 |      2 | `!` *then* `?`            |
-| `T??`     | `Option<Option<T>>`       | An optional of an optional                                    |      2 | `?` *then* `?`            |
-| `T?!E!F`  | `Result<Option<T>, E\|F>` | A result with 2 possible errors of an optional                |      2 | `!` *then* `?`            |
-| `T!E?`    | `Option<Result<T, E>>`    | An optional of a result with 1 possible error                 |      2 | `?` *then* `!`            |
-| `T?!E?`   | `Option<Result<Option<T>, E>`    | An optional of a result with 1 possible error of an optional  |      3 | `?` *then* `!` *then* `?` |
-| `T!E?!F`  | `Result<Option<Result<T, E>>, F>` | An reesult with 1 possible error of an optional of result with 1 possible error | 3 | `!` *then* `?` *then* `!` |
+| Mu's Type | Other Languages                  | In Plain English                                                             | Layers | Resolve Order             |
+|:----------|:---------------------------------|:-----------------------------------------------------------------------------|-------:|:----------------------------|
+| `T?`      | `Maybe<T>`                       | A maybe                                                                      |      1 | `?`                         |
+| `T!E`     | `Result<T, E>`                   | A result with 1 possible error                                               |      1 | `!`                         |
+| `T?!E`    | `Result<Maybe<T>, E>`            | A result with 1 possible error of a maybe                                    |      2 | `!` *then* `?`            |
+| `T??`     | `Maybe<Maybe<T>>`                | A maybe of a maybe                                                           |      2 | `?` *then* `?`            |
+| `T?!E!F`  | `Result<Maybe<T>, E\|F>`         | A result with 2 possible errors of a maybe                                  |      2 | `!` *then* `?`            |
+| `T!E?`    | `Maybe<Result<T, E>>`            | A maybe of a result with 1 possible error                                   |      2 | `?` *then* `!`            |
+| `T?!E?`   | `Maybe<Result<Maybe<T>, E>`      | A maybe of a result with 1 possible error of a maybe                       |      3 | `?` *then* `!` *then* `?` |
+| `T!E?!F`  | `Result<Maybe<Result<T, E>>, F>` | An reesult with 1 possible error of a maybe of result with 1 possible error |      3 | `!` *then* `?` *then* `!` |
 
 Think of each `?` or `!` on a *type* as a **layer.** When you call the same `?` or `!` in an *expression,* you **unwrap** that layer.
 
@@ -2165,15 +2165,15 @@ Think of each `?` or `!` on a *type* as a **layer.** When you call the same `?` 
 x: int!Error = getRiskyInt()   -- Get wrapped result value.
 y: int = x!                    -- Unwrap the result
                                    -- Which is equivalent to…
-y = (match x is
-    | Ok(val) then val                       -- Get the Ok value.
-    | Exception(e) then return Exception(e)  -- Exit block, return Exception if a function
+y = match x is (
+| Ok(val) then val                   -- Get the Ok value.
+| Error(e) then return Error(e)      -- Exit block, return error if a function
 )
 ```
 
 ```
-x: int? = getMaybeInt()   -- Get wrapped optional value.
-y: int = x?               -- Unwrap the optional.
+x: int? = getMaybeInt()   -- Get wrapped maybe value.
+y: int = x?               -- Unwrap the maybe.
                           -- Which is equivalent to…
 y = (match x is
     | Some(val) then val      -- Get the Some value.
@@ -2197,7 +2197,7 @@ catch
 try risky()! catch (Error(e) then _ | then _)
 ```
 
-Error handling. Unwrap result types with `!` inside a `try` block. Unhandled exceptions propagate upward. Like with `match _ is`, inline `try _ catch` needs parentheses around the pattern matching section.
+Error handling. Unwrap result types with `!` inside a `try` block. Unhandled errors propagate upward. Like with `match _ is`, inline `try _ catch` needs parentheses around the pattern matching section after `catch`.
 
 ```
 try
@@ -2254,7 +2254,7 @@ riskyFn(a: int): int! =
 
 #### `maybe` / `else`
 
-None-coalescing. Unwrap option types with `?` inside an `maybe` block. If any `?` returns `None`, the block short-circuits.
+None-coalescing. Unwrap maybe types with `?` inside an `maybe` block. If any `?` returns `None`, the block short-circuits.
 
 ```
 maybe
@@ -2272,7 +2272,7 @@ Inline form.
 x = maybe f(a?) else "fallback"
 ```
 
-Using `?` inside a function automatically infers an option return type `T?`.
+Using `?` inside a function automatically infers a maybe return type `T?`.
 
 ```
 addStuff(a: int, b: int): int? =
@@ -2281,7 +2281,7 @@ addStuff(a: int, b: int): int? =
     x + y
 ```
 
-Nested options unwrap with multiple `??`:
+Nested maybes unwrap with multiple `??`:
 
 ```
 unnest(x: int??): int? = x??
@@ -2300,10 +2300,10 @@ getFirst(a: int, b: int, c: int): int =
 Other examples:
 
 ```
-crunchData(): int?!Error!CustomError =    -- Multiple error types
+crunchData(): int?!Error!CustomError =                                -- Multiple error types
     value: int? = someFunc()?
-    -- Option to Result
-    data: int = opt value? else raise CustomError("Not found")      -- Exist function on fallback
+    -- Maybe to Result
+    data: int = maybe value? else raise CustomError("Not found")      -- Exist function on fallback
     data
 ```
 
@@ -2324,10 +2324,10 @@ isThirteen(x) =
 
 #### `raise`
 
-Return out of the function with an exception value. The function must return a result type `type!`. If an except type is also declared `type!except`, then the type passed to `raise` must match.
+Return out of the function with an error value. The function must return a result type `T!`. If declared `T!E` where `E` is an `error` type, then the type passed to `raise` must match.
 
 ```
--- `type!` is inferred:
+-- T!E is inferred:
 alwaysFail() =
     raise MyError("error message")
 
@@ -2586,9 +2586,9 @@ match a is
     print("third!")
 ```
 
-### Exception Types (`error`)
+### Error Types (`error`)
 
-Exceptions are bit like both `struct` and `enum`. Every `error` type is a member of the `error` sum type. When your program compiles, all of `error`'s members get collected together. The compiler tracks which `error` memebers are possible in any block. See "Error Handling" for more details. Instantiation works the same as enums.
+Errors are bit like both `struct` and `enum`. Every `error` type is a member of the `error` sum type. When your program compiles, all of `error`'s members get collected together. The compiler tracks which `error` memebers are possible in any block. See "Error Handling" for more details. Instantiation works the same as enums.
 
 ```
 OutOfBounds :: error        -- No data.
@@ -2599,7 +2599,7 @@ DivideByZero :: error =
 ```
 divide(num: float, dem: float): float!DivideByZero =
     if dem == 0.0 then
-        raise DivideByZero(val: num)     -- Causes branch to `except` block when called with `!`.
+        raise DivideByZero(val: num)     -- Causes branch in `try` block when called with `!`.
     num / dem
 
 try
@@ -2755,7 +2755,7 @@ The compiler will read the body of the macro and understand where to insert its 
 You can also define a type with a meta function. The meta functions parameters in `[]` will be inferred if it returns a function or type and you call it with parentheses `()`. In other words, `meta(_)` is equal to `meta[_](_)`. 
 
 ```
--- Note that this is not the actual definition for an maybe type `T?`. This is just a user-defined enum that uses the same pattern.
+-- Note that this is not the actual definition for a maybe type `T?`. This is just a user-defined enum that uses the same pattern.
 MyMaybe[T] :: enum =
     Some(T)
     None
@@ -2958,7 +2958,7 @@ This connects the same explicit-list convention as `inherit` and capturing — *
 
 ### Base Context / Command Line Arguments
 
-Global context variables are defined when a module starts. These contain things like system information, environment variables, or the command-line arguments passed to your program when it's called. These are all type optional string `str?`. The first argument `$0` is either the filepath to the main script when in interpreated mode or `None` when running as a compiled programm. You can use this to check if your running as a script or not.
+Global context variables are defined when a module starts. These contain things like system information, environment variables, or the command-line arguments passed to your program when it's called. These are all type maybe string `str?`. The first argument `$0` is either the filepath to the main script when in interpreated mode or `None` when running as a compiled programm. You can use this to check if your running as a script or not.
 
 ```
 if $0 is Some(x) then
@@ -3046,7 +3046,7 @@ Mu's unconventional choices are intentional, prioritizing readability, explicit 
 * __Readability First:__ Significant whitespace avoids bracket clutter, while the strict block/inline switching rules (`:` vs `()`) prevent you from fighting the formatter.
 * __Traceable Dependencies:__ The language forces you to explicitly name what you bring into scope. There are no glob imports or implicit mutable state captures. `import`, `inherit`, and `\` (capturing) all use explicit listing.
 * __Unified Concepts:__ `::` is the universal operator for top-level, compile-time definitions (structs, aliases, constants).
-* __Type and Expression Symmetry:__ `?` (Optionals) and `!` (Results) work identically whether used in type definitions or as unwrapping operators.
+* __Type and Expression Symmetry:__ `?` (Maybes) and `!` (Results) work identically whether used in type definitions or as unwrapping operators.
 * __Scalable Patterns:__ Simple tasks use simple syntax (e.g., `fn(x) = x`), but the language easily scales up to explicit types, memory models, and generic constraints as complexity demands.
 
 ---
@@ -3104,7 +3104,7 @@ do
 
 ## Reserved Keywords
 
-Mu has 43 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard options (`Some`, `None`), and decorators (`@memory`) are built-in symbols but *not* strict keywords.
+Mu has 43 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard maybes (`Some`, `None`), and decorators (`@memory`) are built-in symbols but *not* strict keywords.
 
 **The Keyword List:**
 `and`, `as`, `await`, `band`, `bor`, `break`, `catch` `continue`, `defer`, `do`, `else`, `enum`, `error`, `fallthrough`, `fn`, `if`, `impl`, `import`, `in`, `inherit`, `is`, `loop`, `match`, `maybe`, `mod`, `mu`, `never`, `not`, `opt`, `or`, `out`, `proto`, `raise`, `ref`, `rem`, `return`, `self`, `struct`, `then`, `try`, `until`, `where`, `xor`, `yield`.
@@ -3132,8 +3132,8 @@ Mu has 43 reserved keywords. Note that built-in types (`int`, `str`), boolean va
 |:--------------:|:----------------------------------------------------|
 |   `lhs . rhs`  | Member access                                       |
 |   `lhs # rhs`  | Array/dictionary index                              |
-|   `lhs ?`      | Unwrap option, propagate `None` to nearest `opt`    |
-|   `lhs !`      | Unwrap result, propagate exception to nearest `try` |
+|   `lhs ?`      | Unwrap maybe, propagate `None` to nearest `maybe`   |
+|   `lhs !`      | Unwrap result, propagate error to nearest `try`     |
 |   `lhs ^`      | Dereference typed pointer                           |
 |       `~ rhs`  | Inferred type conversion                            |
 |     `... rhs`  | Spread array into array                             |
@@ -3200,10 +3200,10 @@ The practical case where it matters is things like clock arithmetic, array wrapp
 
 | Syntax     | Meaning            | Note                                                     |
 |:-----------|:-------------------|:---------------------------------------------------------|
-| `T?`, `x?` | Optional           | Unwraps an optional; propagates `None` to nearest `opt`. |
-| `T!`, `x!` | Result / Exception | Unwraps a result; propagates error to nearest `try`.     |
+| `T?`, `x?` | Maybe              | Unwraps a maybe; propagates `None` to nearest `maybe`.   |
+| `T!`, `x!` | Result / Error     | Unwraps a result; propagates error to nearest `try`.     |
 | `T#`, `x#` | Array / Dict Index | `T#N` is fixed-size. Access: `array#index`.              |
-| `T^`, `x^` | Pointer            | Dereference a pointer. Requires `@unsafe`.         |
+| `T^`, `x^` | Pointer            | Dereference a pointer. Requires `@unsafe`.               |
 
 ---
 
