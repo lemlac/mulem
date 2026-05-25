@@ -292,16 +292,16 @@ Mu has a clean, consistent operator set with both symbolic and word forms.
 | Level | Category                  | Operators                   |
 |:------|:--------------------------|:----------------------------|
 | 11    | Member access/Function    | `.` `[]` `()`               |
-| 10    | Postfix                   | `? ! ^`                     |
-| 9     | Unary                     | `+ - not ~`                 |
+| 10    | Postfix                   | `?` `!` `^`                     |
+| 9     | Unary                     | `+` `-` `not` `~`                 |
 | 8     | Exponent                  | `**` (right-associative)    |
-| 7     | Multiplicative / Shift    | `* / // rem mod << >> >>>`  |
-| 6     | Additive / Concat         | `+ - ++`                    |
-| 5     | Bitwise                   | `band bor xor`              |
-| 4     | Range                     | `.. ..=`                    |
-| 3     | Comparison                | `== != < > <= >=`           |
+| 7     | Multiplicative / Shift    | `*` `/` `//` `rem` `mod` `<<` `>>` `>>>`  |
+| 6     | Additive / Concat         | `+` `-` `++`                    |
+| 5     | Bitwise                   | `band` `bor` `xor`              |
+| 4     | Range                     | `..` `..=`                    |
+| 3     | Comparison                | `==` `!=` `<` `>` `<=` `>=`           |
 | 2     | Logical AND               | `and`                       |
-| 1     | Logical OR / Pipeline     | `or \|\| \|>`               |
+| 1     | Logical OR / Coalesce / Pipeline     | `or` `\|\|` `\|>`               |
 | 0     | Assignment / Spread       | `= := += => & ...`          |
 
 | Operator       | Meaning                                             |
