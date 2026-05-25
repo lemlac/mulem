@@ -685,6 +685,10 @@ printX()        -- Prints "0"
 
 __`$x` vs. `$`__
 
+`$` is automatic and ephemeral — it appears and disappears with each pipeline step, like a baton being passed in a relay race. You never declare it, you just use it.
+
+`$x` is something you declare and own. It lives in the lexical scope like any other variable, except it's visible to functions that ask for it. The `$` prefix is a signal that it comes from the *environment* rather than being passed directly.
+
 |      | What it is       | When it's set                | Scope          |
 |------|------------------|------------------------------|----------------|
 | `$x` | context variable | declared over function calls | lexical scope  |
