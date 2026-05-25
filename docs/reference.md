@@ -3202,7 +3202,7 @@ Modules are named with the keyword `mod` near the top before anything is defined
 ```
 @from("../../somewhere.mu") import someModule{thing}
 
-mod myModule
+myModule :: mod
 
 addThing(x) = x + thing
 ```
@@ -3251,7 +3251,7 @@ Modules define how memory is handled with the `@memory` decorator. *(See [Decora
 import std.mem{memory, Count, ARC}
 
 @memory(Count(ARC))
-mod moduleThatUsesReferenceCounting
+moduleThatUsesReferenceCounting :: mod
 ```
 
 How this is implemented is outside of the scope of this document. That will be saved for when it's time to make a standard library for Mulang. For now, Mulang will focus on only implementing the garbage collector which will work in both interpreted and compiled mode.
@@ -3279,7 +3279,7 @@ Built-in decorators demonstrated so far include `@unsafe`, `@inlined`, `@opaque`
 
 ```
 @memory(Manual) -- Call it like a function to pass a variable.
-mod myModule
+myModule :: mod
 
 @opaque         -- No function needed if there are no arguments.
 Thing :: struct =
@@ -3318,10 +3318,10 @@ Mu's unconventional choices are intentional, prioritizing readability, explicit 
 
 ## Reserved Keywords
 
-Mu has 41 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard options (`Some`, `None`), and decorators (`@memory`) are built-in symbols but *not* strict keywords.
+Mu has 42 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard options (`Some`, `None`), and decorators (`@memory`) are built-in symbols but *not* strict keywords.
 
 **The Keyword List:**
-`and`, `as`, `await`, `band`, `bor`, `break`, `continue`, `defer`, `do`, `else`, `enum`, `except`, `fallthrough`, `fn`, `if`, `impl`, `import`, `in`, `inherit`, `is`, `loop`, `match`, `mod`, `mu`, `never`, `not`, `opt`, `or`, `out`, `proto`, `raise`, `ref`, `return`, `self`, `struct`, `then`, `try`, `until`, `where`, `xor`, `yield`.
+`and`, `as`, `await`, `band`, `bor`, `break`, `continue`, `defer`, `do`, `else`, `enum`, `except`, `fallthrough`, `fn`, `if`, `impl`, `import`, `in`, `inherit`, `is`, `loop`, `match`, `mod`, `mu`, `never`, `not`, `opt`, `or`, `out`, `proto`, `raise`, `ref`, `rem`, `return`, `self`, `struct`, `then`, `try`, `until`, `where`, `xor`, `yield`.
 
 ---
 
@@ -3332,7 +3332,7 @@ Here is a quick synthesized example showing how Mu's structs, implementations, p
 ```mu
 import std.print
 
-mod exampleApp
+exampleApp :: mod
 
 (-- 
     Define a struct and implement a prototype.
