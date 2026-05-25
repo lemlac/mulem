@@ -302,70 +302,7 @@ __Keywords that can start a pattern sequence:__
 
 ## Operators
 
-Mu has a clean, consistent operator set with both symbolic and word forms.
-
-### Precedence (Highest to Lowest)
-
-| Level | Category                  | Operators                   |
-|:------|:--------------------------|:----------------------------|
-| 11    | Member access/Function    | `.` `[]` `()`               |
-| 10    | Postfix                   | `?` `!` `^`                     |
-| 9     | Unary                     | `+` `-` `not` `~`                 |
-| 8     | Exponent                  | `**` (right-associative)    |
-| 7     | Multiplicative / Shift    | `*` `/` `//` `rem` `mod` `<<` `>>` `>>>`  |
-| 6     | Additive / Concat         | `+` `-` `++`                    |
-| 5     | Bitwise                   | `band` `bor` `xor`              |
-| 4     | Range                     | `..` `..=`                    |
-| 3     | Comparison                | `==` `!=` `<` `>` `<=` `>=`           |
-| 2     | Logical AND               | `and`                       |
-| 1     | Logical OR / Pipeline     | `or` `\|>`               |
-| 0     | Assignment / Spread       | `= := += => & ...`          |
-
-| Operator       | Meaning                                             |
-|:--------------:|:----------------------------------------------------|
-|   `lhs . rhs`  | Member access                                       |
-|   `lhs # rhs`  | Array/dictionary index                              |
-|   `lhs ?`      | Unwrap option, propagate `None` to nearest `opt`    |
-|   `lhs !`      | Unwrap result, propagate exception to nearest `try` |
-|   `lhs ^`      | Dereference typed pointer                           |
-|       `~ rhs`  | Inferred type conversion                            |
-|     `... rhs`  | Spread array into array                             |
-|       `& rhs`  | Spread tuple into tuple (same type)                 |
-|  `lhs .. rhs`  | Exclusive range                                     |
-| `lhs ..= rhs`  | Inclusive range                                     |
-| `lhs \|> rhs`  | Pipeline                                            |
-|  `lhs => rhs`  | Pipeline assignment                                 |
-|   `lhs = rhs`  | Assignment or declaration                           |
-|  `lhs += rhs`  | Increment                                           |
-|  `lhs -= rhs`  | Decrement                                           |
-|  `lhs := rhs`  | Explicit inferred-type declaration                  |
-| `lhs: T = rhs` | Explicit typed declaration                          |
-|   `lhs + rhs`  | Addition                                            |
-|   `lhs - rhs`  | Subtraction                                         |
-|       `+ rhs`  | Unary positive                                      |
-|       `- rhs`  | Sign flip                                           |
-|   `lhs * rhs`  | Multiplication                                      |
-|   `lhs / rhs`  | Exact division (float)                              |
-|  `lhs // rhs`  | Floor division (int)                                |
-|  `lhs rem rhs` | Modulo (sign matches `lhs`)                         |
-|  `lhs mod rhs` | Floor modulo (sign matches `rhs`)                   |
-|  `lhs ** rhs`  | Exponentiation (right-associative)                  |
-|  `lhs == rhs`  | Equality                                            |
-|  `lhs != rhs`  | Inequality                                          |
-|   `lhs > rhs`  | Greater than                                        |
-|   `lhs < rhs`  | Less than                                           |
-|  `lhs >= rhs`  | Greater than or equal                               |
-|  `lhs <= rhs`  | Less than or equal                                  |
-| `lhs band rhs` | Bitwise AND                                         |
-| `lhs bor rhs`  | Bitwise OR                                          |
-| `lhs xor rhs`  | Bitwise XOR                                         |
-|  `lhs << rhs`  | Shift left                                          |
-|  `lhs >> rhs`  | Shift right                                         |
-| `lhs >>> rhs`  | Unsigned shift right                                |
-|  `lhs ++ rhs`  | Concatenation                                       |
-| `lhs and rhs`  | Logical AND                                         |
-|  `lhs or rhs`  | Logical OR                                          |
-|     `not rhs`  | Logical NOT (or bitwise NOT for numbers)            |
+Mu has mix of symbolic and word-form operators. For a complete list, see [Table of Operators](#table-of-operators) at the end of this document.
 
 Increment and decrement are the same as assignement:
 
@@ -3110,16 +3047,7 @@ Mu's unconventional choices are intentional, prioritizing readability, explicit 
 
 ---
 
-## Reserved Keywords
-
-Mu has 42 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard options (`Some`, `None`), and decorators (`@memory`) are built-in symbols but *not* strict keywords.
-
-**The Keyword List:**
-`and`, `as`, `await`, `band`, `bor`, `break`, `catch` `continue`, `defer`, `do`, `else`, `enum`, `error`, `fallthrough`, `fn`, `if`, `impl`, `import`, `in`, `inherit`, `is`, `loop`, `match`, `mod`, `mu`, `never`, `not`, `opt`, `or`, `out`, `proto`, `raise`, `ref`, `rem`, `return`, `self`, `struct`, `then`, `try`, `until`, `where`, `xor`, `yield`.
-
----
-
-## Putting It All Together: A Mu Example
+## Putting It All Together…
 
 Here is a quick synthesized example showing how Mu's structs, implementations, pipelining, and error handling might look in a real script:
 
@@ -3167,6 +3095,80 @@ do
     | FetchError(e) then
         print("Failed to fetch user: {e}")
 ```
+
+---
+
+## Reserved Keywords
+
+Mu has 42 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard options (`Some`, `None`), and decorators (`@memory`) are built-in symbols but *not* strict keywords.
+
+**The Keyword List:**
+`and`, `as`, `await`, `band`, `bor`, `break`, `catch` `continue`, `defer`, `do`, `else`, `enum`, `error`, `fallthrough`, `fn`, `if`, `impl`, `import`, `in`, `inherit`, `is`, `loop`, `match`, `mod`, `mu`, `never`, `not`, `opt`, `or`, `out`, `proto`, `raise`, `ref`, `rem`, `return`, `self`, `struct`, `then`, `try`, `until`, `where`, `xor`, `yield`.
+
+---
+
+## Table of Operators
+
+| Level | Category                  | Operators                   |
+|:------|:--------------------------|:----------------------------|
+| 11    | Member access/Function    | `.` `[]` `()`               |
+| 10    | Postfix                   | `?` `!` `^`                     |
+| 9     | Unary                     | `+` `-` `not` `~`                 |
+| 8     | Exponent                  | `**` (right-associative)    |
+| 7     | Multiplicative / Shift    | `*` `/` `//` `rem` `mod` `<<` `>>` `>>>`  |
+| 6     | Additive / Concat         | `+` `-` `++`                    |
+| 5     | Bitwise                   | `band` `bor` `xor`              |
+| 4     | Range                     | `..` `..=`                    |
+| 3     | Comparison                | `==` `!=` `<` `>` `<=` `>=`           |
+| 2     | Logical AND               | `and`                       |
+| 1     | Logical OR / Pipeline     | `or` `\|>`               |
+| 0     | Assignment / Spread       | `= := += => & ...`          |
+
+| Operator       | Meaning                                             |
+|:--------------:|:----------------------------------------------------|
+|   `lhs . rhs`  | Member access                                       |
+|   `lhs # rhs`  | Array/dictionary index                              |
+|   `lhs ?`      | Unwrap option, propagate `None` to nearest `opt`    |
+|   `lhs !`      | Unwrap result, propagate exception to nearest `try` |
+|   `lhs ^`      | Dereference typed pointer                           |
+|       `~ rhs`  | Inferred type conversion                            |
+|     `... rhs`  | Spread array into array                             |
+|       `& rhs`  | Spread tuple into tuple (same type)                 |
+|  `lhs .. rhs`  | Exclusive range                                     |
+| `lhs ..= rhs`  | Inclusive range                                     |
+| `lhs \|> rhs`  | Pipeline                                            |
+|  `lhs => rhs`  | Pipeline assignment                                 |
+|   `lhs = rhs`  | Assignment or declaration                           |
+|  `lhs += rhs`  | Increment                                           |
+|  `lhs -= rhs`  | Decrement                                           |
+|  `lhs := rhs`  | Explicit inferred-type declaration                  |
+| `lhs: T = rhs` | Explicit typed declaration                          |
+|   `lhs + rhs`  | Addition                                            |
+|   `lhs - rhs`  | Subtraction                                         |
+|       `+ rhs`  | Unary positive                                      |
+|       `- rhs`  | Sign flip                                           |
+|   `lhs * rhs`  | Multiplication                                      |
+|   `lhs / rhs`  | Exact division (float)                              |
+|  `lhs // rhs`  | Floor division (int)                                |
+|  `lhs rem rhs` | Modulo (sign matches `lhs`)                         |
+|  `lhs mod rhs` | Floor modulo (sign matches `rhs`)                   |
+|  `lhs ** rhs`  | Exponentiation (right-associative)                  |
+|  `lhs == rhs`  | Equality                                            |
+|  `lhs != rhs`  | Inequality                                          |
+|   `lhs > rhs`  | Greater than                                        |
+|   `lhs < rhs`  | Less than                                           |
+|  `lhs >= rhs`  | Greater than or equal                               |
+|  `lhs <= rhs`  | Less than or equal                                  |
+| `lhs band rhs` | Bitwise AND                                         |
+| `lhs bor rhs`  | Bitwise OR                                          |
+| `lhs xor rhs`  | Bitwise XOR                                         |
+|  `lhs << rhs`  | Shift left                                          |
+|  `lhs >> rhs`  | Shift right                                         |
+| `lhs >>> rhs`  | Unsigned shift right                                |
+|  `lhs ++ rhs`  | Concatenation                                       |
+| `lhs and rhs`  | Logical AND                                         |
+|  `lhs or rhs`  | Logical OR                                          |
+|     `not rhs`  | Logical NOT (or bitwise NOT for numbers)            |
 
 ---
 
