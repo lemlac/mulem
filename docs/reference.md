@@ -859,24 +859,24 @@ print("1 - 1 = {action(1, 1)}")  -- Prints "0".
 |:-----------------|:------------------|:-----------------------------------|
 | *(none)*         | Pass by copy      | No                                 |
 | `mu`             | Pass by copy      | Yes                                |
-| `ref`            | Pass by reference | No / Yes                           |
-| `in`             | Pass by reference | Yes                           |
+| `in`             | Pass by reference | No                           |
+| `ref`             | Pass by reference | Yes                           |
 | `out`            | Unset reference   | Yes (Must be assigned)             |
 | `opt`            | Optional argument | Wraps in `T?`. Coalesce with `||`. |
 
 Function parameters can be declared like variables. Likewise, you can modify their mutability and reference-ness the same way.
 
 ```
-increment(in x: int) =
+increment(ref x: int) =
     x += 1
 
 mu y = 0
 increment(y)
 ```
 
-Another type of parameter is `out`. `out` parameters are guaranteed‑set references. They behave like `in`, except they begin the function in an *unset* state. Use an `out` parameter when a function’s job is to produce a value rather than consume one.
+`in` and `out` are complements of each other. One is **read-only** (`in`) and the other is **write-only** (`out`). `ref` combines these two to pass a variable that you can both **read and write** to.
 
-An out parameter must not remain unset in any branch of the function. It must either be:
+`out` parameters are guaranteed‑set references. They behave like `ref`, except they begin the function in an *unset* state. Use an `out` parameter when a function’s job is to produce a value rather than consume one. An `out` parameter must not remain unset in any branch of the function. It must either be:
 
 - Assigned directly, *or*
 - Passed to another function that also takes an out parameter.
@@ -892,16 +892,14 @@ setInt(x)
 print("{x}")    -- Prints "3"
 ```
 
-This is fine, but what if you just wanted to grab the `out` variable in one go? Normally you could just write `n = setInt()` — but `out` parameters don’t return values. We can inline a variable from the `out` parameter with the keyword `as`. Just like how we use `as` for aliasing, this makes it clear that we're expecting a new variable at the call site. That way it's *explicit* that we're intentionally declaring a new variable instead of passing in an existing one.
+This is fine, but what if you just wanted to grab the `out` variable in one go? Normally you could just write `n = setInt()` for return values — but `out` parameters aren't retaurn values. We can inline a variable from the `out` parameter with the keyword `as` — just like how we use `as` for aliasing. This makes it clear that we're expecting a new variable at the call site. That way it's *explicit* that we're intentionally declaring a new variable instead of passing in an existing one.
 
 ```
 setInt(as n)    -- Declare a new variable as `n` that gets set by `setInt`.
 print("{n}")    -- Prints "3"
 ```
 
-`setInt(as n)` → "Set int as n"—This makes it clear what you're trying to do.
-
-Using `as` makes the intent unambiguous: you are creating a variable, not passing an existing one. `as` already means "bind this to a name" throughout the language:
+`setInt(as n)` → "Set int as n"—it says exactly what it does. This makes it clear that you're intentionally making a new variable. Using `as` makes the intent unambiguous: you are creating a variable, not passing an existing one. `as` already means "bind this to a name" throughout the language:
 
 ```
 {x as y} = {x: 2}                 -- destructuring
@@ -914,7 +912,7 @@ Languages that use return values for this kind of thing (`n = setInt()`) imply t
 
 ### Optional Parameters
 
-Parameters can be made optional with the `opt` modifier. This wraps the variable is type `T?`. If the parameter is missing, it will be set to `None`.
+Parameters can be made optional with the `opt` modifier. This wraps the variable in type `T?`. If the parameter is missing, it will be set to `None`.
 
 ```
 addOptional(opt a: int, opt b: int): int =
@@ -951,7 +949,7 @@ requiredParam(None)      -- Prints "None"
 -- requiredParam()       -- Error: missing parameter `val: int?`
 ```
 
-`opt` parameters can aslo have default values. Use `=` to to give an optional parameter a default value. This will make it a type `T` if it's used. 
+`opt` parameters can aslo have default values. Use `=` to to give an optional parameter a default value. This will make it a type `T`, so unwrapping is unnecessary.
 
 ```
 addOptional(opt a = 0, opt b = 0): int = a + b     -- `a` and `b` are always `int`s
@@ -961,7 +959,7 @@ print("{addOptional(1)}")     -- Prints "1"
 print("{addOptional(1, 1)}")  -- Prints "2"
 ```
 
-Use `...` to collect all variables into a single variable. The variable should be type `T#` (an array).
+Use `...` to collect all arguments into a single variable. The variable should be type `T#` (an array).
 
 ```
 addAll(...nums: int#): int =
@@ -1014,7 +1012,7 @@ cannotChangeX(2) -- Prints "2"
 print("{x}")     -- Prints "1"
 ```
 
-To capture a mutable variable, write `\` at the end of the function signature. This goes after the return type `: T` *(or after the parameter if inferred)* and before the equals sign `=`. List each *mutable* (`mu`) variables that the function uses. This helps make it easy to see which functions depend on mutable variables and which ones don't since `\` doesn't appear in type notation or anywhere else to the left of the equals sign `=` in function signatures except for captures. You can think of it like `\` for escaping. In this case, we are escaping the scope of this function to grab memory outside of it.
+To capture a mutable variable, write `\` at the end of the function signature. This goes after the parameters and before the return type `: T =`. List each *mutable* (`mu`) variables that the function uses. This helps make it easy to see which functions depend on mutable variables and which ones don't since `\` doesn't appear in type notation or anywhere else to the left of the equals sign `=` in function signatures except for captures. You can think of it like `\` for escaping. In this case, we are escaping the scope of this function to grab memory outside of it.
 
 This follows the same practice that `import` and `inherit` where all words in a given context are listed out clearly so that there are no accident name collisions or hidden gotchas.
 
@@ -1024,7 +1022,7 @@ mu count = 0               -- Mutable variables, must be captured with `\`.
 mu squared = 1
 mu cubed = 1
    
-addCount(): int \ count \ squared \ cube =     -- Capture 3 variables at once.
+addCount() \ (count, squared, cube): int =     -- Capture 3 variables at once.
     count += amount                            -- Mutate captured variables inside the function.
     squared = count * count
     cubed = squared * count
@@ -1043,19 +1041,19 @@ mu count = 0
 addCount() =
     count += 1  -- Error here
 ```
-> `count` is mutable but not captured. Did you mean `addCount() \ count =`?
+> `count` is mutable but not captured. Did you mean `addCount() \ (count) =`?
 
 **Accidentally tried to capture an immutable:**
 ```
 x = 1
-f() \ x =
+f() \ (x) =
     x + 1
 ```
-> `x` is immutable and is captured automatically — remove `\ x` from the signature.
+> `x` is immutable and is captured automatically — remove `\ (x)` from the signature.
 
 **Captured a variable that doesn't exist in scope:**
 ```
-f() \ ghost =
+f() \ (ghost) =
     ghost + 1
 ```
 > `ghost` is not defined in the enclosing scope. Captures must refer to mutable variables in the outer scope.
@@ -1067,19 +1065,14 @@ forEach([1,2,3], fn(x) =
     count += x
 )
 ```
-> `count` is mutable but not captured by this lambda. Did you mean `fn(x) \ count =`?
-
-**The error should appear at the mutation site, not the signature**, and always suggest the fix explicitly. 
+> `count` is mutable but not captured by this lambda. Did you mean `fn(x) \ (count) =`?
 
 #### Lambda Functions
 
 Define a function within an expression with the keyword `fn` in the pattern `fn(x) = x`. This is useful for passing functions to other functions.
 
 ```
-fn(arg) = _
-
-fn(arg) =
-    _
+(fn(arg) = _)
 
 (fn(arg) =
     _
@@ -1087,7 +1080,7 @@ fn(arg) =
 ```
 
 ```
-map(array, func) = [...loop x in array then func(x)]
+map(array, action) = [...loop x in array then action(x)]
 array0 = [1, 2, 3, 4]
 array1 = map(array0, fn(x) = x + 1)   -- Inline
 array2 = map(array0, fn(x) =          -- Multi-line
@@ -1101,7 +1094,7 @@ array2 = map(array0, fn(x) =          -- Multi-line
 A name is optional. Adding a name creates an immutable reference of the function itself.
 
 ```
-doThing(fn callback(val) =
+otherAction(fn callback(val) =
     if val > 0:
         callback(val - 1)
     else:
@@ -1113,57 +1106,19 @@ Capturing also works inside lambda functions just like with named functions.
 
 ```
 mu count = 0
-forEach([1, 2, 3, 4], fn(x) \ count =
+forEach([1, 2, 3, 4], fn(x) \ (count) =
     count += x
 )
 ```
 
-The same keyword for creating functions is also used for function type notation. If this seems confusing, just remember where the context is: if it's being used like a type, it means a *function pointer type*; if it's being used like a value, it's a *lambda function*.
-
-**The symmetry is the point, not a coincidence.**
-
-Mulang is built around a principle that type notation and value expressions mirror each other. You see this everywhere:
-
-| Type           | Expression  |
-|:---------------|-------------|
-| `T?`           | `x?`        |
-| `T!`           | `x!`        |
-| `T^`           | `x^`        |
-| `T#N`          | `x#N`       |
-| `fn(int): int` | `fn(x) = x` |
-
-Breaking this pattern for `fn` alone would be the odd one out. A reader who has internalized the symmetry would find a separate keyword — say, `func` for types and `fn` for lambdas — *more* confusing, not less, because it violates the rule they already learned.
-
-**The disambiguation is always unambiguous.**
-
-The parser determines which meaning applies based on what follows the parameter list.
-
-- `fn(int, int): int` — followed by `:`, so it's a type
-- `fn(a, b) = a + b` — followed by `=`, so it's a lambda
-
-These two tokens, `:` and `=`, are already the fundamental dividing line between type annotations and value expressions throughout the entire language. `fn` doesn't introduce a new ambiguity — it uses the same rule that already governs everything else.
-
-**It reads naturally at the call site.**
-
-When you see:
-
-```
-action: mu fn(int, int): int
-action = fn(a, b) = a + b
-```
-
-The word `fn` appearing in both lines reinforces that these two things are about the same concept — a function. A reader new to the language sees one word associated with "function" rather than having to learn that `fn` means lambda but `Fn` or `func` means type. Less vocabulary, same precision.
-
 #### Curried functions
 
-When a function returns another function, you can drop the `fn` keyword from each *subsequent return type* — the : already implies it. 
+When a function returns another function, list each function parameters as the return type. Optionally, you can just let the return type be inferred.
 
 ```
 curriedFn(a: int): (int): (int): int = _                 -- Immutable declaration
-curriedFnPtr: mu fn(int): (int): (int): int = curriedFn  -- Mutable declaration. 
+mu curriedFnPtr(int): (int): (int): int = curriedFn  -- Mutable declaration. 
 ```
-
-The first `fn` in the type notation is important. `mu (int): …` would be ambiguous between "a mutable function taking an int" and some other grouping. The `fn` prefix is what signals "this is a function type." The subsequent `(int):` groups are unambiguous because they follow a `:` that can only mean a return type in that position.
 
 Normally, functions can have an implicit return, but this poses a problem for curried functions…
 
@@ -1173,93 +1128,50 @@ curriedFn(a: int): (int): (int): int =
         _
 ```
 
-`fn(x) = ` is a lambda expression, but `name(x) = ` is a function declaration. The two look visually similar. That can make code hard to read. If you try to declare a function with the name `fn`, Mulang will throw an error to prevent this ambiguity. This prevents potential gotchas and silent errors.
+`fn(x) = ` is a lambda expression, but `name(x) = ` is a function declaration. Mulang will thinking your trying to declare a function named `fn` instead of a lambda function, like as if you were writing `fn = _`. If you try to declare a function with the name `fn`, Mulang will throw an error to prevent. 
 
 ```
-(-- This is an error because you are trying to declare a function with the name `fn`:
-fn(a, b) =
-    a + b
-fn(1, 2)
+(-- 
+fn(a, b) = a + b  -- Error: `fn` is a reserved word
+fn(1, 2)          -- Error: `fn` is not a function
 --)
 ```
 
-In order to return a function, you need to write out `return` at the start of the line so that it's clear you aren't trying to declare a new function named `fn`. 
+In order to return a function, you need to write `out(x: T): T`. The next function's parameters go in parentheses. The rest of the block below it becomes the body of the next function. If it's inside another block like `do` or `then`, there needs to be an explicit `return` at the bottom of the block to make it clear that the curried function ends there.
 
 ```
-curriedFn(a: int): (int): (int): int = 
-    return fn(b: int) =          -- Now it's clear that this is a lambda function.
-        _
-```
-
-Calling curried functions works like you'd expect.
-
-```
-curryAdd(a: int): (int): (int): int =
-    return fn(b) =
-        return fn(c) =
-            a + b + c
-
-print("{ curryAdd(1)(2)(3) }")   -- Prints "6". (1 + 2 + 3)
-
-addOne = curryAdd(1)             -- `a` is set to 1.
-addOne(2)(3)                     -- Prints "6".
-```
-
-Function currying is common in programming, but all that indenting can make it hard to read. To help with this, Mulang has a special feature for curried functions. You can remove the `=` at the end of `return fn…` and unindent the lines below it. The rest of the block at that point becomes the next function body.
-
-```
-curryTest(b: bool) =        -- Complex return type, left to inference
-    print("In function 1")
-    if bool:                -- New block.
-        return fn()         -- Return function.
-        print("In function 2")
-        return fn()
-        print("In function 3")
+curryFn(a: char) =           -- Complex return type, left to inference
+    print("In function 1: {a}")
+    if bool then            -- New block.
+        out(b: char)        -- Return function.
+        print("In function 2: {b}")
+        out(c: char)
+        print("In function 3: {c}")
+        return              -- End of curry chain.
     print("Didn't go")      -- This doesn't run if b is True.
 
-curryTest(True)()()         -- Call all three functions.
+curryTest('a')('b')('c')    -- Call all three functions.
 ```
 
 Prints:
 
 ```
-In function 1
-In function 2
-In function 3
+In function 1: a
+In function 2: b
+In function 3: c
 ```
 
-Normally `fn()` always expects an `=` to separate its signature and body, and `return` always ends a block. With `return fn`, these two rules combine naturally:
-
-1. `return` ends the current block.
-2. `return fn` is returning a function, so what comes after is that function's body.
-
-Everything written below `return fn` at the same indentation level belongs to the returned function's body — just as it would with `return fn() =` and explicit indentation. The flattening isn't a new rule, it's a consequence of rules that already exist.
-
-*Where it's useful:* The flattening trick is useful for deeply curried functions:
+Everything written below `out(x: T): T` at the same indentation level belongs to the returned function's body.
 
 ```
 pipeline(config) =
     -- Inside first function.
-    return fn(input)
+    out(input)
     -- Inside second function.
-    return fn(transform)
+    out(transform)
     -- Inside third function.
     transform(input, config)
 ```
-
-vs. the nested alternative:
-
-```
-pipeline(config) =
-    -- Inside first function.
-    return fn(input) =
-        -- Inside second function.
-        return fn(transform) =
-            -- Inside third function.
-            transform(input, config)
-```
-
-The flat version keeps all parameter names at the same indentation level, which is genuinely more readable at a glance. Middleware chains, builder patterns, and continuation-passing style would all benefit. You gain a readability win for currying. 
 
 #### Named Parameters
 
@@ -1286,10 +1198,10 @@ isGreaterThan(1: 10, 0: 5)  -- a=5,  b=10 → False
 
 #### Contextual Parameters
 
-Functions may require context variables by declaring them with `$name: type`. These are resolved from the calling scope rather than passed as arguments. Whenever you see `$` inside a function, think *"this comes from the surrounding context rather than a direct argument."* They are declared like captured variables using `\`. You can think of it like a variadic capture that's based on the *context* at function call.
+Contextual parameters are like captured variables that depend on the context where the function is called. Functions may require context parameters by declaring them with `$x: T` in the capture field `\ ()`. These are resolved from the calling scope rather than passed as arguments. Whenever you see `$name` inside a function, think *"this comes from the surrounding context rather than a direct argument."* 
 
 ```
-addContext() \ $a: int \ $b: int =
+addContext() \ ($a: int, $b: int) =
     $a + $b
 
 do:                         -- Issolate parameters to this scope
@@ -1309,8 +1221,14 @@ do:                         -- Issolate parameters to this scope
 The type can be inferred like other parameters. 
 
 ```
-addContext() \ $a \ $b =
+addContext() \ ($a, $b) =
     $a + $b
+```
+
+A function can be called with particular context variables by passing them in as named parameters.
+
+```
+addContext($a: 1, $b: 2)     -- Sets these context parameters for this one function  call.
 ```
 
 Sometimes it's hard to tell where contextual variables are coming from. In that case, you could use a decorator like `@defined` to assert that variables are defined in a the scope.
@@ -1320,25 +1238,27 @@ Sometimes it's hard to tell where contextual variables are coming from. In that 
 addContext()
 ```
 
-The contextual variable prefix makes it clear that anything with `$` is a contextual variables that's shared with functions in the *same scope.* `$` by itself is just one specific variable which gets set by the return value of a *pipeline* expression.
-
-Optional contextual parameters use `opt T`. This will wrap it in an option type `T?` if it doesn't exit or match the type. 
+Optional contextual parameters use `opt`. This will wrap it in an option type `T?` if it doesn't exit or match the type. 
 
 ```
-isThereX() \ $x: opt int =
+isThereX() \ (opt $x: int) =
     match $x is
     | Some(_): print("$x exists")
     | None:    print("No $x")
 ```
 
-*Note the difference…"
+Pipeline functions have the pipeline context `$` in as one of their context variables. This will get passed in automatically when piped.
 
-- `$x: opt T` – Optional type `T` parameter.
-- `$x: T?` - **Required** type `T?` parameter.
+```
+f() \ ($: char) =
+    print("$ is {$}")
 
-Declaring the pipeline context `$` in the function will require that function to be pipelined with a certain type. Recall that `$` on its own is a variable. This makes it easy to see pipeline functions. When calling them, pass the `$` argument to `|>`
+x = 'x'
 
-* `x |> f()` → `$` is `x`
+x |> f() → Prints "$ is x"
+```
+
+`$` can be any type. The function will require that type to be pipes into it.
 
 ```
 AddArgs :: { a: 1, b: 2 }
