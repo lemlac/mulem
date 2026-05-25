@@ -671,7 +671,7 @@ if x => 0: _
 Contextual variables are declared with dollar sign character at the start of their name such as `$x`. This is used for functions with contextual parameters, letting you to share variables between functions without passing them directly. *(See [Contextual Parameters](#contextual-parameters).)*
 
 ```
-printX() } $x: int =   -- Function that requires `$x` to be defined.
+printX() \ $x: int =   -- Function that requires `$x` to be defined.
     print("{$x}")
 
 $x = 0
@@ -1377,7 +1377,7 @@ Declaring the pipeline context `$` in the function will require that function to
 ```
 AddArgs :: { a: 1, b: 2 }
 
-pipeAdd() / $: AddArgs =    -- Needs an AddArgs object piped to it.
+pipeAdd() \ $: AddArgs =    -- Needs an AddArgs object piped to it.
     $.a + $.b
 
 result = AddArgs(a: 1, b: 2) |> pipeAdd()   -- This sets $ to an AddArgs
@@ -1395,7 +1395,7 @@ pipeAdd() \ $: AddArgs =
 pipeAdd() \ $ as {a, b}: AddArgs =   -- Get a and b from the pipeline context.
     a + b
 
-pipeAdd() / $ as ctx: AddArgs =   -- Or create alias for context
+pipeAdd() \ $ as ctx: AddArgs =   -- Or create alias for context
     ctx.a + ctx.b
 ```
 
@@ -2076,7 +2076,7 @@ until cond
 
 ```
 loop False:
-    pass
+    _
 else:
     print("Never ran")
 ```
