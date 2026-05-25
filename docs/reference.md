@@ -299,20 +299,20 @@ Mu has a clean, consistent operator set with both symbolic and word forms.
 
 ### Precedence (Highest to Lowest)
 
-| Level | Category                  | Operators                |
-|:------|:--------------------------|:-------------------------|
-| 11    | Member access/Function    | `.` `[]` `()`            |
-| 10    | Postfix                   | `? ! ^`                  |
-| 9     | Unary                     | `+ - not ~`              |
-| 8     | Exponent                  | `**` (right-associative) |
-| 7     | Multiplicative / Shift    | `* / // % %% << >> >>>`  |
-| 6     | Additive / Concat         | `+ - ++`                 |
-| 5     | Bitwise                   | `band bor xor`           |
-| 4     | Range                     | `.. ..=`                 |
-| 3     | Comparison                | `== != < > <= >=`        |
-| 2     | Logical AND               | `and`                    |
-| 1     | Logical OR / Pipeline     | `or \|\| \|>`            |
-| 0     | Assignment / Spread       | `= := += => & ...`       |
+| Level | Category                  | Operators                   |
+|:------|:--------------------------|:----------------------------|
+| 11    | Member access/Function    | `.` `[]` `()`               |
+| 10    | Postfix                   | `? ! ^`                     |
+| 9     | Unary                     | `+ - not ~`                 |
+| 8     | Exponent                  | `**` (right-associative)    |
+| 7     | Multiplicative / Shift    | `* / // rem mod << >> >>>`  |
+| 6     | Additive / Concat         | `+ - ++`                    |
+| 5     | Bitwise                   | `band bor xor`              |
+| 4     | Range                     | `.. ..=`                    |
+| 3     | Comparison                | `== != < > <= >=`           |
+| 2     | Logical AND               | `and`                       |
+| 1     | Logical OR / Pipeline     | `or \|\| \|>`               |
+| 0     | Assignment / Spread       | `= := += => & ...`          |
 
 | Operator       | Meaning                                             | Precedence |
 |:---------------|:----------------------------------------------------|:----------:|
@@ -1054,7 +1054,7 @@ This follows the same practice that `import` and `inherit` where all words in a 
 
 ```
 amount = 1                 -- Immutable variable, doesn't need to be captured.
-mu count = 0               -- Mutable variables, must be captured with `/`.
+mu count = 0               -- Mutable variables, must be captured with `\`.
 mu squared = 1
 mu cubed = 1
    
@@ -1069,7 +1069,7 @@ addCount()
 print("{count}, {squared}, {cubed}") -- Prints "3, 9, 27"
 ```
 
-Error messages will highlight cases where someone would be confused about `/` in a function signature:
+Error messages will highlight cases where someone would be confused about `\` in a function signature:
 
 **Forgot to capture a mutable variable:**
 ```
@@ -1442,7 +1442,7 @@ The main advantage of using contextual parameters is that you can make dedicated
 
 They're the same dependency injection concept applied consistently to both lexical scope and pipeline context. 
 
-It also means pipeline functions are self-documenting in a nice way. When you see `/ $: SomeType` in a signature, you immediately know that function is meant to live inside a pipeline and expects a specific type flowing into it. 
+It also means pipeline functions are self-documenting in a nice way. When you see `\ $: SomeType` in a signature, you immediately know that function is meant to live inside a pipeline and expects a specific type flowing into it. 
 
 The shared sigil is *intentional communication* — both mean "this comes from context, not a direct argument." The distinction between them is clear from syntax alone. In that way, they're not really unrelated at all.
 
@@ -3219,7 +3219,7 @@ This connects the same explicit-list convention as `inherit` and capturing — *
 |:----------|:------------------------------------|
 | `import`  | Names from another module.          |
 | `inherit` | Members from another struct.        |
-| `() / =`  | Mutable variables from outer scope. |
+| `() \ =`  | Mutable variables from outer scope. |
 
 ### Base Context / Command Line Arguments
 
