@@ -613,7 +613,7 @@ Adding a new line and indentation after the `=` starts a block. The last express
 
 ```
 lunch =
-    if getDayOfWeek() == "Tuesday":
+    if getDayOfWeek() == "Tuesday" then
         "tacos"
     else:
         "sandwich"
@@ -665,7 +665,7 @@ not $x -- This is okay, 2 words: `not` + `$`.
 The **context** of any expression is a set of variables that will be implicitly passed to function when they're called. Context variables are declared with dollar sign character at the start of their name such as `$x`. These are passed to functions that have them in their function signature, known as *contextual parameters.* *(See [Contextual Parameters](#contextual-parameters).)*
 
 ```
-printX() \ $x: int =   -- Function that requires `$x` to be defined.
+printX() \ ($x: int) =   -- Function that requires `$x` to be defined.
     print("{$x}")
 
 $x = 0
@@ -744,7 +744,7 @@ Functions do not automatically capture mutable variables. Any assignment inside 
 ```
 mu count = 0
 
-addCount() \ count =
+addCount() \ (count) =
     count += 1
 
 addCount()
@@ -785,10 +785,8 @@ Thing :: {x: int, y: int}
 ### Function Declarations
 
 * __Basic:__ `add(a, b) = a + b`
-* __Parameter Modifiers:__ `mu` / `ref` / `out` / `opt`
-* __Lambdas:__ `fn(x) = x + 1`. Use `fn` for both lambda creation and function pointer types.
-* __Currying:__ Use `return fn` to avoid deep nesting and explicitly declare curried chains.
-* __Context Parameters:__ Prefix arguments with `$` (e.g., `/$config`). The function resolves these implicitly from the calling lexical scope, acting as clean dependency injection.
+* __Parameter Modifiers:__ `mu` / `ref` / `in` / `out` / `opt`
+* __Lambdas:__ `fn(x) = x + 1`
 
 Functions are declared by adding parentheses `()` and the name and before the colon `:` or equals sign `=`. The return type and parameter types can be either explicitly declared or inferred based on usage.
 
@@ -816,6 +814,12 @@ fib(n) =
         1
     else:
         fib(n - 1) + fib(n - 2)
+```
+
+`fn` is a reserve word for lambda functions. Declaring a function with this name will throw an error.
+
+```
+fn(x) 
 ```
 
 The arguments of a function are a **tuple.** The share the same syntax. Arguments are separated by commas `,`. Trailing commas are ignored, but leading commas and double commas are considered a syntax error. 
