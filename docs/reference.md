@@ -671,7 +671,7 @@ if x => 0: _
 Contextual variables are declared with dollar sign character at the start of their name such as `$x`. This is used for functions with contextual parameters, letting you to share variables between functions without passing them directly. *(See [Contextual Parameters](#contextual-parameters).)*
 
 ```
-printX() / $x: int =   -- Function that requires `$x` to be defined.
+printX() } $x: int =   -- Function that requires `$x` to be defined.
     print("{$x}")
 
 $x = 0
@@ -766,7 +766,7 @@ Functions do not automatically capture mutable variables. Any assignment inside 
 ```
 mu count = 0
 
-addCount() / count =
+addCount() \ count =
     count += 1
 
 addCount()
@@ -3309,7 +3309,7 @@ This is a work in progress though. How these decorators are implemented and thei
 Mu's unconventional choices are intentional, prioritizing readability, explicit data tracing, and scalable complexity:
 
 * __Readability First:__ Significant whitespace avoids bracket clutter, while the strict block/inline switching rules (`:` vs `()`) prevent you from fighting the formatter.
-* __Traceable Dependencies:__ The language forces you to explicitly name what you bring into scope. There are no glob imports or implicit mutable state captures. `import`, `inherit`, and `/` (capturing) all use explicit listing.
+* __Traceable Dependencies:__ The language forces you to explicitly name what you bring into scope. There are no glob imports or implicit mutable state captures. `import`, `inherit`, and `\` (capturing) all use explicit listing.
 * __Unified Concepts:__ `::` is the universal operator for top-level, compile-time definitions (structs, aliases, constants).
 * __Type and Expression Symmetry:__ `?` (Optionals) and `!` (Results) work identically whether used in type definitions or as unwrapping operators.
 * __Scalable Patterns:__ Simple tasks use simple syntax (e.g., `fn(x) = x`), but the language easily scales up to explicit types, memory models, and generic constraints as complexity demands.
