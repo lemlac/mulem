@@ -627,14 +627,12 @@ a = 2           -- New variable, shadows previous `a`.
 a = "hello"     -- Type can change when shadowing.
 ```
 
-You can also shadow a variable using its previous value. This works for both regular assignment `=` and pipeline assignment `=>`.
+You can also shadow a variable using its previous value. 
 
 ```
 i = 0
 i = i + 1     -- Sets new `i` based on old `i`.
-i += 1        --\ 
-i + 1 => i    ---\
-1 +=> i       ---- All do the same thing.
+i += 1        -- Does the same thing.
 ```
 
 `=` is a void statement and may not be used inside expressions that expect a non-void value. Use `==` for comparison and `=>` for inline assignment.
@@ -654,9 +652,17 @@ Reversing the normal order of assignment for `=>` operators helps with programme
 if x => 0: _
 ```
 
-### Contextual Variables
+### Context Variables
 
-Contextual variables are declared with dollar sign character at the start of their name such as `$x`. This is used for functions with contextual parameters, letting you to share variables between functions without passing them directly. *(See [Contextual Parameters](#contextual-parameters).)*
+Any variable starting with `$` is a **context variable.** Variable names in Mulang don't allow `$` anywhere else in their name.
+
+```
+-$x    -- This is okay, 1 symbol + 1 word: `-` + `$`.
+not$x  -- This is one word, error since `not$` doesn't exist.
+not $x -- This is okay, 2 words: `not` + `$`.
+```
+
+The **context** of any expression is a set of variables that will be implicitly passed to function when they're called. Context variables are declared with dollar sign character at the start of their name such as `$x`. These are passed to functions that have them in their function signature, known as *contextual parameters.* *(See [Contextual Parameters](#contextual-parameters).)*
 
 ```
 printX() \ $x: int =   -- Function that requires `$x` to be defined.
@@ -666,36 +672,20 @@ $x = 0
 printX()        -- Prints "0"
 ```
 
-__`$x` vs. `$`__
+`$` by itself also called the **pipeline context.** It holds the value of the previous pipeline expression. `$` is one context variable that changes with each pipeline step, like a baton being passed in a relay race. 
 
-`$` is automatic and ephemeral — it appears and disappears with each pipeline step, like a baton being passed in a relay race. You never declare it, you just use it.
-
-`$x` is something you declare and own. It lives in the lexical scope like any other variable, except it's visible to functions that ask for it. The `$` prefix is a signal that it comes from the *environment* rather than being passed directly.
+Other context variables such as `$x` are declared by you. They live in the lexical scope like any other variable. The difference is that functions that ask for them will see them. The `$` prefix is a signal that it comes from the *environment* rather than being passed directly.
 
 |      | What it is       | When it's set                | Scope          |
 |------|------------------|------------------------------|----------------|
 | `$x` | context variable | declared over function calls | lexical scope  |
 | `$`  | pipeline value   | each `\|>` step              | one expression |
 
-**`$` is ephemeral and automatic; `$x` is declared and persistent.** `$` and `$x` share a sigil but are otherwise unrelated — one is automatic and short-lived, the other is explicit and persistent.
-
 ```
 $x = 10
 getValue()      -- Start pipeline.
 |> $ + $x       -- `$` is the pipeline value; `$x` is the contextual variable
 |> print("{$}") -- `$` is equal to the previous `$` + `$x`
-```
-
-### Pipeline Context (`$`)
-
-Any variable starting with `$` is a **context variable.** These are scoped variables that functions can see when they're called. They must be declared in the function's signature with captured variables to see them. *(See [Function Declarations](#function-declarations).)*
-
-Variable names in Mulang don't allow `$` inside them, but this symbol is treated like a name. You can put symbols next to it, but other words needs to be seperated with a space next to it.
-
-```
--$    -- This is okay, 1 symbol + 1 word: `-` + `$`.
-not$  -- This is one word, error since `not$` doesn't exist.
-not $ -- This is okay, 2 words: `not` + `$`.
 ```
 
 Variables declared as `$x` and `$0` and such are context variables, and one context variable gets set during pipeline: `$` by itself also called the **pipeline context.** It holds the value of the previous pipeline expression.
@@ -708,7 +698,7 @@ Variables declared as `$x` and `$0` and such are context variables, and one cont
 (0, x: 1) |> print("{$.0 + $.x}")  -- Or in-lined.
 ```
 
-Going back to the example in the previous section, we can make it even more concise like this:
+Going back to the example in [Pipelining](#pipelining), we can make it even more concise like this:
 
 ```
 user = User.create() |> {
