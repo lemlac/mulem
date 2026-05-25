@@ -777,6 +777,19 @@ action = sub
 print("1 - 1 = {action(1, 1)}")  -- Prints "0".
 ```
 
+There is a symmetry between the type annotation and the value expression in Mu: `T?` and `x?`, `T!` and `x!`, etc.. The same goes for functions.
+
+- `fn(int, int): int` — used in a type position, *it's a function pointer type.*
+- `fn(a, b) = a + b` — used in a value position, *it's a lambda.*
+
+These two forms are always distinguishable by the surrounding code. The parser can tell which one it's looking at based on whether what follows the parameter list is `:` (a type) or `=` (a body).
+
+The one genuine edge case the spec calls out — trying to name a lambda `fn` — is already caught as a compile-time error with a helpful message. That's a reasonable resolution rather than a design flaw.
+
+So I'd actually retract that criticism. The symmetry is worth preserving and the grammar seems resolvable without a second keyword.
+
+What's your take on it — do you see an actual parsing ambiguity I'm missing, or is it clean?
+
 #### Parameter Modifiers
 
 Function parameters can be declared like variables. Likewise, you can modify their mutability and reference-ness the same way.
@@ -1051,7 +1064,7 @@ action: mu fn(int, int): int    -- Declaring a variable with a function type.
 action = fn(a, b) = a + b       -- Passing to the variable with a function value.
 ```
 
-Note that if you try to declare a function with the name `fn`, it will throw an error. This prevents potential gotchas and silent errors. In order to return a function, you need to write out `return fn` at the start of the line so that it's clear you aren't trying to declare a function.
+`name(x) = ` is a function declaration and `fn(x) = ` is a lambda expression, and the two look visually similar. That can be a problem like when your trying to return a function from another function. Using an implicit `return` would look like declaring a function named `fn`. The two look similar by themselves, but `return fn` makes it explicit. If you try to declare a function with the name `fn`, it will throw an error. This prevents potential gotchas and silent errors. In order to return a function, you need to write out `return fn` at the start of the line so that it's clear you aren't trying to declare a function.
 
 ```
 (-- This is an error because you are trying to declare a function with the name `fn`:
