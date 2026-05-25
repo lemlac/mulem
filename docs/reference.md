@@ -1903,6 +1903,14 @@ match expr is
     _
 ```
 
+```
+-- Simple value mapping
+color = match status is
+| Ok    then "green"
+| Err   then "red"
+| then  "gray"
+```
+
 The patterns map to the type passed in after `match`, so you only need to reference the members of that type in each pattern.
 
 ```
