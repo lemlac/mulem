@@ -1180,9 +1180,26 @@ action = fn(a, b) = a + b
 
 The word `fn` appearing in both lines reinforces that these two things are about the same concept — a function. A reader new to the language sees one word associated with "function" rather than having to learn that `fn` means lambda but `Fn` or `func` means type. Less vocabulary, same precision.
 
-**The error case is handled explicitly.**
+#### Curried functions
 
-`name(x) = ` is a function declaration and `fn(x) = ` is a lambda expression, and the two look visually similar. That can be a problem like when your trying to return a function from another function. Using an implicit `return` would look like declaring a function named `fn`. The two look similar by themselves, but `return fn` makes it explicit. If you try to declare a function with the name `fn`, it will throw an error. This prevents potential gotchas and silent errors. In order to return a function, you need to write out `return fn` at the start of the line so that it's clear you aren't trying to declare a new function named `fn`. `fn(x) = …` at the statement level genuinely looks like a function declaration. *Something* has to resolve that, and `return fn` is at least explicit.
+When a function returns another function, you can drop the `fn` keyword from each *subsequent return type* — the : already implies it. 
+
+```
+curriedFn(a: int): (int): (int): int = _                 -- Immutable declaration
+curriedFnPtr: mu fn(int): (int): (int): int = curriedFn  -- Mutable declaration. 
+```
+
+The first `fn` in the type notation is important. `mu (int): …` would be ambiguous between "a mutable function taking an int" and some other grouping. The `fn` prefix is what signals "this is a function type." The subsequent `(int):` groups are unambiguous because they follow a `:` that can only mean a return type in that position.
+
+Normally, functions can have an implicit return, but this poses a problem for curried functions…
+
+```
+curriedFn(a: int): (int): (int): int = 
+    fn(b: int) =          -- Is this a lambda function or a function declaration named `fn`?
+        _
+```
+
+`fn(x) = ` is a lambda expression, but `name(x) = ` is a function declaration. The two look visually similar. That can make code hard to read. If you try to declare a function with the name `fn`, Mulang will throw an error to prevent this ambiguity. This prevents potential gotchas and silent errors.
 
 ```
 (-- This is an error because you are trying to declare a function with the name `fn`:
@@ -1190,27 +1207,34 @@ fn(a, b) =
     a + b
 fn(1, 2)
 --)
+```
 
--- This is not an error; it's a function that returns another function:
-curryAdd(a: int): fn(int): fn(int): int =
+In order to return a function, you need to write out `return` at the start of the line so that it's clear you aren't trying to declare a new function named `fn`. 
+
+```
+curriedFn(a: int): (int): (int): int = 
+    return fn(b: int) =          -- Now it's clear that this is a lambda function.
+        _
+```
+
+Calling curried functions works like you'd expect.
+
+```
+curryAdd(a: int): (int): (int): int =
     return fn(b) =
         return fn(c) =
             a + b + c
 
-curryAdd(1)(2)(3)
+print("{ curryAdd(1)(2)(3) }")   -- Prints "6". (1 + 2 + 3)
+
+addOne = curryAdd(1)             -- `a` is set to 1.
+addOne(2)(3)                     -- Prints "6".
 ```
 
-Functions that return functions are common in programming, but the indentation can make it hard to read. To help with this, Mulang has a special feature involving `return fn`. You can leave the `=` and keep the indentation below it at the same as the `return` line. The rest of the scope at that point becomes the next function body.
+Function currying is common in programming, but all that indenting can make it hard to read. To help with this, Mulang has a special feature for curried functions. You can remove the `=` at the end of `return fn…` and unindent the lines below it. The rest of the block at that point becomes the next function body.
 
 ```
-curryAdd(a: int) =          -- Inferred return type.
-    return fn(b: int)       -- No equals sign or identing.
-    return fn(c: int)       -- Inside the second function.
-    a + b + c               -- Inside the last function, final return value.
-
-curryAdd(1)(2)(3)
-
-curryTest(b: bool) =
+curryTest(b: bool) =        -- Complex return type, left to inference
     print("In function 1")
     if bool:                -- New block.
         return fn()         -- Return function.
@@ -1218,6 +1242,7 @@ curryTest(b: bool) =
         return fn()
         print("In function 3")
     print("Didn't go")      -- This doesn't run if b is True.
+
 curryTest(True)()()         -- Call all three functions.
 ```
 
@@ -1229,12 +1254,22 @@ In function 2
 In function 3
 ```
 
+Normally `fn()` always expects an `=` to separate its signature and body, and `return` always ends a block. With `return fn`, these two rules combine naturally:
+
+1. `return` ends the current block.
+2. `return fn` is returning a function, so what comes after is that function's body.
+
+Everything written below `return fn` at the same indentation level belongs to the returned function's body — just as it would with `return fn() =` and explicit indentation. The flattening isn't a new rule, it's a consequence of rules that already exist.
+
 *Where it's useful:* The flattening trick is useful for deeply curried functions:
 
 ```
 pipeline(config) =
+    -- Inside first function.
     return fn(input)
+    -- Inside second function.
     return fn(transform)
+    -- Inside third function.
     transform(input, config)
 ```
 
@@ -1242,8 +1277,11 @@ vs. the nested alternative:
 
 ```
 pipeline(config) =
+    -- Inside first function.
     return fn(input) =
+        -- Inside second function.
         return fn(transform) =
+            -- Inside third function.
             transform(input, config)
 ```
 
