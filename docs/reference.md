@@ -3182,7 +3182,7 @@ increment(b)   -- T is inferred bool which has no implementation, compile-time e
 
 ## Importing and Modules
 
-* **Modules:** Declare with `mod moduleName`. Only one per file.
+* **Modules:** Declare with `moduleName :: mod`. Only one per file.
 * **Imports:** Must be explicit. `import a.b{c, d}`. Use `@from("path")` for direct file imports.
 * **Decorators:** Prefixed with `@` and placed above expressions or declarations to alter compiler behavior.
 * *Examples:* `@unsafe` (allows pointers/raw indexing), `@opaque` (hides struct internals), `@memory(GC)` (sets memory management model).
