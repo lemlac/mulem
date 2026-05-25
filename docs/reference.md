@@ -338,8 +338,8 @@ Mu has a clean, consistent operator set with both symbolic and word forms.
 | `lhs * rhs`    | Multiplication                                      |      7     |
 | `lhs / rhs`    | Exact division (float)                              |      7     |
 | `lhs // rhs`   | Floor division (int)                                |      7     |
-| `lhs % rhs`    | Modulo (sign matches `lhs`)                         |      7     |
-| `lhs %% rhs`   | Floor modulo (sign matches `rhs`)                   |      7     |
+| `lhs rem rhs`  | Modulo (sign matches `lhs`)                         |      7     |
+| `lhs mod rhs`  | Floor modulo (sign matches `rhs`)                   |      7     |
 | `lhs ** rhs`   | Exponentiation (right-associative)                  |      8     |
 | `lhs == rhs`   | Equality                                            |      3     |
 | `lhs != rhs`   | Inequality                                          |      3     |
@@ -428,30 +428,25 @@ Note that the period inside of number literals such as `3.14` is treated differe
 
 __Remainder vs. Modulo:__
 
-- **`%` is "remainder"** — what's left over after truncating toward zero. The result takes the sign of what you started with.
+- **`rem` is "remainder"** — what's left over after truncating toward zero. The result takes the sign of what you started with.
 
 ```
- 7 %  3 ==  1   -- positive because 7 is positive
--7 %  3 == -1   -- negative because -7 is negative
- 7 % -3 ==  1   -- positive because 7 is positive
--7 % -3 == -1   -- negative because -7 is negative
+ 7 rem 3 ==  1    -- positive because 7 is positive
+-7 rem 3 == -1    -- negative because -7 is negative
+ 7 rem -3 ==  1   -- positive because 7 is positive
+-7 rem -3 == -1   -- negative because -7 is negative
 ```
 
-- **`%%` is "true modulo"** — the mathematical kind where the result always lives in the range `[0, divisor)`. The result takes the sign of what you're dividing *by*.
+- **`mod` is "true modulo"** — the mathematical kind where the result always lives in the range `[0, divisor)`. The result takes the sign of what you're dividing *by*.
 
 ```
- 7 %%  3 ==  1   -- same as above, no difference here
--7 %%  3 ==  2   -- "wraps around": -7 mod 3 = 2 in math
- 7 %% -3 == -2   -- wraps the other way
--7 %% -3 == -1   -- same as % here
+ 7 mod 3 ==  1    -- same as above, no difference here
+-7 mod 3 ==  2    -- "wraps around": -7 mod 3 = 2 in math
+ 7 mod -3 == -2   -- wraps the other way
+-7 mod -3 == -1   -- same as % here
 ```
 
-*The mnemonic:*
-
-- **One `%` stays close to the input.**
-- **Two `%%` wraps around to stay positive.** *(when the divisor is positive, which it usually is)*
-
-The practical case where it matters is things like clock arithmetic, array wrapping, or anything where you want `(-1) %% n` to give you `n - 1` instead of `-1`. With `%` you'd have to write `((x % n) + n) % n` — the classic defensive idiom. `%%` just does that for you.
+The practical case where it matters is things like clock arithmetic, array wrapping, or anything where you want `(-1) mod n` to give you `n - 1` instead of `-1`. With `rem` you'd have to write `((x rem n) + n) rem n` — the classic defensive idiom. `mod` just does that for you.
 
 ### Key Type Modifiers & Postfix Operators
 
@@ -1053,7 +1048,7 @@ cannotChangeX(2) -- Prints "2"
 print("{x}")     -- Prints "1"
 ```
 
-To capture a mutable variable, write `/` at the end of the function signature. This goes after the return type `: T` *(or after the parameter if inferred)* and before the equals sign `=`. List each *mutable* (`mu`) variables that the function uses. This helps make it easy to see which functions depend on mutable variables and which ones don't since `/` doesn't appear in type notation or anywhere else to the left of the equals sign `=` in function signatures except for captures. You can think of it like division where `1/0` is an error. In this case it means that this function depends on these variables or else there will be an error, so the program will take special care to make sure they remain in scope for the functon.
+To capture a mutable variable, write `\` at the end of the function signature. This goes after the return type `: T` *(or after the parameter if inferred)* and before the equals sign `=`. List each *mutable* (`mu`) variables that the function uses. This helps make it easy to see which functions depend on mutable variables and which ones don't since `\` doesn't appear in type notation or anywhere else to the left of the equals sign `=` in function signatures except for captures. You can think of it like `\` for escaping. In this case, we are escaping the scope of this function to grab memory outside of it.
 
 This follows the same practice that `import` and `inherit` where all words in a given context are listed out clearly so that there are no accident name collisions or hidden gotchas.
 
@@ -1063,7 +1058,7 @@ mu count = 0               -- Mutable variables, must be captured with `/`.
 mu squared = 1
 mu cubed = 1
    
-addCount(): int / count / squared / cube =     -- Capture 3 variables at once.
+addCount(): int \ count \ squared \ cube =     -- Capture 3 variables at once.
     count += amount                            -- Mutate captured variables inside the function.
     squared = count * count
     cubed = squared * count
@@ -1082,19 +1077,19 @@ mu count = 0
 addCount() =
     count += 1  -- Error here
 ```
-> `count` is mutable but not captured. Did you mean `addCount() / count =`?
+> `count` is mutable but not captured. Did you mean `addCount() \ count =`?
 
 **Accidentally tried to capture an immutable:**
 ```
 x = 1
-f() / x =
+f() \ x =
     x + 1
 ```
-> `x` is immutable and is captured automatically — remove `/ x` from the signature.
+> `x` is immutable and is captured automatically — remove `\ x` from the signature.
 
 **Captured a variable that doesn't exist in scope:**
 ```
-f() / ghost =
+f() \ ghost =
     ghost + 1
 ```
 > `ghost` is not defined in the enclosing scope. Captures must refer to mutable variables in the outer scope.
@@ -1106,7 +1101,7 @@ forEach([1,2,3], fn(x) =
     count += x
 )
 ```
-> `count` is mutable but not captured by this lambda. Did you mean `fn(x) / count =`?
+> `count` is mutable but not captured by this lambda. Did you mean `fn(x) \ count =`?
 
 **The error should appear at the mutation site, not the signature**, and always suggest the fix explicitly. 
 
@@ -1152,7 +1147,7 @@ Capturing also works inside lambda functions just like with named functions.
 
 ```
 mu count = 0
-forEach([1, 2, 3, 4], fn(x) / count =
+forEach([1, 2, 3, 4], fn(x) \ count =
     count += x
 )
 ```
@@ -1325,10 +1320,10 @@ isGreaterThan(1: 10, 0: 5)  -- a=5,  b=10 → False
 
 #### Contextual Parameters
 
-Functions may require context variables by declaring them with `$name: type`. These are resolved from the calling scope rather than passed as arguments. Whenever you see `$` inside a function, think *"this comes from the surrounding context rather than a direct argument."* They are declared like captured variables using `/`. You can think of it like a variadic capture that's based on the *context* at function call.
+Functions may require context variables by declaring them with `$name: type`. These are resolved from the calling scope rather than passed as arguments. Whenever you see `$` inside a function, think *"this comes from the surrounding context rather than a direct argument."* They are declared like captured variables using `\`. You can think of it like a variadic capture that's based on the *context* at function call.
 
 ```
-addContext() / $a: int / $b: int =
+addContext() \ $a: int \ $b: int =
     $a + $b
 
 do:                         -- Issolate parameters to this scope
@@ -1348,7 +1343,7 @@ do:                         -- Issolate parameters to this scope
 The type can be inferred like other parameters. 
 
 ```
-addContext() / $a / $b =
+addContext() \ $a \ $b =
     $a + $b
 ```
 
@@ -1364,7 +1359,7 @@ The contextual variable prefix makes it clear that anything with `$` is a contex
 Optional contextual parameters use `opt T`. This will wrap it in an option type `T?` if it doesn't exit or match the type. 
 
 ```
-isThereX() / $x: opt int =
+isThereX() \ $x: opt int =
     match $x is
     | Some(_): print("$x exists")
     | None:    print("No $x")
@@ -1392,12 +1387,12 @@ print("{result}")      -- Prints "3"
 You can also destructure from the pipeline context to turn members into local variables.
 
 ```
-pipeAdd() / $: AddArgs =
+pipeAdd() \ $: AddArgs =
     {a, b} = $        -- Get a and b from the pipeline context.
     a + b
 
 
-pipeAdd() / $ as {a, b}: AddArgs =   -- Get a and b from the pipeline context.
+pipeAdd() \ $ as {a, b}: AddArgs =   -- Get a and b from the pipeline context.
     a + b
 
 pipeAdd() / $ as ctx: AddArgs =   -- Or create alias for context
@@ -1426,7 +1421,7 @@ doB(config, logger)
 doC(config, logger)
 ```
 
-You declare them once in the scope as `$config` and `$logger`, and any function that needs them just declares `/ $config / $logger` in its signature. The call sites stay clean:
+You declare them once in the scope as `$config` and `$logger`, and any function that needs them just declares `\ $config \ $logger` in its signature. The call sites stay clean:
 
 ```
 $config = getConfig()
@@ -1438,12 +1433,12 @@ doC()
 
 So it's essentially **implicit dependency injection scoped to the lexical scope** — with a more explicit declaration at the function definition side and a visible `$` sigil to signal *"this comes from context, not from a direct argument."*
 
-The main advantage of using contextual parameters is that you can make dedicated pipelune functions that have `/ $` in their function signature and then you only need to write `|> f()` instead of passing in the `$` variable directly.
+The main advantage of using contextual parameters is that you can make dedicated pipelune functions that have `\ $` in their function signature and then you only need to write `|> f()` instead of passing in the `$` variable directly.
 
 `$` and `$x` are both about the same core idea — functions declaring what they need from the environment rather than having it passed explicitly — just at different levels:
 
-- `/ $x` says "I need this named thing from the surrounding scope"
-- `/ $` says "I need the pipeline value, and I'm designed to be used with `|>`"
+- `\ $x` says "I need this named thing from the surrounding scope"
+- `\ $` says "I need the pipeline value, and I'm designed to be used with `|>`"
 
 They're the same dependency injection concept applied consistently to both lexical scope and pipeline context. 
 
