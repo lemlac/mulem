@@ -3333,3 +3333,356 @@ Just because it's different doesn't mean it's bad. Mulang as a new language is f
 ---
 
 *This document captures the current state of the Mulang design. The language is still evolving.*
+
+
+===
+
+
+===
+
+
+===
+
+
+===
+
+
+===
+
+
+===
+
+
+===
+
+
+===
+
+
+===
+
+
+===
+
+
+===
+
+
+===
+
+
+# Mu Language Reference
+
+*Version 0.1 (Draft)*
+
+Mu (Mulang) is a general-purpose, expression-oriented language designed to balance conciseness and eloquence. It combines Python-like readability, Rust-like safety and control, and F#-style pipelines. Mu supports both interpretation and compilation, making it ideal for systems programming, AI, and game development.
+
+---
+
+## 1. Core Syntax & Lexical Rules
+
+* **Expression-Oriented:** Almost everything is an expression that returns a value.
+* **Comments:** `-- Single line` or `(-- Block (nested) --)`.
+* **Statement Separation:** Newlines or semicolons (`;`).
+
+### Blocks and Whitespace
+
+Mu uses a hybrid whitespace model governed by three rules:
+
+1. **Block Mode:** Any line ending in `:` or `=` begins a block. Indentation is significant (4 spaces recommended). The block's value is its last evaluated expression.
+2. **Inline Mode:** Opening a bracket (`(`, `[`, `{`) enters inline mode. Whitespace becomes insignificant until the bracket closes.
+3. **Return to Block:** Closing the outermost bracket returns the parser to block mode.
+
+### Expression Splitting
+
+Use a period (`.`) at the start of a line to safely split a single expression across multiple lines, perfect for method chaining or long arithmetic.
+
+```mu
+result = 10
+    . + 5 * 2
+    . / 4
+
+```
+
+---
+
+## 2. Operators & Pipelining
+
+Mu provides a consistent operator set. Repeating a symbol usually yields a more technical variant (e.g., `+` vs `++` concat, `%` remainder vs `%%` true modulo, `/` exact vs `//` floor).
+
+### Key Type Modifiers & Postfix Operators
+
+| Syntax | Meaning | Note |
+| --- | --- | --- |
+| `T?`, `x?` | Optional | Unwraps an optional; propagates `None` to nearest `opt`. |
+| `T!`, `x!` | Result / Exception | Unwraps a result; propagates error to nearest `try`. |
+| `T#`, `x#` | Array / Dict Index | `T#N` is fixed-size. Access: `array#index`. |
+| `T^`, `x^` | Pointer | Dereference a pointer. Requires `@unsafe`. |
+
+### The Pipeline (`|>`) and Context (`$`)
+
+Pipelines pass the result of the previous expression forward using the **pipeline context**, represented by `$`.
+
+```mu
+-- Standard pipeline:
+fetchA()
+|> fetchB $
+|> fetchC $
+|> print("{$}")
+
+-- Inline pipeline assignment (reverse order assignment):
+fetchA() |> fetchB $ => myVar
+
+```
+
+---
+
+## 3. Variables & Bindings
+
+Variables are immutable by default.
+
+* **`=`**: Declare a variable (type inferred) or mutate an existing mutable variable.
+* **`:`**: Explicitly declare a type (`x: int = 5`).
+* **`:=`**: Explicitly declare a new variable, shadowing any previous variable of the same name.
+* **`mu`**: Declares a mutable variable.
+* **`ref` / `ref mu**`: Declares a reference to another variable's memory.
+
+### Destructuring
+
+Extract values natively using tuples or named arguments.
+
+```mu
+(a, b) = (0, 1)                             -- Positional
+{x as y: int} = {x: 2}                      -- Named with alias and type
+(_, b, _) & {x, _} = (0, 1, 2, x: 3, y: 4)  -- Mixed, skipping with `_`
+
+```
+
+---
+
+## 4. Functions
+
+Functions are defined by placing `()` before a `:` or `=`. Types can be explicit or inferred.
+
+```mu
+-- Inline inferred:
+add(a, b) = a + b
+
+-- Explicit block form:
+fib(n: int): int =
+    if n < 2: n else: fib(n - 1) + fib(n - 2)
+
+```
+
+### Parameter Modifiers
+
+| Modifier | Behavior | Mutable inside function? |
+| --- | --- | --- |
+| *(none)* | Pass by copy | No |
+| `mu` | Pass by copy | Yes |
+| `ref` / `ref mu` | Pass by reference | No / Yes |
+| `out` | Unset reference | Yes (Must be assigned) |
+| `opt` | Optional argument | Wraps in `T?`. Coalesce with `||`. |
+
+*Note: Call an `out` parameter site with `as varName` to explicitly create the variable inline.*
+
+### Capturing State (`/`)
+
+By default, functions **cannot** capture mutable variables from the outer scope. To do so, explicitly declare the capture using `/` after the function signature.
+
+```mu
+mu count = 0
+increment() / count =    -- Explicitly captures `count`
+    count += 1
+
+```
+
+### Lambdas, Currying, and Context Params
+
+* **Lambdas:** `fn(x) = x + 1`. Use `fn` for both lambda creation and function pointer types.
+* **Currying:** Use `return fn` to avoid deep nesting and explicitly declare curried chains.
+* **Context Parameters:** Prefix arguments with `$` (e.g., `/$config`). The function resolves these implicitly from the calling lexical scope, acting as clean dependency injection.
+
+---
+
+## 5. Types & Data Structures
+
+Built-in primitives: `int`, `uint`, `float`, `bool` (`True`/`False`), `char` (`'a'`), `str`, `ptr`. Convert types using `~` (e.g., `y: int = ~floatVar`).
+
+### Strings
+
+* `"text {var}"`: Standard string with interpolation.
+* `"""text"""`: Multi-line string. Left-padding is trimmed based on the position of the closing `"""`.
+* `''text''`: Raw inline string (no interpolation or escapes).
+* `@"""text"""@`: Multi-line raw string (stack `@` to escape internal quotes).
+
+### Arrays (`#`) and Dictionaries
+
+Arrays use brackets `[1, 2]`. Concatenate with `++`. Spread with `...`.
+Dictionaries combine value and key types via `#` (`ValueType#KeyType`). Access members using `#`.
+
+```mu
+dict: int#str = [a: 1, b: 2]
+val = dict#a  -- or dict#["a"]
+
+```
+
+---
+
+## 6. Control Flow
+
+All control flow constructs share block/inline duality. Inline requires `then`.
+
+* **`do`**: Creates a scoped block. Can be labeled (`do.label:`).
+* **`if` / `else**`: `if x > 0 then x else -x`
+* **`loop`**: Universal looping keyword.
+* Unconditional: `loop:`
+* While: `loop cond:`
+* For-each: `loop x in array:`
+* Do-until: `loop: _ until cond`
+
+
+* **`try` / `except**`: Resolves Results (`T!`).
+* **`opt`**: Resolves Optionals (`T?`). If any `?` inside fails, the block short-circuits.
+
+### Pattern Matching (`match` / `is`)
+
+Exhaustive by default. Use `|` for cases and `:` to begin the block.
+
+```mu
+match choice is
+| First: print("1")
+| Second(x if x > 0): print("Positive {x}") -- Guard clause
+| Third(opt x): print(x || 0)               -- Optional binding fallback
+| else: print("Default")
+
+```
+
+You can use `is` standalone for inline extractions: `result = val is Pattern(x) then x`.
+
+---
+
+## 7. Meta Bindings (`::`)
+
+`::` defines compile-time abstractions (constants, aliases, structs, enums, etc.) that cannot be mutated or shadowed.
+
+* **Constants:** `PI :: const float = 3.14`
+* **Aliases:** `numberType :: int`
+* **Structs:** Data containers. Can inherit fields from other structs using `inherit`.
+```mu
+User :: struct = name: str, age: int
+
+```
+
+
+* **Enums:** Sum types, optionally carrying data.
+```mu
+Result :: enum = Ok(int), Err(str)
+
+```
+
+
+* **Prototypes & Implementations:** Define behavior (`proto`) and attach it (`impl`).
+```mu
+Speaker :: proto = speak(self): str
+
+User :: impl[Speaker] =
+    speak(self) = "Hi, I'm {self.name}"
+
+```
+
+
+
+### Meta Functions and Generics
+
+Meta functions execute at compile-time. Parameters use square brackets `[]`.
+Use a `where` block to enforce generic constraints.
+
+```mu
+sort[T] :: where =
+    T: impl[Comparable] else "T must implement Comparable"
+
+sort[T] :: (arr: T#): T# = _
+
+```
+
+---
+
+## 8. Modules & Decorators
+
+* **Modules:** Declare with `mod moduleName`. Only one per file.
+* **Imports:** Must be explicit. `import a.b{c, d}`. Use `@from("path")` for direct file imports.
+* **Decorators:** Prefixed with `@` and placed above expressions or declarations to alter compiler behavior.
+* *Examples:* `@unsafe` (allows pointers/raw indexing), `@opaque` (hides struct internals), `@memory(GC)` (sets memory management model).
+
+---
+
+## 9. Design Philosophy & Rationale
+
+Mu's unconventional choices are intentional, prioritizing readability, explicit data tracing, and scalable complexity:
+
+* **Readability First:** Significant whitespace avoids bracket clutter, while the strict block/inline switching rules (`:` vs `()`) prevent you from fighting the formatter.
+* **Traceable Dependencies:** The language forces you to explicitly name what you bring into scope. There are no glob imports or implicit mutable state captures. `import`, `inherit`, and `/` (capturing) all use explicit listing.
+* **Unified Concepts:** * `::` is the universal operator for top-level, compile-time definitions (structs, aliases, constants).
+* `?` (Optionals) and `!` (Results) work identically whether used in type definitions or as unwrapping operators.
+
+
+* **Scalable Patterns:** Simple tasks use simple syntax (e.g., `fn(x) = x`), but the language easily scales up to explicit types, memory models, and generic constraints as complexity demands.
+
+---
+
+## 10. Reserved Keywords
+
+Mu has 41 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard options (`Some`, `None`), and decorators (`@memory`) are built-in symbols but *not* strict keywords.
+
+**The Keyword List:**
+`and`, `as`, `await`, `band`, `bor`, `break`, `continue`, `defer`, `do`, `else`, `enum`, `except`, `fallthrough`, `fn`, `if`, `impl`, `import`, `in`, `inherit`, `is`, `loop`, `match`, `mod`, `mu`, `never`, `not`, `opt`, `or`, `out`, `proto`, `raise`, `ref`, `return`, `self`, `struct`, `then`, `try`, `until`, `where`, `xor`, `yield`.
+
+---
+
+## Putting It All Together: A Mu Example
+
+Here is a quick synthesized example showing how Mu's structs, implementations, pipelining, and error handling might look in a real script:
+
+```mu
+mod exampleApp
+
+import std.print
+
+(-- 
+    Define a struct and implement a prototype.
+--)
+User :: struct = 
+    name: str
+    age: int
+
+Speaker :: proto = 
+    speak(self): str
+
+User :: impl[Speaker] =
+    speak(self) = "Hi, I'm {self.name}."
+
+(-- 
+    A function returning a Result type (User or an Error).
+    It captures no outside state.
+--)
+fetchUser(id: int): User! =
+    if id > 0:
+        User(name: "Alice", age: 30)
+    else:
+        raise Error("Invalid ID")
+
+(-- 
+    Main logic demonstrating error unwrapping (!) 
+    and the pipeline operator (|>).
+--)
+do:
+    try:
+        -- Fetch the user, unwrap the result, and pipe it forward
+        fetchUser(1)!
+        |> print($.speak())
+        |> print("User is {$.age} years old.")
+    except Error(e):
+        print("Failed to fetch user: {e}")
+
+```
