@@ -929,15 +929,15 @@ When calling a function with an explicit `T?`, you give it a value of `T?`. When
 
 ```
 optionalParam(opt val: int) =
-    if val is Some(x):
+    if val is Some(x) then
         print("Some({x})")
-    else:
+    else
         print("None")
 
 requiredParam(val: int?) =
-    if val is Some(x):
+    if val is Some(x) then
         print("{x}")
-    else:
+    else
         print("None")
 
 x: int = 5
@@ -1096,6 +1096,7 @@ A name is optional. Adding a name creates an immutable reference of the function
 ```
 otherAction(fn callback(val) =
     if val > 0:
+        print("{val}")
         callback(val - 1)
     else:
         print("done")
@@ -1788,7 +1789,7 @@ Pointer types have 2 kinds of mutability: one for the reference, and one for the
   * _While:_ `loop cond then _`
   * _For-each:_ `loop x in array then _`
   * _Do-while-not:_ `loop _ until cond`
-* [__`try` / `except`__](#try-except): Resolves Results (`T!`).
+* [__`try` / `catch`__](#try-catch): Resolves Results (`T!`).
 * [__`opt`__](#opt): Resolves Optionals (`T?`). If any `?` inside fails, the block short-circuits.
 
 All branching constructs share the same block / inline pattern:
@@ -2243,7 +2244,7 @@ y = (match x is
 )
 ```
 
-#### `try` / `except`
+#### `try` / `catch`
 
 Error handling. Unwrap result types with `!` inside a `try` block. Unhandled exceptions propagate upward.
 
@@ -2252,7 +2253,7 @@ try
     a = doSomething1(x)!
     b = doSomething2(a)!
     b
-except Exception(e) then
+catch | Exception(e) =
     print("Error: {e}")
     0
 ```
@@ -2263,10 +2264,11 @@ try
     data2 = anotherRisky()!
     final = process(data, data2)
     final
-except IOError(e) then
+catch
+| IOError(e) =
     print("IO failed: {e}")
     defaultValue
-except ValidationError(e) then
+| ValidationError(e) =
     raise Err(e)
 ```
 
@@ -2275,10 +2277,11 @@ result: int = try
     data = riskyOperation()!
     data2 = anotherRisky()!
     process(data, data2)
-except IOError(e) then
+catch
+| IOError(e) =
     print("IO failed: {e}")
     0              -- fallback value
-except ValidationError(e) then
+| ValidationError(e) =
     raise Err(e)   -- Escape function with error
 ```
 
@@ -2297,7 +2300,7 @@ riskyFn(a: int): int! =
     c
 ```
 
-#### `opt`
+#### `opt` / `else`
 
 None-coalescing. Unwrap option types with `?` inside an `opt` block. If any `?` returns `None`, the block short-circuits.
 
@@ -2326,17 +2329,17 @@ addStuff(a: int, b: int): int? =
     x + y
 ```
 
-Nested options unwrap with multiple `??`.
+Nested options unwrap with multiple `??`:
 
 ```
 unnest(x: int??): int? = x??
 ```
 
-Chain with to try multiple options with a final fallback.
+Chain multiple `opt` / `else` together untill you get a fallback:
 
 ```
 getFirst(a: int, b: int, c: int): int =
-    opt getA(a?) else opt getB(b?) else opt getC(c?) else 0
+    opt getA(a)? else opt getB(b)? else opt getC(c)? else 0
 ```
 
 Other examples:
@@ -2347,7 +2350,6 @@ crunchData(): int?!Error!CustomError =    -- Multiple error types
     -- Option to Result
     data: int = opt value? else raise CustomError("Not found")      -- Exist function on fallback
     data
-
 ```
 
 ### Function Control Flow
@@ -2376,8 +2378,8 @@ alwaysFail() =
 
 try
     alwaysFail()!
-except e then
-    print("{e}")
+catch | _(e) =           -- Catch all errors.
+.    print("Error{e}")
 ```
 
 #### `yield`
@@ -2628,13 +2630,13 @@ match a is
     print("third!")
 ```
 
-### Exception Types (`except`)
+### Exception Types (`error`)
 
-Exceptions are bit like both `struct` and `enum`. Every `except`-type is a member of the `Exception` sum type. When your program compiles, all `Exception` members get collected together. The compiler tracks which `Excpetion` memebers are possible in any block. See "Error Handling" for more details. Instantiation works the same as enums.
+Exceptions are bit like both `struct` and `enum`. Every `error` type is a member of the `error` sum type. When your program compiles, all of `error`'s members get collected together. The compiler tracks which `error` memebers are possible in any block. See "Error Handling" for more details. Instantiation works the same as enums.
 
 ```
-OutOfBounds :: except        -- No data.
-DivideByZero :: except =
+OutOfBounds :: error        -- No data.
+DivideByZero :: error =
     value: int               -- Attach data on this.
 ```
 
@@ -2646,7 +2648,7 @@ divide(num: float, dem: float): float!DivideByZero =
 
 try
     divide(1, 0)!
-except DivideByZero{val} then
+catch | DivideByZero{val} =
     print("Can't divide {val} by zero!")
 ```
 
@@ -3160,7 +3162,7 @@ do
         fetchUser(1)!
         |> print($.speak()); $
         |> print("User is {$.age} years old."); $
-    except Error(e) then
+    catch | Error(e) =
         print("Failed to fetch user: {e}")
 ```
 
