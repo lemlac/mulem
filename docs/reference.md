@@ -268,7 +268,7 @@ f1(if cond then
             expr
             expr
         )
-    expect _ then
+    catch | (_) =
         _
 else
     f3(fn() =
@@ -3116,7 +3116,7 @@ Mu's unconventional choices are intentional, prioritizing readability, explicit 
 Mu has 42 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard options (`Some`, `None`), and decorators (`@memory`) are built-in symbols but *not* strict keywords.
 
 **The Keyword List:**
-`and`, `as`, `await`, `band`, `bor`, `break`, `continue`, `defer`, `do`, `else`, `enum`, `except`, `fallthrough`, `fn`, `if`, `impl`, `import`, `in`, `inherit`, `is`, `loop`, `match`, `mod`, `mu`, `never`, `not`, `opt`, `or`, `out`, `proto`, `raise`, `ref`, `rem`, `return`, `self`, `struct`, `then`, `try`, `until`, `where`, `xor`, `yield`.
+`and`, `as`, `await`, `band`, `bor`, `break`, `catch` `continue`, `defer`, `do`, `else`, `enum`, `error`, `fallthrough`, `fn`, `if`, `impl`, `import`, `in`, `inherit`, `is`, `loop`, `match`, `mod`, `mu`, `never`, `not`, `opt`, `or`, `out`, `proto`, `raise`, `ref`, `rem`, `return`, `self`, `struct`, `then`, `try`, `until`, `where`, `xor`, `yield`.
 
 ---
 
