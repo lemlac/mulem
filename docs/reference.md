@@ -544,7 +544,7 @@ fetchA() |> fetchB $ |> fetchC $ |> do   -- Or in one line.
     print("{$}")                         -- Then use the result.
 
 -- Freely mix the two formats:
-fetchA() |>            -- Start with this context.
+fetchA() |> do         -- Start with this context.
     print("{$}")       -- Use the same `$` for these two lines.
     fetchB $           -- Same context `$`.
     |> print("{$}"); fetchC $ |> do  -- Start a new context inline.
