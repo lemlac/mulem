@@ -267,7 +267,8 @@ f1(if cond then
             expr
             expr
         )
-    catch | (_) =
+    catch
+    | (e) then
         _
 else
     f3(fn() =
@@ -280,6 +281,23 @@ else
 ```
 
 *The core idea…* Mulang let's you write code that looks like the structure it describes. Blocks of logic get indentation. Inline expressions stay on one line. The switching rules exist so you never have to fight the formatter to achieve either one.
+
+### Pattern Splitting
+
+A **pattern** is special type of expression. It's a sequence of enumerable members separated by vertical bars (`|`). Some keywords can start a pattern which terminates at `then`. When a pattern keyword is at the end of a line, the lines following it that start with `|` point to the same pattern sequence. This is similar to expression splitting, so we call it **pattern splitting.**
+
+```
+match expr is
+| Pattern(x) then
+    print("{x}")
+| then        -- Wildcard
+    print("no match")
+```
+
+__Keywords that can start a pattern sequence:__
+
+- `is`
+- `catch`
 
 ---
 
@@ -614,7 +632,7 @@ Adding a new line and indentation after the `=` starts a block. The last express
 lunch =
     if getDayOfWeek() == "Tuesday" then
         "tacos"
-    else:
+    else
         "sandwich"
 ```
 
@@ -861,7 +879,7 @@ print("1 - 1 = {action(1, 1)}")  -- Prints "0".
 | `in`             | Pass by reference | No                           |
 | `ref`             | Pass by reference | Yes                           |
 | `out`            | Unset reference   | Yes (Must be assigned)             |
-| `opt`            | Optional argument | Wraps in `T?`. Coalesce with `||`. |
+| `opt`            | Optional argument | Wraps in T?` |
 
 Function parameters can be declared like variables. Likewise, you can modify their mutability and reference-ness the same way.
 
@@ -973,14 +991,14 @@ print("{addAll(1, 2)}")     -- Prints "3"
 print("{addAll(1, 2, 3)}")  -- Prints "6"
 ```
 
-A name is optional after `...`. You can use the symbol by itself to pass it to another function or itself in a functional loop. Use `| () = ` immediately after a function defintion. The first parameter to match will go.
+A name is optional after `...`. You can use the symbol by itself to pass it to another function or itself in a functional loop. Use `| fn() = ` immediately after a function defintion. The first parameter to match will go.
 
 ```
 addAll(x: int, ...): int =
     x + addAll(...)
-| (x: int): int =
+| fn(x: int): int =
     x
-| (): int =
+| fn(): int =
     0
 
 print("{addAll()}")         -- Prints "0"
@@ -1204,7 +1222,7 @@ Contextual parameters are like captured variables that depend on the context whe
 addContext() \ ($a: int, $b: int) =
     $a + $b
 
-do:                         -- Issolate parameters to this scope
+do                          -- Issolate parameters to this scope
     $a = 1
     $b = 2
     result = addContext()   -- Uses $a and $b from context.
@@ -1378,9 +1396,10 @@ print("{y}")     -- Prints "1.0"
 `bool` is a built-in enum type with its only members being `False` and `True`. This means you can also pattern match with a bool, although it's recommended to use `if`/`else` instead. Enum-members are capitalized by convention. 
 
 ```
-match value is | True =
+match value is
+| True then
     print("It's true!")
-| False =
+| False then
     print("It's false!")
 ```
 
@@ -1957,8 +1976,8 @@ print("{x}")     -- Prints either "4" or "5"
 
 ```
 match expr is
-| Pattern1(x) = expr
-| else = expr
+| Pattern1(x) then expr
+| then expr
 ```
 
 The next control flow methods are based on pattern match. Generally, you see the word `is`, you next thing to expect after it is a pattern: `value is Pattern(x)`.
@@ -1968,69 +1987,57 @@ The next control flow methods are based on pattern match. Generally, you see the
 Enum/exception branching. Exhaustive by default. `| else:` for the default case.
 
 ```
-match expr is | ptrn =
+match expr is
+| ptrn then
     _
-| ptrn =
+| ptrn then
     _
-| else
+| then
     _
 ```
-
-Each pattern starts with `|`. This was chosen because pattern matching is a core feature in Mulang and a core identity of functional programming. This keeps it much briefer than the usual `switch`/`case` statement, closer to the pattern matching found in functional programming languages. 
-
-Its syntax is a bit different than most blocks. You start with `match expr is`. Each case starts with `|`. This is a special case since each pattern starts a block. The colons are put at the end of the pattern on each case, with each case being its own block. 
 
 The patterns map to the type passed in after `match`, so you only need to reference the members of that type in each pattern.
 
 ```
-match choice is | First =  -- Each pattern case starts its on block.
+match choice is
+| First then               -- Each pattern can case starts its on block.
     print("First")         -- Ident for the new block.
-| Second(x) =              -- Continue this for each case.
+| Second(x) then           -- Continue this for each case.
     print("Second({x})")   -- ……
-| Third{val} =             -- ……
+| Third{val} then          -- ……
     print("Third \{ val={val} }")
-                           -- All choices were exhausted, so no `| else` is necessary.
-```
-
-The first case can also be put on the next like this, making it easy to line up all the patterns:
-
-```
-match choice is          -- Put case on next line
-| First =                -- Start it with `|`
-    print("First")
-| Second(x) =
-    print("Second({x})")
-| Third{val} =
-    print("Third \{ val={val} }")
+                           -- All choices were exhausted, so no `| then` is necessary.
 ```
 
 ```
 tuple = (a: 1, b: 2)
 dict = [x: 3, y: 4]
-restult = match x is | Ptrn1 = 5 | Ptrn2 = 6 | else 7 
+restult = match x is Ptrn1 then 5 | Ptrn2 then 6 | then 7 
 --
-message = match e is | OpenError{filename} = "Open error: {filename}" | else "Unknown error"
+message = match e is | OpenError{filename} then "Open error: {filename}" | then "Unknown error"
 ```
 
-You can have multiple patterns match to one case. If any of the patterns destructure with a variable, the same variable name and type must be in all patterns. If not, use a wildcard `_` in each pattern or omit the tuples part entirely to disable destructuring. Otherwise, use a fallback in the pattern.
+You can have multiple patterns match to one case. If any of the patterns destructure with a variable, the same variable name and type must be in all patterns. If not, use a wildcard `(_)` in each pattern or omit the data part entirely to disable destructuring. Otherwise, use a fallback in the pattern.
 
 ```
 match choice is
-| First =
+| First then
     print("First")
-| Second(val) | Third{val} =                  -- `val` must be in all patterns
+| Second(val) | Third{val} then          -- `val` must be in all patterns
     print("Second or Third, val={val}")
 ```
 
 ```
 -- `First` doesn't have any values, so destructuring must be disabled.
-match choice is First | Second | Third ->
+match choice is
+| First | Second | Third then
     print("First, Second, or Third")
 ```
 
 ```
 -- Fallback, `val` is converted to option type `T?`:
-match choice is First | Second(opt val) | Third{opt val} ->
+match choice is
+| First | Second(opt val) | Third{opt val} then
     print("First, Second, or Third: {opt val? else "None"}")
 ```
 
@@ -2040,12 +2047,15 @@ Proceeds to the next case, which must not destructure new values, unless fallbac
 
 ```
 match choice is
-| First =
+| First then
     print("First")
     fallthrough
-| Second(opt x) =            -- `opt x` in pattern wraps the variable in an option
+| Second(opt x) then    -- `opt x` in pattern wraps the variable in an option
     if x is Some(x) then
         print("Definitely Second: {x}")
+    -- Implicit break.
+e| then
+    print("No match")
 ```
 
 #### Pattern Fallback
@@ -2061,13 +2071,14 @@ Add `if` inside a pattern to conditionally match.
 
 ```
 match choice is
-| Second(x if x > 0) =
+| Second(x if x > 0) then
     print("Positive: {x}")
-| Second(x if x < 0) =
+| Second(x if x < 0) then
     print("Negative: {x}")
-| Second(x) =
+| Second(x) then
     print("Zero")
-| else _
+| then
+    print("No match")
 ```
 
 #### `is` / `then`
@@ -2108,25 +2119,25 @@ getValue()
 |> doSomethingWith($)
 ```
 
-#### `=>` / `else`
+#### `=> is` / `else`
 
 ```
-expr => ptrn
-expr => ptrn else expr
-expr => ptrn else:
+expr => is ptsrn
+expr => is ptrn else _
+expr => is ptrn else
     _
 ```
 
-The same thing as `is` but sets a variable in scope. This can be done with any pipeline assignment operator `=>`. 
+The same thing as a regular `is` but sets a variable in scope. This can be done with any pipeline assignment operator `=>`. 
 
 ```
-getStuff() => Pattern(opt x)
+getStuff() => is Pattern(opt x)
 
 print("{x?}")  -- unwrap x
 ```
 
 ```
-getStuff() => Pattern(x) else raise Error("No match")  -- branch out when match fails
+getStuff() => is Pattern(x) else raise Error("No match")  -- branch out when match fails
 
 print("{x}")   -- x is guaranteed here
 ```
@@ -2134,7 +2145,7 @@ print("{x}")   -- x is guaranteed here
 #### `if` + `is`
 
 ```
-if expr is ptrn then expr else expr
+if expr is ptrn then _ else _
 if expr is ptrn then
     _
 else
@@ -2156,6 +2167,11 @@ Like with other patterns, multiple patterns can be checked for at once with `|`.
 
 ```
 if value is Pattern1(x: int) | Pattern2{data as x: int} then
+    print("{x}")
+
+if value is
+| Pattern1(x: int)
+| Pattern2{data as x: int} then
     print("{x}")
 ```
 
@@ -2194,7 +2210,7 @@ print("{x}")    -- x is guaranteed set here.
 If `break` is reachable inside the loop, optional bindings are required.
 
 ```
-loop:
+loop
     if earlyCondition then
         break
 until getValue() is Pattern(opt x)
@@ -2228,8 +2244,8 @@ x: int!Error = getRiskyInt()   -- Get wrapped result value.
 y: int = x!                    -- Unwrap the result
                                    -- Which is equivalent to…
 y = (match x is
-    | Ok(val) = val                       -- Get the Ok value.
-    | Exception(e) = return Exception(e)  -- Exit block, return Exception if a function
+    | Ok(val) then val                       -- Get the Ok value.
+    | Exception(e) then return Exception(e)  -- Exit block, return Exception if a function
 )
 ```
 
@@ -2238,8 +2254,8 @@ x: int? = getMaybeInt()   -- Get wrapped optional value.
 y: int = x?               -- Unwrap the optional.
                           -- Which is equivalent to…
 y = (match x is
-    | Some(val) = val      -- Get the Some value.
-    | None = return None   -- Exit block, return None if a function
+    | Some(val) then val      -- Get the Some value.
+    | None then return None   -- Exit block, return None if a function
 )
 ```
 
@@ -2252,7 +2268,8 @@ try
     a = doSomething1(x)!
     b = doSomething2(a)!
     b
-catch | Exception(e) =
+catch
+| Error(e) then
     print("Error: {e}")
     0
 ```
@@ -2264,10 +2281,10 @@ try
     final = process(data, data2)
     final
 catch
-| IOError(e) =
+| IOError(e) then
     print("IO failed: {e}")
     defaultValue
-| ValidationError(e) =
+| ValidationError(e) then
     raise Err(e)
 ```
 
@@ -2277,17 +2294,17 @@ result: int = try
     data2 = anotherRisky()!
     process(data, data2)
 catch
-| IOError(e) =
+| IOError(e) then
     print("IO failed: {e}")
     0              -- fallback value
-| ValidationError(e) =
+| ValidationError(e) then
     raise Err(e)   -- Escape function with error
 ```
 
 Inline form.
 
 ```
-result = try divide(1, 0)! except _ then 0.0
+result = try divide(1, 0)! catch then 0.0
 ```
 
 Using `!` inside a function automatically infers a result return type `T!`.
@@ -2377,7 +2394,8 @@ alwaysFail() =
 
 try
     alwaysFail()!
-catch | _(e) =           -- Catch all errors.
+catch
+| (e) then                -- Catch all errors.
 .    print("Error{e}")
 ```
 
@@ -2621,11 +2639,11 @@ When pattern match, the fill path to the type doesn't need to named on each case
 
 ```
 match a is
-| First =
+| First then
     print("first!")
-| Second(_) =
+| Second(_) then
     print("second!")
-| Third{_} =
+| Third{_} then
     print("third!")
 ```
 
@@ -2647,7 +2665,7 @@ divide(num: float, dem: float): float!DivideByZero =
 
 try
     divide(1, 0)!
-catch | DivideByZero{val} =
+catch DivideByZero{val} then
     print("Can't divide {val} by zero!")
 ```
 
@@ -2698,11 +2716,11 @@ MyStruct :: impl[MyPrototype] =
 MyEnum :: impl[MyPrototype] =
     speak(self) =
         match self is
-        | First =
+        | First then
             "I am a MyEnum of First"
-        | Second(x) =
+        | Second(x) then
             "I am a MyEnum of Second({x})"
-        | Third{val} =
+        | Third{val} then
             "I am a MyEnum of Third \{ val={val} }"
 ```
 
@@ -2926,39 +2944,22 @@ sort[T] :: where =
     T: impl[Comparable] else "sort requires T to implement Comparable — define `compare(self, other: T): int` on your type"
 ```
 
-The `else` on a constraint provides the error message when the constraint fails. This is a developer experience feature more than a type theory feature, but it pays enormous dividends in practice. 
-
-```
-groupBy[T, K] :: where =
-    T: type
-    K: impl[Hashable] & impl[Comparable]
-    K: typeof[fn(T): K]
-        else "groupBy key function must return a Hashable, Comparable type"
-
-groupBy[T, K] :: (arr: T#, keyFn: fn(T): K): T##K =
-    result: mu T##K = [:]
-    loop item in arr:
-        key = keyFn(item)
-        result#key = (result#key || []) ++ item
-    result
-```
-
 ### Manual Implementation
 
 Generics will automatically generate code based on their parameters, but you can also implement them by hand using pattern matching. If you only want to use the manual implementations for a generic function, you can set its body to `never`. This creates a virtual function that can be overloaded later. If you use a function that is defined with `never`, it will throw a compile-time error.
 
 ```
 -- Forces every type to have its own implementation
-increment[T] :: (c: ref mu T): void = never
+increment[T] :: (ref c: T): void = never
 
 Counter :: struct = value: int
 
 -- Specialized for Counter
-increment[Counter] :: (c: ref mu Counter): void =
+increment[Counter] :: (ref c: Counter): void =
     c.value += 1
 
 -- Specialized for float
-increment[float] :: (c: ref mu float): void =
+increment[float] :: (ref c: float): void =
     c += 1.0
 
 c = Counter(value: 2)
@@ -3080,7 +3081,7 @@ Thing :: struct =
     value: int
 
 @inlined
-setBitAnd(ref mu a, ref b) =
+setBitAnd(ref a, in b) =
     a = a band b
 ```
 
@@ -3141,6 +3142,8 @@ Speaker :: proto =
 User :: impl[Speaker] =
     speak(self) = "Hi, I'm {self.name}."
 
+FetchError :: error = (str)
+
 (-- 
     A function returning a Result type (User or an Error).
     It captures no outside state.
@@ -3149,7 +3152,7 @@ fetchUser(id: int): User! =
     if id > 0 then
         User(name: "Alice", age: 30)
     else
-        raise Error("Invalid ID")
+        raise FetchError("Invalid ID")
 
 (-- 
     Main logic demonstrating error unwrapping (!) 
@@ -3161,7 +3164,8 @@ do
         fetchUser(1)!
         |> print($.speak()); $
         |> print("User is {$.age} years old."); $
-    catch | Error(e) =
+    catch
+    | FetchError(e) then
         print("Failed to fetch user: {e}")
 ```
 
