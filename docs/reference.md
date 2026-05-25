@@ -1846,14 +1846,12 @@ loop Pattern(opt x) in listOfPatterns then
         print("Found match: {x}")
 ```
 
-This can be combined with `opt` to automatically skip when there's a mismatch.
+This can be combined with `maybe` to automatically skip when there's a mismatch.
 
 ```
-loop Pattern(opt x) in listOfPatterns then opt    -- Add `opt` to the end of the loop's opening line.
+loop Pattern(opt x) in listOfPatterns then maybe   -- Add `maybe` to the end of the loop's opening line.
     print("Found match: {x?}")                     -- If `x` is None, the loop skips to the next iteration
 ```
-
-The reason `opt` appears twice is because `opt x` is saying `x` is optional, and `then opt` is starting an `opt` block which is for unwrapping `T?` types. *(See [`opt` / `else`](#opt-else).)*
 
 #### `break` / `continue`
 
@@ -2189,9 +2187,11 @@ y = (match x is
 try
     risky()!
 catch
-| Error(e) then
+| Error(e) then    -- Catch specific error type.
     _
-| then
+| (e) then         -- Catch all remaining error type.
+    _
+| then             -- Catch all remaining error type, but disregard value.
     _
 
 try risky()! catch (Error(e) then _ | then _)
@@ -2252,15 +2252,15 @@ riskyFn(a: int): int! =
     c
 ```
 
-#### `opt` / `else`
+#### `maybe` / `else`
 
-None-coalescing. Unwrap option types with `?` inside an `opt` block. If any `?` returns `None`, the block short-circuits.
+None-coalescing. Unwrap option types with `?` inside an `maybe` block. If any `?` returns `None`, the block short-circuits.
 
 ```
-opt
+maybe
     a = getA()?
     b = getB()?
-    c = opt getC()? else 0     -- Fallback
+    c = maybe getC()? else 0     -- Fallback
     print("{a + b + c}")
 else
     print("Didn't work")
@@ -2269,7 +2269,7 @@ else
 Inline form.
 
 ```
-x = opt f(a?) else "fallback"
+x = maybe f(a?) else "fallback"
 ```
 
 Using `?` inside a function automatically infers an option return type `T?`.
@@ -2287,11 +2287,14 @@ Nested options unwrap with multiple `??`:
 unnest(x: int??): int? = x??
 ```
 
-Chain multiple `opt` / `else` together untill you get a fallback:
+Chain multiple `maybe` / `else` together untill you get a fallback:
 
 ```
 getFirst(a: int, b: int, c: int): int =
-    opt getA(a)? else opt getB(b)? else opt getC(c)? else 0
+. maybe getA(a)? else
+. maybe getB(b)? else
+. maybe getC(c)? else
+. 0
 ```
 
 Other examples:
@@ -2601,7 +2604,8 @@ divide(num: float, dem: float): float!DivideByZero =
 
 try
     divide(1, 0)!
-catch DivideByZero{val} then
+catch
+| DivideByZero{val} then
     print("Can't divide {val} by zero!")
 ```
 
@@ -3100,10 +3104,10 @@ do
 
 ## Reserved Keywords
 
-Mu has 42 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard options (`Some`, `None`), and decorators (`@memory`) are built-in symbols but *not* strict keywords.
+Mu has 43 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard options (`Some`, `None`), and decorators (`@memory`) are built-in symbols but *not* strict keywords.
 
 **The Keyword List:**
-`and`, `as`, `await`, `band`, `bor`, `break`, `catch` `continue`, `defer`, `do`, `else`, `enum`, `error`, `fallthrough`, `fn`, `if`, `impl`, `import`, `in`, `inherit`, `is`, `loop`, `match`, `mod`, `mu`, `never`, `not`, `opt`, `or`, `out`, `proto`, `raise`, `ref`, `rem`, `return`, `self`, `struct`, `then`, `try`, `until`, `where`, `xor`, `yield`.
+`and`, `as`, `await`, `band`, `bor`, `break`, `catch` `continue`, `defer`, `do`, `else`, `enum`, `error`, `fallthrough`, `fn`, `if`, `impl`, `import`, `in`, `inherit`, `is`, `loop`, `match`, `maybe`, `mod`, `mu`, `never`, `not`, `opt`, `or`, `out`, `proto`, `raise`, `ref`, `rem`, `return`, `self`, `struct`, `then`, `try`, `until`, `where`, `xor`, `yield`.
 
 ---
 
