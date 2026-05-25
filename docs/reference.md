@@ -1166,8 +1166,8 @@ Optional contextual parameters use `opt`. This will wrap it in an option type `T
 ```
 isThereX() \ (opt $x: int) =
     match $x is
-    | Some(_) = print("$x exists")
-    | None    = print("No $x")
+    | Some(_) then print("$x exists")
+    | None    then print("No $x")
 ```
 
 Pipeline functions have the pipeline context `$` in as one of their context variables. This will get passed in automatically when piped.
@@ -1909,6 +1909,11 @@ color = match status is
 | Ok    then "green"
 | Err   then "red"
 | then  "gray"
+
+-- Inside another expression
+result = process(data) |> match $ is
+| Success(v) then v * 2
+| Failure(e) then (log(e); 0)
 ```
 
 The patterns map to the type passed in after `match`, so you only need to reference the members of that type in each pattern.
