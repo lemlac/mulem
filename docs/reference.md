@@ -450,11 +450,12 @@ __Remainder vs. Modulo:__
 -7 %% -3 == -1   -- same as % here
 ```
 
-The mnemonic I'd suggest: **one `%` stays close to the input, two `%%` wraps around to stay positive** (when the divisor is positive, which it usually is).
+*The mnemonic:*
+
+- **One `%` stays close to the input.**
+- **Two `%%` wraps around to stay positive.** *(when the divisor is positive, which it usually is)*
 
 The practical case where it matters is things like clock arithmetic, array wrapping, or anything where you want `(-1) %% n` to give you `n - 1` instead of `-1`. With `%` you'd have to write `((x % n) + n) % n` — the classic defensive idiom. `%%` just does that for you.
-
-That framing —  — is probably the clearest one-line distinction, and it's what I'd put right at the top of the spec.
 
 ### Function Calls
 
