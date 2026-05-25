@@ -1901,19 +1901,25 @@ match expr is
     _
 | then
     _
+
+match expr is (ptrn then _ | ptrn then _ | then _)
 ```
+
+When inline, the patterns after `is` need to be in parentheses.
 
 ```
 -- Simple value mapping
-color = match status is
+color = match status is (
 | Ok    then "green"
 | Err   then "red"
 | then  "gray"
+)
 
 -- Inside another expression
-result = process(data) |> match $ is
+result = process(data) |> match $ is (
 | Success(v) then v * 2
 | Failure(e) then (print("Failure: {e}"); 0)
+)
 ```
 
 The patterns map to the type passed in after `match`, so you only need to reference the members of that type in each pattern.
@@ -1930,11 +1936,9 @@ match choice is
 ```
 
 ```
-tuple = (a: 1, b: 2)
-dict = [x: 3, y: 4]
-restult = match x is Ptrn1 then 5 | Ptrn2 then 6 | then 7 
+restult = match x is (Ptrn1 then 5 | Ptrn2 then 6 | then 7)
 --
-message = match e is | OpenError{filename} then "Open error: {filename}" | then "Unknown error"
+message = match e is (OpenError{filename} then "Open error: {filename}" | then "Unknown error")
 ```
 
 You can have multiple patterns match to one case. If any of the patterns destructure with a variable, the same variable name and type must be in all patterns. If not, use a wildcard `(_)` in each pattern or omit the data part entirely to disable destructuring. Otherwise, use a fallback in the pattern.
@@ -1974,7 +1978,7 @@ match choice is
     if x is Some(x) then
         print("Definitely Second: {x}")
     -- Implicit break.
-e| then
+| then
     print("No match")
 ```
 
@@ -2181,7 +2185,19 @@ y = (match x is
 
 #### `try` / `catch`
 
-Error handling. Unwrap result types with `!` inside a `try` block. Unhandled exceptions propagate upward.
+```
+try
+    risky()!
+catch
+| Error(e) then
+    _
+| then
+    _
+
+try risky()! catch (Error(e) then _ | then _)
+```
+
+Error handling. Unwrap result types with `!` inside a `try` block. Unhandled exceptions propagate upward. Like with `match _ is`, inline `try _ catch` needs parentheses around the pattern matching section.
 
 ```
 try
@@ -2221,10 +2237,10 @@ catch
     raise Err(e)   -- Escape function with error
 ```
 
-Inline form.
+Inline form. If you only have a whildcard case `(| then x)`, you just write the value `x`.
 
 ```
-result = try divide(1, 0)! catch then 0.0
+result = try divide(1, 0)! catch 0.0
 ```
 
 Using `!` inside a function automatically infers a result return type `T!`.
@@ -2316,7 +2332,7 @@ try
     alwaysFail()!
 catch
 | (e) then                -- Catch all errors.
-.    print("Error{e}")
+    print("Error{e}")
 ```
 
 #### `yield`
