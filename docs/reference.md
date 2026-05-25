@@ -115,7 +115,7 @@ Commas have lower presedence than newlines or semicolons. So in an expression li
 (a, c, e)
 ```
 
-The commas divide slots, and within each slot the semicolons sequence expressions left to right, discarding all but the last.
+The commas divide slots, and within each slot the semicolons sequence expressions left to right, discarding all but the last. *If you use `;` inside a tuple slot, only the last value appears in the tuple — earlier expressions run for side effects only.*
 
 - Slot 1: `a`
 - Slot 2: `b` *then* `c` — value is `c`
@@ -1017,10 +1017,10 @@ A name is optional. Adding a name creates an immutable reference of the function
 
 ```
 otherAction(fn callback(val) =
-    if val > 0:
+    if val > 0 then
         print("{val}")
         callback(val - 1)
-    else:
+    else
         print("done")
 )
 ```
@@ -1852,6 +1852,8 @@ This can be combined with `opt` to automatically skip when there's a mismatch.
 loop Pattern(opt x) in listOfPatterns then opt    -- Add `opt` to the end of the loop's opening line.
     print("Found match: {x?}")                     -- If `x` is None, the loop skips to the next iteration
 ```
+
+The reason `opt` appears twice is because `opt x` is saying `x` is optional, and `then opt` is starting an `opt` block which is for unwrapping `T?` types. *(See [`opt` / `else`](#opt-else).)*
 
 #### `break` / `continue`
 
