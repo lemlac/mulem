@@ -184,7 +184,20 @@ do:
     _       -- Empty block.
 ```
 
-### Inline Blocks `( …: … )`
+### Inlining with `then`
+
+Any block that has a *subject* can be inlined using `then` instead of `:`.
+
+```
+if x then "True" else "False"   -- Inline form.
+
+if x:                           -- Block form.
+    "True"
+else:
+    "False"
+```
+
+### Inline Mode / Block Mode
 
 To switch from block mode to inline mode (and vice versa):
 
@@ -228,18 +241,57 @@ else:
 )
 ```
 
-### Inlining with `then`
+*The core idea…* Mulang let's you write code that looks like the structure it describes. Blocks of logic get indentation. Inline expressions stay on one line. The switching rules exist so you never have to fight the formatter to achieve either one.
 
-Any block that has a *subject* can be inlined using `then` instead of `:`.
+There are two modes:
+
+- **Block mode** — indentation is meaningful, newlines end expressions
+- **Inline mode** — indentation is ignored, brackets determine structure
+
+And one simple trigger for each:
+
+- **Entering block mode:** a line ends with `:` or `=`
+- **Entering inline mode:** you open a bracket `(` `[` `{`
+
+That's it. The third rule *("if all brackets are closed, return to block mode")* isn't really a separate rule; it's just what happens when inline mode ends.
+
+*A way to visualize it:* Think of brackets as a bubble. Inside the bubble, whitespace doesn't matter. Outside the bubble, it does. Opening a bracket blows the bubble open. Closing the last bracket pops it.
 
 ```
-if x then "True" else "False"   -- Inline form.
-
-if x:                           -- Block form.
-    "True"
-else:
-    "False"
+apiFetch(fn(result) =    -- bubble opens here (
+    if result > 0:       -- inside the bubble, but `:` starts a sub-block
+        print("yes")
+    else:
+        print("no")
+)                        -- bubble pops here
 ```
+
+The sub-blocks inside the bubble follow normal indentation rules — but only relative to each other, not to the surrounding code. The bubble insulates them.
+
+*The one thing worth a dedicated callout:* `:` or `=` inside a bracket starts a *sub-block within inline mode* — it doesn't pop back out to full block mode. The bubble analogy handles this naturally: you can have structure inside a bubble without the bubble caring about the outside world.
+
+A before/after comparison is probably the clearest way to make this stick:
+
+```
+-- Without the rules, you'd need extra syntax:
+apiFetch(fn(result) => {
+    if (result > 0) {
+        print("yes")
+    } else {
+        print("no")
+    }
+})
+
+-- With the rules, the structure speaks for itself:
+apiFetch(fn(result) =
+    if result > 0:
+        print("yes")
+    else:
+        print("no")
+)
+```
+
+The second version has no extra delimiters. The structure is entirely communicated by indentation and the bracket boundary. That's the payoff the rules are designed to deliver, and leading with that payoff makes the rules feel inevitable rather than arbitrary.
 
 ---
 
@@ -377,6 +429,32 @@ This rule also applies to the range operator `..`, making `..` and `...` equival
 ```
 
 Note that the period inside of number literals such as `3.14` is treated differently. *For more information, see [Numbers](#Numbers).*
+
+__Remainder vs. Modulo:__
+
+- **`%` is "remainder"** — what's left over after truncating toward zero. The result takes the sign of what you started with.
+
+```
+ 7 %  3 ==  1   -- positive because 7 is positive
+-7 %  3 == -1   -- negative because -7 is negative
+ 7 % -3 ==  1   -- positive because 7 is positive
+-7 % -3 == -1   -- negative because -7 is negative
+```
+
+- **`%%` is "true modulo"** — the mathematical kind where the result always lives in the range `[0, divisor)`. The result takes the sign of what you're dividing *by*.
+
+```
+ 7 %%  3 ==  1   -- same as above, no difference here
+-7 %%  3 ==  2   -- "wraps around": -7 mod 3 = 2 in math
+ 7 %% -3 == -2   -- wraps the other way
+-7 %% -3 == -1   -- same as % here
+```
+
+The mnemonic I'd suggest: **one `%` stays close to the input, two `%%` wraps around to stay positive** (when the divisor is positive, which it usually is).
+
+The practical case where it matters is things like clock arithmetic, array wrapping, or anything where you want `(-1) %% n` to give you `n - 1` instead of `-1`. With `%` you'd have to write `((x % n) + n) % n` — the classic defensive idiom. `%%` just does that for you.
+
+That framing —  — is probably the clearest one-line distinction, and it's what I'd put right at the top of the spec.
 
 ### Function Calls
 
@@ -630,21 +708,33 @@ Reversing the normal order of assignment for `=>` operators helps with programme
 if x => 0: _
 ```
 
-Contextual variables are declared with `$` at the start of their name. This is used for functions with contextual parameters, letting you to share variables between functions without passing them directly. *(See [Contextual Parameters](#contextual-parameters).)*
+### Contextual Variables
+
+Contextual variables are declared with dollar sign character at the start of their name such as `$x`. This is used for functions with contextual parameters, letting you to share variables between functions without passing them directly. *(See [Contextual Parameters](#contextual-parameters).)*
 
 ```
 printX() / $x: int =   -- Function that requires `$x` to be defined.
-    print("{x}")
+    print("{$x}")
 
 $x = 0
 printX()        -- Prints "0"
 ```
 
-| Channel    | Meaning                       | Lifetime          |
-|:-----------|:------------------------------|:------------------|
-| `$`        | pipeline value                | per pipeline step |
-| `$name`    | shared contextual variable    | lexical scope     |
-| `$name: T` | required contextual parameter | function call     |
+__`$x` vs. `$`__
+
+|      | What it is       | When it's set                | Scope          |
+|------|------------------|------------------------------|----------------|
+| `$x` | context variable | declared over function calls | lexical scope  |
+| `$`  | pipeline value   | each `\|>` step              | one expression |
+
+**`$` is ephemeral and automatic; `$x` is declared and persistent.** `$` and `$x` share a sigil but are otherwise unrelated — one is automatic and short-lived, the other is explicit and persistent.
+
+```
+$x = 10
+getValue()      -- Start pipeline.
+|> $ + $x       -- `$` is the pipeline value; `$x` is the contextual variable
+|> print("{$}") -- `$` is equal to the previous `$` + `$x`
+```
 
 *See [Contextual Parameters](#comtextual-parameters) for more details.*
 
@@ -776,19 +866,6 @@ print("1 + 1 = {action(1, 1)}")  -- Prints "2".
 action = sub
 print("1 - 1 = {action(1, 1)}")  -- Prints "0".
 ```
-
-There is a symmetry between the type annotation and the value expression in Mu: `T?` and `x?`, `T!` and `x!`, etc.. The same goes for functions.
-
-- `fn(int, int): int` — used in a type position, *it's a function pointer type.*
-- `fn(a, b) = a + b` — used in a value position, *it's a lambda.*
-
-These two forms are always distinguishable by the surrounding code. The parser can tell which one it's looking at based on whether what follows the parameter list is `:` (a type) or `=` (a body).
-
-The one genuine edge case the spec calls out — trying to name a lambda `fn` — is already caught as a compile-time error with a helpful message. That's a reasonable resolution rather than a design flaw.
-
-So I'd actually retract that criticism. The symmetry is worth preserving and the grammar seems resolvable without a second keyword.
-
-What's your take on it — do you see an actual parsing ambiguity I'm missing, or is it clean?
 
 #### Parameter Modifiers
 
@@ -1057,14 +1134,54 @@ doThing(fn callback(val) =
 )
 ```
 
+Capturing also works inside lambda functions just like with named functions.
+
+```
+mu count = 0
+forEach([1, 2, 3, 4], fn(x) / count =
+    count += x
+)
+```
+
 The same keyword for creating functions is also used for function type notation. If this seems confusing, just remember where the context is: if it's being used like a type, it means a *function pointer type*; if it's being used like a value, it's a *lambda function*.
 
+**The symmetry is the point, not a coincidence.**
+
+Mulang is built around a principle that type notation and value expressions mirror each other. You see this everywhere:
+
+| Type           | Expression  |
+|:---------------|-------------|
+| `T?`           | `x?`        |
+| `T!`           | `x!`        |
+| `T^`           | `x^`        |
+| `T#N`          | `x#N`       |
+| `fn(int): int` | `fn(x) = x` |
+
+Breaking this pattern for `fn` alone would be the odd one out. A reader who has internalized the symmetry would find a separate keyword — say, `func` for types and `fn` for lambdas — *more* confusing, not less, because it violates the rule they already learned.
+
+**The disambiguation is always unambiguous.**
+
+The parser determines which meaning applies based on what follows the parameter list.
+
+- `fn(int, int): int` — followed by `:`, so it's a type
+- `fn(a, b) = a + b` — followed by `=`, so it's a lambda
+
+These two tokens, `:` and `=`, are already the fundamental dividing line between type annotations and value expressions throughout the entire language. `fn` doesn't introduce a new ambiguity — it uses the same rule that already governs everything else.
+
+**It reads naturally at the call site.**
+
+When you see:
+
 ```
-action: mu fn(int, int): int    -- Declaring a variable with a function type.
-action = fn(a, b) = a + b       -- Passing to the variable with a function value.
+action: mu fn(int, int): int
+action = fn(a, b) = a + b
 ```
 
-`name(x) = ` is a function declaration and `fn(x) = ` is a lambda expression, and the two look visually similar. That can be a problem like when your trying to return a function from another function. Using an implicit `return` would look like declaring a function named `fn`. The two look similar by themselves, but `return fn` makes it explicit. If you try to declare a function with the name `fn`, it will throw an error. This prevents potential gotchas and silent errors. In order to return a function, you need to write out `return fn` at the start of the line so that it's clear you aren't trying to declare a function.
+The word `fn` appearing in both lines reinforces that these two things are about the same concept — a function. A reader new to the language sees one word associated with "function" rather than having to learn that `fn` means lambda but `Fn` or `func` means type. Less vocabulary, same precision.
+
+**The error case is handled explicitly.**
+
+`name(x) = ` is a function declaration and `fn(x) = ` is a lambda expression, and the two look visually similar. That can be a problem like when your trying to return a function from another function. Using an implicit `return` would look like declaring a function named `fn`. The two look similar by themselves, but `return fn` makes it explicit. If you try to declare a function with the name `fn`, it will throw an error. This prevents potential gotchas and silent errors. In order to return a function, you need to write out `return fn` at the start of the line so that it's clear you aren't trying to declare a new function named `fn`.
 
 ```
 (-- This is an error because you are trying to declare a function with the name `fn`:
@@ -1082,7 +1199,7 @@ curryAdd(a: int): fn(int): fn(int): int =
 curryAdd(1)(2)(3)
 ```
 
-Functions that return functions are common in programming, but the indentation can make it hard to read. To help with this, you can leave the `=` and keep the indentation the same. The rest of the scope at that point becomes the next function body.
+Functions that return functions are common in programming, but the indentation can make it hard to read. To help with this, Mulang has a special feature involving `return fn`. You can leave the `=` and keep the indentation below it at the same as the `return` line. The rest of the scope at that point becomes the next function body.
 
 ```
 curryAdd(a: int) =          -- Inferred return type.
@@ -1109,15 +1226,6 @@ Prints:
 In function 1
 In function 2
 In function 3
-```
-
-Capturing also works inside lambda functions just like with named functions.
-
-```
-mu count = 0
-forEach([1, 2, 3, 4], fn(x) / count =
-    count += x
-)
 ```
 
 #### Named Parameters
