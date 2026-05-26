@@ -384,11 +384,11 @@ Multiple expressions separated by semicolons `;` on one line share the same pipe
 |> print("{$}")               -- Print result.
 ```
 
-Note that `|>` at the beginning of a line is different from `. |>` which is a split expression on the next line. The pipe will continue after it.
+Note that `|>` at the beginning of a line is different from `.. |>` which is a split expression on the next line. The pipe will continue after it.
 
 ```
 |> fetchA()
-. |> fetchB $
+.. |> fetchB $
 |> fetchC $
 |> print("{$}")
 ```
@@ -396,8 +396,8 @@ Note that `|>` at the beginning of a line is different from `. |>` which is a sp
 *Is the same as...*
 
 ```
-|> fetchA() . |> fetchB $    -- The period doesn't effect this statement.
-|> fetchC $                  -- Pipe from the previous statement.
+|> fetchA() |> fetchB $    -- Goes back to this line.
+|> fetchC $                -- Pipe from the previous statement.
 |> print("{$}")
 ```
 
