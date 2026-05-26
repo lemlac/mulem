@@ -1910,10 +1910,17 @@ loop item in inventory; idx += 1 then
     print("Slot {idx}: {item}")
 ```
 
+Because `do` blocks isolate scopes and inline expressions sequence seamlessly, you can combine `do` and `loop` to create a traditional, strictly scoped counter loop without requiring a distinct `for` keyword:
+
 ```
 -- C-style for loop
 do mu i = 1; loop i <= 100; i += 1 then
+    if i rem 10 == 0 then
+        print("{i}!!!")
+        continue
     print("{i}")
+
+-- 'i' is automatically out of scope and cleaned up here
 ```
 
 Inlined `loop x in` returns a lazy iterator collected with `...`.
