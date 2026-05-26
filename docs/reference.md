@@ -165,6 +165,61 @@ x = 1
 
 The periods (`.`) become like dots in a bullet-point list, and it also takes on the appearance of an elipses (…) making it apparent that you have one long expression. There are special rules in regard to periods before operators to make this possible. *For more information, see [Operators](#operators).*
 
+Indentation is lenient with expression splitting. As long as the line starts with a period (`.`), then it belongs to the same expression.
+
+```
+do
+    a
+        . + b
+      . * c
+        . - d
+    . / e
+  . % f                -- Indenting less than the start works too.
+      . band g
+```
+
+It's recommended to keep the indentation the same. This is especially useful for long `if` statement.
+
+```
+if a or b
+. and c or d        -- Each `.` is in the `if` condition.
+. and e or f
+. then              -- Block starts here.
+    print("True")
+else
+    print("False")
+```
+
+Note that the period inside of number literals such as `3.14` is treated differently. *For more information, see [Numbers](#numbers).*
+
+Even though its forgiven for white space *before* the period (`.`), expression splitting is**space-sensitive.** Depending on the space *after* the period, it mean two different things:
+
+__1. Method Chaining (No Space after `.`)__
+
+```
+object.method1()
+    .method2()     -- No space: this is an implicit line continuation for a method
+    .method3()
+```
+
+A line beginning with a period (`.`) followed immediately by an identifier character ([a-zA-Z_]) signifies an **implicit method chain continuation**, equivalent to appending `.identifier` directly to the end of the previous line.
+
+__2. Expression Splitting (Space after `.`)__
+
+```mu
+if a or b
+. and c or d       -- Space after '.': this is an explicit expression split
+. then
+    print("True")
+```
+
+```
+result = dynamicVariableA + dynamicVariableB
+.-dynamicVariableC   -- `-` after '.': this is an explicit expression split
+```
+
+A line beginning with a period (`.`) followed immediately by a whitespace of non-identifier character signifies an **explicit expression split**. The period and the space are consumed, and the rest of the line is appended directly to the expression on the previous line.
+
 ### Block Expressions
 
 A block wraps multiple expressions into one. Each block is a new scope. Newline after certain keywords or symbols and indentation starts a block. The last expression evaluated in a block is its value. Use `_` (wildcard) to leave a block empty.
@@ -298,53 +353,6 @@ i -= 1   -- i = i - 1
 ```
 
 *Note: Mulang doesn't have a `--` (decrement by 1) operator. `--` is reserved for comments.* 
-
-All infix operators (symbolic or keyword) may have a period in front of them. This doesn't affect order of operations. The following expressions are equivalent:
-
-```
-a + b * c - d / e rem f band g
-```
-
-```
-a . + b . * c . - d . / e . rem f . band g
-```
-
-```
-a
-. + b
-. * c
-. - d
-. / e
-. rem f
-. band g
-```
-
-Indentation is lenient with expression splitting. As long as the line starts with a period (`.`), then it belongs to the same expression.
-
-```
-do
-    a
-        . + b
-      . * c
-        . - d
-    . / e
-  . % f                -- Indenting less than the start works too.
-      . band g
-```
-
-It's recommended to keep the indentation the same. This is especially useful for long `if` statement.
-
-```
-if a or b
-. and c or d        -- Each `.` is in the `if` condition.
-. and e or f
-. then              -- Block starts here.
-    print("True")
-else
-    print("False")
-```
-
-Note that the period inside of number literals such as `3.14` is treated differently. *For more information, see [Numbers](#numbers).*
 
 ### Function Calls
 
