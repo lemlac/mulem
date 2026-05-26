@@ -107,6 +107,8 @@ When you want to run a side effect and produce a value in one tuple slot, you ne
 
 The `;` here runs `print(...)` for its side effect, then uses `getY()` as the actual value for that slot. To make this work, `,` has to be the *lower-precedence operator* — it defines the slot boundaries, while `;` *sequences within them.*
 
+Given that `;` and `,` can both exist inside tuple brackets, you *have* to define their relative precedence. There's no neutral option. Making `;` higher-precedence (sequencing within slots) makes sense because it's the only reading that makes `,` unambiguously mean *"new slot."* Forbidding `;` inside tuples entirely would just make it harder to express side effects at a specific slot position.
+
 **Commas divide slots. Semicolons sequence within a slot** *– meaning commas have lower precedence than semicolons.* So in an expression like this…
 
 ```
@@ -265,7 +267,7 @@ apiFetch(fn(result) =    -- This starts a block for the function.
 Nesting works freely. You only need to worry about closing the bracket when you're done with the block. 
 
 ```
--- Complicated logic...
+-- Complicated logic…
 f1(if cond then
     try
         f2(do
@@ -318,13 +320,6 @@ i -= 1   -- i = i - 1
 ```
 
 *Note: Mulang doesn't have a `--` (decrement by 1) operator. `--` is reserved for comments.* 
-
-The range operator can be 2 periods `..` or 3 periods `...`. Only the equals sign `=` changes if its exclusive or inclusive.
-
-```
-0..1  ==  0...1    -- Exclusive range
-0..=1 ==  0...=1   -- Inclusive range
-```
 
 All infix operators (symbolic or keyword) may have a period in front of them. This doesn't affect order of operations. The following expressions are equivalent:
 
@@ -1691,7 +1686,7 @@ print("{ dict#b }")       -- Prints "2",
 
 `#b` is the same as `#["b"]`. Member names of a dictionary get converted to string literals. If it's not a valid variable name (alphanumeric), them it needs to be in a true string literal like `#["invalid name"]`.
 
-Like with arrays, you can't access dictionaries directly unless it's guarenteed to succeed. If not, you should mark it in a block with `@unsafe`. 
+Like with arrays, you can't access dictionaries directly unless it's guaranteed to succeed. If not, you should mark it in a block with `@unsafe`. 
 
 ```
 @unsafe do                   -- Allow raw dictionary access.
@@ -1757,7 +1752,7 @@ Pointer types have 2 kinds of mutability: one for the reference, and one for the
 
 ## Control Flow
 
-* [__`do`__](#do): Creates a scoped block. Can be labeled (`do.label:`).
+* [__`do`__](#do): Creates a scoped block. Can be labeled (`do:label`).
 * [__`if` / `else`__](#if-else): `if x > 0 then x else -x`
 * [__`loop`__](#loop): Universal looping keyword.
   * _Unconditional:_ `loop _`
@@ -1791,7 +1786,7 @@ keyword expr
 do
     _
 
-do.label
+do:label
     _
 ```
 
@@ -1804,11 +1799,11 @@ x =
         y + 1       -- block's value is 2
 ```
 
-Any starting block can be given a label. Use this to call `break` on a specific block. This uses the same convention as membership access `.`. The distinction is that this only comes after a keyword such as `do.`, `loop.`, or `break.`. 
+Any starting block can be given a label with `:label` after its starting keyword. Use this to call `break` on a specific label. 
 
 ```
-do.block
-    break.block
+do:label
+    break:label
 ```
 
 #### `if` / `else`
@@ -1910,20 +1905,20 @@ loop Pattern(opt x) in listOfPatterns then maybe   -- Add `maybe` to the end of 
 Both accept an optional label to target an outer loop.
 
 ```
-loop.outer x in 0..100 then
-    loop.inner y in 0..100 then
+loop:outer x in 0..100 then
+    loop:inner y in 0..100 then
         if x * y >= 100:l then
-            break.inner
+            break:inner
         if x * y == 77 then
-            break.outer
+            break:outer
 ```
 
 Pass a value to `break`, that becomes the value of the block, analogous to `return` for function.
 
 ```
-x = do.block
+x = do:block
     if cond then
-        break.block 5
+        break:block 5
     4
 
 print("{x}")     -- Prints either "4" or "5"
@@ -2034,7 +2029,7 @@ match choice is
 
 #### Pattern Fallback
 
-If a pattern can't be **guarenteed** for any reason, then you must have a **fallback.** There are two options available:
+If a pattern can't be **guaranteed** for any reason, then you must have a **fallback.** There are two options available:
 
 - __Optional binding:__ `Pattern(opt x)` — wraps `x` in type `T?`, `Some(x)` if it matched, `None` if it didn't
 - __Default value:__ `Pattern(opt x = default)` — `x` is type `T`, if it didn't match `x` is set to `default`
@@ -2209,7 +2204,7 @@ Error and null handling is done through the `try` and `maybe` keywords. These bl
 | `T?!E!F`  | `Result<Maybe<T>, E\|F>`         | A result with 2 possible errors of a maybe                                  |      2 | `!` *then* `?`            |
 | `T!E?`    | `Maybe<Result<T, E>>`            | A maybe of a result with 1 possible error                                   |      2 | `?` *then* `!`            |
 | `T?!E?`   | `Maybe<Result<Maybe<T>, E>`      | A maybe of a result with 1 possible error of a maybe                       |      3 | `?` *then* `!` *then* `?` |
-| `T!E?!F`  | `Result<Maybe<Result<T, E>>, F>` | An reesult with 1 possible error of a maybe of result with 1 possible error |      3 | `!` *then* `?` *then* `!` |
+| `T!E?!F`  | `Result<Maybe<Result<T, E>>, F>` | An result with 1 possible error of a maybe of result with 1 possible error |      3 | `!` *then* `?` *then* `!` |
 
 Think of each `?` or `!` on a *type* as a **layer.** When you call the same `?` or `!` in an *expression,* you **unwrap** that layer.
 
@@ -2907,7 +2902,7 @@ Slice[T, Start, End] :: where =
 
 ```
 -- A generic pair type
-Pari[A, B] :: where =
+Pair[A, B] :: where =
     A: impl[Comparable]
     B: impl[Comparable]
 
