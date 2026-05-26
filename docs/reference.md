@@ -12,7 +12,7 @@ This document is not focused on when you would apply any of the mechanics descri
 
 - **Expression-oriented**: Almost everything is an expression and returns a value.
 - **Significant whitespace** with smart inline support.
-- **Modern error & option handling**: `?` and `!` propagation, `||` coalescing.
+- **Modern error & option handling**: `?` and `!` propagation
 - **Flexible**: Multi-paradigm (functional, procedural, low-level).
 
 ## Lexical Conventions
