@@ -62,7 +62,7 @@ Statements are separated by newlines or semicolons (`;`). The two are interchang
 
 ## Expressions and Blocks
 
-A program is a sequence of expressions. Each expression is seperated by lines or grouped together on one line and delimitted with semicolons (`;`).
+A program is a sequence of expressions. Each expression is separated by lines or grouped together on one line and delimitted with semicolons (`;`).
 
 ```
 expr
@@ -218,7 +218,7 @@ __Symbols that can start a block:__
 
 ### Inline Expressions
 
-Any block keyword or symbol is inlined when a new line is abscent after it.
+Any block keyword or symbol is inlined when a new line is absent after it.
 
 ```
 if x then "True" else "False"   -- Inline form.
@@ -346,7 +346,7 @@ a
 . band g
 ```
 
-Indentation is leanient with expression splitting. As long as the line starts with a period (`.`), then it belongs to the same expression.
+Indentation is lenient with expression splitting. As long as the line starts with a period (`.`), then it belongs to the same expression.
 
 ```
 do
@@ -640,7 +640,7 @@ user = User.create() |> {
 }
 ```
 
-`&$` means to spread the pipeline result in this tuple. This makes an object with new properties set below it. Because this is such a common action, we can abriviate with `&{}`. 
+`&$` means to spread the pipeline result in this tuple. This makes an object with new properties set below it. Because this is such a common action, we can abbreviate with `&{}`. 
 
 ```
 user = User.create() |> &{  -- Means to append to the pipe's context.
@@ -651,7 +651,7 @@ user = User.create() |> &{  -- Means to append to the pipe's context.
 
 A top level `&` will spread based on the current pipeline context `$`. This makes it easier to pipe data and only change what you need. 
 
-*See [Contextual Parameters](#comtextual-parameters) for more details.*
+*See [Contextual Parameters](#contextual-parameters) for more details.*
 
 ### Mutability (`mu`)
 
@@ -1137,7 +1137,7 @@ Contextual parameters are like captured variables that depend on the context whe
 addContext() \ ($a: int, $b: int) =
     $a + $b
 
-do                          -- Issolate parameters to this scope
+do                          -- Isolate parameters to this scope
     $a = 1
     $b = 2
     result = addContext()   -- Uses $a and $b from context.
