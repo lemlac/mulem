@@ -1881,11 +1881,24 @@ else
 When you have one or more semicolons `;` in the subject of a `loop` before `then`, the first in the sequence will be the loop's subject field (such as a condition or `in` expression) and the other expressions will run at the end of each iteration of the loop. 
 
 ```
+-- The Dangerous Way
+mu i = 1
+loop i <= 100 then
+    if i rem 10 == 0 then
+        print("{i}!!!")
+        continue
+        -- OOPS! We forgot to do `i += 1` before continuing. 
+        -- Infinite loop on i = 10!
+    print("{i}")
+    i += 1
+
+-- The Safe Way
 mu i = 1
 loop i <= 100; i += 1 then
     if i rem 10 == 0 then
         print("{i}!!!")
         continue
+        -- i will now increment even when you call `continue`
     print("{i}")
 ```
 
