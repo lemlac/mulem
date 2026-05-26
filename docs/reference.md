@@ -2078,6 +2078,58 @@ match choice is
     print("No match")
 ```
 
+Can also be used on `if`/`else` blocks. Doing so will go to the next `else` or `else if` block.
+
+```
+if state == Initialize then
+    setup_memory()
+    fallthrough
+else if state == Ready then
+    start_processing()
+```
+
+```
+render_flags = if quality == Ultra then
+    enable_raytracing()
+    fallthrough
+else if quality == High then
+    enable_dynamic_shadows()
+    fallthrough
+else
+    enable_base_geometry() -- The final function evaluates to the return value
+```
+
+```
+-- Assume 'level' is an enum: Debug, Info, Error
+loop level in log_queue then
+    if level == Debug then
+        print("[DEBUG] Tracking internal memory pointers...")
+        fallthrough
+    else if level == Info then
+        print("[INFO] System heartbeat normal.")
+        fallthrough
+    else
+        print("[WARN/ERROR] Event logged to persistent storage.")
+```
+
+However, this won't work of the condition of the next `if` creates a new binding with `=>`. It must be binded optionally with `=> opt`.
+
+```
+if bypass_security then
+    fallthrough
+else if fetch_active_session() => session then
+    print("Welcome, {session.name}") -- COMPILE ERROR!
+```
+
+```
+if bypass_security then
+    fallthrough
+else if fetch_active_session() => opt session then
+    -- 'session' is safely typed as a Maybe
+    if session is Some(session) then
+        print("Welcome, {session.name}")
+```
+
 #### Pattern Fallback
 
 If a pattern can't be **guaranteed** for any reason, then you must have a **fallback.** There are two options available:
