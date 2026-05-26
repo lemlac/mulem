@@ -590,17 +590,19 @@ not$x  -- This is one word, error since `not$` doesn't exist.
 not $x -- This is okay, 2 words: `not` + `$`.
 ```
 
-The **context** of any expression is a set of variables that will be implicitly passed to function with **contextual parameters.** Context variables are declared with dollar sign character at the start of their name such as `$x`. These are passed to functions that have them in their function signature. *(See [Contextual Parameters](#contextual-parameters).)*
+Context variables are declared with dollar sign character at the start of their name such as `$x`. These get captured by functions that have them in their function signature at the call site. *(See [Contextual Parameters](#contextual-parameters).)*
 
 ```
 printX() \ ($x: int) =   -- Function that requires `$x` to be defined.
     print("{$x}")
 
-$x = 0
+printX()        -- Error: $x is missing from context.
+
+$x = 0          -- $x must be explicitly defined within this scope.
 printX()        -- Prints "0"
 ```
 
-Other functions can't define context variables outside of their scope. They only exist within a given scope, so they would have to explicitly defined above the function call in order for functions to see them. When a function captures its contextual parameters, functions only see those context variables in the scope of the function. It's all tracked the same way that regular parameters and captured variables are. 
+Other functions can't define context variables outside of their scope. They only exist within a given scope, so they have to be explicitly defined above the function call in order for functions to see them. When a function captures its contextual parameters, functions only see those context variables in the scope of the function. It's all tracked the same way that regular parameters and captured variables are. 
 
 `$` by itself also called the **pipeline context.** It holds the value of the previous pipeline expression. `$` is one context variable that changes with each pipeline step, like a baton being passed in a relay race. 
 
