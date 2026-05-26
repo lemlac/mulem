@@ -375,13 +375,13 @@ This makes the order of operations easy to follow at a glance. It reads like a p
 
 The first line of a block may also start with `|>`, in which case its pipeline context is an empty tuple `()`. A line starting with `|>` is not required to use the pipeline context. Some functions also require the pipeline context as a contextual parameter. *(See [Contextual Parameters](#contextual-parameters).)*
 
-Multiple expressions separated by semicolons `;` on one line share the same pipeline context. The last expression on the line is passed as the context to the next pipe.
+When mixed with `do`, multiple expressions separated by semicolons `;` on one line will share the same pipeline context. The last expression on the line is passed as the context to the next pipe.
 
 ```
-|> fetchA()                   -- Run fetchA,
-|> print("{$}"); fetchB $     -- Print result, then fetchB
-|> print("{$}"); fetchC $     -- Print result, then fetchC
-|> print("{$}")               -- Print result.
+|> fetchA()                      -- Run fetchA,
+|> do print("{$}"); fetchB(&$)   -- Print result, then fetchB
+|> do print("{$}"); fetchC(&$)   -- Print result, then fetchC
+|> print("{$}")                  -- Print result.
 ```
 
 Note that `|>` at the beginning of a line is different from `.. |>` which is a split expression on the next line. The pipe will continue after it.
@@ -2478,7 +2478,7 @@ catch
 Exits out of a function with an `iter[_]` type. The return value of the function must be of type `iter[T]` where T is the yield type. When you have `yield` in your function, the actual return value in the function body is discarded, and using `return _` in it is a compile-time error. Use of `yield` will infer the return type to be `iter[_]`. 
 
 ```
-count(n: int): iter[int] =
+countUpTo(n: int): iter[int] =
     loop i in 0..n then
         yield i
 ```
