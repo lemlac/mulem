@@ -1,10 +1,10 @@
-# Mu Language Reference
+# The μ (Mu) Programming Language Reference
 
 *Version 0.1 (Draft)*
 
-__The Mu programming language__ *(also Mulang)* is a general-purpose, expression-oriented language designed to balance conciseness and eloquence. It delivers highly readable syntax, robust safety mechanisms, granular execution control, and expressive data pipelining. Supporting both interpretation and compilation, Mu is ideally suited for systems programming, AI, and game development.
+__The μ programming language__ *(also Mu or Mulang)* is a general-purpose, expression-oriented language designed to balance conciseness and eloquence. It delivers highly readable syntax, robust safety mechanisms, granular execution control, and expressive data pipelining. Supporting both interpretation and compilation, Mu is ideally suited for systems programming, AI, and game development.
 
-This document is not focused on when you would apply any of the mechanics described. It's just describing the mechanics themselves within the Mu programming language. If it went over the *why,* it would be at least 100 times as long. 
+This document is not focused on when you would apply any of the mechanics described. It's just describing the mechanics themselves within the Mu programming language.
 
 ---
 
