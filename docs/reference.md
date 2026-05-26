@@ -105,11 +105,12 @@ Given that `;` and `,` can both exist inside tuple brackets, you *have* to defin
 (getX(), print("fetching y"); getY())
 ```
 
-Is it `getX(), print("fetching y")` then `getY()`, or is it a tuple of `getX()` and `print("fetching y"); getY()`? To fix this ambiguity, `,` and `;` cannot mix inside a bracket expression. You will have to wrap one sequence in parentheses first.
+Is it `getX(), print("fetching y")` then `getY()`, or is it a tuple of `getX()` and `print("fetching y"); getY()`? To maintain syntactic clarity and eliminate operator precedence ambiguity between commas (slot separators) and semicolons (expression sequencers), `,` and `;` **cannot be mixed at the same nesting level** inside any bracket expression (`()`, `[]`, `{}`). To resolve this context, you must explicitly isolate the sequenced expressions. This can be done either by wrapping the sequence in nested parentheses or by using an inline `do` expression:
 
 ```
 (getX(), print("fetching y"); getY())    -- Error: unexpected character: ";"
-(getX(), (print("fetching y"); getY()))  -- OK
+(getX(), (print("fetching y"); getY()))  -- OK: isolated via parentheses
+(getX(), do print("fetching y"); getY()) -- OK: isolated via inline 'do'
 ```
 
 The `;` here runs `print(...)` for its side effect, then uses `getY()` as the actual value for that slot. 
@@ -1796,6 +1797,20 @@ Any starting block can be given a label with `:label` after its starting keyword
 do:label
     break:label
 ```
+
+Inline `do` will start a sequence of expressions separated by semicolons `;` that ends at a new line or (when inside a bracket) at a comma or closing bracket. The last expression in that sequence is the value of that slot. For example, in the example shown earlier:
+
+```
+(getX(), (print("fetching y"); getY()))
+```
+
+We can also write it as this:
+
+```
+(getX(), do print("fetching y"); getY())
+```
+
+Adding `do` makes it's clear that `;` is connected to `do` and not the parentheses. You can read it as **do** `print("fetching y")` **then** `getY()`.
 
 #### `if` / `else`
 
