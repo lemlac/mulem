@@ -154,71 +154,48 @@ x = 1 \
   + 5 + 6
 ```
 
-With Mulang's expression splitting, this becomes much more readable. 
+
+We aren't method chaining, so we can't just put `.` in front if each operator. Instead, We can give a special rule to for a leading `..` (double periods). When a line starts with `..`, it continues from the previous line. This allows us to use Mulang's expression splitting to make this much more readable. 
 
 ```
 x = 1
-. + 2 + 3
-. + 4
-. + 5 + 6
+.. + 2 + 3
+.. + 4
+.. + 5 + 6
 ```
 
-The periods (`.`) become like dots in a bullet-point list, and it also takes on the appearance of an elipses (…) making it apparent that you have one long expression. There are special rules in regard to periods before operators to make this possible. *For more information, see [Operators](#operators).*
+The periods (`..`) become like dots in a bullet-point list, and it also takes on the appearance of a double elipses (…) making it apparent that you have one long expression. 
 
 Indentation is lenient with expression splitting. As long as the line starts with a period (`.`), then it belongs to the same expression.
 
 ```
 do
     a
-        . + b
-      . * c
-        . - d
-    . / e
-  . % f                -- Indenting less than the start works too.
-      . band g
+        .. + b
+      .. * c
+        .. - d
+    .. / e
+  .. rem f          -- Indenting less than the start works too.
+      .. band g
 ```
 
 It's recommended to keep the indentation the same. This is especially useful for long `if` statement.
 
 ```
 if a or b
-. and c or d        -- Each `.` is in the `if` condition.
-. and e or f
-. then              -- Block starts here.
+.. and c or d        -- Each `..` is in the `if` condition.
+.. and e or f
+.. then              -- Block starts here.
     print("True")
 else
     print("False")
 ```
 
-Note that the period inside of number literals such as `3.14` is treated differently. *For more information, see [Numbers](#numbers).*
-
-Even though it's forgiving for white space *before* the period (`.`), expression splitting is still **space-sensitive.** Depending on the space *after* the period, it means two different things:
-
-__1. Method Chaining (No Space after `.`)__
+Expression splitting only occurs when `..` appears **at the beginning of a line** *(after indentation).* Anywhere else, `..` is parsed normally *(e.g., as a range operator).*
 
 ```
-object.method1()
-    .method2()     -- No space: this is an implicit line continuation for a method
-    .method3()
+3..5  -- Range from 3 to 5
 ```
-
-A line beginning with a period (`.`) followed immediately by an identifier character ([a-zA-Z_]) signifies an **implicit method chain continuation**, equivalent to appending `.identifier` directly to the end of the previous line.
-
-__2. Plain Expression Splitting (Space after `.`)__
-
-```
-if a or b
-. and c or d       -- Space after '.': this is an explicit expression split
-. then
-    print("True")
-```
-
-```
-result = dynamicVariableA + dynamicVariableB
-.-dynamicVariableC   -- `-` after '.': this is an explicit expression split
-```
-
-A line beginning with a period (`.`) followed immediately by a whitespace of non-identifier character signifies an **explicit expression split**. The period and the space are consumed, and the rest of the line is appended directly to the expression on the previous line.
 
 ### Block Expressions
 
@@ -2449,10 +2426,10 @@ Chain multiple `maybe` / `else` together untill you get a fallback:
 
 ```
 getFirst(a: int, b: int, c: int): int =
-. maybe getA(a)? else
-. maybe getB(b)? else
-. maybe getC(c)? else
-. 0
+.. maybe getA(a)? else
+.. maybe getB(b)? else
+.. maybe getC(c)? else
+.. 0
 ```
 
 Other examples:
