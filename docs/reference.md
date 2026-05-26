@@ -1,4 +1,4 @@
-# The μ (Mu) Programming Language Reference
+# The μ Programming Language Reference
 
 *Version 0.1 (Draft)*
 
@@ -192,7 +192,7 @@ else
 
 Note that the period inside of number literals such as `3.14` is treated differently. *For more information, see [Numbers](#numbers).*
 
-Even though its forgiven for white space *before* the period (`.`), expression splitting is **space-sensitive.** Depending on the space *after* the period, it mean two different things:
+Even though it's forgiving for white space *before* the period (`.`), expression splitting is still **space-sensitive.** Depending on the space *after* the period, it means two different things:
 
 __1. Method Chaining (No Space after `.`)__
 
