@@ -4,6 +4,8 @@
 
 __The Mu programming language__ *(also Mulang)* is a general-purpose, expression-oriented language designed to balance conciseness and eloquence. It delivers highly readable syntax, robust safety mechanisms, granular execution control, and expressive data pipelining. Supporting both interpretation and compilation, Mu is ideally suited for systems programming, AI, and game development.
 
+This document is not focused on when you would apply any of the mechanics described. It's just describing the mechanics themselves within the Mu programming language. If it went over the *why,* it would be at least 100 times as long. 
+
 ---
 
 ## Core Design Philosophy
@@ -97,6 +99,14 @@ Each block or bracket statement (`()`/`[]`/`{}`) starts a new scope. For example
 
 `x` is isolated to inside the parentheses, and the result of the expression is `x + 1`. 
 
+When you want to run a side effect and produce a value in one tuple slot, you need a way to sequence within a slot. For example:
+
+```
+(getX(), print("fetching y"); getY())
+```
+
+The `;` here runs `print(...)` for its side effect, then uses `getY()` as the actual value for that slot. To make this work, `,` has to be the *lower-precedence operator* — it defines the slot boundaries, while `;` *sequences within them.*
+
 **Commas divide slots. Semicolons sequence within a slot** *– meaning commas have lower precedence than semicolons.* So in an expression like this…
 
 ```
@@ -120,7 +130,7 @@ The commas divide slots, and within each slot the semicolons sequence expression
 The use case for this is that you want to do something and produce a tuple value at that position:
 
 ```
-(getX(), log("fetching y"); getY())
+(getX(), print("fetching y"); getY())
 ```
 
 Slot 1 is `getX()`, slot `2` calls log for its side effect then `getY()` for the actual value. The result is `(x, y)`.
@@ -580,7 +590,7 @@ not$x  -- This is one word, error since `not$` doesn't exist.
 not $x -- This is okay, 2 words: `not` + `$`.
 ```
 
-The **context** of any expression is a set of variables that will be implicitly passed to function when they're called. Context variables are declared with dollar sign character at the start of their name such as `$x`. These are passed to functions that have them in their function signature, known as *contextual parameters.* *(See [Contextual Parameters](#contextual-parameters).)*
+The **context** of any expression is a set of variables that will be implicitly passed to function with **contextual parameters.** Context variables are declared with dollar sign character at the start of their name such as `$x`. These are passed to functions that have them in their function signature. *(See [Contextual Parameters](#contextual-parameters).)*
 
 ```
 printX() \ ($x: int) =   -- Function that requires `$x` to be defined.
@@ -594,7 +604,7 @@ Other functions can't define context variables outside of their scope. They only
 
 `$` by itself also called the **pipeline context.** It holds the value of the previous pipeline expression. `$` is one context variable that changes with each pipeline step, like a baton being passed in a relay race. 
 
-Other context variables such as `$x` are declared by you. They live in the lexical scope like any other variable. The difference is that functions that ask for them will see them. The `$` prefix is a signal that it comes from the *environment* rather than being passed directly.
+Other context variables such as `$x` are declared by you. They live in the lexical scope like any other variable. The difference is that functions that ask for them will see them. 
 
 |      | What it is       | When it's set                | Scope          |
 |------|------------------|------------------------------|----------------|
@@ -1159,14 +1169,35 @@ The call site *can* be explicit when you want it to be — you're not forced to 
 
 You can be terse when context is obvious, explicit when it matters. The `$` prefix does the work of keeping both styles recognizable as the same mechanism.
 
-I'd fully retract the skepticism. It's a well-thought-out feature.
+Capturing and contextual variables are related. When you call `addCount()​`, you're not passing any variables to it because `count`​ is captured by the function. In the same way, contextual parameters get captured but they exist in the call site rather than the function's definition site.
 
-Sometimes it's hard to tell where contextual variables are coming from. In that case, you could use a decorator like `@defined` to assert that variables are defined in a the scope.
+Compare these two examples:
 
 ```
-@defined($a, $b)    -- Will throw at compile-time if $a or $b are undefined.
-addContext()
+mu count = 0
+
+addCount() \ (count) =
+    count += 1
+
+-- ...
+
+addCount()
+print("{count}")    -- "1"
 ```
+
+```
+addCount() \ (mu $count) =
+    $count += 1
+
+-- ...
+
+mu $count = 0
+
+addCount()
+print("{$count}")    -- "1"
+```
+
+The call to `addCount()` is identical in both cases. The difference is where `count`/`$count` is coming from. Captured variables come from where the function was defined. Contextual parameters come from the scope of the call site. 
 
 Optional contextual parameters use `opt`. This will wrap it in a maybe type `T?` if it doesn't exit or match the type. 
 
