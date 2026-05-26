@@ -2,22 +2,63 @@
 
 The following document is focused on how parsing works in Mu.
 
-When starting off, the parser begins with **block-level parsing.** Semi-colons (`;`) and new-lines delimit expressions. This forms an **expression sequence.** Empty expressions are dropped from the sequence.
+* __token__: The smallest meaningful unit in an expression.
+* __expression__: A collection of tokens, sub-expressions.
+* __sequence__: An expression that contains sub-expressions seperated by delimitters.
+* __parsing mode__: Detlermines how a sequence will be parsed and what tokens are valid or invalid.
+* __parsing stack__: A list of parsing mode sequence pairs and indentations.
+* __opener__: A token that opens a new sequence and pushes the sequence and a new parsing mode to the parsing stack.
+* __delimiter__: A token that seperates expressions in a sequence.
+* __closer__: A token that closes a sequences and pops the current parsing stack off by 1.
+* __indentation__: A sequence of space characters (except new-lines) that are at the beginning of a line.
+
+* __block__: A sequence delimited by new-lines.
+* __line__: A sequence delimited by semicolons.
+* __tuple__: A sequence delimited by commas.
+
+| Parsing Mode | Opener | Delimiters | Closer |
+|:--|:--|:--|:--|
+| __block parsing__ | Certain keywords at the end of a new line | new-lines | Decreased indentation |
+| __line parsing__ | new line | semi-colons | new-line |
+| __tuple parsing__ | Brackets `(`/`[`/`{` | commas | Matching closing bracket `)`/`]`/`}` |
+| __`do`-parsing__ | `do` | semi-colons | new-line or comma |
+
+When starting off, the parser begins in block parsing mode. Empty expressions are dropped from the sequence. If it finds a semi-colon or comma, it will switch modes for the rest of the line: semi-colon – line parsing, comma – tuple parsing. If in line parsing mode, empty expressions are also dropped. If in tuple parsing mode, empty expressions are only dropped if they are at the end of the sequence, otherwise it's error. Colons `:` at the beginning of a line will apped the expression to the end of the previous sequence in the same mode. 
 
 ```
 expr
 expr
 
 expr; expr
+
+expr, expr
+
+expr, expr,
+expr, expr,,
+
+expr,, expr   -- Error
+, expr, expr  -- Error
+
+expr
+: expr 
 ```
 
-- A **line** is any sequence of tokens until a new line character.
-- An **expression** is sequence of tokens between delimitters, openers and closera.
-- A **delimitter** is a token that separates expressions which changes depending on the parsing mode.
-- An **opener** is a token that switching parsing mode
-- A **closer** is a token that exits a parsing mode back to the parsing mode before it.
+If the `do` token appears while in block parsing or tuple parsing mode and `do` is not at the end of a line, then the parser will switch to `do`-parsing until a new-line or comma. If `do` is at the end of a line, it will start a new block with increased indentation.
 
-If an expression has a comma (`,`) in it, it will start **tuple parsing** until a new-line or closing bracket, during which semi-colons aren't allowed. Components are delimitted with commas — the previous expression being the first component. If a line starts with a comma, it will use the last expression above it as the first component. Multiple lines starting with comma will chain together to the same tuple.
+```
+do expr; expr
+do expr; expr, expr
+expr, do expr; expr
+expr, do expr; expr, expr
+do
+    expr
+expr; do
+    expr
+expr, do
+    expr
+```
+
+If an expression has a comma (`,`) in it, it will start tuple parsing until a new-line or closing bracket, during which semi-colons aren't allowed. Each expression is a commponent in the tuple, starting with the expression before the comma. If a line starts with a comma, it will append to the previous tuple being parsed or start a new one with the expression on the previous line as the first component. 
 
 ```
 expr, expr  -- Tuple of 2
