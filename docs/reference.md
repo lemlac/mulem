@@ -747,13 +747,13 @@ f(x: int): int = x   -- Shadows previous f
 f()                  -- Error: f expects 1 argument.
 ```
 
-Instead, you can use pattern matching to achieve the same thing.
+Instead, you can use pattern matching to achieve the same thing. Set the parameter to `(match)` and define each function overload with `|` in the next lines. 
 
 ```
-safeDivide =
-| (x: int, y: int if y != 0): float =
+safeDivide(match) =
+| (x: float, y: float if y != 0.0): float =
     x / y
-| (x: int, y: int): float =
+| (x: float, y: float): float =
     0.0
 ```
 
@@ -890,16 +890,22 @@ addAll(...nums: int#): int =
 A name is optional after `...`. You can use the symbol by itself to pass it to another function or itself in a functional loop. Use `| fn() = ` immediately after a function defintion. The first parameter to match will go.
 
 ```
-addAll =
+addAll(match) =
 | (x: int, ...): int = x + addAll(...)
 | (x: int): int = x
 | (): int = 0
 
-print("{addAll()}")         -- Prints "0"
-print("{addAll(1)}")        -- Prints "1"
-print("{addAll(1, 2)}")     -- Prints "3"
-print("{addAll(1, 2, 3)}")  -- Prints "6"
+logAndAdd(msg: str, ...) =
+    print("{msg} {addAll(...)}")
+
+logAndAdd("Sum =")           -- Prints "Sum = 0"
+logAndAdd("Sum =", 1)        -- Prints "Sum = 1"
+logAndAdd("Sum =", 1, 2)     -- Prints "Sum = 3"
+logAndAdd("Sum =", 1, 2, 3)  -- Prints "Sum = 6"
 ```
+
+- `(match)` — dispatch on arguments, `|` arms follow
+- `(...)` — accept and forward whatever arguments received to the next function
 
 #### Capturing
 
