@@ -105,7 +105,7 @@ Given that `;` and `,` can both exist inside tuple brackets, you *have* to defin
 (getX(), print("fetching y"); getY())
 ```
 
-Is it `getX(), print("fetching y")` then `getY()`, or is it a tuple of `getX()` and `print("fetching y"); getY()`? To maintain syntactic clarity and eliminate operator precedence ambiguity between commas (slot separators) and semicolons (expression sequencers), `,` and `;` **cannot be mixed at the same nesting level** inside any bracket expression (`()`, `[]`, `{}`). To resolve this context, you must explicitly isolate the sequenced expressions. This can be done either by wrapping the sequence in nested parentheses or by using an inline `do` expression:
+Is it `getX(), print("fetching y")` then `getY()`, or is it a tuple of `getX()` and `print("fetching y"); getY()`? To maintain syntactic clarity and eliminate operator precedence ambiguity between commas (slot separators) and semicolons (expression sequencers), `,` and `;` **cannot be mixed at the same nesting level** inside any bracket expression (`()`, `[]`, `{}`). You must resolve this by explicitly isolating the sequenced expressions. This can be done either by wrapping the sequence in nested parentheses or by using an inline `do` expression:
 
 ```
 (getX(), print("fetching y"); getY())    -- Error: unexpected character: ";"
