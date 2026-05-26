@@ -739,6 +739,24 @@ action = sub
 print("1 - 1 = {action(1, 1)}")  -- Prints "0".
 ```
 
+Standard function overloading isn't possible because that would shadow the previous definitions.
+
+```
+f(): int = 0
+f(x: int): int = x   -- Shadows previous f
+f()                  -- Error: f expects 1 argument.
+```
+
+Instead, you can use pattern matching to achieve the same thing.
+
+```
+safeDivide =
+| (x: int, y: int if y != 0): float =
+    x / y
+| (x: int, y: int): float =
+    0.0
+```
+
 #### Parameter Modifiers
 
 | Modifier         | Behavior          | Mutable inside function?           |
@@ -860,15 +878,22 @@ print("{addAll(1, 2)}")     -- Prints "3"
 print("{addAll(1, 2, 3)}")  -- Prints "6"
 ```
 
+```
+-- With pattern matching:
+addAll(...nums: int#): int =
+    match nums is
+    | []            then 0
+    | [x]           then x
+    | [x, ...rest]  then x + addAll(...rest)
+```
+
 A name is optional after `...`. You can use the symbol by itself to pass it to another function or itself in a functional loop. Use `| fn() = ` immediately after a function defintion. The first parameter to match will go.
 
 ```
-addAll(x: int, ...): int =
-    x + addAll(...)
-| fn(x: int): int =
-    x
-| fn(): int =
-    0
+addAll =
+| (x: int, ...): int = x + addAll(...)
+| (x: int): int = x
+| (): int = 0
 
 print("{addAll()}")         -- Prints "0"
 print("{addAll(1)}")        -- Prints "1"
