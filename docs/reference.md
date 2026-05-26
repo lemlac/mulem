@@ -850,9 +850,9 @@ Parameters can be made optional with the `opt` modifier. This wraps the variable
 
 ```
 addOptional(opt a: int, opt b: int): int =
-    aVal = maybe a? else 0    -- Coalesce optional arguments with default value 0.
-    bVal = maybe b? else 0    -- This unwraps their value if they exist or set them to 0.
-    aVal + bVal               -- Add the unwrapped values.
+    aVal = a ?: 0    -- Coalesce optional arguments with default value 0.
+    bVal = b ?: 0    -- This unwraps their value if they exist or set them to 0.
+    aVal + bVal      -- Add the unwrapped values.
 
 print("{addOptional()}")      -- Prints "0"
 print("{addOptional(1)}")     -- Prints "1"
