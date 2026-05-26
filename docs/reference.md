@@ -1061,50 +1061,74 @@ curriedFn(a: int): (int): (int): int =
         _
 ```
 
-`fn(x) = ` is a lambda expression, but `name(x) = ` is a function declaration. Mulang will thinking your trying to declare a function named `fn` instead of a lambda function, like as if you were writing `fn = _`. If you try to declare a function with the name `fn`, Mulang will throw an error to prevent. 
+`fn(x) = ` is a lambda expression, but `name(x) = ` is a function declaration. Since `name(x) = ` is a function declaration, Mulang would interpret `fn(b: int) = ` as declaring a local function named `fn` — which then fails because `fn` is reserved. If you try to declare a function with the name `fn`, Mulang will throw an error to prevent it.
 
 ```
 (-- 
-fn(a, b) = a + b  -- Error: `fn` is a reserved word
-fn(1, 2)          -- Error: `fn` is not a function
+fn(a, b) = a + b  -- Error: `fn` is a reserved keyword and cannot be used as a name
+fn(1, 2)          -- Error: `fn` is a reserved keyword and cannot be used as a name
 --)
 ```
 
-In order to return a function, you need to write as fn(x: T): T`. The next function's parameters go in parentheses. The rest of the block below it becomes the body of the next function. If it's inside another block like `do` or `then`, there needs to be an explicit `return` at the bottom of the block to make it clear that the curried function ends there.
+If Mulang could implicitly return lambda functions, that wouldn't solve the issue, say you have a function like this:
 
 ```
-curryFn(a: char) =           -- Complex return type, left to inference
+curryFn(a: char) =
     print("In function 1: {a}")
-    if bool then            -- New block.
-        as fn(b: char)      -- Return function.
+    fn(b: char) =
         print("In function 2: {b}")
-        as fn(c: char)
-        print("In function 3: {c}")
-        return              -- End of curry chain.
-    print("Didn't go")      -- This doesn't run if b is True.
-
-curryTest('a')('b')('c')    -- Call all three functions.
+        fn(c: char) =
+            print("In function 3: {c}")
 ```
 
-Prints:
+The problem is `fn(b: char) =` looks like a function definition. If you typo'd `fn`, you would get silent errors:
 
 ```
-In function 1: a
-In function 2: b
-In function 3: c
+curryFn(a: char) =
+    print("In function 1: {a}")
+    fun(b: char) =           -- Declare a function named `fun` and never use it. This function now returns `void`.
+        print("In function 2: {b}")
+        fn(c: char) =
+            print("In function 3: {c}")
 ```
 
-Everything written below `as fn(x: T): T` at the same indentation level belongs to the returned function's body.
+To solve this issue, you must explicitly say `return fn` in order to curry functions. This ensures that `fn(x) =` is only used in expressions and not accidentally declaring a new function. 
 
 ```
-pipeline(config) =
-    -- Inside first function.
-    as fn(input)
-    -- Inside second function.
-    as fn(transform)
-    -- Inside third function.
-    transform(input, config)
+curryFn(a: char) =
+    print("In function 1: {a}")
+    return fn(b: char) =
+        print("In function 2: {b}")
+        return fn(c: char) =
+            print("In function 3: {c}")
+
+curryFn('a')('b')('c')
+(-- Prints:
+"In function 1: a"
+"In function 2: b"
+"In function 3: c"
+--)
 ```
+
+There can be a lot of indentation when you curry functions like this. Is there a way we could write this more elegantly? *Yes!*
+
+```
+curryFn(a: char) =
+    print("In function 1: {a}")
+    return fn(b: char)             -- Drop the equals sign `=`.
+    print("In function 2: {b}")    -- Indent back.
+    return fn(c: char)
+    print("In function 3: {c}")
+
+curryFn('a')('b')('c')             -- Works the same.
+(-- Prints:
+"In function 1: a"
+"In function 2: b"
+"In function 3: c"
+--)
+```
+
+Now all the functions line up on the same indentation. Normally `return` ends a block, but this time it means we're switching from one function to another. The compiler rule is simple — `return fn(params)` begins a continuation, everything else after `return` is an error.
 
 #### Named Parameters
 
