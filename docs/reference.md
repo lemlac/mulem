@@ -525,16 +525,16 @@ There are two types of bindings: basic `=` and meta `::`. See [Meta Bindings](#m
 ```
 x = 42          -- inferred
 y: int = 42     -- explicit type
-z := 42         -- forced inference
+z: _ = 42       -- forced inference
 mu counter = 0  -- mutable
 ```
 
-Variables are declared with just the equals sign (`=`). Type is inferred, but can be declared with a colon (`:`). You can also use the `:=` operator instead to declare and infer the type at the same time. This is useful for shadowing mutable variables. *(See [Mutability](#mutability).)* For now, just know that anytime you see `:` before `=`, *it always declares a new variable,* and if you see just `=`, *it's either declaring or mutating a variable.*
+Variables are declared with just the equals sign (`=`). Type is inferred, but can be declared with a colon (`:`). You can also use `: _ =` instead to declare and infer the type at the same time. This is useful for shadowing mutable variables. *(See [Mutability](#mutability).)* For now, just know that anytime you see `:` before `=`, *it always declares a new variable,* and if you see just `=`, *it's either declaring or mutating a variable.*
 
 ```
 a = 0               -- Implicit declaration, type inferred.
 b: int = 1          -- Explicit type.
-c := 2              -- Explicit declaration, inferred type.
+c: _ = 2            -- Explicit declaration, inferred type.
 ```
 
 Adding a new line and indentation after the `=` starts a block. The last expression evaluated in the block is the value of that variable.
@@ -600,6 +600,8 @@ printX()        -- Error: $x is missing from context.
 
 $x = 0          -- $x must be explicitly defined within this scope.
 printX()        -- Prints "0"
+
+print($x: 1)    -- Or set as a named variable.
 ```
 
 Other functions can't define context variables outside of their scope. They only exist within a given scope, so they have to be explicitly defined above the function call in order for functions to see them. When a function captures its contextual parameters, functions only see those context variables in the scope of the function. It's all tracked the same way that regular parameters and captured variables are. 
@@ -3194,7 +3196,6 @@ Mu has 42 reserved keywords. Note that built-in types (`int`, `str`), boolean va
 |   `lhs = rhs`  | Assignment or declaration                           |
 |  `lhs += rhs`  | Increment                                           |
 |  `lhs -= rhs`  | Decrement                                           |
-|  `lhs := rhs`  | Explicit inferred-type declaration                  |
 | `lhs: T = rhs` | Explicit typed declaration                          |
 |   `lhs + rhs`  | Addition                                            |
 |   `lhs - rhs`  | Subtraction                                         |
