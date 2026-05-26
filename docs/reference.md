@@ -3224,6 +3224,13 @@ Mu has 42 reserved keywords. Note that built-in types (`int`, `str`), boolean va
 |  `lhs or rhs`  | Logical OR                                          |
 |     `not rhs`  | Logical NOT (or bitwise NOT for numbers)            |
 
+`not` behaves like the `!` prefix operator in some languages which use both logical NOT and bitwise NOT depending on the type.
+
+```
+not False == True
+not 5 == -6
+```
+
 __Remainder vs. Modulo:__
 
 - **`rem` is "remainder"** *(C-style modulo)* — what's left over after truncating toward zero. The result takes the sign of what you started with.
