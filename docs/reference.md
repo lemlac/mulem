@@ -155,7 +155,7 @@ x = 1 \
 ```
 
 
-We aren't method chaining, so we can't just put `.` in front if each operator. Instead, We can give a special rule to for a leading `..` (double periods). When a line starts with `..`, it continues from the previous line. This allows us to use Mulang's expression splitting to make this much more readable. 
+We aren't method chaining, so we can't just put `.` in front if each operator. Instead, We can give a special rule to for a leading `..` (double periods). When a line starts with `..`, it continues from the previous line and the `..` gets consumed like a trailing `\`. This allows us to use Mulang's expression splitting to make this much more readable. 
 
 ```
 x = 1
