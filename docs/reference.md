@@ -2451,7 +2451,7 @@ Other examples:
 
 ```
 crunchData(): int?!Error!CustomError =                                -- Multiple error types
-    value: int? = someFunc()?
+    value: int? = someFunc()!
     -- Maybe to Result
     data: int = maybe value? else raise CustomError("Not found")      -- Exist function on fallback
     data
