@@ -1878,6 +1878,17 @@ else
     print("Never ran")
 ```
 
+When you have one or more semicolons `;` in the subject of a `loop` before `then`, the first in the sequence will be the loop's subject field (such as a condition or `in` expression) and the other expressions will run at the end of each iteration of the loop. 
+
+```
+mu i = 1
+loop i <= 100; i += 1 then
+    if i rem 10 == 0 then
+        print("{i}!!!")
+        continue
+    print("{i}")
+```
+
 Inlined `loop x in` returns a lazy iterator collected with `...`.
 
 ```
