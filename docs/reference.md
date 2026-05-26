@@ -1256,7 +1256,7 @@ Notation:
 Some built-in types include `byte`, `int`, `uint`, `float`, `bool`, `char`, `str`, and `ptr`. Note that although built-in types use lowercase names, they are not *keywords*. This is just a naming convention. *It's recommended that users create custom types with capitalized names to differentiate from built-in types.*
 
 ```
-myByte: byte = @255
+myByte: byte = 255y
 myInt: int = -1234
 myInt: uint = 5678
 myFloat: float = 12.34
@@ -1276,7 +1276,7 @@ y: typeof[x] = 1    -- Ensures that x and y have the same type.
 You can also get the default value of any type with the compile-time function `default`. The type needs to have a default value defined which is yet to be determined how, but they're already defined for basic types.
 
 ```
-x = default[byte]   -- == @0
+x = default[byte]   -- == 0y
 x = default[int]    -- == 0
 x = default[float]  -- == 0.0
 x = default[bool]   -- == False
@@ -1390,11 +1390,11 @@ unicode = '\uFFFF'
 
 #### Bytes
 
-Bytes `byte` are 8-bit unsigned integers. You can write a byte literal by putting `@` in front of any `int` or `char` literal that's in the range of 0 to 255 (inclusive).
+Bytes `byte` are 8-bit unsigned integers. You can write a byte literal by putting `y` at the end of an integer or by putting @ in front of a `char` literal. It must be in the range of 0 to 255 (inclusive).
 
 ```
-min = @0
-max = @255
+min = 0y
+max = 255y
 a = @'a'
 ```
 
