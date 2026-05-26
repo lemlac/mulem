@@ -1926,9 +1926,9 @@ loop Pattern(opt x) in listOfPatterns then
 This can be combined with `maybe` to automatically skip when there's a mismatch.
 
 ```
-loop Pattern(opt x) in listOfPatterns then maybe   -- Add `maybe` to the end of the loop's opening line.
-    print("Found match: {x?}")                     -- If `x` is None, the loop skips to the next iteration
-```
+loop Pattern(opt x) in listOfPatterns then
+    maybe print("Found match: {x?}")
+```        
 
 #### `break` / `continue`
 
