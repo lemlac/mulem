@@ -97,29 +97,25 @@ Each block or bracket statement (`()`/`[]`/`{}`) starts a new scope. For example
 
 `x` is isolated to inside the parentheses, and the result of the expression is `x + 1`. 
 
-**Commas divide slots. Semicolons sequence within a slot.** That means that commas have *lower* presedence than newlines or semicolons. So in an expression like this…
+**Commas divide slots. Semicolons sequence within a slot** *– meaning commas have lower precedence than semicolons.* So in an expression like this…
 
 ```
 (a, b; c, d; e)
 ```
 
-…It would be evaluated to…
+What this means:
 
-```
-(a, (b; c), (d; e))
-```
+- Slot 1: `a`
+- Slot 2: `b` *then* `c` — value is `c`
+- Slot 3: `d` *then* `e` — value is `e`
 
-…And **not** `((a, b); (c, d); e)`. The result is a tuple:
+So it becomes `(a, (b; c), (d; e))` and **not** `((a, b); (c, d); e)`. The result is a tuple:
 
 ```
 (a, c, e)
 ```
 
 The commas divide slots, and within each slot the semicolons sequence expressions left to right, discarding all but the last. *If you use `;` inside a tuple slot, only the last value appears in the tuple — earlier expressions run for side effects only.*
-
-- Slot 1: `a`
-- Slot 2: `b` *then* `c` — value is `c`
-- Slot 3: `d` *then* `e` — value is `e`
 
 The use case for this is that you want to do something and produce a tuple value at that position:
 
@@ -593,6 +589,8 @@ printX() \ ($x: int) =   -- Function that requires `$x` to be defined.
 $x = 0
 printX()        -- Prints "0"
 ```
+
+Other functions can't define context variables outside of their scope. They only exist within a given scope, so they would have to explicitly defined above the function call in order for functions to see them. When a function captures its contextual parameters, functions only see those context variables in the scope of the function. It's all tracked the same way that regular parameters and captured variables are. 
 
 `$` by itself also called the **pipeline context.** It holds the value of the previous pipeline expression. `$` is one context variable that changes with each pipeline step, like a baton being passed in a relay race. 
 
@@ -1148,11 +1146,20 @@ addContext() \ ($a, $b) =
     $a + $b
 ```
 
-A function can be called with particular context variables by passing them in as named parameters.
+A function can be called with particular context variables explicitly. To do this, set them as named parameters in the function call.
 
 ```
-addContext($a: 1, $b: 2)     -- Sets these context parameters for this one function  call.
+addContext($a: 1, $b: 2)     -- Sets these context parameters for this one function call.
 ```
+
+The call site *can* be explicit when you want it to be — you're not forced to rely on ambient `$x` declarations. So you get both:
+
+- **Ambient style**: declare `$x` in scope, call `f()` cleanly — good for threading a value through many calls without noise
+- **Explicit style**: `f($x: val)` right at the call site — good when you want the dependency visible locally
+
+You can be terse when context is obvious, explicit when it matters. The `$` prefix does the work of keeping both styles recognizable as the same mechanism.
+
+I'd fully retract the skepticism. It's a well-thought-out feature.
 
 Sometimes it's hard to tell where contextual variables are coming from. In that case, you could use a decorator like `@defined` to assert that variables are defined in a the scope.
 
@@ -3208,3 +3215,33 @@ The practical case where it matters is things like clock arithmetic, array wrapp
 ---
 
 *This document captures the current state of the Mulang design. The language is still evolving.*
+
+
+
+Genuinely? Mu has more coherent design thinking behind it than most hobby language specs I've seen. There's a clear authorial voice — you know what you want the language to *feel* like, and most of the individual choices serve that vision. Let me be specific.
+
+**What genuinely impressed me:**
+
+The `.` expression splitting is the standout idea. It's original, solves a real problem (backslash continuation is ugly, implicit continuation is ambiguous), and has an aesthetic payoff — it really does read like a bullet list or ellipsis. That's the kind of idea that makes a language memorable.
+
+The three-rule block/inline switching model is elegant. Most significant-whitespace languages struggle badly when you need to pass a multi-line lambda to a function call. Mu's answer — brackets open inline mode, closing bracket returns to block mode — is clean and teachable. The `apiFetch` example actually looks *nice*, which is rare.
+
+The explicit mutable capture syntax `\ (count, squared)` is a strong safety decision, and the planned error messages (suggesting the fix by name) show real design maturity. This turns what could be a footgun into a self-documenting constraint.
+
+`?`/`!` working symmetrically as both type modifiers and postfix operators is very clean. The `setInt(as n)` syntax for `out` parameters is genuinely clever — `as` already means "bind to a name" throughout the language, so reusing it there is consistent rather than arbitrary.
+
+**Where I'd push back:**
+
+The *interaction surface* worries me more than any single feature. You have: significant whitespace + inline mode + expression splitting + pipeline semantics + context variables (`$x`) + explicit captures + five parameter modifiers (`mu`/`ref`/`in`/`out`/`opt`). Each is individually justifiable, but the combinatorial complexity of how they interact is high. A language feels simple when any two features compose predictably. That's hard to guarantee here.
+
+Context variables (`$x`) are the one feature I'm most skeptical of. Implicit dependency injection is powerful but it works against your stated goal of *traceable dependencies*. You can look at a function call and not know what it sees without scanning the enclosing scope for `$`-prefixed variables. Explicit captures `\` solve this for `mu` variables — context variables are the inverse philosophy applied inconsistently.
+
+The tuple comma/semicolon precedence rule — commas having *lower* precedence than semicolons — is genuinely surprising. It's internally consistent and the use case is real, but "surprising" in a spec is always a yellow flag. That rule will catch people.
+
+`mu` as the mutability keyword is a potential confusion point since it's also the language's name. Probably fine in practice, but worth being conscious of.
+
+**Overall read:**
+
+Mu feels like a systems language with a functional soul trying to also be beginner-friendly. That's an ambitious triangle. Rust makes the same attempt and mostly succeeds, but at the cost of a steep learning curve. The question is whether Mu's syntax clarity can offset its conceptual surface area. The foundation is strong enough that it's worth finding out.
+
+What's the part you feel least settled on?
