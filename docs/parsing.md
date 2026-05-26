@@ -29,18 +29,22 @@ When starting off, the parser begins in block parsing mode. Empty expressions ar
 expr
 expr
 
+expr;
+expr;
+
 expr; expr
+; expr;;;
 
 expr, expr
 
 expr, expr,
-expr, expr,,
+expr, expr,,,
 
-expr,, expr   -- Error
+expr,,, expr   -- Error
 , expr, expr  -- Error
 
 expr
-: expr 
+: expr
 ```
 
 If the `do` token appears, a new sequence will be added to the stack. If there's a new line after, it will switch to block parsing until indentation ends. If another token appears, it will switch into line parsing until the end of the line or another delimiter ot closer appears. 
