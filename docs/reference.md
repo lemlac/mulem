@@ -191,12 +191,6 @@ else
     print("False")
 ```
 
-Expression splitting only occurs when `..` appears **at the beginning of a line** *(after indentation).* Anywhere else, `..` is parsed normally *(e.g., as a range operator).*
-
-```
-3..5  -- Range from 3 to 5
-```
-
 ### Block Expressions
 
 A block wraps multiple expressions into one. Each block is a new scope. Newline after certain keywords or symbols and indentation starts a block. The last expression evaluated in a block is its value. Use `_` (wildcard) to leave a block empty.
@@ -1210,7 +1204,7 @@ x |> f() → Prints "$ is x"
 ```
 AddArgs :: { a: 1, b: 2 }
 
-pipeAdd() \ $: AddArgs =    -- Needs an AddArgs object piped to it.
+pipeAdd() \ ($: AddArgs) =    -- Needs an AddArgs object piped to it.
     $.a + $.b
 
 result = AddArgs(a: 1, b: 2) |> pipeAdd()   -- This sets $ to an AddArgs
@@ -1941,9 +1935,9 @@ loop Pattern(opt x) in listOfPatterns then maybe   -- Add `maybe` to the end of 
 Both accept an optional label to target an outer loop.
 
 ```
-loop:outer x in 0..100 then
-    loop:inner y in 0..100 then
-        if x * y >= 100:l then
+loop:outer x in 0...100 then
+    loop:inner y in 0...100 then
+        if x * y >= 100 then
             break:inner
         if x * y == 77 then
             break:outer
@@ -2404,6 +2398,7 @@ else
 Inline form.
 
 ```
+a = Some(10)
 x = maybe f(a?) else "fallback"
 ```
 
@@ -2479,7 +2474,7 @@ Exits out of a function with an `iter[_]` type. The return value of the function
 
 ```
 countUpTo(n: int): iter[int] =
-    loop i in 0..n then
+    loop i in 0...n then
         yield i
 ```
 
@@ -2509,7 +2504,7 @@ Both `yield` and `await` can be used together in an `iter[async[_]]` type. The t
 
 ```
 asyncIterFn(n): iter[async[int]] =
-    loop i in 0..n then
+    loop i in 0...n then
         val = await fetch(i)
         yield val
 
@@ -3247,7 +3242,7 @@ do
 Mu has 42 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard maybes (`Some`, `None`), and decorators (`@memory`) are built-in symbols but *not* strict keywords.
 
 **The Keyword List:**
-`and`, `as`, `await`, `band`, `bor`, `break`, `catch` `continue`, `defer`, `do`, `else`, `enum`, `error`, `fallthrough`, `fn`, `if`, `impl`, `import`, `in`, `inherit`, `is`, `loop`, `match`, `maybe`, `mod`, `never`, `not`, `opt`, `or`, `out`, `proto`, `raise`, `ref`, `rem`, `return`, `self`, `struct`, `then`, `try`, `until`, `where`, `xor`, `yield`.
+`and`, `as`, `await`, `band`, `bor`, `break`, `catch`, `continue`, `defer`, `do`, `else`, `enum`, `error`, `fallthrough`, `fn`, `if`, `impl`, `import`, `in`, `inherit`, `is`, `loop`, `match`, `maybe`, `mod`, `never`, `not`, `opt`, `or`, `out`, `proto`, `raise`, `ref`, `rem`, `return`, `self`, `struct`, `then`, `try`, `until`, `where`, `xor`, `yield`.
 
 ---
 
@@ -3262,7 +3257,7 @@ Mu has 42 reserved keywords. Note that built-in types (`int`, `str`), boolean va
 | 7     | Multiplicative / Shift    | `*` `/` `//` `rem` `mod` `<<` `>>` `>>>`  |
 | 6     | Additive / Concat         | `+` `-` `++`                              |
 | 5     | Bitwise                   | `band` `bor` `xor`                        |
-| 4     | Range                     | `..` `..=`                                |
+| 4     | Range                     | `...` `..=`                                |
 | 3     | Comparison                | `==` `!=` `<` `>` `<=` `>=`               |
 | 2     | Logical AND               | `and`                                     |
 | 1     | Logical OR / None-Coalesce / Pipeline     | `or` `?:` `\|>`                                |
@@ -3277,7 +3272,7 @@ Mu has 42 reserved keywords. Note that built-in types (`int`, `str`), boolean va
 |   `lhs ^`      | Dereference typed pointer                           |
 |     `... rhs`  | Spread array into array                             |
 |       `& rhs`  | Spread tuple into tuple (same type)                 |
-|  `lhs .. rhs`  | Exclusive range                                     |
+|  `lhs ... rhs` | Exclusive range                                     |
 | `lhs ..= rhs`  | Inclusive range                                     |
 | `lhs \|> rhs`  | Pipeline                                            |
 |  `lhs => rhs`  | Pipeline assignment                                 |
