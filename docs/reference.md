@@ -1383,6 +1383,8 @@ The exception to this rule is in scientific notation: the sign after `e` is a pa
 
 Another rule is that if there's a period in a place where a decimal is expected, then it's part of the number literal and not `.` for member/component access. This is space sensitive.
 
+*What the tokenizer sees:*
+
 - `1.0` is a float `1.0`.
 - `1. 0` is a float `1.` followed by int `0`.
 - `1 .0` is an int `1` followed by access `.` to its `0`th component.
