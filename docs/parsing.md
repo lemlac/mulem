@@ -43,7 +43,7 @@ expr
 : expr 
 ```
 
-If the `do` token appears while in block parsing or tuple parsing mode and `do` is not at the end of a line, then the parser will switch to `do`-parsing until a new-line or comma. If `do` is at the end of a line, it will start a new block with increased indentation.
+If the `do` token appears, a new sequence will be added to the stack. If there's a new line after, it will switch to block parsing until indentation ends. If another token appears, it will switch into line parsing until the end of the line or another delimiter ot closer appears. 
 
 ```
 do expr; expr
