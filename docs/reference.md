@@ -1296,9 +1296,10 @@ Notation:
 
 ### Built-in Types
 
-Some built-in types include `int`, `uint`, `float`, `bool`, `char`, `str`, and `ptr`. Note that although built-in types use lowercase names, they are not *keywords*. This is just a naming convention. *It's recommended that users create custom types with capitalized names to differentiate from built-in types.*
+Some built-in types include `byte`, `int`, `uint`, `float`, `bool`, `char`, `str`, and `ptr`. Note that although built-in types use lowercase names, they are not *keywords*. This is just a naming convention. *It's recommended that users create custom types with capitalized names to differentiate from built-in types.*
 
 ```
+myByte: byte = @255
 myInt: int = -1234
 myInt: uint = 5678
 myFloat: float = 12.34
@@ -1318,6 +1319,7 @@ y: typeof[x] = 1    -- Ensures that x and y have the same type.
 You can also get the default value of any type with the compile-time function `default`. The type needs to have a default value defined which is yet to be determined how, but they're already defined for basic types.
 
 ```
+x = default[byte]   -- == @0
 x = default[int]    -- == 0
 x = default[float]  -- == 0.0
 x = default[bool]   -- == False
@@ -1332,11 +1334,11 @@ x = default[ptr]    -- == Null
 implementLater(): int = default[]
 ```
 
-You can also get the size of any type with the compile-time function `sizeof`. It returns a constant `uint` (unsigned integer) with the number of bytes of memory that type requires. The exact sizes of some types like `int` or `float` might vary, but you can rely on `char` and `bool` being 1 byte each. There's also the `void` type which represents no data. `ptr` depends on the pointer size of the system. 
+You can also get the size of any type with the compile-time function `sizeof`. It returns a constant `uint` (unsigned integer) with the number of bytes of memory that type requires. The exact sizes of some types like `int` or `float` might vary, but you can rely on `byte` and `bool` being 1 byte each. There's also the `void` type which represents no data. `ptr` depends on the pointer size of the system. 
 
 ```
+sizeOfChar = sizeof[byte]   -- == 1
 sizeOfBool = sizeof[bool]   -- == 1
-sizeOfChar = sizeof[char]   -- == 1
 sizeOfVoid = sizeof[void]   -- == 0
 sizeOfPtr  = sizeof[ptr]    -- == 4 or 8
 ```
@@ -1429,7 +1431,19 @@ nullChar = '\0'
 unicode = '\uFFFF'
 ```
 
+#### Bytes
+
+Bytes `byte` are 8-bit unsigned integers. You can write a byte literal by putting `@` in front of any `int` or `char` literal that's in the range of 0 to 255 (inclusive).
+
+```
+min = @0
+max = @255
+a = @'a'
+```
+
 #### Strings
+
+Strings (`str`) are immutable 1D arrays of characters `char`. 
 
 |    Form     | Purpose                                                                    |
 |:-----------:|:---------------------------------------------------------------------------|
