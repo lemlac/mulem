@@ -2482,6 +2482,11 @@ Variable and functions primarily use the equals sign (`=`) and are for storing a
 * **Constants:** `PI :: const float = 3.14`
 * **Structs:** `MyStruct :: struct = _`
 
+Other languages often use a set of prefixed keywords to define these things, but the `::` symbol keeps the name of the variable on the left.
+
+- `const PI`, `struct MyStruct`, `enum MyEnum`
+- `PI :: const`, `MyStruct :: struct, `MyEnum :: enum`
+
 Meta bindings are meant to resemble definitions. *"This is that."* Only when things get complicated should you have to expand on that. It should be easy and simple to define something. They are like the language file of your API, telling the compiler how to speak your own custom language—not just the language that you *speak* but the language that you *think* in.
 
 ### Aliases
