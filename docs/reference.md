@@ -131,21 +131,9 @@ s = """
     """
 ```
 
-Otherwise, a semicolon always ends an expression.
+Otherwise, a semicolon always ends an expression. New lines have a special rule: any line starting with a `:` gets appended to the end of the previous line. This is known as **expression splitting.** 
 
-New lines have a special rule: any line starting with a `.` gets appended to the end of the previous line. This is known as **expression splitting.** 
-
-```
--- Method chaining across lines:
-object.method1()
-      .method2()
-      .method3()
-
--- Is the same as:
-object.method1() .method2() .method3()
-```
-
-This is useful for method chaining, but can we use this for other applications? It's not always clear if `- 1` at the start of a line means *subtract 1* or *negative 1.* Some languages use a backslash `\` for this, but that has its downsides. With backslashes, they all go at the end of the a line which hardly ever line up without manual formatting.
+It's not always clear if `- 1` at the start of a line means *subtract 1* or *negative 1.* Some languages use a backslash `\` for this, but that has its downsides. With backslashes, they all go at the end of the a line which hardly ever line up without manual formatting.
 
 ```
 x = 1 \
@@ -154,42 +142,43 @@ x = 1 \
   + 5 + 6
 ```
 
-
-We aren't method chaining, so we can't just put `.` in front if each operator. Instead, We can give a special rule to for a leading `..` (double periods). When a line starts with `..`, it continues from the previous line and the `..` gets consumed like a trailing `\`. This allows us to use Mulang's expression splitting to make this much more readable. 
+We aren't method chaining, so we can't just put `.` in front if each operator. Instead, We can give a special rule to for a leading `:` (colon). When a line starts with `:`, it continues from the previous line and the `:` gets consumed like a trailing `\`. This allows us to use Mulang's expression splitting to make this much more readable. 
 
 ```
 x = 1
-.. + 2 + 3
-.. + 4
-.. + 5 + 6
+: + 2 + 3
+: + 4
+: + 5 + 6
 ```
 
-The periods (`..`) become like dots in a bullet-point list, and it also takes on the appearance of a double elipses (…) making it apparent that you have one long expression. 
+The colons (`:`) become like dots in a bullet-point list, and it also takes on the appearance of an elipses (…) making it apparent that you have one long expression. 
 
-Indentation is lenient with expression splitting. As long as the line starts with a period (`.`), then it belongs to the same expression.
+Indentation is lenient with expression splitting. As long as the line starts with a colon (`:`), then it belongs to the same expression.
 
 ```
 do
     a
-        .. + b
-      .. * c
-        .. - d
-    .. / e
-  .. rem f          -- Indenting less than the start works too.
-      .. band g
+        : + b
+      : * c
+        : - d
+     : / e
+  : rem f          -- Indenting less than the start works too.
+      : band g
 ```
 
 It's recommended to keep the indentation the same. This is especially useful for long `if` statement.
 
 ```
 if a or b
-.. and c or d        -- Each `..` is in the `if` condition.
-.. and e or f
-.. then              -- Block starts here.
+: and c or d        -- Each `:` is in the `if` condition.
+: and e or f
+: then              -- Block starts here.
     print("True")
 else
     print("False")
 ```
+
+Semi-colons `;` and colons are like opposites: one ends expressions, this other continues them.
 
 ### Block Expressions
 
@@ -378,11 +367,11 @@ When mixed with `do`, multiple expressions separated by semicolons `;` on one li
 |> print("{$}")                  -- Print result.
 ```
 
-Note that `|>` at the beginning of a line is different from `.. |>` which is a split expression on the next line. The pipe will continue after it.
+Note that `|>` at the beginning of a line is different from `: |>` which is a split expression on the next line. The pipe will continue after it.
 
 ```
 |> fetchA()
-.. |> fetchB $
+: |> fetchB $
 |> fetchC $
 |> print("{$}")
 ```
@@ -2452,10 +2441,10 @@ Chain multiple `maybe` / `else` together untill you get a fallback:
 
 ```
 getFirst(a: int, b: int, c: int): int =
-.. maybe getA(a)? else
-.. maybe getB(b)? else
-.. maybe getC(c)? else
-.. 0
+    : maybe getA(a)? else
+    : maybe getB(b)? else
+    : maybe getC(c)? else
+    : 0
 ```
 
 Other examples:
