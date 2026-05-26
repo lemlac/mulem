@@ -662,7 +662,7 @@ Mutable variables are declared with `mu`. Setting them later mutates the value r
 ```
 mu count = 0
 count += 1          -- Mutates count.
-count := 0          -- Shadows count with a new immutable variable.
+count: _ = 0        -- Shadows count with a new immutable variable.
 ```
 
 A mutable variable may be declared without an initial value, but cannot be used until it is set.
@@ -3177,8 +3177,8 @@ Mu has 42 reserved keywords. Note that built-in types (`int`, `str`), boolean va
 | 4     | Range                     | `..` `..=`                                |
 | 3     | Comparison                | `==` `!=` `<` `>` `<=` `>=`               |
 | 2     | Logical AND               | `and`                                     |
-| 1     | Logical OR / Pipeline     | `or` `\|>`                                |
-| 0     | Assignment / Spread       | `= := += => & ...`                        |
+| 1     | Logical OR / None-Coalesce / Pipeline     | `or` `?:` `\|>`                                |
+| 0     | Assignment / Spread       | `=` `+=` `-=` `=>` `&` `...`                        |
 
 | Operator       | Meaning                                             |
 |:--------------:|:----------------------------------------------------|
