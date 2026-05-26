@@ -99,43 +99,20 @@ Each block or bracket statement (`()`/`[]`/`{}`) starts a new scope. For example
 
 `x` is isolated to inside the parentheses, and the result of the expression is `x + 1`. 
 
-When you want to run a side effect and produce a value in one tuple slot, you need a way to sequence within a slot. For example:
+Given that `;` and `,` can both exist inside tuple brackets, you *have* to define their relative precedence. There's no neutral option. For example:
 
 ```
 (getX(), print("fetching y"); getY())
 ```
 
-The `;` here runs `print(...)` for its side effect, then uses `getY()` as the actual value for that slot. To make this work, `,` has to be the *lower-precedence operator* — it defines the slot boundaries, while `;` *sequences within them.*
-
-Given that `;` and `,` can both exist inside tuple brackets, you *have* to define their relative precedence. There's no neutral option. Making `;` higher-precedence (sequencing within slots) makes sense because it's the only reading that makes `,` unambiguously mean *"new slot."* Forbidding `;` inside tuples entirely would just make it harder to express side effects at a specific slot position.
-
-**Commas divide slots. Semicolons sequence within a slot** *– meaning commas have lower precedence than semicolons.* So in an expression like this…
+Is it `getX(), print("fetching y")` then `getY()`, or is it a tuple of `getX()` and `print("fetching y"); getY()`? To fix this ambiguity, `,` and `;` cannot mix inside a bracket expression. You will have to wrap one sequence in parentheses first.
 
 ```
-(a, b; c, d; e)
+(getX(), print("fetching y"); getY())    -- Error: unexpected character: ";"
+(getX(), (print("fetching y"); getY()))  -- OK
 ```
 
-What this means:
-
-- Slot 1: `a`
-- Slot 2: `b` *then* `c` — value is `c`
-- Slot 3: `d` *then* `e` — value is `e`
-
-So it becomes `(a, (b; c), (d; e))` and **not** `((a, b); (c, d); e)`. The result is a tuple:
-
-```
-(a, c, e)
-```
-
-The commas divide slots, and within each slot the semicolons sequence expressions left to right, discarding all but the last. *If you use `;` inside a tuple slot, only the last value appears in the tuple — earlier expressions run for side effects only.*
-
-The use case for this is that you want to do something and produce a tuple value at that position:
-
-```
-(getX(), print("fetching y"); getY())
-```
-
-Slot 1 is `getX()`, slot `2` calls log for its side effect then `getY()` for the actual value. The result is `(x, y)`.
+The `;` here runs `print(...)` for its side effect, then uses `getY()` as the actual value for that slot. 
 
 ### Expression Splitting
 
