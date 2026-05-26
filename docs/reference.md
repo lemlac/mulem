@@ -484,10 +484,10 @@ This lets you extract the result of any step in a pipeline simply by appending `
 print("a = {a}, b = {b}, c = {c}")
 ```
 
-The variable type is always inferred, to avoid ambiguity with `:`. Mutability can be specified with `~`. *(See [Mutability](#mutability).)*
+The variable type is always inferred, to avoid ambiguity with `:`. Mutability can be specified with `mu`. *(See [Mutability](#mutability).)*
 
 ```
-fetchA() => ~x |> fetchB(x) |> do   -- Create a mutable variable `x`.
+fetchA() => mu x |> fetchB(x) |> do   -- Create a mutable variable `x`.
     x += 1                          -- Mutate it.
     print("{x}")                    -- Print it.
 ```
@@ -523,10 +523,10 @@ There are two types of bindings: basic `=` and meta `::`. See [Meta Bindings](#m
 ### Variable Declarations
 
 ```
-x = 42        -- inferred
-y: int = 42   -- explicit type
-z := 42       -- forced inference
-~counter = 0  -- mutable
+x = 42          -- inferred
+y: int = 42     -- explicit type
+z := 42         -- forced inference
+mu counter = 0  -- mutable
 ```
 
 Variables are declared with just the equals sign (`=`). Type is inferred, but can be declared with a colon (`:`). You can also use the `:=` operator instead to declare and infer the type at the same time. This is useful for shadowing mutable variables. *(See [Mutability](#mutability).)* For now, just know that anytime you see `:` before `=`, *it always declares a new variable,* and if you see just `=`, *it's either declaring or mutating a variable.*
@@ -653,12 +653,12 @@ A top level `&` will spread based on the current pipeline context `$`. This make
 
 *See [Contextual Parameters](#contextual-parameters) for more details.*
 
-### Mutability (`~`)
+### Mutability (`mu`)
 
-Mutable variables are declared with `~`. Setting them later mutates the value rather than shadowing it.
+Mutable variables are declared with `mu`. Setting them later mutates the value rather than shadowing it.
 
 ```
-~count = 0
+mu count = 0
 count += 1          -- Mutates count.
 count := 0          -- Shadows count with a new immutable variable.
 ```
@@ -666,7 +666,7 @@ count := 0          -- Shadows count with a new immutable variable.
 A mutable variable may be declared without an initial value, but cannot be used until it is set.
 
 ```
-~x: int
+mu x: int
 x = 1
 doSomething(x)      -- OK now.
 ```
@@ -674,7 +674,7 @@ doSomething(x)      -- OK now.
 Functions do not automatically capture mutable variables. Any assignment inside a function to an outer mutable variable creates a new local variable unless explicitly captured. *(See [Capturing](#capturing).)*
 
 ```
-~count = 0
+mu count = 0
 
 addCount() \ (count) =
     count += 1
@@ -688,7 +688,7 @@ print("{count}")    -- "1"
 A reference points to the same memory location as another variable. Its mutability is carried over.
 
 ```
-~x = 0
+mu x = 0
 ref xRef = x
 xRef = 1
 print("{x}")        -- "1"
@@ -717,7 +717,7 @@ Thing :: {x: int, y: int}
 ### Function Declarations
 
 * __Basic:__ `add(a, b) = a + b`
-* __Parameter Modifiers:__ `~` / `ref` / `in` / `out` / `opt`
+* __Parameter Modifiers:__ `mu` / `ref` / `in` / `out` / `opt`
 * __Lambdas:__ `fn(x) = x + 1`
 
 Functions are declared by adding parentheses `()` and the name and before the colon `:` or equals sign `=`. The return type and parameter types can be either explicitly declared or inferred based on usage.
@@ -773,10 +773,10 @@ add3(,1,2, ,3,,) -- This is not okay.
 --)
 ```
 
-Functions can also be declared with `~` to be set later. This type is called a **function pointer.** It lets you treat functions that same way you do with variables.
+Functions can also be declared with `mu` to be set later. This type is called a **function pointer.** It lets you treat functions that same way you do with variables.
 
 ```
-~action(int, int): int
+mu action(int, int): int
 add(a, b) = a + b
 sub(a, b) = a - b
 action = add
@@ -790,7 +790,7 @@ print("1 - 1 = {action(1, 1)}")  -- Prints "0".
 | Modifier         | Behavior          | Mutable inside function?           |
 |:-----------------|:------------------|:-----------------------------------|
 | *(none)*         | Pass by copy      | No                                 |
-| `~`              | Pass by copy      | Yes                                |
+| `mu`             | Pass by copy      | Yes                                |
 | `in`             | Pass by reference | No                                 |
 | `ref`            | Pass by reference | Yes                                |
 | `out`            | Unset reference   | Yes (Must be assigned)             |
@@ -802,7 +802,7 @@ Function parameters can be declared like variables. Likewise, you can modify the
 increment(ref x: int) =
     x += 1
 
-~y = 0
+mu y = 0
 increment(y)
 ```
 
@@ -819,7 +819,7 @@ This guarantees that the variable is initialized after the call completes.
 setInt(out i): void =
     i = 3
 
-~x: int
+mu x: int
 setInt(x)
 print("{x}")    -- Prints "3"
 ```
@@ -840,7 +840,7 @@ method(self as this)              -- self aliasing
 setInt(as n)                      -- out parameter
 ```
 
-Languages that use return values for this kind of thing (`n = setInt()`) imply the value comes out of the function through the normal return channel, which is misleading when the mechanism is actually a reference parameter. `setInt(as n)` makes the call-site declaration explicit without requiring you to pre-declare a `~` variable just to hand it in.
+Languages that use return values for this kind of thing (`n = setInt()`) imply the value comes out of the function through the normal return channel, which is misleading when the mechanism is actually a reference parameter. `setInt(as n)` makes the call-site declaration explicit without requiring you to pre-declare a `mu` variable just to hand it in.
 
 ### Optional Parameters
 
@@ -895,7 +895,7 @@ Use `...` to collect all arguments into a single variable. The variable should b
 
 ```
 addAll(...nums: int#): int =
-    ~sum: int = 0
+    mu sum: int = 0
     loop n in nums:
         sum += n
     sum
@@ -944,15 +944,15 @@ cannotChangeX(2) -- Prints "2"
 print("{x}")     -- Prints "1"
 ```
 
-To capture a mutable variable, write `\` at the end of the function signature. This goes after the parameters and before the return type `: T =`. List each *mutable* (`~`) variables that the function uses. This helps make it easy to see which functions depend on mutable variables and which ones don't since `\` doesn't appear in type notation or anywhere else to the left of the equals sign `=` in function signatures except for captures. You can think of it like `\` for escaping. In this case, we are escaping the scope of this function to grab memory outside of it.
+To capture a mutable variable, write `\` at the end of the function signature. This goes after the parameters and before the return type `: T =`. List each *mutable* (`mu`) variables that the function uses. This helps make it easy to see which functions depend on mutable variables and which ones don't since `\` doesn't appear in type notation or anywhere else to the left of the equals sign `=` in function signatures except for captures. You can think of it like `\` for escaping. In this case, we are escaping the scope of this function to grab memory outside of it.
 
 This follows the same practice that `import` and `inherit` where all words in a given context are listed out clearly so that there are no accident name collisions or hidden gotchas.
 
 ```
 amount = 1               -- Immutable variable, doesn't need to be captured.
-~count = 0               -- Mutable variables, must be captured with `\`.
-~squared = 1
-~cubed = 1
+mu count = 0             -- Mutable variables, must be captured with `\`.
+mu squared = 1
+mu cubed = 1
    
 addCount() \ (count, squared, cube): int =     -- Capture 3 variables at once.
     count += amount                            -- Mutate captured variables inside the function.
@@ -969,7 +969,7 @@ Error messages will highlight cases where someone would be confused about `\` in
 
 **Forgot to capture a mutable variable:**
 ```
-~count = 0
+mu count = 0
 addCount() =
     count += 1  -- Error here
 ```
@@ -992,7 +992,7 @@ f() \ (ghost) =
 
 **Mutated without capturing, inside a lambda:**
 ```
-~count = 0
+mu count = 0
 forEach([1,2,3], fn(x) =
     count += x
 )
@@ -1038,7 +1038,7 @@ otherAction(fn callback(val) =
 Capturing also works inside lambda functions just like with named functions.
 
 ```
-~count = 0
+mu count = 0
 forEach([1, 2, 3, 4], fn(x) \ (count) =
     count += x
 )
@@ -1050,7 +1050,7 @@ When a function returns another function, list each function parameters as the r
 
 ```
 curriedFn(a: int): (int): (int): int = _                 -- Immutable declaration
-~curriedFnPtr(int): (int): (int): int = curriedFn        -- Mutable declaration. 
+mu curriedFnPtr(int): (int): (int): int = curriedFn      -- Mutable declaration. 
 ```
 
 Normally, functions can have an implicit return, but this poses a problem for curried functions…
@@ -1200,7 +1200,7 @@ Capturing and contextual variables are related. When you call `addCount()​`, y
 Compare these two examples:
 
 ```
-~count = 0
+mu count = 0
 
 addCount() \ (count) =
     count += 1
@@ -1212,12 +1212,12 @@ print("{count}")    -- "1"
 ```
 
 ```
-addCount() \ (~$count) =
+addCount() \ (mu $count) =
     $count += 1
 
 -- ...
 
-~$count = 0
+mu $count = 0
 
 addCount()
 print("{$count}")    -- "1"
@@ -1725,18 +1725,18 @@ if result == Null then
 A standard library will be made to safely handle pointer dereferencing and do pointer arithmetic, but that is outside the scope of this document. Here is an example of how it might work:
 
 ```
-~x = 0               -- Create a local mutable variable.
+mu x = 0             -- Create a local mutable variable.
 xPtr = getMuPtr(x)?  -- Map pointer to a maybe type `T?`.
 xPtr.set(1)!         -- Safely set the pointer and branch if there's an error.
 print("{x}")         -- "1", the pointer successfully mutated `x`.
 ```
 
-Sometimes, it's necessary to dig deep into the unsafe territory. Mulang normally prevents you from doing this unless you mark the code with `@unsafe`. The `^` is the symbol associated with pointers, analogues to `?` for maybes, `!` for results, and `#` for arrays. It can be used in type notation, but it's also the operator to dereference a pointer. Thy type must be known at compile-time. Dereferencing an opaque pointer `ptr` is a compile-time error. In the type notation, `T^` prevents the pointer from mutating its memory or `T^~` allows mutation with `^ =` (dereference + assignment). 
+Sometimes, it's necessary to dig deep into the unsafe territory. Mulang normally prevents you from doing this unless you mark the code with `@unsafe`. The `^` is the symbol associated with pointers, analogues to `?` for maybes, `!` for results, and `#` for arrays. It can be used in type notation, but it's also the operator to dereference a pointer. Thy type must be known at compile-time. Dereferencing an opaque pointer `ptr` is a compile-time error. In the type notation, `T^` prevents the pointer from mutating its memory or `T^mu` allows mutation with `^ =` (dereference + assignment). 
 
 ```
 @unsafe do                   -- Allow pointer manipulation in this block.
-    ~x = 0                   -- `ptr` type takes a reference and creates a generic pointer.
-    xPtr: int^~ = ptr(x)     -- Convert `ptr` to `int^~`, type is known.
+    mu x = 0                 -- `ptr` type takes a reference and creates a generic pointer.
+    xPtr: int^mu = ptr(x)    -- Convert `ptr` to `int^mu`, type is known.
     xPtr^ = 1                -- Mutate the memory.
     print("{xPtr^}")         -- Prints "1".
     print("{x}")             -- Prints "1".
@@ -1744,12 +1744,12 @@ Sometimes, it's necessary to dig deep into the unsafe territory. Mulang normally
 
 Pointer types have 2 kinds of mutability: one for the reference, and one for the pointer variable itself. Here is a table of each kind and what it means.
 
-|    Type   | What It Means                         | Can reassign pointer | Can mutate memory | *Think…* |
-|:---------:|:--------------------------------------|:--------------------:|:-----------------:|:---------|
-|  `x: T^`  | immutable pointer to immutable memory |       **No**         |      **No**       | *This will never change.* |
-|  `x: T^~` | immutable pointer to mutable memory   |       **No**         |        Yes        | *Like a more low-level `ref`.* |
-| `~x: T^`  | mutable pointer to immutable memory   |         Yes          |      **No**       | *I need to switch what I'm looking at.* |
-| `~x: T^~` | mutable pointer to mutable memory     |         Yes          |        Yes        | *I need full control.* |
+|     Type     | What It Means                         | Can reassign pointer | Can mutate memory | *Think…* |
+|:------------:|:--------------------------------------|:--------------------:|:-----------------:|:---------|
+|    `x: T^`   | immutable pointer to immutable memory |       **No**         |      **No**       | *This will never change.* |
+|    `x: T^mu` | immutable pointer to mutable memory   |       **No**         |        Yes        | *Like a more low-level `ref`.* |
+| `mu x: T^`   | mutable pointer to immutable memory   |         Yes          |      **No**       | *I need to switch what I'm looking at.* |
+| `mu x: T^mu` | mutable pointer to mutable memory     |         Yes          |        Yes        | *I need full control.* |
 
 ---
 
@@ -2170,7 +2170,7 @@ loop nextValue() is Some(x) then
 Loop until a pattern matches. Bindings are in scope below the loop.
 
 ```
-~i = 0
+mu i = 0
 loop
     print("Attempts: {i}")
     i += 1
@@ -2401,7 +2401,7 @@ count(n: int): iter[int] =
 If you use `yield`, you can only use a void `return` to exit the function. 
 
 ```
-countUntil(i: ~int, max: int): iter[int] =
+countUntil(mu i: int, max: int): iter[int] =
      loop
         if i >= max then
             return      -- Break out of the loop and the function.
@@ -2429,7 +2429,7 @@ asyncIterFn(n): iter[async[int]] =
         yield val
 
 asyncCollect(n): async[int#] =
-    ~ret: int# = []
+    mu ret: int# = []
     loop (await x) in asyncIterFn(n) then
         ret ++= x
     ret
@@ -3185,7 +3185,6 @@ Mu has 42 reserved keywords. Note that built-in types (`int`, `str`), boolean va
 |   `lhs ?`      | Unwrap maybe, propagate `None` to nearest `maybe`   |
 |   `lhs !`      | Unwrap result, propagate error to nearest `try`     |
 |   `lhs ^`      | Dereference typed pointer                           |
-|       `~ rhs`  | Inferred type conversion                            |
 |     `... rhs`  | Spread array into array                             |
 |       `& rhs`  | Spread tuple into tuple (same type)                 |
 |  `lhs .. rhs`  | Exclusive range                                     |
