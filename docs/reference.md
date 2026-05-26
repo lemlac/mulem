@@ -204,9 +204,9 @@ object.method1()
 
 A line beginning with a period (`.`) followed immediately by an identifier character ([a-zA-Z_]) signifies an **implicit method chain continuation**, equivalent to appending `.identifier` directly to the end of the previous line.
 
-__2. Expression Splitting (Space after `.`)__
+__2. Plain Expression Splitting (Space after `.`)__
 
-```mu
+```
 if a or b
 . and c or d       -- Space after '.': this is an explicit expression split
 . then
