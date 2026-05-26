@@ -1878,6 +1878,8 @@ else
     print("Never ran")
 ```
 
+When the parser encounters `loop`, it enters a *loop subject state.* Semicolons encountered in this state do not terminate the statement; they serve as delimiters for the step expressions. This state remains active until the parser matches the loop's body terminator (`then` or `until`).
+
 When you have one or more semicolons `;` in the subject of a `loop` before `then`, the first in the sequence will be the loop's subject field (such as a condition or `in` expression) and the other expressions will run at the end of each iteration of the loop. 
 
 ```
@@ -1897,8 +1899,20 @@ mu i = 1
 loop i <= 100; i += 1 then
     if i rem 10 == 0 then
         print("{i}!!!")
-        continue
-        -- i will now increment even when you call `continue`
+        continue    -- Automatically triggers `i += 1` before checking condition again
+    print("{i}")
+```
+
+```
+-- Track index of `loop / in`
+mu idx = 0
+loop item in inventory; idx += 1 then
+    print("Slot {idx}: {item}")
+```
+
+```
+-- C-style for loop
+do mu i = 1; loop i <= 100; i += 1 then
     print("{i}")
 ```
 
