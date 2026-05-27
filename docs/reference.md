@@ -1088,7 +1088,7 @@ curryFn('a')('b')('c')
 There can be a lot of indentation when you curry functions like this. Is there a way we could write this more elegantly? *Yes!*
 
 ```
-curryFn(a: char) =
+curryFn(a: char): (char): (char): void =
     print("In function 1: {a}")
     return fn(b: char)             -- Drop the equals sign `=`.
     print("In function 2: {b}")    -- Indent back.
@@ -1103,7 +1103,7 @@ curryFn('a')('b')('c')             -- Works the same.
 --)
 ```
 
-Now all the functions line up on the same indentation. Normally `return` ends a block, but this time it means we're switching from one function to another. The compiler rule is simple — `return fn(params)` begins a continuation, everything else after `return` is an error.
+Now all the functions line up together. Each `return fn` is an explicit suspension point from the function similar to `yeild` or `await`. The remaining part of the function becomes the body of the returned function. Normally `return` ends a block, but this time it means we're switching from one function to another. The compiler rule is simple — `return fn(params)` begins a continuation, everything else after `return` is an error.
 
 #### Named Parameters
 
