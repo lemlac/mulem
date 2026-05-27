@@ -62,13 +62,16 @@ Statements are separated by newlines or semicolons (`;`). The two are interchang
 
 ## Expressions and Blocks
 
-A program is a sequence of expressions. Each expression is separated by lines or grouped together on one line and delimitted with semicolons (`;`).
+A program is a sequence of expressions. Each expression is separated by lines or grouped together on one line and delimitted with semicolons (`;`). Semi-colons at the end of a line are ignored.
 
 ```
 expr
 expr
 
 expr; expr
+
+expr;
+expr;
 ```
 
 Whitespace is significant. When expressions are sperated by lines, the indentation can't be higher unless it's the start of a new block. 
@@ -91,29 +94,28 @@ do
 expr       -- Decreasing indentation exits the block.
 ```
 
-Each block or bracket statement (`()`/`[]`/`{}`) starts a new scope. For example:
+Each sequence starts a new scope. For example:
 
 ```
-(x = 0; x + 1)
+do x = 2; x + 1
 ```
 
-`x` is isolated to inside the parentheses, and the result of the expression is `x + 1`. 
+`x` is isolated to inside the `do` sequence, and the result of the expression is `2 + 1`. 
 
-Given that `;` and `,` can both exist inside tuple brackets, you *have* to define their relative precedence. There's no neutral option. For example:
-
-```
-(getX(), print("fetching y"); getY())
-```
-
-Is it `getX(), print("fetching y")` then `getY()`, or is it a tuple of `getX()` and `print("fetching y"); getY()`? To maintain syntactic clarity and eliminate operator precedence ambiguity between commas (slot separators) and semicolons (expression sequencers), `,` and `;` **cannot be mixed at the same nesting level** inside any bracket expression (`()`, `[]`, `{}`). You must resolve this by explicitly isolating the sequenced expressions. This can be done either by wrapping the sequence in nested parentheses or by using an inline `do` expression:
+Given that `;` and `,` can both exist inside an expression, you *have* to define their relative precedence. There's no neutral option. For example:
 
 ```
-(getX(), print("fetching y"); getY())    -- Error: unexpected character: ";"
-(getX(), (print("fetching y"); getY()))  -- OK: isolated via parentheses
-(getX(), do print("fetching y"); getY()) -- OK: isolated via inline 'do'
+getX(), print("fetching y"); getY(), getZ()
 ```
 
-The `;` here runs `print(...)` for its side effect, then uses `getY()` as the actual value for that slot. 
+Is it `getX(), print("fetching y")` then `getY(), getZ()`, or is it a tuple of `getX()`, `print("fetching y"); getY()`, and `getZ()`? To maintain syntactic clarity and eliminate operator precedence ambiguity between commas (slot separators) and semicolons (expression sequencers), `,` and `;` **cannot be mixed at the same nesting level**. You must resolve this by explicitly isolating the sequenced expressions. This can be done by wrapping one sequence in an inline `do` expression:
+
+```
+getX(), print("fetching y"); getY(), getZ()     -- Error: unexpected character: ";"
+getX(), do print("fetching y"); getY(), getZ()  -- OK: isolated via inline 'do'
+```
+
+The `do` here says to start a sequence that's seperated by semi-colons `;`. The comma `,` ends the sequence. It's now clear that `print(…)` is only there to run side effects after `getX()`, and the value of the expression is the tuple `x, y, z`.
 
 ### Expression Splitting
 
@@ -313,6 +315,14 @@ i -= 1   -- i = i - 1
 ```
 
 *Note: Mulem doesn't have a `--` (decrement by 1) operator. `--` is reserved for comments.* 
+
+The pipeline assignment operator `=> x` is reversed from normal assignment `x =`. This is an intential design choice. To get rid of `=> x` and use standard assignment syntax, you would have to either:
+
+1. Accept verbose boilerplate such as `mu x = 0; ... |> do x = $; $ |> ...`.
+2. Destroy Mulem's safety guarantees against the `if x = 1` bug.
+3. Force explicit mutable closure captures for simple pipeline steps.
+
+None of those options are good. Therefore, the "bipolar" visual flow of `=> x` (looking right for the variable name instead of left) isn't a design flaw—it's a deliberate, necessary syntactic feature required to keep pipelines elegant while preserving Mulem's safety rules. It acts as a specific "pipeline-mode" operator. When developers see `|>`, their brains are already shifted into "left-to-right data flow" mode, so `=> x` naturally matches that directional momentum.
 
 ### Function Calls
 
@@ -1090,8 +1100,8 @@ There can be a lot of indentation when you curry functions like this. Is there a
 ```
 curryFn(a: char): (char): (char): void =
     print("In function 1: {a}")
-    return fn(b: char)             -- Drop the equals sign `=`.
-    print("In function 2: {b}")    -- Indent back.
+    return fn(b: char)
+    print("In function 2: {b}")
     return fn(c: char)
     print("In function 3: {c}")
 
