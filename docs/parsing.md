@@ -3,15 +3,14 @@
 The following document is focused on how parsing works in Mu.
 
 * __token__: The smallest meaningful unit in an expression.
-* __expression__: A collection of tokens, sub-expressions.
+* __expression__: A collection of tokens and sub-expressions.
 * __sequence__: An expression that contains sub-expressions seperated by delimitters.
-* __parsing mode__: Detlermines how a sequence will be parsed and what tokens are valid or invalid.
-* __parsing stack__: A list of parsing mode sequence pairs and indentations.
+* __parsing mode__: Determines how a sequence will be parsed and what tokens are valid or invalid.
+* __parsing stack__: A list of parsing mode/sequence pairs.
 * __opener__: A token that opens a new sequence and pushes the sequence and a new parsing mode to the parsing stack.
-* __delimiter__: A token that seperates expressions in a sequence.
+* __delimiter__: A token that seperates expressions within a sequence.
 * __closer__: A token that closes a sequences and pops the current parsing stack off by 1.
-* __indentation__: A sequence of space characters (except new-lines) that are at the beginning of a line.
-
+  
 __Parsing Modes:__
 
 * _Normal:_
