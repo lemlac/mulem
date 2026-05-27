@@ -1,6 +1,6 @@
 # Parsing
 
-The following document is focused on how parsing works in Mu.
+The following document is focused on how parsing works in Mulem.
 
 * __token__: The smallest meaningful unit in an expression.
 * __expression__: A collection of tokens and sub-expressions.
