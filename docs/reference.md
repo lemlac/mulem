@@ -2802,12 +2802,12 @@ match a is
 
 ### Error Types (`error`)
 
-Errors are bit like both `struct` and `enum`. Every `error` type is a member of the `error` sum type. When your program compiles, all of `error`'s members get collected together. The compiler tracks which `error` memebers are possible in any block. See "Error Handling" for more details. Instantiation works the same as enums.
+Errors are bit like both `struct` and `enum`. Each `error` type represents a member of a potential **error tagged union** that's summed up per function with a result `T!E` return type. Every `try` / `catch` block matches patterns to the summed error tagged union in its block based on each `!` point. Result types flatten, so `Result[Result[T, E], F]` would become `Result[T, E|F]` where `E|F` is a tagged union of each possible error in that result. Instantiation works the same as structs.
 
 ```
-OutOfBounds :: error        -- No data.
-DivideByZero :: error =
-    value: int               -- Attach data on this.
+OutOfBounds :: error                 -- No data.
+ErrorMessage :: error = (str)        -- Attach a position tuple.
+DivideByZero :: error = value: int   -- Attach named member
 ```
 
 ```
