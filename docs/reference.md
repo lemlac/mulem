@@ -119,6 +119,8 @@ Is it `getX(), print("fetching y")` then `getY(), getZ()`, or is it a tuple of `
 
 The `do` here says to start a sequence that's seperated by semi-colons `;`. The comma `,` ends the sequence. It's now clear that `print(…)` is only there to run side effects after `getX()`, and the value of the expression is the tuple `(x, y, z)`.
 
+That's why the rule *"`,` and `;` cannot be mixed at the same nesting level"* is in place. It prevents the disagreement of what `(a, b; c, d)` means. `(a, do b; c, d)` makes it clear that `do b;` is an side-effect and `c` is the value for the slot. Each `;` after `do` can be read as "then" like __*do* this *then* that.__
+
 ### Expression Splitting
 
 Semicolons and newlines are ignored—as far as syntax is concerned—when they are inside a multi-line comment `(-- --)` or string `"""…"""`. 
