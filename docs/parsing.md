@@ -16,8 +16,7 @@ __Parsing Modes:__
 
 * _Normal:_
   * __block__
-  * __open-line__
-  * __open-tuple__
+  * __block-line__
   * __bracket__
   * __do-line__
 * _Special:_
@@ -34,15 +33,17 @@ If a line starts with a colon `:`, all previous whitespace will be ignored. The 
 
 Each sequence in normal parsing mode *(except for the root sequence)* has a **bracket parent.** For bracket sequences, this is a self-reference. For non-bracket sequences, this is the same as their parents' bracket parent. A bracket sequence starts when there's an opening bracket `(`/`[`/`{`. Whenever a closing bracket `)`/`]`/`}` appears, it must match the barcket parent of that sequence. If it does, all sequences with that bracket parent will close and the parser continues at the parent of that bracket sequence. If it doesn't, an error will be thrown and parsing ends.
 
-__While in block mode:__\
+### Block Parsing Mode
+
 Each block starts with indentation, the root block having an indentation of 0. Expressions in this sequence must have matching indentation. A line with less indentation ends the block. 
 
-While parsing each line, if the parser finds a semi-colon or comma, it will switch modes for the rest of the line: semi-colon – **open-line** parsing, comma – **open-tuple** parsing. 
+While parsing each line, if the parser finds a semi-colon or comma, it will switch to block-line mode for the rest of the line.
 
-* __open-line mode__: Expressions are delimited by semi-colons. If a comma is found, an error will be thrown. 
-* __open-tuple mode__: Expressions are delimited by commas. If a semi-colon is found, an error will be thrown. 
+### Block-Line Parsing Mode
 
-While in block, open-line, or open-tuple mode – if the `do` token appears, a new sequence will be added to the stack.
+Block-line sequences can have either semi-colons or commas as delimiters, but not both. New-lines closes the sequence, as well as other normal parsing closers.
+
+While in block or block-line mode – if the `do` token appears, a new sequence will be added to the stack.
 
 * If there's a new-line after `do` — it will switch to block parsing with increased indentation.
 * If another token appears — it will switch into **do-line** parsing until its closer appears.
