@@ -142,7 +142,7 @@ x = 1 \
   + 5 + 6
 ```
 
-We aren't method chaining, so we can't just put `.` in front if each operator. Instead, We can give a special rule to for a leading `~` (colon). When a line starts with `~`, it continues from the previous line and the `~` gets consumed like a trailing `\`. This allows us to use Mulem's expression splitting to make this much more readable. 
+We aren't method chaining, so we can't just put `.` in front if each operator. Instead, We can give a special rule to for a leading `~` (tilde). When a line starts with `~`, it continues from the previous line and the `~` gets consumed like a trailing `\`. This allows us to use Mulem's expression splitting to make this much more readable. 
 
 ```
 x = 1
@@ -151,9 +151,9 @@ x = 1
 ~ + 5 + 6
 ```
 
-The colons (`~`) become like dashes in a list, making it apparent that you have one long expression. The tilde `~` is often used in writing to mean *"repeat the word or phrase from the previous line"* when taking notes.
+The tildes (`~`) become like dashes in a list, making it apparent that you have one long expression. The tilde `~` is often used in writing to mean *"repeat the word or phrase from the previous line"* when taking notes.
 
-Indentation is lenient with expression splitting. As long as the line starts with a colon (`~`), then it belongs to the same expression.
+Indentation is lenient with expression splitting. As long as the line starts with a tilde (`~`), then it belongs to the same expression.
 
 ```
 do
