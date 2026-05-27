@@ -319,14 +319,6 @@ i += 1   -- i = i + 1
 i -= 1   -- i = i - 1
 ```
 
-The pipeline assignment operator `=> x` is reversed from normal assignment `x =`. This is an intential design choice. To get rid of `=> x` and use standard assignment syntax, you would have to either:
-
-1. Accept verbose boilerplate such as `mu x = 0; ... |> (do x = $; $) |> ...`.
-2. Destroy Mulem's safety guarantees against the `if x = 1` bug.
-3. Force explicit mutable closure captures for simple pipeline steps.
-
-None of those options are good. Therefore, the "bipolar" visual flow of `=> x` (looking right for the variable name instead of left) isn't a design flaw—it's a deliberate, necessary syntactic feature required to keep pipelines elegant while preserving Mulem's safety rules. It acts as a specific "pipeline-mode" operator. When developers see `|>`, their brains are already shifted into "left-to-right data flow" mode, so `=> x` naturally matches that directional momentum.
-
 ### Function Calls
 
 Function can be called in 3 ways:
@@ -417,23 +409,23 @@ fetchA() |> do         -- Start with this pipeline context.
         print("{$}")                   -- Print the final result.
 ```
 
-To get a value within a pipeline, use `=> x` after any step to store it into a local variable. The assignment is written in reverse order — the variable name goes on the right.
+To get a value within a pipeline, use `as x` after any step to store it into a local variable. The assignment is written in reverse order — the variable name goes on the right.
 
 ```
 |> fetchA()
 |> fetchB(&$)
-|> fetchC(&$) => x    -- Put the result into `x`.
+|> fetchC(&$) as x    -- Put the result into `x`.
 
 print("{x}")          -- Print the result.
 ```
 
-This lets you extract the result of any step in a pipeline simply by appending `=> name` to that line.
+This lets you extract the result of any step in a pipeline simply by appending `as name` to that line.
 
 ```
 -- Put all results of each step into variables.
-|> fetchA() => a
-|> fetchB $ => b
-|> fetchC $ => c
+|> fetchA() as a
+|> fetchB $ as b
+|> fetchC $ as c
 
 print("a = {a}, b = {b}, c = {c}")
 ```
@@ -441,18 +433,18 @@ print("a = {a}, b = {b}, c = {c}")
 The variable type is always inferred, to avoid ambiguity with `:`. Mutability can be specified with `mu`. *(See [Mutability](#mutability).)*
 
 ```
-fetchA() => mu x |> fetchB(x) |> do   -- Create a mutable variable `x`.
+fetchA() as mu x |> fetchB(x) |> do   -- Create a mutable variable `x`.
     x += 1                          -- Mutate it.
     print("{x}")                    -- Print it.
 ```
 
-To put the final result of any pipeline into a variable, use `|> $ => x` at the end, where `x` is any variable name. This makes it easy to mix and match the pipes in between with `|> $ => x` at the end to collect it all into a variable. 
+To put the final result of any pipeline into a variable, use `|> $ as x` at the end, where `x` is any variable name. This makes it easy to mix and match the pipes in between with `|> $ as x` at the end to collect it all into a variable. 
 
 ```
 |> fetchA()      -- Start.
 |> fetchB(&$)    -- Pass pipeline context.
 |> fetchC(&$)    -- Pass pipeline context.
-|> $ => x        -- Put the pipeline context into `x`.
+|> $ as x        -- Put the pipeline context into `x`.
 
 print("{x}")
 ```
@@ -517,7 +509,7 @@ i = i + 1     -- Sets new `i` based on old `i`.
 i += 1        -- Does the same thing.
 ```
 
-`=` is a void statement and may not be used inside expressions that expect a non-void value. Use `==` for comparison and `=>` for inline assignment.
+`=` is a void statement and may not be used inside expressions that expect a non-void value. Use `==` for comparison and `as` for inline assignment.
 
 ```
 -- Error:
@@ -526,14 +518,6 @@ if x = 0 then
 
 -- Correct:
 if x == 0 then
-    void
-```
-
-Reversing the normal order of assignment for `=>` operators helps with programmers who might confuse `=>` for `>=` (greater than or equals).
-
-```
--- Error: did you mean `x >= 0`?
-if x => 0 then
     void
 ```
 
@@ -1819,7 +1803,7 @@ The next control flow methods are based on pattern match. Generally, you see the
 
 #### `match` / `is`
 
-Enum/error branching. Exhaustive by default. `| then` / `| ->` for the default case.
+Enum/error branching. Exhaustive by default. `| then` for the default case.
 
 ```
 match expr is
@@ -1830,23 +1814,23 @@ match expr is
 | then
     body
 
-match expr is (ptrn -> expr | ptrn -> expr | -> expr)
+match expr is (ptrn: expr | ptrn: expr | expr)
 ```
 
-When inline, the patterns after `is` need to be in parentheses and `then` is replaced with `->`.
+When inline, the patterns after `is` need to be in parentheses and `then` is replaced with `:`.
 
 ```
 -- Simple value mapping
 color = match status is (
-    | Ok  -> "green"
-    | Err -> "red"
-    |     -> "gray"
+    | Ok  : "green"
+    | Err : "red"
+    |       "gray"
 )
 
 -- Inside another expression
 result = process(data) |> match $ is (
-    | Success(v) -> v * 2
-    | Failure(e) -> do print("Failure: {e}"); 0
+    | Success(v) : v * 2
+    | Failure(e) : do print("Failure: {e}"); 0
 )
 ```
 
@@ -1864,9 +1848,9 @@ match choice is
 ```
 
 ```
-restult = match x is (Ptrn1 -> 5 | Ptrn2 -> 6 | -> 7)
+restult = match x is (Ptrn1: 5 | Ptrn2: 6 | 7)
 --
-message = match e is (OpenError{filename} -> "Open error: {filename}" | -> "Unknown error")
+message = match e is (OpenError{filename}: "Open error: {filename}" | "Unknown error")
 ```
 
 You can have multiple patterns match to one case. If any of the patterns destructure with a variable, the same variable name and type must be in all patterns. If not, use a wildcard `(_)` in each pattern or omit the data part entirely to disable destructuring. Otherwise, use a fallback in the pattern.
@@ -1944,24 +1928,6 @@ loop level in log_queue then
         print("[WARN/ERROR] Event logged to persistent storage.")
 ```
 
-However, this won't work of the condition of the next `if` creates a new binding with `=>`. It must be binded optionally with `=> opt`.
-
-```
-if bypass_security then
-    fallthrough
-else if fetch_active_session() => session then
-    print("Welcome, {session.name}") -- COMPILE ERROR!
-```
-
-```
-if bypass_security then
-    fallthrough
-else if fetch_active_session() => opt session then
-    -- 'session' is safely typed as a Maybe
-    if session is Some(session) then
-        print("Welcome, {session.name}")
-```
-
 #### Pattern Fallback
 
 If a pattern can't be **guaranteed** for any reason, then you must have a **fallback.** There are two options available:
@@ -1989,7 +1955,7 @@ match choice is
 
 ```
 expr is ptrn then expr
-expr is (ptrn -> expr)
+expr is (ptrn: expr)
 ```
 
 Extract a single binding inline. Requires a guaranteed match or optional bindings.
@@ -2020,31 +1986,8 @@ Pairs naturally with pipelining.
 
 ```
 getValue()
-|> $ is (Pattern(opt x = "fallback") -> x)
+|> $ is (Pattern(opt x = "fallback"): x)
 |> doSomethingWith($)
-```
-
-#### `=> is` / `else`
-
-```
-expr => is ptrn
-expr => is ptrn else expr
-expr => is ptrn else
-    body
-```
-
-The same thing as a regular `is` but sets a variable in scope. This can be done with any pipeline assignment operator `=>`. 
-
-```
-getStuff() => is Pattern(opt x)
-
-print("{x?}")  -- unwrap x
-```
-
-```
-getStuff() => is Pattern(x) else raise Error("No match")  -- branch out when match fails
-
-print("{x}")   -- x is guaranteed here
 ```
 
 #### `if` + `is`
@@ -2220,7 +2163,7 @@ catch
     raise Err(e)   -- Escape function with error
 ```
 
-Inline form. If you only have a whildcard case `(| -> x)`, you just write the value `x`.
+Inline form. If you only have a whildcard case `( | x)`, you just write the value `x`.
 
 ```
 result = try divide(1, 0)! catch 0.0
@@ -3046,7 +2989,7 @@ Mulem has 42 reserved keywords. Note that built-in types (`int`, `str`), boolean
 | 4     | Comparison                 | `==` `!=` `<` `>` `<=` `>=`               |
 | 3     | Logical AND                | `and`                                     |
 | 2     | Logical OR / None-Coalesce | `or` `?:`                                 |
-| 1     | Pipeline                   | `|>` `=>`                                 |
+| 1     | Pipeline                   | `|>`                                      |
 | 0     | Assignment / Spread        | `=` `+=` `-=` `&` `...`                   |
 
 | Operator       | Meaning                                             |
@@ -3064,7 +3007,6 @@ Mulem has 42 reserved keywords. Note that built-in types (`int`, `str`), boolean
 |  `lhs ... rhs` | Exclusive range                                     |
 | `lhs ..= rhs`  | Inclusive range                                     |
 | `lhs \|> rhs`  | Pipeline                                            |
-|  `lhs => rhs`  | Pipeline assignment                                 |
 |   `lhs = rhs`  | Assignment or declaration                           |
 |  `lhs += rhs`  | Increment                                           |
 |  `lhs -= rhs`  | Decrement                                           |
