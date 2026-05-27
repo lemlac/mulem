@@ -148,26 +148,33 @@ x = 1 \
   + 5 + 6
 ```
 
-We can give a special rule to for a leading `~` (tilde). When a line starts with `~`, it continues from the previous line and the `~` gets consumed like a trailing `\`. This allows us to use expression splitting to make this much more readable. 
+Mulem has a special rule resvered for the tilde (`~`). Anywhere you see one in an expression, whitespace *before* and *after* it is treated as single space (` `). This allows you to easily format your code anyway you prefer.
 
 ```
+-- At the end like backslash:
+x = 1 ~
+  + 2 + 3 ~
+  + 4 ~
+  + 5 + 6
+
+-- Or at the start:
 x = 1
 ~ + 2 + 3
 ~ + 4
 ~ + 5 + 6
 ```
 
-The tildes (`~`) become like dashes in a list, making it apparent that you have one long expression. The tilde `~` is often used in writing to mean *"repeat the word or phrase from the previous line"* when taking notes.
+When used at the start of each line, the tildes (`~`) become like dashes in a list, making it visually apparent that you have one long expression. 
 
 Indentation is lenient with expression splitting. As long as the line starts with a tilde (`~`), then it belongs to the same expression.
 
 ```
 do
     a
-        ~ + b
+        ~ + b ~    -- Double is fine.
       ~ * c
-        ~ - d
-     ~ / e
+        ~ - d ~
+     / e
   ~ rem f          -- Indenting less than the start works too.
       ~ band g
 ```
