@@ -1574,14 +1574,15 @@ Pointer types have 2 kinds of mutability: one for the reference, and one for the
 ## Control Flow
 
 * [__`do`__](#do): Creates a scoped block. Can be labeled (`do:label`).
-* [__`if` / `else`__](#if-else): `if x > 0 then x else -x`
+* [__`if` / `else`__](#if--else): `if x > 0 then x else -x`
 * [__`loop`__](#loop): Universal looping keyword.
   * _Unconditional:_ `loop _`
   * _While:_ `loop cond then _`
   * _For-each:_ `loop x in array then _`
   * _Do-while-not:_ `loop _ until cond`
-* [__`try` / `catch`__](#try-catch): Resolves Results (`T!`).
-* [__`maybe`__](#maybe-else): Resolves maybes (`T?`). If any `?` inside fails, the block short-circuits.
+* [__`match` / `is`__](#match--is): Pattern Matching
+* [__`try` / `catch`__](#try--catch): Resolves Results (`T!`).
+* [__`maybe` / `else`__](#maybe--else): Resolves maybes (`T?`). If any `?` inside fails, the block short-circuits.
 
 All branching constructs share the same block / inline pattern:
 
