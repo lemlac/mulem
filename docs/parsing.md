@@ -27,72 +27,41 @@ __Parsing Modes:__
 When starting off, the parser begins in block parsing mode with the root sequence. The starting indentation must be zero at the first non-empty line.
 
 __While in a normal parsing mode:__\
-Anytime a bracket appears `(`/`[`/`{`, a bracket sequence will start and the parsing mode will switch to bracket mode. Each sequence will have a **bracket parent** that points to this sequence. Sub brackets sequences will set the bracket parent of them and their children to themselves. Whenever a non-bracket sequence sees a closing bracket `)`/`]`/`}`, it must match its bracket parent. If it does, all sequences up to the braket parent ends. If not, 
+If a comment opener appears -> switch to comment mode.\
+If a string opener appears -> switch to string mode.
 
+Each normal parsing mode has a **bracket parent**. For bracket sequences, this is a self-reference. For non-bracket sequences, this is the same as their parents' bracket parent. A bracket sequence starts when theres an opening bracket `(`/`[`/`{`. Whenever a closing bracket `)`/`]`/`}` appears, it must match the barcket parent of that sequence. If it does, all sequences with that bracket parent will close and the parser continues at the parent of that bracket sequence. If it doesn't, an error will be thrown and parsing ends.
+
+If a line starts with a colon `:`, all previous whitespace will be ignored. The sequence will continue from the previous one.
 
 __While in block mode:__\
 Each block starts with indentation, the root block having an indentation of 0. Expressions in that sequence must have matching indentation. A line with less indentation ends the block. 
 
-While parsing each line, if the parser finds a semi-colon or comma, it will switch modes for the rest of the line: semi-colon – line parsing, comma – tuple parsing. When in line parsing mode, empty expressions are also dropped. When in tuple parsing mode, empty expressions are only dropped if they are at the end of the sequence, otherwise it's error. Colons `:` at the beginning of a line will apped the expression to the end of the previous sequence in the same mode. 
+While parsing each line, if the parser finds a semi-colon or comma, it will switch modes for the rest of the line: semi-colon – **open-line** parsing, comma – **open-tuple** parsing. 
 
-```
-expr
-expr
+* __open-line mode__: Expressions are delimited by semi-colons. If a comma is found, an error will be thrown. 
+* __open-tuple mode__: Expressions are delimited by commas. If a semi-colon is found, an error will be thrown. 
 
-expr;
-expr;
+While in block, open-line, or open-tuple mode – if the `do` token appears, a new sequence will be added to the stack.
 
-expr; expr
-; expr;;;
+* If there's a new-line after `do`, it will switch to block parsing with increased indentation.
+* If another token appears, it will switch into **do-line** parsing its closer appears.
 
-expr, expr
+__While in a comment mode:__\
+Comment mode has two modes: **line** and **block**. Comment mode also carries an index of how many nested block comments are in it.
 
-expr, expr,
-expr, expr,,,
+Opener:
+* `--` -> line comment mode
+* `(--` -> block comment mode
 
-expr,,, expr   -- Error
-, expr, expr  -- Error
+* While in line comment mode, all tokens until a new-line are consumed.
+* While in block comment mode:
+  * Start with nested-block-comments of 1.
+  * An opening comment token `(--` appears: nested-block-comments increment by one.
+  * A closing comment token `--)` appears: nested-block-comments decrement by one.
+  * Block comment ends when nested-block-comments reaches 0.
 
-expr
-: expr
-```
-
-If the `do` token appears, a new sequence will be added to the stack. If there's a new line after, it will switch to block parsing until indentation ends. If another token appears, it will switch into line parsing until the end of the line or another delimiter ot closer appears. 
-
-```
-do expr; expr
-do expr; expr, expr
-expr, do expr; expr
-expr, do expr; expr, expr
-do
-    expr
-expr; do
-    expr
-expr, do
-    expr
-```
-
-If an expression has a comma (`,`) in it, it will start tuple parsing until a new-line or closing bracket, during which semi-colons aren't allowed. Each expression is a commponent in the tuple, starting with the expression before the comma. If a line starts with a comma, it will append to the previous tuple being parsed or start a new one with the expression on the previous line as the first component. 
-
-```
-expr, expr  -- Tuple of 2
-
-expr
-, expr      -- Tuple of 2
-
-expr, expr
-, expr      -- Tuple of 3
-
-expr, expr
-, expr, expr
-, expr      -- Tuple of 5
-```
-
-- `expr, expr, expr` — This line contains a tuple of 3.
-- `expr; expr, expr` — This line contains a tuple of 2. First expression is dropped.
-- `expr, expr: expr` — Error: semi-colon in tuple expression.
-
-An assignment operator (`=`, `+=`, `-=`) in an expression starts **assignment parsing.** If the left side has a modifier + name or name + colon (`:`) or name + parameter (`()`), it's a **declaration.** Otherwise, the left side is evaluated to determine if it's an expression that returns a reference or an immutable variable. The right side is an expression.
+When a comment finishes, the parser goes back to its parent and removes the comment from the sequence.
 
 ```
 name = expr
