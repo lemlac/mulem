@@ -27,8 +27,8 @@ __Parsing Modes:__
 When starting off, the parser begins in block parsing mode with the root sequence. The starting indentation must be zero at the first non-empty line.
 
 __While in a normal parsing mode:__\
-If a comment opener appears -> switch to comment mode.\
-If a string opener appears -> switch to string mode.
+If a comment opener appears — switch to comment mode.\
+If a string opener appears — switch to string mode.
 
 If a line starts with a colon `:`, all previous whitespace will be ignored. The sequence will continue from the previous one.
 
@@ -44,15 +44,15 @@ While parsing each line, if the parser finds a semi-colon or comma, it will swit
 
 While in block, open-line, or open-tuple mode – if the `do` token appears, a new sequence will be added to the stack.
 
-* If there's a new-line after `do`, it will switch to block parsing with increased indentation.
-* If another token appears, it will switch into **do-line** parsing until its closer appears.
+* If there's a new-line after `do` — it will switch to block parsing with increased indentation.
+* If another token appears — it will switch into **do-line** parsing until its closer appears.
 
 __While in a comment mode:__\
 Comment mode has two modes: **line** and **block**. Comment mode also carries an index of how many nested block comments are in it.
 
 Opener:
-* `--` -> line comment mode
-* `(--` -> block comment mode
+* `--` — line comment mode
+* `(--` — block comment mode
 
 * While in line comment mode, all tokens until a new-line are consumed.
 * While in block comment mode:
@@ -63,8 +63,3 @@ Opener:
 
 When a comment finishes, the parser goes back to its parent and removes the comment from the sequence.
 
-```
-name = expr
-```
-
-axCommas and brackets start **tuple parsing** until a newline. Semicolons are not allowed during 
