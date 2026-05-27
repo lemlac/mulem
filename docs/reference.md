@@ -2823,6 +2823,8 @@ catch
     print("Can't divide {val} by zero!")
 ```
 
+Uncaught errors in a `try` / `catch` block are implicitly reraised. Each `catch` pattern removes a possible error from the result type of that block. When all possible errors have a `catch` arm, the value of that block is automatically unwrapped so that `Result[T, ()]` becomes just `T`. 
+
 ### Prototypes (`proto`)
 
 A `proto` is an abstract interface — a named contract with no data. It is equivalent to a `virtual class` / `trait` / `interface` in other languages. Each member is a function, also called a **method**. Methods that have a parameter named `self` at the beginning will be called like methods on the instance of that type, i.e. `self.method(_)`. This is equivalent to saying `typeof[self].method(self, _)`.
