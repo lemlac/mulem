@@ -78,3 +78,13 @@ If another do-line sequence starts while in do-line mode, it will flatten to the
 do a; do b; do c     -->  do a; b; c
 do a; (do b; do c)   -->  do a; (do b; c)
 ```
+
+```
+x; y; z       -- valid
+x, y, z       -- valid
+x; y, y       -- invalid
+x, y; z       -- invalid
+do x; y, z    -- valid
+x, do y; z    -- valid
+do x, y; z    -- invalid
+```
