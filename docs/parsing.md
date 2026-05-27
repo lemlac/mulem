@@ -72,8 +72,9 @@ do a; b; c        -- 1 do-line sequence of 3
 x, do w; y, z     -- 1 open-tuple of 3, 2nd expression is a do-line sequence of 2
 ```
 
-Nested do-line sequences will flatten.
+If another do-line sequence starts while in do-line mode, it will flatten to the current sequence. Flattening only happens when the immediate top of the parsing stack is a do-line sequence. 
 
 ```
-do a; do b; do c   -->  do a; b; c
+do a; do b; do c     -->  do a; b; c
+do a; (do b; do c)   -->  do a; (do b; c)
 ```
