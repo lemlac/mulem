@@ -12,18 +12,28 @@ The following document is focused on how parsing works in Mu.
 * __closer__: A token that closes a sequences and pops the current parsing stack off by 1.
 * __indentation__: A sequence of space characters (except new-lines) that are at the beginning of a line.
 
-* __block__: A sequence delimited by new-lines.
-* __line__: A sequence delimited by semicolons.
-* __tuple__: A sequence delimited by commas.
+__Parsing Modes:__
 
-| Parsing Mode | Opener | Delimiters | Closer |
-|:--|:--|:--|:--|
-| __block parsing__ | Certain keywords at the end of a new line | new-lines | Decreased indentation |
-| __line parsing__ | new line | semi-colons | new-line |
-| __tuple parsing__ | Brackets `(`/`[`/`{` | commas | Matching closing bracket `)`/`]`/`}` |
-| __`do`-parsing__ | `do` | semi-colons | new-line or comma |
+* _Normal:_
+  * __block__
+  * __open-line__
+  * __open-tuple__
+  * __bracket__
+  * __do-line__
+* _Special:_
+  * __string__
+  * __comment__
 
-When starting off, the parser begins in block parsing mode. Empty expressions are dropped from the sequence. If it finds a semi-colon or comma, it will switch modes for the rest of the line: semi-colon – line parsing, comma – tuple parsing. If in line parsing mode, empty expressions are also dropped. If in tuple parsing mode, empty expressions are only dropped if they are at the end of the sequence, otherwise it's error. Colons `:` at the beginning of a line will apped the expression to the end of the previous sequence in the same mode. 
+When starting off, the parser begins in block parsing mode with the root sequence. The starting indentation must be zero at the first non-empty line.
+
+__While in a normal parsing mode:__\
+Anytime a bracket appears `(`/`[`/`{`, a bracket sequence will start and the parsing mode will switch to bracket mode. Each sequence will have a **bracket parent** that points to this sequence. Sub brackets sequences will set the bracket parent of them and their children to themselves. Whenever a non-bracket sequence sees a closing bracket `)`/`]`/`}`, it must match its bracket parent. If it does, all sequences up to the braket parent ends. If not, 
+
+
+__While in block mode:__\
+Each block starts with indentation, the root block having an indentation of 0. Expressions in that sequence must have matching indentation. A line with less indentation ends the block. 
+
+While parsing each line, if the parser finds a semi-colon or comma, it will switch modes for the rest of the line: semi-colon – line parsing, comma – tuple parsing. When in line parsing mode, empty expressions are also dropped. When in tuple parsing mode, empty expressions are only dropped if they are at the end of the sequence, otherwise it's error. Colons `:` at the beginning of a line will apped the expression to the end of the previous sequence in the same mode. 
 
 ```
 expr
