@@ -1356,22 +1356,22 @@ bigDocument = @"""
 -- `"""@@` closes the matching `@@"""`.
 ```
 
-Sometimes, we just want to copy and paste string data without formatting it. To help with this, Mulem allows you to put a raw string enclosed in `@` signs at the start of a new line without breaking a block. Significant whitespace is temporarially disabled when the line starts with `@`-style raw string, and the parser ignores indentation significance while inside the raw string. All whitespace and characters are put into the string without formatting until it gets to the matching `"""@` marker. Then, re-ident in the next line to resume the block. This is useful for debugging and embedding data in code.
+Sometimes, we just want to copy and paste string data without formatting it. We can take advantage of the fact that brackets start as whitespace insensitive. All whitespace and characters are put into the string without formatting until it gets to the matching `"""@` marker and closing bracket. Then, re-ident in the next line to resume the block. This is useful for debugging and embedding data in code.
 
 ```
 do
     do
         do
-            do                     -- Deeply nest block.
-                nestedRawString =  -- Put raw string on the next line without indenting.
+            do                       -- Deeply nest block.
+                nestedRawString = (  -- Put raw string on the next line without indenting.
 @"""                       
                        
     Indentation  
   doesn't matter     
  here.              
 
-"""@  -- Right here: the string ends and the block resumes.
-                -- Re-indent to return to the block.
+"""@
+                )                    -- Re-indent to return to the block.
                 print("{nestedRawString}")
 ```
 
@@ -1387,9 +1387,23 @@ What it prints:
    
 ```
 
-While this is possible, this is not recommended for the sake of legibility. For anything more complicated, it's recommended to save the string to a document and open the file inside your program, which will be handled by a separate library and lies outside the scope of this document.
-
 `@"""…"""@` inherits the `"""` closing-position trim anchor, so if you *do* want controlled indentation trimming, you still get it from where you place the closing `"""@`. That makes the two systems consistent with each other and interchangeable.
+
+```
+do
+    do
+        do
+            do                       -- Deeply nest block.
+                nestedRawString =
+                    @"""                       
+                                           
+                        Indentation  
+                      doesn't matter     
+                     here.              
+                    
+                    """@
+                print("{nestedRawString}")
+```
 
 #### Arrays
 
