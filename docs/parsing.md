@@ -63,3 +63,17 @@ Opener:
 
 When a comment finishes, the parser goes back to its parent and removes the comment from the sequence.
 
+## Do-Line Mode
+
+A do-line sequence starts with `do` + a non-new-line token and takes any expression delimitted by semi-coloms `;` until it reaches its closer: comma, new-line, or parent bracket closer. 
+
+```
+do a; b; c        -- 1 do-line sequence of 3
+x, do w; y, z     -- 1 open-tuple of 3, 2nd expression is a do-line sequence of 2
+```
+
+Nested do-line sequence will flatten.
+
+```
+do a; do b; c, d   -- 1 open-tuple of 2, 1st expression is a do-line of 3
+```
