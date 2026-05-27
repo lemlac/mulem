@@ -51,7 +51,7 @@ Statements are separated by newlines or semicolons (`;`). The two are interchang
 
 | Category             | Examples                                            |
 |:---------------------|:----------------------------------------------------|
-| Words                | `x`, `PI`, `1`, `3.14`, `0xABCDEF`, `$x`, `$0`      |
+| Words                | `x`, `PI`, `1`, `3.14`, `0xABCDEF`,                 |
 | String/Char literals | `'a'`, `"foo"`, `"""big string"""`, `''raw''`       |
 | Delimiters           | `,` (tuples/arrays), `;` (expressions)              |
 | Symbols              | `~!@#%^&*-+=\|:<.>/?` (excluding `--`)              |
