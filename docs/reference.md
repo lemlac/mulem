@@ -137,7 +137,7 @@ s = """
     """
 ```
 
-Otherwise, a semicolon always ends an expression. New lines have a special rule: any line starting with a `:` gets appended to the end of the previous line. This is known as **expression splitting.** 
+Otherwise, a semicolon always ends an expression. 
 
 It's not always clear if `- 1` at the start of a line means *subtract 1* or *negative 1.* Some languages use a backslash `\` for this, but that has its downsides. With backslashes, they all go at the end of the a line which hardly ever line up without manual formatting.
 
@@ -166,7 +166,7 @@ x = 1
 
 When used at the start of each line, the tildes (`~`) become like dashes in a list, making it visually apparent that you have one long expression. 
 
-Indentation is lenient with expression splitting. As long as the line starts with a tilde (`~`), then it belongs to the same expression.
+Indentation is lenient with expression splitting. As long as there's a tilde (`~`) in between two tokens in an expression, then it belongs to the same expression.
 
 ```
 do
@@ -757,12 +757,12 @@ f(x: int): int = x   -- Shadows previous f
 f()                  -- Error: f expects 1 argument.
 ```
 
-Overload a function by redeclaring it with `and` before its name. The first parameter to match will go.
+Overload a function by redeclaring it with `or` before its name. The first set of parameters to match will go.
 
 ```
 safeDivide(x: float, y: float if y != 0.0): float =
     x / y
-and safeDivide(x: float, y: float): float =
+or safeDivide(x: float, y: float): float =
     0.0
 ```
 
@@ -901,9 +901,9 @@ A name is optional after `...`. You can use the symbol by itself to pass it to a
 ```
 addAll(x: int, ...): int =
     x + addAll(...)
-and addAll(x: int): int =
+or addAll(x: int): int =
     x
-and addAll(): int =
+or addAll(): int =
     0
 
 logAndAdd(msg: str, ...) =
@@ -2609,7 +2609,7 @@ asyncCollect(n): async[int#] =
     ret
 ```
 
-Unlike in other languages where *promises* or *futures* can either resolve **or reject,** async types in Mulem **only resolve.** Instead you can use a result type `T!E` inside an `async[T!E]` function. Unwrap it like you would a result type. Because this is common, `await` has special rules in regards to the `!` and `?` opeerators when placed after it.
+Unlike in other languages where *promises* or *futures* can either resolve or reject, async types in Mulem **only resolve.** Instead you can use a result type `T!E` inside an `async[T!E]` function. Unwrap it like you would a result type. Because this is common, `await` has special rules in regards to the `!` and `?` opeerators when placed after it.
 
 ```
 await! x == (await x)!      -- Unwrap an `async[T!E]`
