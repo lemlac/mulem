@@ -142,7 +142,7 @@ x = 1 \
   + 5 + 6
 ```
 
-We aren't method chaining, so we can't just put `.` in front if each operator. Instead, We can give a special rule to for a leading `~` (tilde). When a line starts with `~`, it continues from the previous line and the `~` gets consumed like a trailing `\`. This allows us to use Mulem's expression splitting to make this much more readable. 
+We can give a special rule to for a leading `~` (tilde). When a line starts with `~`, it continues from the previous line and the `~` gets consumed like a trailing `\`. This allows us to use expression splitting to make this much more readable. 
 
 ```
 x = 1
@@ -178,7 +178,7 @@ else
     print("False")
 ```
 
-Semi-colons `;` and colons are like opposites: one ends expressions, this other continues them.
+Note that the binary NOT operator is the keyword `not` in Mulem. `~` is only used for expression splitting.
 
 ### Block Expressions
 
