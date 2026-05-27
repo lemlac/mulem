@@ -1080,11 +1080,11 @@ curryFn(a: char) =
 To solve this issue, you must explicitly say `return fn` in order to curry functions. This ensures that `fn(x) =` is only used in expressions and not accidentally declaring a new function. 
 
 ```
-curryFn(a: char) =
+curryFn(a: char): (char): (char): void =
     print("In function 1: {a}")
-    return fn(b: char) =
+    return fn(b: char): (char): void =          -- Note: types can be inferred, but it's written out for demonstration purposes.
         print("In function 2: {b}")
-        return fn(c: char) =
+        return fn(c: char): void =
             print("In function 3: {c}")
 
 curryFn('a')('b')('c')
@@ -1100,9 +1100,9 @@ There can be a lot of indentation when you curry functions like this. Is there a
 ```
 curryFn(a: char): (char): (char): void =
     print("In function 1: {a}")
-    return fn(b: char)
+    (b: char) = fn: (char): void              -- Parameters go on the left, return goes on the right.
     print("In function 2: {b}")
-    return fn(c: char)
+    (c) = fn                                  -- Types can also be inferred.
     print("In function 3: {c}")
 
 curryFn('a')('b')('c')             -- Works the same.
@@ -1113,7 +1113,36 @@ curryFn('a')('b')('c')             -- Works the same.
 --)
 ```
 
-Now all the functions line up together. Each `return fn` is an explicit suspension point from the function similar to `yeild` or `await`. The remaining part of the function becomes the body of the returned function. Normally `return` ends a block, but this time it means we're switching from one function to another. The compiler rule is simple — `return fn(params)` begins a continuation, everything else after `return` is an error.
+Now all the functions line up together, and the next parameters resemble normal assignment. Each `() = fn` is an explicit suspension point from the function similar to `yeild` or `await`. The remaining part of the function becomes the body of the next function. 
+
+When capturing variables, each returned function needs to capture them seperately.
+
+```
+mu count = 0
+curryAddCount(a: int) \ (count): (int): (int): int =
+    count += a                            -- (1) Evaluated immediately
+    (b: int) = fn \ (count): (int): int   -- (2) Suspends and captures `count`
+    count += b                            -- (3) Evaluated when second fn is called
+    (c: int) = fn \ (count): int
+    count += c
+    count
+
+print("{ curryAddCount(1)(2)(3) } == { count }")   -- Prints "6 == 6"
+```
+
+If a curried function takes no parameters, put an empty tuple `()` on the left. 
+
+```
+curryLoop() =
+    loop
+        print("I'm looping!")
+        () = fn          -- Suspend function.
+
+next = curryLoop()       -- Prints "I'm looping!"
+next = next()            -- Prints "I'm looping!"
+next = next()            -- Prints "I'm looping!"
+next = next()            -- Prints "I'm looping!"
+```
 
 #### Named Parameters
 
