@@ -88,3 +88,6 @@ do x; y, z    -- valid
 x, do y; z    -- valid
 do x, y; z    -- invalid
 ```
+
+- **Block line rule**: track delimiter type (unset, `;`, or `,`). First delimiter sets it. Mismatch is an error.
+- **Do-line**: a `;`-delimited sub-sequence, closed by `,` / newline / bracket closer. Can appear as an item at any level.
