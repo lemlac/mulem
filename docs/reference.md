@@ -142,37 +142,37 @@ x = 1 \
   + 5 + 6
 ```
 
-We aren't method chaining, so we can't just put `.` in front if each operator. Instead, We can give a special rule to for a leading `:` (colon). When a line starts with `:`, it continues from the previous line and the `:` gets consumed like a trailing `\`. This allows us to use Mulem's expression splitting to make this much more readable. 
+We aren't method chaining, so we can't just put `.` in front if each operator. Instead, We can give a special rule to for a leading `~` (colon). When a line starts with `~`, it continues from the previous line and the `~` gets consumed like a trailing `\`. This allows us to use Mulem's expression splitting to make this much more readable. 
 
 ```
 x = 1
-: + 2 + 3
-: + 4
-: + 5 + 6
+~ + 2 + 3
+~ + 4
+~ + 5 + 6
 ```
 
-The colons (`:`) become like dots in a bullet-point list, and it also takes on the appearance of an elipses (…) making it apparent that you have one long expression. 
+The colons (`~`) become like dashes in a list, making it apparent that you have one long expression. The tilde `~` is often used in writing to mean *"repeat the word or phrase from the previous line"* when taking notes.
 
-Indentation is lenient with expression splitting. As long as the line starts with a colon (`:`), then it belongs to the same expression.
+Indentation is lenient with expression splitting. As long as the line starts with a colon (`~`), then it belongs to the same expression.
 
 ```
 do
     a
-        : + b
-      : * c
-        : - d
-     : / e
-  : rem f          -- Indenting less than the start works too.
-      : band g
+        ~ + b
+      ~ * c
+        ~ - d
+     ~ / e
+  ~ rem f          -- Indenting less than the start works too.
+      ~ band g
 ```
 
 It's recommended to keep the indentation the same. This is especially useful for long `if` statement.
 
 ```
 if a or b
-: and c or d        -- Each `:` is in the `if` condition.
-: and e or f
-: then              -- Block starts here.
+~ and c or d        -- Each `~` line is in the `if` condition.
+~ and e or f
+~ then              -- Block starts here.
     print("True")
 else
     print("False")
@@ -367,11 +367,11 @@ When mixed with `do`, multiple expressions separated by semicolons `;` on one li
 |> print("{$}")                  -- Print result.
 ```
 
-Note that `|>` at the beginning of a line is different from `: |>` which is a split expression on the next line. The pipe will continue after it.
+Note that `|>` at the beginning of a line is different from `~ |>` which is a split expression on the next line. The pipe will continue after it.
 
 ```
 |> fetchA()
-: |> fetchB $
+~ |> fetchB $
 |> fetchC $
 |> print("{$}")
 ```
@@ -736,12 +736,12 @@ f(x: int): int = x   -- Shadows previous f
 f()                  -- Error: f expects 1 argument.
 ```
 
-Overload a function by redeclaring it with `else` before its name. The first parameter to match will go.
+Overload a function by redeclaring it with `and` before its name. The first parameter to match will go.
 
 ```
 safeDivide(x: float, y: float if y != 0.0): float =
     x / y
-else safeDivide(x: float, y: float): float =
+and safeDivide(x: float, y: float): float =
     0.0
 ```
 
@@ -880,9 +880,9 @@ A name is optional after `...`. You can use the symbol by itself to pass it to a
 ```
 addAll(x: int, ...): int =
     x + addAll(...)
-else addAll(x: int): int =
+and addAll(x: int): int =
     x
-else addAll(): int =
+and addAll(): int =
     0
 
 logAndAdd(msg: str, ...) =
@@ -1439,12 +1439,12 @@ helloEscaped = "Hello, \{name}!"
 lines = "This \n string \n has \n linebreaks."
 ```
 
-Subsequent string literals will automatically concatenate, and the `++` operator can be used to concatenate non-literal strings.
+Subsequent string literals will automatically concatenate, and the `<>` operator can be used to concatenate non-literal strings.
 
 ```
 str1 = "This" " string"
 str2 = " is broken"
-str3 = str1 ++ str2 ++ " into multiple parts."
+str3 = str1 <> str2 <> " into multiple parts."
 print(str3)
 -- Prints "This string is broken into multiple parts."
 ```
@@ -1609,21 +1609,36 @@ loop x in list then
     print("{x}")     -- No need to use `#`
 ```
 
-If the left hand side of `++` isn't an array, it will automatically create one. A non-array on the right-hand side will push it to the end of the resulting array. In this way, you can abandon square brackets notation for array literals entirely and just use `++`.
+At least one operand in a chain of `<>` operations must be an array `T#`. Other operands can be type `T#` or `T`. If all are type `T`, you can put an empty array `[]` in the chain start a new one. 
 
 ```
-a = 1 ++ 2 ++ 3 ++ 4  -- == [1, 2, 3, 4]
-b = 0 ++ a ++ 5       -- == [0, 1, 2, 3, 4, 5]
-c = b ++ 6 ++ 7 ++ 8  -- == [0, 1, 2, 3, 4, 5, 6, 7, 8]
+a = 1 <> 2 <> 3 <> 4 <> []  -- == [1, 2, 3, 4]
+b = 0 <> a <> 5             -- == [0, 1, 2, 3, 4, 5]
+c = b <> 6 <> 7 <> 8        -- == [0, 1, 2, 3, 4, 5, 6, 7, 8]
 ```
 
-Use the spread operator `...` to spread an array into another array. This must be the first prefix operator in an expression, and it must be in a compatiable array or tuple literal. It always goes last in the slot's expression, so extra parentheses aren't necessary: `...a ++ b` == `...(a ++ b)`.
+`<>` is either right or left associative depending on the type on the left-hand side.
+
+- `T# <> T#` – left associative
+- `T# <> T` – left associative
+- `T <> T#` - right associative
+- `T <> T` - right associative
+
+Because any `lhs <> rhs` returns `T#`, the chain becomes left-associative at the first `T#` operand. The example gets parsed like this:
+
+```
+a = ( 1 <> ( 2 <> ( 3 <> ( 4 <> [] ) ) ) )     -- right associative for whole chain
+b = ( 0 <> ( a <> 5 ) )                        -- left associative, then right associative
+c = ( ( ( b <> 6 ) <> 7 ) <> 8 )               -- left associative for whole chain
+```
+
+Use the spread operator `...` to spread an array into another array. This must be the first prefix operator in an expression, and it must be in a compatiable array or tuple literal. It always goes last in the slot's expression, so extra parentheses aren't necessary: `...a <> b` == `...(a <> b)`.
 
 ```
 a = [1, 2, 3]
 b = [0, ...a, 4]                -- == [0, 1, 2, 3, 4]
-c = a ++ b                      -- == [1, 2, 3, 0, 1, 2, 3, 4]
-d = [0, ...a ++ b, 5, ...c, 6]  -- == [0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 1, 2, 3, 0, 1, 2, 3, 4, 6]
+c = a <> b                      -- == [1, 2, 3, 0, 1, 2, 3, 4]
+d = [0, ...a <> b, 5, ...c, 6]  -- == [0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 1, 2, 3, 0, 1, 2, 3, 4, 6]
 ```
 
 If you spread an array into a tuple, the type must be known at compile-time and the tuple must have compatible components. Positional components will map to array indexes or iterator yields based on where the spread is placed inside the tuple. If the tuple runs out of space, the spread will be truncated. This works similar to variadic parameters in functions.
@@ -2442,10 +2457,10 @@ Chain multiple `maybe` / `else` together untill you get a fallback:
 
 ```
 getFirst(a: int, b: int, c: int): int =
-    : maybe getA(a)? else
-    : maybe getB(b)? else
-    : maybe getC(c)? else
-    : 0
+    ~ maybe getA(a)? else
+    ~ maybe getB(b)? else
+    ~ maybe getC(c)? else
+    ~ 0
 ```
 
 Other examples:
@@ -2532,7 +2547,7 @@ asyncIterFn(n): iter[async[int]] =
 asyncCollect(n): async[int#] =
     mu ret: int# = []
     loop (await x) in asyncIterFn(n) then
-        ret ++= x
+        ret <>= x
     ret
 ```
 
@@ -3269,26 +3284,28 @@ Mulem has 42 reserved keywords. Note that built-in types (`int`, `str`), boolean
 
 ## Table of Operators
 
-| Level | Category                  | Operators                                 |
-|:------|:--------------------------|:------------------------------------------|
-| 11    | Member access/Function    | `.` `[]` `()`                             |
-| 10    | Postfix                   | `?` `!` `^`                               |
-| 9     | Unary                     | `+` `-` `not`                             |
-| 8     | Exponent                  | `**` (right-associative)                  |
-| 7     | Multiplicative / Shift    | `*` `/` `//` `rem` `mod` `<<` `>>` `>>>`  |
-| 6     | Additive / Concat         | `+` `-` `++`                              |
-| 5     | Bitwise                   | `band` `bor` `xor`                        |
-| 4     | Range                     | `...` `..=`                                |
-| 3     | Comparison                | `==` `!=` `<` `>` `<=` `>=`               |
-| 2     | Logical AND               | `and`                                     |
-| 1     | Logical OR / None-Coalesce / Pipeline     | `or` `?:` `\|>`                                |
-| 0     | Assignment / Spread       | `=` `+=` `-=` `=>` `&` `...`                        |
+| Level | Category                   | Operators                                 |
+|:------|:---------------------------|:------------------------------------------|
+| 12    | Member access/Function     | `.` `?.` `#[]` `()`                       |
+| 11    | Postfix                    | `?` `!` `^`                               |
+| 10    | Unary                      | `+` `-` `not`                             |
+| 9     | Exponent                   | `**` (right-associative)                  |
+| 8     | Multiplicative / Shift     | `*` `/` `//` `rem` `mod` `<<` `>>` `>>>`  |
+| 7     | Additive / Concat          | `+` `-` `<>`                              |
+| 6     | Bitwise                    | `band` `bor` `xor`                        |
+| 5     | Range                      | `...` `..=`                               |
+| 4     | Comparison                 | `==` `!=` `<` `>` `<=` `>=`               |
+| 3     | Logical AND                | `and`                                     |
+| 2     | Logical OR / None-Coalesce | `or` `?:`                                 |
+| 1     | Pipeline                   | `|>` `=>`                                 |
+| 0     | Assignment / Spread        | `=` `+=` `-=` `&` `...`                   |
 
 | Operator       | Meaning                                             |
 |:--------------:|:----------------------------------------------------|
 |   `lhs . rhs`  | Member access                                       |
 |   `lhs # rhs`  | Array/dictionary index                              |
 |   `lhs ?`      | Unwrap maybe, propagate `None` to nearest `maybe`   |
+|  `lhs ?. rhs`  | None-coalessing member access                       |
 |   `lhs !`      | Unwrap result, propagate error to nearest `try`     |
 |   `lhs ^`      | Dereference typed pointer                           |
 |     `... rhs`  | Spread array into array                             |
@@ -3323,7 +3340,7 @@ Mulem has 42 reserved keywords. Note that built-in types (`int`, `str`), boolean
 |  `lhs << rhs`  | Shift left                                          |
 |  `lhs >> rhs`  | Shift right                                         |
 | `lhs >>> rhs`  | Unsigned shift right                                |
-|  `lhs ++ rhs`  | Concatenation                                       |
+|  `lhs <> rhs`  | Concatenation                                       |
 | `lhs and rhs`  | Logical AND                                         |
 |  `lhs or rhs`  | Logical OR                                          |
 |     `not rhs`  | Logical NOT (or bitwise NOT for numbers)            |
