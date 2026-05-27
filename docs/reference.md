@@ -771,12 +771,13 @@ f(x: int): int = x   -- Shadows previous f
 f()                  -- Error: f expects 1 argument.
 ```
 
-Overload a function by redeclaring it with `or` before its name. The first set of parameters to match will go.
+Instead, one function can be defined with multiple definitions using `fn is`. The next patterns will have function signatures and their bodies. The first function signature to match will go. This can also work for lambda functions. 
 
 ```
-safeDivide(x: float, y: float if y != 0.0): float =
+safeDivide = fn is
+| (x: float, y: float if y != 0.0): float =
     x / y
-or safeDivide(x: float, y: float): float =
+| (x: float, y: float): float =
     0.0
 ```
 
@@ -913,11 +914,12 @@ addAll(...nums: int#): int =
 A name is optional after `...`. You can use the symbol by itself to pass it to another function or itself in a functional loop. 
 
 ```
-addAll(x: int, ...): int =
+addAll = fn is
+| (x: int, ...): int =
     x + addAll(...)
-or addAll(x: int): int =
+| (x: int): int =
     x
-or addAll(): int =
+| (): int =
     0
 
 logAndAdd(msg: str, ...) =
@@ -1606,11 +1608,8 @@ list: int#4 = [1, 2, 3, 4]
 print("length of list: {len(list)}")
 compressedList = [list#0 + list#1, list#2 + list#3]
 doubleArray: int#2#2 = [[1, 2], [3, 4]]
-```
-
-```
-i = 2
-print("{list#[i]}")   -- Prints "3" because list#2 is 3
+item = doubleArray#1#0    -- The 2nd row, 1st column
+print("{item}")           -- Prints "3"
 ```
 
 This builds on the visible symmetry between type notation and their value expressions:
@@ -1622,17 +1621,11 @@ This builds on the visible symmetry between type notation and their value expres
 | **Pointers** | `T^`  | `x^`  |
 | **Arrays**   | `T#N` | `x#n` |
 
-```
-item = doubleArray#1#0    -- The 2nd row, 1st column
-print("{item}")           -- Prints "3"
-```
-
-Raw indexing is generally frowned upon. Mulem prevents you from accessing an array unless can be guaranteed to be within range. If you wish to access an index without safety, mark your code with `@unsafe`. 
+Accessing directly with a number literal `#N` gives you a type `T`. To access with a variable, you must use `#[n]` which returns a maybe type `T?`. This you must unwrap this with `maybe` and/or one of the maybe-type operators: `?`, `?:`, `?.`, `?#`.
 
 ```
-@unsafe do                  -- Allow raw indexing.
-    list: int# = getData()
-    print("{list#100}")     -- Might fail.
+i = 2
+print("{ list#[i] ?: 0 }")   -- Prints "3" because list#2 is 3
 ```
 
 In general, you'll mostly be using arrays by iterating or piping them. 
@@ -1720,21 +1713,11 @@ dict: int#str = [
     c: 3,
     ["invalid name"]: 127,
 ]
-print("{ dict#["b"] }")   -- Prints "2"
-print("{ dict#b }")       -- Prints "2",
+print("{ dict#["b"] ?: 0 }")   -- Prints "2"
+print("{ dict#"b" }")          -- Prints "2",
 ```
 
-`#b` is the same as `#["b"]`. Member names of a dictionary get converted to string literals. If it's not a valid variable name (alphanumeric), them it needs to be in a true string literal like `#["invalid name"]`.
-
-Like with arrays, you can't access dictionaries directly unless it's guaranteed to succeed. If not, you should mark it in a block with `@unsafe`. 
-
-```
-@unsafe do                   -- Allow raw dictionary access.
-    dict: int#str = getData()
-    print("{dict#data}")     -- Might fail.
-```
-
-You can iterate through a dictioary like with arrays.
+You can iterate through a dictioary like with arrays. This is the recommend way of using dictionaries. 
 
 ```
 loop (val, key) in dict then
@@ -1759,24 +1742,14 @@ if result == Null then
     raise NotFound
 ```
 
-A standard library will be made to safely handle pointer dereferencing and do pointer arithmetic, but that is outside the scope of this document. Here is an example of how it might work:
+Sometimes, it's necessary to dig deep into the unsafe territory. The `^` is the symbol associated with pointers, analogues to `?` for maybes, `!` for results, and `#` for arrays. It can be used in type notation, but it's also the operator to dereference a pointer. Thy type must be known at compile-time. Dereferencing an opaque pointer `ptr` is a compile-time error. In the type notation, `T^` prevents the pointer from mutating its memory or `T^mu` allows mutation with `^ =` (dereference + assignment). 
 
 ```
-mu x = 0             -- Create a local mutable variable.
-xPtr = getMuPtr(x)?  -- Map pointer to a maybe type `T?`.
-xPtr.set(1)!         -- Safely set the pointer and branch if there's an error.
-print("{x}")         -- "1", the pointer successfully mutated `x`.
-```
-
-Sometimes, it's necessary to dig deep into the unsafe territory. Mulem normally prevents you from doing this unless you mark the code with `@unsafe`. The `^` is the symbol associated with pointers, analogues to `?` for maybes, `!` for results, and `#` for arrays. It can be used in type notation, but it's also the operator to dereference a pointer. Thy type must be known at compile-time. Dereferencing an opaque pointer `ptr` is a compile-time error. In the type notation, `T^` prevents the pointer from mutating its memory or `T^mu` allows mutation with `^ =` (dereference + assignment). 
-
-```
-@unsafe do                   -- Allow pointer manipulation in this block.
-    mu x = 0                 -- `ptr` type takes a reference and creates a generic pointer.
-    xPtr: int^mu = ptr(x)    -- Convert `ptr` to `int^mu`, type is known.
-    xPtr^ = 1                -- Mutate the memory.
-    print("{xPtr^}")         -- Prints "1".
-    print("{x}")             -- Prints "1".
+mu x = 0                 -- `ptr` type takes a reference and creates a generic pointer.
+xPtr: int^mu = ptr(x)    -- Convert `ptr` to `int^mu`, type is known.
+xPtr^ = 1                -- Mutate the memory.
+print("{xPtr^}")         -- Prints "1".
+print("{x}")             -- Prints "1".
 ```
 
 Pointer types have 2 kinds of mutability: one for the reference, and one for the pointer variable itself. Here is a table of each kind and what it means.
@@ -3329,7 +3302,7 @@ Mulem has 41 reserved keywords. Note that built-in types (`int`, `str`), boolean
 
 | Level | Category                   | Operators                                 |
 |:------|:---------------------------|:------------------------------------------|
-| 12    | Member access/Function     | `.` `?.` `#[]` `()`                       |
+| 12    | Member access/Function     | `.` `?.` `#` `?#` `()`                    |
 | 11    | Postfix                    | `?` `!` `^`                               |
 | 10    | Unary                      | `+` `-` `not`                             |
 | 9     | Exponent                   | `**` (right-associative)                  |
@@ -3346,9 +3319,11 @@ Mulem has 41 reserved keywords. Note that built-in types (`int`, `str`), boolean
 | Operator       | Meaning                                             |
 |:--------------:|:----------------------------------------------------|
 |   `lhs . rhs`  | Member access                                       |
-|   `lhs # rhs`  | Array/dictionary index                              |
+|   `lhs # rhs`  | Direct array/dictionary index                       |
+|   `lhs #[rhs]` | Safe array/dictionary index                         |
 |   `lhs ?`      | Unwrap maybe, propagate `None` to nearest `maybe`   |
 |  `lhs ?. rhs`  | None-coalessing member access                       |
+|  `lhs ?# rhs`  | None-coalessing array/dictionary access             |
 |   `lhs !`      | Unwrap result, propagate error to nearest `try`     |
 |   `lhs ^`      | Dereference typed pointer                           |
 |     `... rhs`  | Spread array into array                             |
