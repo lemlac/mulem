@@ -189,7 +189,7 @@ else
 
 ### Block Expressions
 
-A block wraps multiple expressions into one. Each block is a new scope. Newline after certain keywords or symbols and indentation starts a block. The last expression evaluated in a block is its value. Use `_` (wildcard) to leave a block empty.
+A block wraps multiple expressions into one. Each block is a new scope. Newline after certain keywords or symbols and indentation starts a block. The last expression evaluated in a block is its value. Use `void` to leave a block empty.
 
 
 ```
@@ -202,7 +202,7 @@ do
     expr    -- This is the block's value.
 
 do
-    _       -- Empty block.
+    void    -- Empty block.
 ```
 
 __Keywords that can start a block:__
@@ -276,7 +276,7 @@ f1(if cond then
         )
     catch
     | (e) then
-        _
+        void
 else
     f3(fn() =
         expr
@@ -341,7 +341,7 @@ function x          -- spread tuple into function
 
 ### Pipelining `|>`
 
-When placed at the start of a line in a block, the pipelining operator `|>` takes on a special meaning: it takes the value of the previous line and makes it available in the next line as `$`. This symbol is known as the **pipeline context.** *(See [Context Variables](#context-variables).)* This makes it easy to chain a sequence of calls and read them in order.
+When placed at the start of a line in a block, the pipelining operator `|>` takes on a special meaning: it takes the value of the previous line and makes it available in the next line as `$`. This symbol is known as the **pipeline context.** This makes it easy to chain a sequence of calls and read them in order.
 
 ```
 print("{
@@ -357,8 +357,8 @@ print("{
 
 ```
 fetchA()
-|> fetchB $
-|> fetchC $
+|> fetchB(&$)
+|> fetchC(&$)
 |> print("{$}")
 ```
 
@@ -369,9 +369,9 @@ This makes the order of operations easy to follow at a glance. It reads like a p
 - *then* `fetchC`
 - *then* `print`
 
-The first line of a block may also start with `|>`, in which case its pipeline context is an empty tuple `()`. A line starting with `|>` is not required to use the pipeline context. Some functions also require the pipeline context as a contextual parameter. *(See [Contextual Parameters](#contextual-parameters).)*
+The first line of a block may also start with `|>`, in which case its pipeline context is an empty tuple `()`. A line starting with `|>` is not required to use the pipeline context. 
 
-When mixed with `do`, multiple expressions separated by semicolons `;` on one line will share the same pipeline context. The last expression on the line is passed as the context to the next pipe.
+When mixed with `do`, multiple expressions separated by semicolons `;` on one line will share the same pipeline context. The last expression on the line is passed as the pipeline context to the next pipe.
 
 ```
 |> fetchA()                      -- Run fetchA,
@@ -384,16 +384,16 @@ Note that `|>` at the beginning of a line is different from `~ |>` which is a sp
 
 ```
 |> fetchA()
-~ |> fetchB $
-|> fetchC $
+~ |> fetchB(&$)
+|> fetchC(&$)
 |> print("{$}")
 ```
 
 *Is the same as...*
 
 ```
-|> fetchA() |> fetchB $    -- Goes back to this line.
-|> fetchC $                -- Pipe from the previous statement.
+|> fetchA() |> fetchB(&$)    -- Goes back to this line.
+|> fetchC(&$)                -- Pipe from the previous statement.
 |> print("{$}")
 ```
 
@@ -401,30 +401,30 @@ A **pipeline block** is started with `|> do` and a new line, either at the end o
 
 ```
 |> fetchA()         -- Set up things.
-|> fetchB $         -- …
-|> fetchC $         -- …
-|> do               -- Context is now ready.
+|> fetchB(&$)       -- …
+|> fetchC(&$)       -- …
+|> do               -- Pipeline context is now ready.
     print("{$}")    -- Use it here.
 
-fetchA() |> fetchB $ |> fetchC $ |> do   -- Or in one line.
-    print("{$}")                         -- Then use the result.
+fetchA() |> fetchB(&$) |> fetchC(&$) |> do   -- Or in one line.
+    print("{$}")                             -- Then use the result.
 
 -- Freely mix the two formats:
-fetchA() |> do         -- Start with this context.
+fetchA() |> do         -- Start with this pipeline context.
     print("{$}")       -- Use the same `$` for these two lines.
-    fetchB $           -- Same context `$`.
-    |> print("{$}"); fetchC $ |> do  -- Start a new context inline.
-        print("{$}")                 -- Print the final result.
+    fetchB(&$)         -- Same pipeline context `$`.
+    |> print("{$}"); fetchC(&$) |> do  -- Start a new pipeline inline.
+        print("{$}")                   -- Print the final result.
 ```
 
 To get a value within a pipeline, use `=> x` after any step to store it into a local variable. The assignment is written in reverse order — the variable name goes on the right.
 
 ```
 |> fetchA()
-|> fetchB $
-|> fetchC $ => x    -- Put the result into `x`.
+|> fetchB(&$)
+|> fetchC(&$) => x    -- Put the result into `x`.
 
-print("{x}")        -- Print the result.
+print("{x}")          -- Print the result.
 ```
 
 This lets you extract the result of any step in a pipeline simply by appending `=> name` to that line.
@@ -450,8 +450,8 @@ To put the final result of any pipeline into a variable, use `|> $ => x` at the 
 
 ```
 |> fetchA()      -- Start.
-|> fetchB $      -- Pass context.
-|> fetchC $      -- Pass context.
+|> fetchB(&$)    -- Pass pipeline context.
+|> fetchC(&$)    -- Pass pipeline context.
 |> $ => x        -- Put the pipeline context into `x`.
 
 print("{x}")
@@ -461,9 +461,9 @@ One use case for a `|> do` block is to configure an object before assigning it t
 
 ```
 user = User.create() |> do
-    $.name = "John Smith"  -- Set properties on the context.
+    $.name = "John Smith"  -- Set properties on the pipeline context.
     $.dob = "1970-01-01"
-    $                      -- Return the context.
+    $                      -- Return the pipeline context.
 
 print("User: {user.name}, born: {user.dob}")  -- Prints "User: John Smith, born: 1970-01-01"
 ```
@@ -521,115 +521,21 @@ i += 1        -- Does the same thing.
 
 ```
 -- Error:
-if x = 0 then _
+if x = 0 then
+    void
 
 -- Correct:
-if x == 0 then _
+if x == 0 then
+    void
 ```
 
 Reversing the normal order of assignment for `=>` operators helps with programmers who might confuse `=>` for `>=` (greater than or equals).
 
 ```
 -- Error: did you mean `x >= 0`?
-if x => 0 then _
+if x => 0 then
+    void
 ```
-
-### Context Variables
-
-Any variable starting with `$` is a **context variable.** Variable names in Mulem don't allow `$` anywhere else in their name.
-
-```
--$x    -- This is okay, 1 symbol + 1 word: `-` + `$`.
-not$x  -- This is one word, error since `not$` doesn't exist.
-not $x -- This is okay, 2 words: `not` + `$`.
-```
-
-Context variables are declared with dollar sign character at the start of their name such as `$x`. These get captured by functions that have them in their function signature at the call site. *(See [Contextual Parameters](#contextual-parameters).)*
-
-```
-printX($x: char) =     -- Function that uses `$x` if defined.
-    print("{$x}")
-
-printX()        -- Error: $x parameter is missing.
-
-$x = 'x'        -- $x explicitly defined within this scope.
-printX()        -- Prints "x"
-
-print('a')      -- Or set as a named variable.
-```
-
-Context variables don't automatically get captured even when immutable. This prevents accidental clashes. A context variable must be defined in the scope of a function.
-
-```
-$x = 'x'
-$y = 'y'
-
-printXY($y: char) =
-    printX()
-    print("{$y}")
-
-printXY()          -- Error: $x parameter is missing.
-
--- Correct way:
-printXY($x: char, $y: char) =     -- Get $x and $y from the scope.
-    printX()
-    print("{$y}")
-
-printXY()          -- Prints "x" and "y"
-
-printXY('a', 'b')  -- Prints "a" and "b"
-```
-
-Other functions can't define context variables outside of their scope. They only exist within a given scope, so they have to be explicitly defined above the function call in order for functions to see them. When a function captures its contextual parameters, functions only see those context variables in the scope of the function. It's all tracked the same way that regular parameters and captured variables are. 
-
-`$` by itself also called the **pipeline context.** It holds the value of the previous pipeline expression. `$` is one context variable that changes with each pipeline step, like a baton being passed in a relay race. 
-
-Other context variables such as `$x` are declared by you. They live in the lexical scope like any other variable. The difference is that functions that ask for them will see them. 
-
-|      | What it is       | When it's set                | Scope          |
-|------|------------------|------------------------------|----------------|
-| `$x` | context variable | declared over function calls | lexical scope  |
-| `$`  | pipeline value   | each `\|>` step              | one expression |
-
-```
-$x = 10
-getValue()      -- Start pipeline.
-|> $ + $x       -- `$` is the pipeline value; `$x` is the contextual variable
-|> print("{$}") -- `$` is equal to the previous `$` + `$x`
-```
-
-Variables declared as `$x` and `$0` and such are context variables, and one context variable gets set during pipeline: `$` by itself also called the **pipeline context.** It holds the value of the previous pipeline expression.
-
-```
-(0, x: 1)               -- Create a tuple with position member and named member `x`.
-|> do                   -- Pass to a pipeline block, sets $ = (0, x: 1) 
-    print("{$.0 + $.x}")  -- Prints "1".
-
-(0, x: 1) |> print("{$.0 + $.x}")  -- Or in one line.
-```
-
-Going back to the example in [Pipelining](#pipelining), we can make it even more concise like this:
-
-```
-user = User.create() |> {
-    &$,                   -- Append current pipeline context to this object.
-    name: "John Smith",   -- Modify select properties below it.
-    dob: "1970-01-01",
-}
-```
-
-`&$` means to spread the pipeline result in this tuple. This makes an object with new properties set below it. Because this is such a common action, we can abbreviate with `&{}`. 
-
-```
-user = User.create() |> &{  -- Means to append to the pipe's context.
-    name: "John Smith",
-    dob: "1970-01-01",
-}
-```
-
-A top level `&` will spread based on the current pipeline context `$`. This makes it easier to pipe data and only change what you need. 
-
-*See [Contextual Parameters](#contextual-parameters) for more details.*
 
 ### Mutability (`mu`)
 
@@ -958,7 +864,7 @@ print("{x}")     -- Prints "1"
 
 To capture a mutable variable, write `~` at the end of the function signature. This goes after the parameters and before the return type `: T =`. List each *mutable* (`mu`) variables that the function uses. This helps make it easy to see which functions depend on mutable variables and which ones don't since `~` doesn't appear in type notation or anywhere else to the left of the equals sign `=` in function signatures except for captures. 
 
-This follows the same practice that `import` and `inherit` where all words in a given context are listed out clearly so that there are no accident name collisions or hidden gotchas.
+This follows the same practice that `import` and `inherit` where all words in a given scope are listed out clearly so that there are no accident name collisions or hidden gotchas.
 
 ```
 amount = 1               -- Immutable variable, doesn't need to be captured.
@@ -1016,10 +922,10 @@ forEach([1,2,3], fn(x) =
 Define a function within an expression with the keyword `fn` in the pattern `fn(x) = x`. This is useful for passing functions to other functions.
 
 ```
-(fn(arg) = _)
+(fn(arg) = expr)
 
 (fn(arg) =
-    _
+    body
 )
 ```
 
@@ -1070,7 +976,7 @@ Normally, functions can have an implicit return, but this poses a problem for cu
 ```
 curriedFn(a: int): (int): (int): int = 
     fn(b: int) =          -- Is this a lambda function or a function declaration named `fn`?
-        _
+        …
 ```
 
 `fn(x) = ` is a lambda expression, but `name(x) = ` is a function declaration. Since `name(x) = ` is a function declaration, Mulem would interpret `fn(b: int) = ` as declaring a local function named `fn` — which then fails because `fn` is reserved. If you try to declare a function with the name `fn`, Mulem will throw an error to prevent it.
@@ -1192,104 +1098,6 @@ Positional parameters may be set by number at the call site.
 isGreaterThan(a, b) = a > b
 isGreaterThan(0: 10, 1: 5)  -- a=10, b=5 → True
 isGreaterThan(1: 10, 0: 5)  -- a=5,  b=10 → False
-```
-
-#### Contextual Parameters
-
-Contextual parameters are like other parameters. If omitted when the function is called, they are resolved from the calling scope rather than passed as arguments.
-
-```
-addContext($a: int, $b: int) =
-    $a + $b
-
-do                          -- Isolate parameters to this scope
-    $a = 1
-    $b = 2
-    result = addContext()   -- Uses $a and $b from context.
-    print("{result}")       -- Prints "3"
-    $a = 3                  -- Change a parameter.
-    result = addContext()   -- Uses new $a
-    print("{result}")       -- Prints "5"
-
--- Exit scope.
-
--- result = addContext() -- Error: $a and $b parameters missing
-```
-
-The type can be inferred like other parameters. 
-
-```
-addContext($a, $b) = $a + $b
-```
-
-A function can be called with particular context variables explicitly. To do this, call it like a normal function.
-
-```
-addContext(1, 2)         -- Sets these context parameters for this one function call.
-```
-
-The call site *can* be explicit when you want it to be — you're not forced to rely on ambient `$x` declarations. So you get both:
-
-- **Ambient style**: declare `$x = val` in scope, call `f()` cleanly — good for threading a value through many calls without noise
-- **Explicit style**: `f(val)` right at the call site — good when you want the dependency visible locally
-
-You can be terse when context is obvious, explicit when it matters. The `$` prefix does the work of keeping both styles recognizable as the same mechanism.
-
-Optional contextual parameters use `opt`. This will wrap it in a maybe type `T?` if it doesn't exit or match the type. 
-
-```
-isThereX(opt $x: int) =
-    match $x is
-    | Some(_) then print("$x exists")
-    | None    then print("No $x")
-```
-
-Pipeline functions have the pipeline context `$` in as one of their contextual parameters. This will get passed in automatically when piped.
-
-```
-f($: char) =
-    print("$ is {$}")
-
-x = 'x'
-
-x |> f() → Prints "$ is x"
-```
-
-`$` can be any type. The function will require that type to be pipes into it.
-
-```
-AddArgs :: { a: 1, b: 2 }
-
-pipeAdd($: AddArgs) =    -- Needs an AddArgs object piped to it.
-    $.a + $.b
-
-result = AddArgs(a: 1, b: 2) |> pipeAdd()   -- This sets $ to an AddArgs
-print("{result}")      -- Prints "3"
-```
-
-You can also destructure from the pipeline context to turn members into local variables.
-
-```
-pipeAdd($: AddArgs) =
-    {a, b} = $        -- Get a and b from the pipeline context.
-    a + b
-
-
-pipeAdd($ as {a, b}: AddArgs) =   -- Get a and b from the pipeline context.
-    a + b
-
-pipeAdd($ as ctx: AddArgs)( =   -- Or create alias for context
-    ctx.a + ctx.b
-```
-
-If a function doesn't use the pipeline context, you can pass it in manually with `f($)` / `f($, x)` / `f(x, $)` or any other argument position, or you can spread it into all arguments with `f(&$)`. 
-
-```
-add() & AddArgs{a, b} =   -- Regular function with named parameterrs
-    a + b
-
-result = AddArgs(a: 1, b: 2) |> add(&$)   -- Pass to add directly.
-print("{result}")      -- Prints "3"
 ```
 
 ---
@@ -1465,7 +1273,7 @@ Strings (`str`) are immutable 1D arrays of characters `char`.
 |   `''…''`   | Inline raw string, no interpolation or escaping                            |
 | `@"""…"""@` | Multiline raw string; `@` count must match to close                        |
 
-Strings are marked with quotation marks (`"…"`) *(also called double quotes)* and can be formatted with curly braces (`{expr}`) in the string. Use a backslash to write a literal opening curly brace (`\{`). Note that string insertion and named tuples both use curly braces. This shouldn't be an issue though since they're used in different contexts. Inserted expressions are implicitly converted to strings, so using `str()` isn't necessary. This string is only allowed on a single-line, but literal-line characters can be inserted with `\n`.
+Strings are marked with quotation marks (`"…"`) *(also called double quotes)* and can be formatted with curly braces (`{expr}`) in the string. Use a backslash to write a literal opening curly brace (`\{`). Note that string insertion and named tuples both use curly braces. This shouldn't be an issue though since one is inside strings and the other isn't. Inserted expressions are implicitly converted to strings, so using `str()` isn't necessary. This string is only allowed on a single-line, but literal-line characters can be inserted with `\n`.
 
 ```
 name = "world"  
@@ -1528,7 +1336,7 @@ filePath = ''C:\files\on\windows.txt''
 template = ''Insert here → {{variable}}''
 ```
 
-To make a multi-line raw string, add an at sign `@` before and after triple quotation marks `"""`. The number of `@`s must match to close the raw string. This symbol is also used for decorators such as `@unsafe`, so the two connect giving `@` the general syntactical meaning of a compile-time signal.
+To make a multi-line raw string, add an at sign `@` before and after triple quotation marks `"""`. The number of `@`s must match to close the raw string. 
 
 |  Opening | Closing  |
 |---------:|:---------|
@@ -1564,7 +1372,7 @@ bigDocument = @"""
 -- `"""@@` closes the matching `@@"""`.
 ```
 
-Sometimes, we just want to copy and paste string data without formatting it. To help with this, Mulem allows you to put a raw string enclosed in `@` signs at the start of a new line without breaking a block. Significant whitespace is temporarially disabled when the line starts with `@`-style raw string, and the parser ignores indentation significance while inside the raw string. All whitespace and characters are put into the string without formatting until it gets to the matching `''@` marker. Then, re-ident in the next line to resume the block. This is useful for debugging and embedding data in code.
+Sometimes, we just want to copy and paste string data without formatting it. To help with this, Mulem allows you to put a raw string enclosed in `@` signs at the start of a new line without breaking a block. Significant whitespace is temporarially disabled when the line starts with `@`-style raw string, and the parser ignores indentation significance while inside the raw string. All whitespace and characters are put into the string without formatting until it gets to the matching `"""@` marker. Then, re-ident in the next line to resume the block. This is useful for debugging and embedding data in code.
 
 ```
 do
@@ -1796,11 +1604,13 @@ keyword expr
 #### `do`
 
 ```
+do expr; expr
+
 do
-    _
+    body
 
 do:label
-    _
+    body
 ```
 
 Creates a new scope. Its value is the last expression evaluated.
@@ -1838,9 +1648,9 @@ Adding `do` makes it's clear that `;` is connected to `do` and not the parenthes
 ```
 if cond then expr else expr
 if cond then
-    _
+    body
 else
-    _
+    body
 ```
 
 Basic Boolean branching.
@@ -1873,16 +1683,16 @@ The universal loop keyword. All loop forms share the same `loop` keyword.
 ```
 -- Unconditional (break manually):
 loop
-    _
+    body
     break
 
 -- While condition is true:
 loop cond then
-    _
+    body
 
 -- For-each:
 loop x in expr then
-    _
+    body
 
 -- Do-until (runs at least once):
 loop
@@ -1894,7 +1704,7 @@ until cond
 
 ```
 loop False then
-    _
+    void
 else
     print("Never ran")
 ```
@@ -2013,11 +1823,11 @@ Enum/error branching. Exhaustive by default. `| then` / `| ->` for the default c
 ```
 match expr is
 | ptrn then
-    _
+    body
 | ptrn then
-    _
+    body
 | then
-    _
+    body
 
 match expr is (ptrn -> expr | ptrn -> expr | -> expr)
 ```
@@ -2216,10 +2026,10 @@ getValue()
 #### `=> is` / `else`
 
 ```
-expr => is ptsrn
-expr => is ptrn else _
+expr => is ptrn
+expr => is ptrn else expr
 expr => is ptrn else
-    _
+    body
 ```
 
 The same thing as a regular `is` but sets a variable in scope. This can be done with any pipeline assignment operator `=>`. 
@@ -2239,11 +2049,11 @@ print("{x}")   -- x is guaranteed here
 #### `if` + `is`
 
 ```
-if expr is ptrn then _ else _
+if expr is ptrn then expr else expr
 if expr is ptrn then
-    _
+    body
 else
-    _
+    body
 ```
 
 Combines the conditional branching of `if` with pattern matching of `is`. Useful if you want to destructure a single case of a sum type. This must be a pattern that matches the type of the value before `is`.
@@ -2360,13 +2170,13 @@ try
     risky()!
 catch
 | Error(e) then    -- Catch specific error type.
-    _
+    body
 | (e) then         -- Catch all remaining error type.
-    _
+    body
 | then             -- Catch all remaining error type, but disregard value.
-    _
+    body
 
-try risky()! catch (Error(e) then _ | then _)
+try risky()! catch (Error(e) then expr | then expr)
 ```
 
 Error handling. Unwrap result types with `!` inside a `try` block. Unhandled errors propagate upward. Like with `match _ is`, inline `try _ catch` needs parentheses around the pattern matching section after `catch`.
@@ -2667,7 +2477,7 @@ This makes the algebra quite principled. The only cases where order matters are 
 
 It also means the shorthand `(0, 1, x: 2)` isn't really special syntax. It's the natural representation of a tuple that has both dimensions populated.
 
-Opaque types like primitives and enums coerce into a tuple of one, so creating a product type of them creates a positional tuple, e.g. `int & float & char` becomes `(int, float, char)`. Structs convert to named tuples unless declared with an `@opaque` decorator, in which case they behave like opaque types. 
+Opaque types like primitives and enums coerce into a tuple of one, so creating a product type of them creates a positional tuple, e.g. `int & float & char` becomes `(int, float, char)`. 
 
 Combining empty tuples produces an empty tuple `() & () == ()`. The same is true for empty named tuples `{} & {} == {}`. This also means that empty positional tuples and empty named tuples are equivalent `() == {}`. Both tuples have zero dimensions in both positional and named components; therefore they are equivalent. Saying `() & {} & ()` or `{} & ()` and any combination of empty tuples all are the same type.
 
@@ -2713,7 +2523,7 @@ Instantiate a struct by calling it like a function. Each member is treated like 
 myObject = MyStruct(name: "Foobar", value: 1)
 ```
 
-Structs are transparent. They can be destructured like named arrays. Use `@opaque` if you need to disable this. That will treat the struct type to be an opaque type and prevent it from being inherited with `inherit`. *(See [Inheritance and Visibility](Inheritance-and-Visibility).)*
+Structs are transparent. They can be destructured like named tuples. 
 
 ```
 TransparentThing :: struct =
@@ -2722,17 +2532,7 @@ TransparentThing :: struct =
 
 {a, b} = TransparentThing(a: 1, b: 2)
 print("a: {a}, b: {b}")
-
-@opaque
-OpaqueThing :: struct =
-    a: int
-    b: int
-
-o = OpaqueThing(a: 1, b: 2)
-print("a: {o.a}, b: {o.b}")
 ```
-
-*(See [Decorators](#decorators) for more informations on available decorators.)*
 
 ### Enumerable Types (`enum`)
 
@@ -2853,7 +2653,7 @@ MyEnum :: impl[MyPrototype] =
 
 ### Inheritance and Visibility
 
-Even though structs cannot be extended the usual way, they can **inherit** from other structs using the `inherit` keyword. This works similarly to **importing.** It marks members that map to members of another struct, making conversion possible. It follows the same convention for pattern matching like destructuring. *(See [Destructuring](#destructuring).)* The struct being inherited must not be `@opaque` or else it's a compile-time error. *(See [Decorators](#decorators) for more information on available decorators.)*
+Even though structs cannot be extended the usual way, they can **inherit** from other structs using the `inherit` keyword. This works similarly to **importing.** It marks members that map to members of another struct, making conversion possible. It follows the same convention for pattern matching like destructuring. *(See [Destructuring](#destructuring).)* 
 
 ```
 Vector2 :: struct =
@@ -3105,9 +2905,7 @@ increment(b)   -- T is inferred bool which has no implementation, compile-time e
 ## Importing and Modules
 
 * **Modules:** Declare with `moduleName :: mod`. Only one per file.
-* **Imports:** Must be explicit. `import a.b{c, d}`. Use `@from("path")` for direct file imports.
-* **Decorators:** Prefixed with `@` and placed above expressions or declarations to alter compiler behavior.
-* *Examples:* `@unsafe` (allows pointers/raw indexing), `@opaque` (hides struct internals), `@memory(GC)` (sets memory management model).
+* **Imports:** Must be explicit. `import a.b{c, d}`. Use `in "path"` for direct file imports.
 
 Use `import` to import something, optionally giving the import an alias with `as`. You can either import a single export like `import a.b.c` or multiple at once using destructuring rules `import a.b{c, d}`. *(See [Destructuring](#destructuring).)* Note that there is no `.` before the `{`. This follows the same convention that destructuring with tuples does. All imports must be **explicitly** declared—no `import a.b._`. This helps prevent naming conflicts and track where things have been defined.
 
@@ -3119,10 +2917,10 @@ import std.print     -- This is just an example and not final.
 print("Hello, world!")
 ```
 
-Modules are named with the keyword `mod` near the top before anything is defined. This is the name you'll use when importing your module. **There can only be one `mod` declaration per file.** Multiple `mod` declarations is a syntax error. Imports are based on the include path when compiling or running a script. To import from a file by direct filepath, use `@from("path")` before `import`.
+Modules are named with the keyword `mod` near the top before anything is defined. This is the name you'll use when importing your module. **There can only be one `mod` declaration per file.** Multiple `mod` declarations is a syntax error. Imports are based on the include path when compiling or running a script. To import from a file by direct filepath, use `in "path"` after `import`.
 
 ```
-@from("../../somewhere.mu") import someModule{thing}
+import someModule{thing} in "../../somewhere.mu"
 
 myModule :: mod
 
@@ -3143,86 +2941,20 @@ This connects the same explicit-list convention as `inherit` and capturing — *
 | `inherit` | Members from another struct.        |
 | `\ (x)`   | Mutable variables from outer scope. |
 
-### Base Context / Command Line Arguments
-
-Global context variables are defined when a module starts. These contain things like system information, environment variables, or the command-line arguments passed to your program when it's called. These are all type maybe string `str?`. The first argument `$0` is either the filepath to the main script when in interpreated mode or `None` when running as a compiled programm. You can use this to check if your running as a script or not.
-
-```
-if $0 is Some(x) then
-    print("Script name: {x}")
-else
-    print("Compiled mode")
-
-print("Hello, {$1?}!")             -- Prints first argument.
-```
-
-If your file is `hello.mu` and you run it as `mulem hello.mu world`, this is what would be printed:
-
-```
-Script name: hello.mu
-Hello, world!
-```
-
 ### Memory Models
 
-Mulem is multi-paradigm: different functions, structs, or modules can use different memory strategies in the same program. The model is controlled per-module via decorators. Boundary crossing between models follows FFI-like rules — automatic marshalling where possible, explicit escapes otherwise.
+Mulem is multi-paradigm: different functions, structs, or modules can use different memory strategies in the same program. The model is controlled per-module. Boundary crossing between models follows FFI-like rules — automatic marshalling where possible, explicit escapes otherwise.
 
-Modules define how memory is handled with the `@memory` decorator. *(See [Decorators](#decorators) for more information on available decorators.)* By default, modules use a garbage collector. Some options include `Collect(GC)` (default),  `Count(ARC)` (reference counting), and `Manual`. `GC` and `ARC` represent the standard garbage collector and reference counter respectively, but others can be defined and used instead.
+Modules define how memory is handled with the `memory` module setting. By default, modules use a garbage collector. Some options include `Collect(GC)` (default),  `Count(ARC)` (reference counting), and `Manual`. `GC` and `ARC` represent the standard garbage collector and reference counter respectively, but others can be defined and used instead.
 
 ```
-import std.mem{memory, Count, ARC}
+import std.mem{Count, ARC}
 
-@memory(Count(ARC))
-moduleThatUsesReferenceCounting :: mod
+moduleThatUsesReferenceCounting :: mod =
+    memory: Count[ARC]
 ```
 
 How this is implemented is outside of the scope of this document. That will be saved for when it's time to make a standard library for Mulem. For now, Mulem will focus on only implementing the garbage collector which will work in both interpreted and compiled mode.
-
----
-
-## Decorators
-
-There have been a few examples of decorators in this document like `@opaque` and `@memory`. These are compile-time functions that communicate to the compiler directly and can alter the behavior of things. The API for defining your own decorators is not set in stone yet. More information on them will be available in the future. The syntax for adding decorators goes like this:
-
-```
-@dec
-@dec(arg)
-expr
-```
-
-```
-@dec expr
-@dec(arg) expr
-```
-
-Decorators can be stacked and will run in reverse order. *Closest decorator to the expression runs, then the next one above that, then the next one, etc.*
-
-Built-in decorators demonstrated so far include `@unsafe`, `@inlined`, `@opaque`, `@from`, and `@memory`. More planned for the future.
-
-```
-@memory(Manual) -- Call it like a function to pass a variable.
-myModule :: mod
-
-@opaque         -- No function needed if there are no arguments.
-Thing :: struct =
-    value: int
-
-@inlined
-setBitAnd(ref a, in b) =
-    a = a band b
-```
-
-Some other ideas for built-in decorators include:
-
-- `@private` — locks a symbol to only be used within its module.
-- `@static` — make a variable global but only available within the scope that it was defined in.
-- `@inline` — marks that a regular function should inline itself like a meta function.
-- `@comptime` — run a function at compile-time, return it's value as a constant.
-- `@pure` — enforces pure function programming practices: *no capturing, no context, no `ref`, no `out`, etc.*
-- `@safe` — enforces borrow-checking at compile time for this module or function.
-- `@override` — marks that a previously implemented method will be overridden.
-
-This is a work in progress though. How these decorators are implemented and their API are subject to change.
 
 ---
 
@@ -3291,10 +3023,10 @@ do
 
 ## Reserved Keywords
 
-Mulem has 41 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard maybes (`Some`, `None`), and decorators (`@memory`) are built-in symbols but *not* strict keywords.
+Mulem has 42 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard maybes (`Some`, `None`), are built-in symbols but *not* strict keywords.
 
 **The Keyword List:**
-`and`, `as`, `await`, `band`, `bor`, `break`, `catch`, `continue`, `defer`, `do`, `else`, `enum`, `error`, `fallthrough`, `fn`, `if`, `impl`, `import`, `in`, `inherit`, `is`, `loop`, `match`, `maybe`, `mod`, `not`, `opt`, `or`, `out`, `proto`, `raise`, `ref`, `rem`, `return`, `self`, `struct`, `then`, `try`, `until`, `where`, `xor`, `yield`.
+`and`, `as`, `await`, `band`, `bor`, `break`, `catch`, `continue`, `defer`, `do`, `else`, `enum`, `error`, `fallthrough`, `fn`, `if`, `impl`, `import`, `in`, `inherit`, `is`, `loop`, `match`, `maybe`, `mod`, `not`, `opt`, `or`, `out`, `proto`, `raise`, `ref`, `rem`, `return`, `self`, `struct`, `then`, `try`, `until`, `void`, `where`, `xor`, `yield`.
 
 ---
 
@@ -3399,7 +3131,7 @@ The practical case where it matters is things like clock arithmetic, array wrapp
 | `T?`, `x?` | Maybe              | Unwraps a maybe; propagates `None` to nearest `maybe`.   |
 | `T!`, `x!` | Result / Error     | Unwraps a result; propagates error to nearest `try`.     |
 | `T#`, `x#` | Array / Dict Index | `T#N` is fixed-size. Access: `array#index`.              |
-| `T^`, `x^` | Pointer            | Dereference a pointer. Requires `@unsafe`.               |
+| `T^`, `x^` | Pointer            | Dereference a pointer.                                   |
 
 ---
 
