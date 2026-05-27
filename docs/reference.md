@@ -994,7 +994,7 @@ curryFn(a: char) =
             print("In function 3: {c}")
 ```
 
-To solve this issue, you must explicitly say `return fn` in order to curry functions. This ensures that `fn(x) =` is only used in expressions and not accidentally declaring a new function. 
+To solve this issue, you either must wrap the function in parentheses or explicitly say `return fn` in order to curry functions. This ensures that `fn(x) =` is only used in expressions and not accidentally declaring a new function. 
 
 ```
 curryFn(a: char): (char): (char): void =
@@ -1003,6 +1003,15 @@ curryFn(a: char): (char): (char): void =
         print("In function 2: {b}")
         return fn(c: char): void =
             print("In function 3: {c}")
+-- or --
+curryFn(a: char): (char): (char): void =
+    print("In function 1: {a}")
+    (fn(b: char): (char): void =
+        print("In function 2: {b}")
+        (fn(c: char): void =
+            print("In function 3: {c}")
+        )
+    )
 
 curryFn('a')('b')('c')
 (-- Prints:
