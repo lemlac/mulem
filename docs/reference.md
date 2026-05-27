@@ -2045,7 +2045,7 @@ The next control flow methods are based on pattern match. Generally, you see the
 
 #### `match` / `is`
 
-Enum/error branching. Exhaustive by default. `| then` for the default case.
+Enum/error branching. Exhaustive by default. `| then` / `| ->` for the default case.
 
 ```
 match expr is
@@ -2056,23 +2056,23 @@ match expr is
 | then
     _
 
-match expr is (ptrn then _ | ptrn then _ | then _)
+match expr is (ptrn -> expr | ptrn -> expr | -> expr)
 ```
 
-When inline, the patterns after `is` need to be in parentheses.
+When inline, the patterns after `is` need to be in parentheses and `then` is replaced with `->`.
 
 ```
 -- Simple value mapping
 color = match status is (
-| Ok    then "green"
-| Err   then "red"
-| then  "gray"
+    | Ok  -> "green"
+    | Err -> "red"
+    |     -> "gray"
 )
 
 -- Inside another expression
 result = process(data) |> match $ is (
-| Success(v) then v * 2
-| Failure(e) then (print("Failure: {e}"); 0)
+    | Success(v) -> v * 2
+    | Failure(e) -> do print("Failure: {e}"); 0
 )
 ```
 
@@ -2090,9 +2090,9 @@ match choice is
 ```
 
 ```
-restult = match x is (Ptrn1 then 5 | Ptrn2 then 6 | then 7)
+restult = match x is (Ptrn1 -> 5 | Ptrn2 -> 6 | -> 7)
 --
-message = match e is (OpenError{filename} then "Open error: {filename}" | then "Unknown error")
+message = match e is (OpenError{filename} -> "Open error: {filename}" | -> "Unknown error")
 ```
 
 You can have multiple patterns match to one case. If any of the patterns destructure with a variable, the same variable name and type must be in all patterns. If not, use a wildcard `(_)` in each pattern or omit the data part entirely to disable destructuring. Otherwise, use a fallback in the pattern.
@@ -2215,9 +2215,10 @@ match choice is
 
 ```
 expr is ptrn then expr
+expr is (ptrn -> expr)
 ```
 
-Extract a binding inline. Requires a guaranteed match or optional bindings.
+Extract a single binding inline. Requires a guaranteed match or optional bindings.
 
 ```
 -- Guaranteed match (exhaustive type):
@@ -2245,7 +2246,7 @@ Pairs naturally with pipelining.
 
 ```
 getValue()
-|> $ is Pattern(opt x = "fallback") then x
+|> $ is (Pattern(opt x = "fallback") -> x)
 |> doSomethingWith($)
 ```
 
@@ -2445,7 +2446,7 @@ catch
     raise Err(e)   -- Escape function with error
 ```
 
-Inline form. If you only have a whildcard case `(| then x)`, you just write the value `x`.
+Inline form. If you only have a whildcard case `(| -> x)`, you just write the value `x`.
 
 ```
 result = try divide(1, 0)! catch 0.0
@@ -2506,7 +2507,14 @@ getFirst(a: int, b: int, c: int): int =
     ~ 0
 ```
 
-Other examples:
+Or use the `None`-coalescing operator (`?:`).
+
+```
+getFirst(a: int, b: int, c: int): int =
+    getA(a) ?: getB(b) ?: getC(c) ?: 0
+```
+
+Another example of a use for `maybe`:
 
 ```
 crunchData(): int?!Error!CustomError =                                -- Multiple error types
