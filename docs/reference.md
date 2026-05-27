@@ -84,7 +84,7 @@ expr
 Certain keywords and symbols such as `do` or `then` start a block when they are at the end of a line. Increased indentation is expected on the next line, and decreasing indentation exits the block.
 
 ```
-do         -- Line ends with `do`, expecting a new block.
+do         -- Line ends with `block`, expecting a new block.
 expr       -- Error: expected indentation missing at line 2.
 
 do
@@ -270,7 +270,7 @@ Nesting works freely. You only need to worry about closing the bracket when you'
 -- Complicated logic…
 f1(if cond then
     try
-        f2(do
+        f2(block
             expr
             expr
         )
@@ -321,7 +321,7 @@ i -= 1   -- i = i - 1
 
 The pipeline assignment operator `=> x` is reversed from normal assignment `x =`. This is an intential design choice. To get rid of `=> x` and use standard assignment syntax, you would have to either:
 
-1. Accept verbose boilerplate such as `mu x = 0; ... |> do x = $; $ |> ...`.
+1. Accept verbose boilerplate such as `mu x = 0; ... |> (do x = $; $) |> ...`.
 2. Destroy Mulem's safety guarantees against the `if x = 1` bug.
 3. Force explicit mutable closure captures for simple pipeline steps.
 
