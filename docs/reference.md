@@ -1111,9 +1111,9 @@ There can be a lot of indentation when you curry functions like this. Is there a
 ```
 curryFn(a: char): (char): (char): void =
     print("In function 1: {a}")
-    (b: char) = fn: (char): void              -- Parameters go on the left, return goes on the right.
+    (b: char) = return fn: (char): void              -- Parameters go on the left, return goes on the right.
     print("In function 2: {b}")
-    (c) = fn                                  -- Types can also be inferred.
+    (c) = return fn                                  -- Types can also be inferred.
     print("In function 3: {c}")
 
 curryFn('a')('b')('c')             -- Works the same.
@@ -1124,7 +1124,7 @@ curryFn('a')('b')('c')             -- Works the same.
 --)
 ```
 
-Now all the functions line up together, and the next parameters resemble normal assignment. Each `() = fn` is an explicit suspension point from the function similar to `yeild` or `await`. The remaining part of the function becomes the body of the next function. 
+Now all the functions line up together, and the next parameters resemble normal assignment. Each `() = return fn` is an explicit suspension point from the function similar to `yeild` or `await`. The remaining part of the function becomes the body of the next function. 
 
 When capturing variables, each returned function needs to capture them seperately.
 
@@ -1132,9 +1132,9 @@ When capturing variables, each returned function needs to capture them seperatel
 mu count = 0
 curryAddCount(a: int) \ (count): (int): (int): int =
     count += a                            -- (1) Evaluated immediately
-    (b: int) = fn \ (count): (int): int   -- (2) Suspends and captures `count`
+    (b: int) = return fn \ (count): (int): int   -- (2) Suspends and captures `count`
     count += b                            -- (3) Evaluated when second fn is called
-    (c: int) = fn \ (count): int
+    (c: int) = return fn \ (count): int
     count += c
     count
 
@@ -1147,7 +1147,7 @@ If a curried function takes no parameters, put an empty tuple `()` on the left.
 curryLoop() =
     loop
         print("I'm looping!")
-        () = fn          -- Suspend function.
+        () = return fn   -- Suspend function.
 
 next = curryLoop()       -- Prints "I'm looping!"
 next = next()            -- Prints "I'm looping!"
