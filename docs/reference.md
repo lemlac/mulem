@@ -736,13 +736,12 @@ f(x: int): int = x   -- Shadows previous f
 f()                  -- Error: f expects 1 argument.
 ```
 
-Instead, you can use pattern matching to achieve the same thing. Set the parameter to `(match)` and define each function overload with `|` in the next lines. 
+Overload a function by redeclaring it with `else` before its name. The first parameter to match will go.
 
 ```
-safeDivide(match) =
-| (x: float, y: float if y != 0.0): float =
+safeDivide(x: float, y: float if y != 0.0): float =
     x / y
-| (x: float, y: float): float =
+else safeDivide(x: float, y: float): float =
     0.0
 ```
 
@@ -876,13 +875,15 @@ addAll(...nums: int#): int =
     | [x, ...rest]  then x + addAll(...rest)
 ```
 
-A name is optional after `...`. You can use the symbol by itself to pass it to another function or itself in a functional loop. Use `| fn() = ` immediately after a function defintion. The first parameter to match will go.
+A name is optional after `...`. You can use the symbol by itself to pass it to another function or itself in a functional loop. 
 
 ```
-addAll(match) =
-| (x: int, ...): int = x + addAll(...)
-| (x: int): int = x
-| (): int = 0
+addAll(x: int, ...): int =
+    x + addAll(...)
+else addAll(x: int): int =
+    x
+else addAll(): int =
+    0
 
 logAndAdd(msg: str, ...) =
     print("{msg} {addAll(...)}")
