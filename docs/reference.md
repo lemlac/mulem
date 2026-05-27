@@ -1,10 +1,10 @@
-# The μ Programming Language Reference
+# The Mulem Programming Language Reference
 
 *Version 0.1 (Draft)*
 
-__The μ programming language__ *(also Mu or Mulang)* is a general-purpose, expression-oriented language designed to balance conciseness and eloquence. It delivers highly readable syntax, robust safety mechanisms, granular execution control, and expressive data pipelining. Supporting both interpretation and compilation, Mu is ideally suited for systems programming, AI, and game development.
+__Mulem__ is a general-purpose, expression-oriented language designed to balance conciseness and eloquence. It delivers highly readable syntax, robust safety mechanisms, granular execution control, and expressive data pipelining. Supporting both interpretation and compilation, Mulem is ideally suited for systems programming, AI, and game development.
 
-This document is not focused on when you would apply any of the mechanics described. It's just describing the mechanics themselves within the Mu programming language.
+This document is not focused on when you would apply any of the mechanics described. It's just describing the mechanics themselves within the Mulem programming language.
 
 ---
 
@@ -142,7 +142,7 @@ x = 1 \
   + 5 + 6
 ```
 
-We aren't method chaining, so we can't just put `.` in front if each operator. Instead, We can give a special rule to for a leading `:` (colon). When a line starts with `:`, it continues from the previous line and the `:` gets consumed like a trailing `\`. This allows us to use Mulang's expression splitting to make this much more readable. 
+We aren't method chaining, so we can't just put `.` in front if each operator. Instead, We can give a special rule to for a leading `:` (colon). When a line starts with `:`, it continues from the previous line and the `:` gets consumed like a trailing `\`. This allows us to use Mulem's expression splitting to make this much more readable. 
 
 ```
 x = 1
@@ -239,9 +239,9 @@ else
 ) + expr         -- Close block and continue inline expression
 ```
 
-Mulang takes special care when switching between block mode and inline mode, allowing coders to format their code naturally and elegantly. No special keywords like `do…end` or curly braces `{}` are needs, and once you see it, you'll realize it's quite intuitive. 
+Mulem takes special care when switching between block mode and inline mode, allowing coders to format their code naturally and elegantly. No special keywords like `do…end` or curly braces `{}` are needs, and once you see it, you'll realize it's quite intuitive. 
 
-There are 3 rules that Mulang follows:
+There are 3 rules that Mulem follows:
 
 1. Any line ending in certain keywords/symbols starts a block (significant whitespace).
 2. When inside a bracket `(`/`[`/`{`, the matching bracket `)`/`]`/`}` or comma `,` ends the block and switches back to inline mode (insignificant whitespace)
@@ -280,7 +280,7 @@ else
 -- But it all makes sense following the 3 rules.
 ```
 
-*The core idea…* Mulang let's you write code that looks like the structure it describes. Blocks of logic get indentation. Inline expressions stay on one line. The switching rules exist so you never have to fight the formatter to achieve either one.
+*The core idea…* Mulem let's you write code that looks like the structure it describes. Blocks of logic get indentation. Inline expressions stay on one line. The switching rules exist so you never have to fight the formatter to achieve either one.
 
 ### Pattern Splitting
 
@@ -303,7 +303,7 @@ __Keywords that can start a pattern sequence:__
 
 ## Operators
 
-Mu has mix of symbolic and word-form operators. For a complete list, see [Table of Operators](#table-of-operators) at the end of this document.
+Mulem has mix of symbolic and word-form operators. For a complete list, see [Table of Operators](#table-of-operators) at the end of this document.
 
 Increment and decrement are the same as assignement:
 
@@ -312,7 +312,7 @@ i += 1   -- i = i + 1
 i -= 1   -- i = i - 1
 ```
 
-*Note: Mulang doesn't have a `--` (decrement by 1) operator. `--` is reserved for comments.* 
+*Note: Mulem doesn't have a `--` (decrement by 1) operator. `--` is reserved for comments.* 
 
 ### Function Calls
 
@@ -488,7 +488,7 @@ lunch =
         "sandwich"
 ```
 
-Variables are immutable, but declaring it again shadows it. Any subsequent `=` on an immutable variable is an implicit declaration. Redeclaring a variable with the same name is called **shadowing.** This makes Mulang flexible while still having the advantages of being statically typed.
+Variables are immutable, but declaring it again shadows it. Any subsequent `=` on an immutable variable is an implicit declaration. Redeclaring a variable with the same name is called **shadowing.** This makes Mulem flexible while still having the advantages of being statically typed.
 
 ```
 a = 1
@@ -523,7 +523,7 @@ if x => 0 then _
 
 ### Context Variables
 
-Any variable starting with `$` is a **context variable.** Variable names in Mulang don't allow `$` anywhere else in their name.
+Any variable starting with `$` is a **context variable.** Variable names in Mulem don't allow `$` anywhere else in their name.
 
 ```
 -$x    -- This is okay, 1 symbol + 1 word: `-` + `$`.
@@ -903,7 +903,7 @@ Immutable variables can be captured without any issue. They can't change, so the
 
 **By default, functions cannot capture mutable variables.**
 
-This is an intentional decision for better safety in Mulang. Functions don't automatically capture mutable variables. Instead, any variable set inside a function is treated like a new variable. This helps prevent accidentally mutating a variable that you didn't mean to and encourage good functional programming practices.
+This is an intentional decision for better safety in Mulem. Functions don't automatically capture mutable variables. Instead, any variable set inside a function is treated like a new variable. This helps prevent accidentally mutating a variable that you didn't mean to and encourage good functional programming practices.
 
 ```
 x = 1
@@ -1036,7 +1036,7 @@ curriedFn(a: int): (int): (int): int =
         _
 ```
 
-`fn(x) = ` is a lambda expression, but `name(x) = ` is a function declaration. Since `name(x) = ` is a function declaration, Mulang would interpret `fn(b: int) = ` as declaring a local function named `fn` — which then fails because `fn` is reserved. If you try to declare a function with the name `fn`, Mulang will throw an error to prevent it.
+`fn(x) = ` is a lambda expression, but `name(x) = ` is a function declaration. Since `name(x) = ` is a function declaration, Mulem would interpret `fn(b: int) = ` as declaring a local function named `fn` — which then fails because `fn` is reserved. If you try to declare a function with the name `fn`, Mulem will throw an error to prevent it.
 
 ```
 (-- 
@@ -1045,7 +1045,7 @@ fn(1, 2)          -- Error: `fn` is a reserved keyword and cannot be used as a n
 --)
 ```
 
-If Mulang could implicitly return lambda functions, that wouldn't solve the issue, say you have a function like this:
+If Mulem could implicitly return lambda functions, that wouldn't solve the issue, say you have a function like this:
 
 ```
 curryFn(a: char) =
@@ -1449,7 +1449,7 @@ print(str3)
 -- Prints "This string is broken into multiple parts."
 ```
 
-Write multi-line strings with `"""` (3 quotation marks). A common issue in programming languages is how to fix the issue of leading whitespace in a multi-line string. Mulang uses significant whitespace, so unindenting the string wouldn't work. We don't want all the leading whitespace to be in the string, but how do we solve this? To fix this issue, whitespace gets trimmed at compile-time based on the positions of the last `"""`. Any spaces before it is automatically trimmed. Much like blocks, having too little indentation is a syntax error inside multi-line strings. This helps keep things readable and consistent and solves the whitespace issue inside strings.
+Write multi-line strings with `"""` (3 quotation marks). A common issue in programming languages is how to fix the issue of leading whitespace in a multi-line string. Mulem uses significant whitespace, so unindenting the string wouldn't work. We don't want all the leading whitespace to be in the string, but how do we solve this? To fix this issue, whitespace gets trimmed at compile-time based on the positions of the last `"""`. Any spaces before it is automatically trimmed. Much like blocks, having too little indentation is a syntax error inside multi-line strings. This helps keep things readable and consistent and solves the whitespace issue inside strings.
 
 ```
 do
@@ -1529,7 +1529,7 @@ bigDocument = @"""
 -- `"""@@` closes the matching `@@"""`.
 ```
 
-Sometimes, we just want to copy and paste string data without formatting it. To help with this, Mulang allows you to put a raw string enclosed in `@` signs at the start of a new line without breaking a block. Significant whitespace is temporarially disabled when the line starts with `@`-style raw string, and the parser ignores indentation significance while inside the raw string. All whitespace and characters are put into the string without formatting until it gets to the matching `''@` marker. Then, re-ident in the next line to resume the block. This is useful for debugging and embedding data in code.
+Sometimes, we just want to copy and paste string data without formatting it. To help with this, Mulem allows you to put a raw string enclosed in `@` signs at the start of a new line without breaking a block. Significant whitespace is temporarially disabled when the line starts with `@`-style raw string, and the parser ignores indentation significance while inside the raw string. All whitespace and characters are put into the string without formatting until it gets to the matching `''@` marker. Then, re-ident in the next line to resume the block. This is useful for debugging and embedding data in code.
 
 ```
 do
@@ -1594,7 +1594,7 @@ item = doubleArray#1#0    -- The 2nd row, 1st column
 print("{item}")           -- Prints "3"
 ```
 
-Raw indexing is generally frowned upon. Mu prevents you from accessing an array unless can be guaranteed to be within range. If you wish to access an index without safety, mark your code with `@unsafe`. 
+Raw indexing is generally frowned upon. Mulem prevents you from accessing an array unless can be guaranteed to be within range. If you wish to access an index without safety, mark your code with `@unsafe`. 
 
 ```
 @unsafe do                  -- Allow raw indexing.
@@ -1648,7 +1648,7 @@ c: TwoOrMoreInts = (-1, 0, ...list)       -- == (-1, 0, [1, 2])
 d: TwoOrMoreInts = (-2, -1, 0, ...list)   -- == (-2, -1, [0, 1, 2])
 ```
 
-*Mulang separates tuple and array spread to preserve =type safety and avoid runtime surprises. `&` always preserves tuple structure; `...` always preserves array structure.*
+*Mulem separates tuple and array spread to preserve =type safety and avoid runtime surprises. `&` always preserves tuple structure; `...` always preserves array structure.*
 
 #### Dictionaries
 
@@ -1720,7 +1720,7 @@ xPtr.set(1)!         -- Safely set the pointer and branch if there's an error.
 print("{x}")         -- "1", the pointer successfully mutated `x`.
 ```
 
-Sometimes, it's necessary to dig deep into the unsafe territory. Mulang normally prevents you from doing this unless you mark the code with `@unsafe`. The `^` is the symbol associated with pointers, analogues to `?` for maybes, `!` for results, and `#` for arrays. It can be used in type notation, but it's also the operator to dereference a pointer. Thy type must be known at compile-time. Dereferencing an opaque pointer `ptr` is a compile-time error. In the type notation, `T^` prevents the pointer from mutating its memory or `T^mu` allows mutation with `^ =` (dereference + assignment). 
+Sometimes, it's necessary to dig deep into the unsafe territory. Mulem normally prevents you from doing this unless you mark the code with `@unsafe`. The `^` is the symbol associated with pointers, analogues to `?` for maybes, `!` for results, and `#` for arrays. It can be used in type notation, but it's also the operator to dereference a pointer. Thy type must be known at compile-time. Dereferencing an opaque pointer `ptr` is a compile-time error. In the type notation, `T^` prevents the pointer from mutating its memory or `T^mu` allows mutation with `^ =` (dereference + assignment). 
 
 ```
 @unsafe do                   -- Allow pointer manipulation in this block.
@@ -2293,12 +2293,12 @@ if x is Some(x) then
 
 ### Error/Maybe Control Flow
 
-Error and null handling is done through the `try` and `maybe` keywords. These blocks are for unwrapping the 2 monadic types in Mulang: *maybes* `T?` and *results* `T!`. When resolving a monadic, you go in *reverse order* that was notated by the type. Think of it like a box: you start from the outside and work your way in.
+Error and null handling is done through the `try` and `maybe` keywords. These blocks are for unwrapping the 2 monadic types in Mulem: *maybes* `T?` and *results* `T!`. When resolving a monadic, you go in *reverse order* that was notated by the type. Think of it like a box: you start from the outside and work your way in.
 
 - `T?` is a *maybe:* it may contain a value or be `None`.
 - `T!E` is a *result:* it may contain a value or an error of type `E`.
 
-| Mu's Type | Other Languages                  | In Plain English                                                             | Layers | Resolve Order             |
+| Mulem's Type | Other Languages                  | In Plain English                                                             | Layers | Resolve Order             |
 |:----------|:---------------------------------|:-----------------------------------------------------------------------------|-------:|:----------------------------|
 | `T?`      | `Maybe<T>`                       | A maybe                                                                      |      1 | `?`                         |
 | `T!E`     | `Result<T, E>`                   | A result with 1 possible error                                               |      1 | `!`                         |
@@ -2536,7 +2536,7 @@ asyncCollect(n): async[int#] =
     ret
 ```
 
-Unlike in other languages where *promises* or *futures* can either resolve **or reject,** async types in Mulang **only resolve.** Instead you can use a result type `T!E` inside an `async[T!E]` function. Unwrap it like you would a result type. Because this is common, `await` has special rules in regards to the `!` and `?` opeerators when placed after it.
+Unlike in other languages where *promises* or *futures* can either resolve **or reject,** async types in Mulem **only resolve.** Instead you can use a result type `T!E` inside an `async[T!E]` function. Unwrap it like you would a result type. Because this is common, `await` has special rules in regards to the `!` and `?` opeerators when placed after it.
 
 ```
 await! x == (await x)!      -- Unwrap an `async[T!E]`
@@ -3134,7 +3134,7 @@ Hello, world!
 
 ### Memory Models
 
-Mulang is multi-paradigm: different functions, structs, or modules can use different memory strategies in the same program. The model is controlled per-module via decorators. Boundary crossing between models follows FFI-like rules — automatic marshalling where possible, explicit escapes otherwise.
+Mulem is multi-paradigm: different functions, structs, or modules can use different memory strategies in the same program. The model is controlled per-module via decorators. Boundary crossing between models follows FFI-like rules — automatic marshalling where possible, explicit escapes otherwise.
 
 Modules define how memory is handled with the `@memory` decorator. *(See [Decorators](#decorators) for more information on available decorators.)* By default, modules use a garbage collector. Some options include `Collect(GC)` (default),  `Count(ARC)` (reference counting), and `Manual`. `GC` and `ARC` represent the standard garbage collector and reference counter respectively, but others can be defined and used instead.
 
@@ -3145,7 +3145,7 @@ import std.mem{memory, Count, ARC}
 moduleThatUsesReferenceCounting :: mod
 ```
 
-How this is implemented is outside of the scope of this document. That will be saved for when it's time to make a standard library for Mulang. For now, Mulang will focus on only implementing the garbage collector which will work in both interpreted and compiled mode.
+How this is implemented is outside of the scope of this document. That will be saved for when it's time to make a standard library for Mulem. For now, Mulem will focus on only implementing the garbage collector which will work in both interpreted and compiled mode.
 
 ---
 
@@ -3197,7 +3197,7 @@ This is a work in progress though. How these decorators are implemented and thei
 
 ## Design Philosophy
 
-Mu's unconventional choices are intentional, prioritizing readability, explicit data tracing, and scalable complexity:
+Mulem's unconventional choices are intentional, prioritizing readability, explicit data tracing, and scalable complexity:
 
 * __Readability First:__ Significant whitespace avoids bracket clutter, while the strict block/inline switching rules (`:` vs `()`) prevent you from fighting the formatter.
 * __Traceable Dependencies:__ The language forces you to explicitly name what you bring into scope. There are no glob imports or implicit mutable state captures. `import`, `inherit`, and `\` (capturing) all use explicit listing.
@@ -3209,7 +3209,7 @@ Mu's unconventional choices are intentional, prioritizing readability, explicit 
 
 ## Putting It All Together…
 
-Here is a quick synthesized example showing how Mu's structs, implementations, pipelining, and error handling might look in a real script:
+Here is a quick synthesized example showing how Mulem's structs, implementations, pipelining, and error handling might look in a real script:
 
 ```
 import std.print
@@ -3260,7 +3260,7 @@ do
 
 ## Reserved Keywords
 
-Mu has 42 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard maybes (`Some`, `None`), and decorators (`@memory`) are built-in symbols but *not* strict keywords.
+Mulem has 42 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard maybes (`Some`, `None`), and decorators (`@memory`) are built-in symbols but *not* strict keywords.
 
 **The Keyword List:**
 `and`, `as`, `await`, `band`, `bor`, `break`, `catch`, `continue`, `defer`, `do`, `else`, `enum`, `error`, `fallthrough`, `fn`, `if`, `impl`, `import`, `in`, `inherit`, `is`, `loop`, `match`, `maybe`, `mod`, `never`, `not`, `opt`, `or`, `out`, `proto`, `raise`, `ref`, `rem`, `return`, `self`, `struct`, `then`, `try`, `until`, `where`, `xor`, `yield`.
@@ -3368,4 +3368,4 @@ The practical case where it matters is things like clock arithmetic, array wrapp
 
 ---
 
-*This document captures the current state of the Mulang design. The language is still evolving.*
+*This document captures the current state of the Mulem design. The language is still evolving.*
