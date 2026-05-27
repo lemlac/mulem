@@ -97,25 +97,27 @@ expr       -- Decreasing indentation exits the block.
 Each sequence starts a new scope. For example:
 
 ```
-do x = 2; x + 1
+(do x = 2; x + 1)
 ```
 
 `x` is isolated to inside the `do` sequence, and the result of the expression is `2 + 1`. 
 
+Bracket expressions `()`/`[]`/`{}` are white-space insensitive and only delimited with commas `,` until a keyword changes the sequence type. That's what `do` is doing here. It changes the sequence type from brackets to an inline `do` expression. When a non-bracket sequence sees `,` or a closing bracket, it automatically bubbles up to the nearest bracket sequence. 
+
 Given that `;` and `,` can both exist inside an expression, you *have* to define their relative precedence. There's no neutral option. For example:
 
 ```
-getX(), print("fetching y"); getY(), getZ()
+(getX(), print("fetching y"); getY(), getZ())
 ```
 
 Is it `getX(), print("fetching y")` then `getY(), getZ()`, or is it a tuple of `getX()`, `print("fetching y"); getY()`, and `getZ()`? To maintain syntactic clarity and eliminate operator precedence ambiguity between commas (slot separators) and semicolons (expression sequencers), `,` and `;` **cannot be mixed at the same nesting level**. You must resolve this by explicitly isolating the sequenced expressions. This can be done by wrapping one sequence in an inline `do` expression:
 
 ```
-getX(), print("fetching y"); getY(), getZ()     -- Error: unexpected character: ";"
-getX(), do print("fetching y"); getY(), getZ()  -- OK: isolated via inline 'do'
+(getX(), print("fetching y"); getY(), getZ())     -- Error: unexpected character: ";"
+(getX(), do print("fetching y"); getY(), getZ())  -- OK: isolated via inline 'do'
 ```
 
-The `do` here says to start a sequence that's seperated by semi-colons `;`. The comma `,` ends the sequence. It's now clear that `print(…)` is only there to run side effects after `getX()`, and the value of the expression is the tuple `x, y, z`.
+The `do` here says to start a sequence that's seperated by semi-colons `;`. The comma `,` ends the sequence. It's now clear that `print(…)` is only there to run side effects after `getX()`, and the value of the expression is the tuple `(x, y, z)`.
 
 ### Expression Splitting
 
