@@ -413,8 +413,8 @@ This lets you extract the result of any step in a pipeline simply by appending `
 ```
 -- Put all results of each step into variables.
 |> fetchA() as a
-|> fetchB $ as b
-|> fetchC $ as c
+|> fetchB(&$) as b
+|> fetchC(&$) as c
 
 print("a = {a}, b = {b}, c = {c}")
 ```
