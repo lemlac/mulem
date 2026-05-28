@@ -788,7 +788,7 @@ print("{addOptional(1, 1)}")  -- Prints "2"
 Use `...` to collect all arguments into a single variable. The variable should be type `[*T]` (an array).
 
 ```
-addAll(...nums: *int): int =
+addAll(...nums: [*int]): int =
     mu sum: int = 0
     loop n in nums:
         sum += n
