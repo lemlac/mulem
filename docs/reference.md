@@ -2009,7 +2009,7 @@ Pairs naturally with pipelining.
 
 ```
 getValue()
-|> $ is (Pattern(opt x = "fallback"): x)
+|> $ is Pattern(opt x = "fallback") then x
 |> doSomethingWith($)
 ```
 
@@ -2113,21 +2113,25 @@ Think of each `?` or `!` on a *type* as a **layer.** When you call the same `?` 
 ```
 x: int!Error = getRiskyInt()   -- Get wrapped result value.
 y: int = x!                    -- Unwrap the result
-                                   -- Which is equivalent to…
-y = match x is (
-| Ok(val) then val                   -- Get the Ok value.
-| Error(e) then return Error(e)      -- Exit block, return error if a function
-)
+                               -- Which is equivalent to…
+y =
+    match x is
+    | Ok(val) then
+        val                    -- Get the Ok value.
+    | Error(e) then
+        return Error(e)        -- Exit block, return error if a function
 ```
 
 ```
 x: int? = getMaybeInt()   -- Get wrapped maybe value.
 y: int = x?               -- Unwrap the maybe.
                           -- Which is equivalent to…
-y = (match x is
-    | Some(val) then val      -- Get the Some value.
-    | None then return None   -- Exit block, return None if a function
-)
+y =
+    match x is
+    | Some(val) then
+        val               -- Get the Some value.
+    | None then
+        return None       -- Exit block, return None if a function
 ```
 
 #### `try` / `catch`
