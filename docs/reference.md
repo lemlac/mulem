@@ -1974,11 +1974,10 @@ match choice is
     print("No match")
 ```
 
-#### `is` / `then`
+#### `.is`
 
 ```
 expr is ptrn then expr
-expr is (ptrn: expr)
 ```
 
 Extract a single binding inline. Requires a guaranteed match or optional bindings.
@@ -1990,9 +1989,9 @@ result = value is Pattern(x) then x
 
 ```
 -- With fallback (non-exhaustive):
-result = value is Pattern(opt x) then x
-result = value is Pattern(opt x) then maybe x? else "fallback"    -- Wrap in Some(x), then coalesce
-result = value is Pattern(opt x = "fallback") then x              -- Automatic fallback
+result = value is Pattern(opt x) then x                              -- Get wrapped Some(x) or None
+result = value is Pattern(opt x) then maybe x? else "fallback"       -- Unwrap with fallback
+result = value is Pattern(opt x = "fallback") then x                 -- Automatic fallback
 ```
 
 ```
