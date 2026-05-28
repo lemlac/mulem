@@ -668,7 +668,7 @@ f()                  -- Error: f expects 1 argument.
 Instead, one function can be defined with multiple definitions using `match ... is`. The next patterns will have function signatures and their bodies. The first function signature to match will go. This can also work for lambda functions. 
 
 ```
-safeDivide(...) = match (...) is
+safeDivide(...) = match ... is
 | (x: float, y: float if y != 0.0): float =
     x / y
 | (x: float, y: float): float =
@@ -808,7 +808,7 @@ addAll(...nums: [int]): int =
 A name is optional after `...`. You can use the symbol by itself to pass it to another function or itself in a functional loop. 
 
 ```
-addAll(...) = match (...) is
+addAll(...) = match ... is
 | (x: int, ...): int =
     x + addAll(...)
 | (x: int): int =
