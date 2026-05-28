@@ -284,7 +284,7 @@ Nesting works freely. You only need to worry about closing the bracket when you'
 ```
 -- Complicated logic…
 renderScene(
-    if settings.quality == Ultra then
+    if settings.quality == Ultra then  -- Start block
         try
             loadHighResAssets()!
         catch
@@ -293,7 +293,7 @@ renderScene(
             loadFallbackAssets()
     else
         loadFallbackAssets()
-    ,
+    ,                                   -- Ends the `if` / `else` block
     camera: activeCamera
 )
 -- But it all makes sense following the 3 rules.
