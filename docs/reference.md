@@ -187,6 +187,8 @@ else
     print("False")
 ```
 
+Mulem has no implicit lookahead. When in a block, all line breaks end an expression unless ignored explicitly with `~`. 
+
 ### Block Expressions
 
 A block wraps multiple expressions into one. Each block is a new scope. Newline after certain keywords or symbols and indentation starts a block. The last expression evaluated in a block is its value. Use `void` to leave a block empty.
