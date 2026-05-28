@@ -883,7 +883,7 @@ x = 1
 f() \ (x) =
     x + 1
 ```
-> `x` is immutable and is captured automatically — remove `% (x)` from the signature.
+> `x` is immutable and is captured automatically — remove `\ (x)` from the signature.
 
 **Captured a variable that doesn't exist in scope:**
 ```
