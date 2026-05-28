@@ -1563,7 +1563,7 @@ Pointer types have 2 kinds of mutability: one for the reference, and one for the
 Like with arrays and dictionaries, use `deref[]` to safely dereference a pointer.
 
 ```
-if defer[xPtr~] is Some(x) then
+if deref[xPtr~] is Some(x) then
     print("x = {x}")
 else
     print("x is gone")
