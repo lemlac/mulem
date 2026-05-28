@@ -1090,7 +1090,7 @@ Notation:
 
 - **Basic**: `x: T`
 - **Functions**: `f(x: T): T`
-- **Maybes**: `T?`
+- **Questions**: `T?`
 - **Results**: `T!` or T!E` where `E` is an `error` type
 - **Arrays**: `T#` or `T#N` where `N` is the length
 - **Multi-dimensional Arrays**: `T##`, an extra `#` for each dimension, each dimension can be fixed or dynamic: `T#N#`, `T##N`, `T#N#N`, `T#N##`, etc.
@@ -1421,11 +1421,11 @@ This builds on the visible symmetry between type notation and their value expres
 | Type | Notation | Expression |
 |:---------|:------:|:--------:|
 | **Results**  | `T!`  | `x!`  |
-| **Maybes**   | `T?`  | `x?`  |
+| **Question** | `T?`  | `x?`  |
 | **Pointers** | `T^`  | `x^`  |
 | **Arrays**   | `T#N` | `x#n` |
 
-Accessing directly with a number literal `#N` gives you a type `T`. To access with a variable, you must use `#[n]` which returns a maybe type `T?`. This you must unwrap this with `maybe` and/or one of the maybe-type operators: `?`, `?:`, `?.`, `?#`.
+Accessing directly with a number literal `#N` gives you a type `T`. To access with a variable, you must use `#[n]` which returns a maybe type `T?`. This you must unwrap this with `maybe` and/or one of the question-type operators: `?`, `?:`, `?.`, `?#`.
 
 ```
 i = 2
@@ -1537,7 +1537,7 @@ result: ptr = ExternalLib.getSomething()
 ExternalLib.doSomethingWith(result)
 ```
 
-You can manually check if the pointer is `Null` and give a helpful error message in scripts. `Null` is a `ptr` type that points to the NULL pointer. It's distinct from `None` which is an varied maybe type `T?`. 
+You can manually check if the pointer is `Null` and give a helpful error message in scripts. `Null` is a `ptr` type that points to the NULL pointer. It's distinct from `None` which is an varied question type `T?`. 
 
 ```
 result: ptr = ExternalLib.getSomething()
@@ -1546,7 +1546,7 @@ if result == Null then
     raise NotFound
 ```
 
-Sometimes, it's necessary to dig deep into the unsafe territory. The `^` is the symbol associated with pointers, analogues to `?` for maybes, `!` for results, and `#` for arrays. It can be used in type notation, but it's also the operator to dereference a pointer. Thy type must be known at compile-time. Dereferencing an opaque pointer `ptr` is a compile-time error. In the type notation, `T^` prevents the pointer from mutating its memory or `T^mu` allows mutation with `^ =` (dereference + assignment). 
+Sometimes, it's necessary to dig deep into the unsafe territory. The `^` is the symbol associated with pointers, analogues to `?` for qeustion types, `!` for result types, and `#` for arrays. It can be used in type notation, but it's also the operator to dereference a pointer. Thy type must be known at compile-time. Dereferencing an opaque pointer `ptr` is a compile-time error. In the type notation, `T^` prevents the pointer from mutating its memory or `T^mu` allows mutation with `^ =` (dereference + assignment). 
 
 ```
 mu x = 0                 -- `ptr` type takes a reference and creates a generic pointer.
@@ -1578,7 +1578,7 @@ Pointer types have 2 kinds of mutability: one for the reference, and one for the
   * _Do-while-not:_ `loop _ until cond`
 * [__`match` / `is`__](#match--is): Pattern Matching
 * [__`try` / `catch`__](#try--catch): Resolves Results (`T!`).
-* [__`maybe` / `else`__](#maybe--else): Resolves maybes (`T?`). If any `?` inside fails, the block short-circuits.
+* [__`maybe` / `else`__](#maybe--else): Resolves question types (`T?`). If any `?` inside fails, the block short-circuits.
 
 All branching constructs share the same block / inline pattern:
 
@@ -1877,7 +1877,7 @@ match choice is
 ```
 
 ```
--- Fallback, `val` is converted to maybe type `T?`:
+-- Fallback, `val` is converted to question type `T?`:
 match choice is
 | First | Second(opt val) | Third{opt val} then
     print("First, Second, or Third: {maybe val? else "None"}")
@@ -1892,7 +1892,7 @@ match choice is
 | First then
     print("First")
     fallthrough
-| Second(opt x) then    -- `opt x` in pattern wraps the variable in a maybe
+| Second(opt x) then    -- `opt x` in pattern wraps the variable in a question type
     if x is Some(x) then
         print("Definitely Second: {x}")
     -- Implicit break.
@@ -2038,23 +2038,23 @@ if x is Some(x) then
     print("{x}")
 ```
 
-### Error/Maybe Control Flow
+### Error/None Control Flow
 
 Error and null handling is done through the `try` and `maybe` keywords. These blocks are for unwrapping the 2 monadic types in Mulem: *maybes* `T?` and *results* `T!`. When resolving a monadic, you go in *reverse order* that was notated by the type. Think of it like a box: you start from the outside and work your way in.
 
-- `T?` is a *maybe:* it may contain a value or be `None`.
-- `T!E` is a *result:* it may contain a value or an error of type `E`.
+- `T?` is a *question type:* it may contain a value or be `None`.
+- `T!E` is a *result type:* it may contain a value or an error of type `E`.
 
 | Mulem's Type | Other Languages                  | In Plain English                                                             | Layers | Resolve Order             |
 |:----------|:---------------------------------|:-----------------------------------------------------------------------------|-------:|:----------------------------|
-| `T?`      | `Maybe<T>`                       | A maybe                                                                      |      1 | `?`                         |
+| `T?`      | `Question<T>`                       | A question                                                                      |      1 | `?`                         |
 | `T!E`     | `Result<T, E>`                   | A result with 1 possible error                                               |      1 | `!`                         |
-| `T?!E`    | `Result<Maybe<T>, E>`            | A result with 1 possible error of a maybe                                    |      2 | `!` *then* `?`            |
-| `T??`     | `Maybe<Maybe<T>>`                | A maybe of a maybe                                                           |      2 | `?` *then* `?`            |
-| `T?!E!F`  | `Result<Maybe<T>, E\|F>`         | A result with 2 possible errors of a maybe                                  |      2 | `!` *then* `?`            |
-| `T!E?`    | `Maybe<Result<T, E>>`            | A maybe of a result with 1 possible error                                   |      2 | `?` *then* `!`            |
-| `T?!E?`   | `Maybe<Result<Maybe<T>, E>`      | A maybe of a result with 1 possible error of a maybe                       |      3 | `?` *then* `!` *then* `?` |
-| `T!E?!F`  | `Result<Maybe<Result<T, E>>, F>` | An result with 1 possible error of a maybe of result with 1 possible error |      3 | `!` *then* `?` *then* `!` |
+| `T?!E`    | `Result<Question<T>, E>`            | A result with 1 possible error of a question                                    |      2 | `!` *then* `?`            |
+| `T??`     | `Question<Question<T>>`                | A question of a question                                                           |      2 | `?` *then* `?`            |
+| `T?!E!F`  | `Result<Question<T>, E\|F>`         | A result with 2 possible errors of a question                                  |      2 | `!` *then* `?`            |
+| `T!E?`    | `Question<Result<T, E>>`            | A question of a result with 1 possible error                                   |      2 | `?` *then* `!`            |
+| `T?!E?`   | `Question<Result<Question<T>, E>`      | A question of a result with 1 possible error of a question                       |      3 | `?` *then* `!` *then* `?` |
+| `T!E?!F`  | `Result<Question<Result<T, E>>, F>` | An result with 1 possible error of a question of result with 1 possible error |      3 | `!` *then* `?` *then* `!` |
 
 Think of each `?` or `!` on a *type* as a **layer.** When you call the same `?` or `!` in an *expression,* you **unwrap** that layer.
 
@@ -2071,8 +2071,8 @@ y =
 ```
 
 ```
-x: int? = getMaybeInt()   -- Get wrapped maybe value.
-y: int = x?               -- Unwrap the maybe.
+x: int? = getSomeInt()    -- Get wrapped value.
+y: int = x?               -- Unwrap the question.
                           -- Which is equivalent to…
 y =
     match x is
@@ -2155,7 +2155,7 @@ riskyFn(a: int): int! =
 
 #### `maybe` / `else`
 
-None-coalescing. Unwrap maybe types with `?` inside an `maybe` block. If any `?` returns `None`, the block short-circuits.
+None-coalescing. Unwrap question types with `?` inside an `maybe` block. If any `?` returns `None`, the block short-circuits.
 
 ```
 maybe
@@ -2174,7 +2174,7 @@ a = Some(10)
 x = maybe f(a?) else "fallback"
 ```
 
-Using `?` inside a function automatically infers a maybe return type `T?`.
+Using `?` inside a function automatically infers a question return type `T?`.
 
 ```
 addStuff(a: int, b: int): int? =
@@ -2183,7 +2183,7 @@ addStuff(a: int, b: int): int? =
     x + y
 ```
 
-Nested maybes unwrap with multiple `??`:
+Nested questions unwrap with multiple `??`:
 
 ```
 unnest(x: int??): int? = x??
@@ -2211,7 +2211,7 @@ Another example of a use for `maybe`:
 ```
 crunchData(): int?!Error!CustomError =                                -- Multiple error types
     value: int? = someFunc()!
-    -- Maybe to Result
+    -- Question to Result
     data: int = maybe value? else raise CustomError("Not found")      -- Exist function on fallback
     data
 ```
@@ -2656,24 +2656,24 @@ The compiler will read the body of the macro and understand where to insert its 
 You can also define a type with a meta function. The meta functions parameters in `[]` will be inferred if it returns a function or type and you call it with parentheses `()`. In other words, `meta(_)` is equal to `meta[_](_)`. 
 
 ```
--- Note that this is not the actual definition for a maybe type `T?`. This is just a user-defined enum that uses the same pattern.
-MyMaybe[T] :: enum =
+-- Note that this is not the actual definition for a question type `T?`. This is just a user-defined enum that uses the same pattern.
+Option[T] :: enum =
     Some(T)
     None
 
-Some[T] :: MyMaybe[T].Some
-None[T] :: MyMaybe[T].None
+Some[T] :: Option[T].Some
+None[T] :: Option[T].None
 
-maybeInt = Some(1)
+optionInt = Some(1)
 ```
 
 Type parameters can be omitted at the call site if they can be fully inferred from the value arguments, in which case the call uses only parentheses `()`. It can also be called explicitly by making an alias for it or calling with both brackets at the same time `[]()`
 
 ```
 SomeInt :: Some[int]
-maybeInt = SomeInt(1)
+optionInt = SomeInt(1)
 
-maybeInt = Some[int](1)
+optionInt = Some[int](1)
 ```
 
 The syntax `[]` was chosen so that generic type inference will take precedence. `meta(a, b)` means to *call the instantiated function that `meta` returns with inferred types* whereas `meta[a, b]` means to *call the abstract function `meta` with these exact values.* This also makes it easy to distinguish actual function calls from macros/inlining. This removes the need for the more conventional arrow bracket `<>` syntax, which can get confusing. For example, in `f( g < a, b > ( c ) )`, is `g` a generic function or is that comparing two values and passing the results to `f`? The square bracket syntax removes this ambiguity, `f( g [ a, b ] ( c ) )`. This makes it semantically clear that you're doing a compile-time function call followed by a run-time function call. 
@@ -2873,7 +2873,7 @@ Mulem's unconventional choices are intentional, prioritizing readability, explic
 * __Readability First:__ Significant whitespace avoids bracket clutter, while the strict block/inline switching rules (`:` vs `()`) prevent you from fighting the formatter.
 * __Traceable Dependencies:__ The language forces you to explicitly name what you bring into scope. There are no glob imports or implicit mutable state captures. `import`, inheriting, and `\` (capturing) all use explicit listing.
 * __Unified Concepts:__ `::` is the universal operator for top-level, compile-time definitions (structs, aliases, constants).
-* __Type and Expression Symmetry:__ `?` (Maybes) and `!` (Results) work identically whether used in type definitions or as unwrapping operators.
+* __Type and Expression Symmetry:__ `?` (Questions) and `!` (Results) work identically whether used in type definitions or as unwrapping operators.
 * __Scalable Patterns:__ Simple tasks use simple syntax (e.g., `fn(x) = x`), but the language easily scales up to explicit types, memory models, and generic constraints as complexity demands.
 
 ---
@@ -2931,7 +2931,7 @@ do
 
 ## Reserved Keywords
 
-Mulem has 42 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard maybes (`Some`, `None`), are built-in symbols but *not* strict keywords.
+Mulem has 42 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard question `T?` members (`Some`, `None`), are built-in symbols but *not* strict keywords.
 
 **The Keyword List:**
 `and`, `as`, `await`, `band`, `bnot`, `bor`, `break`, `catch`, `continue`, `defer`, `do`, `else`, `enum`, `error`, `fallthrough`, `fn`, `if`, `impl`, `import`, `in`, `is`, `loop`, `match`, `maybe`, `mod`, `not`, `opt`, `or`, `out`, `proto`, `raise`, `ref`, `rem`, `return`, `self`, `struct`, `then`, `try`, `until`, `void`, `where`, `xor`, `yield`.
@@ -2956,52 +2956,52 @@ Mulem has 42 reserved keywords. Note that built-in types (`int`, `str`), boolean
 | 1     | Pipeline                   | `|>`                                      |
 | 0     | Assignment / Spread        | `=` `+=` `-=` `&` `...`                   |
 
-| Operator       | Meaning                                             |
-|:--------------:|:----------------------------------------------------|
-|   `lhs . rhs`  | Member access                                       |
-|   `lhs # rhs`  | Direct array/dictionary index                       |
-|   `lhs #[rhs]` | Safe array/dictionary index                         |
-|   `lhs ?`      | Unwrap maybe, propagate `None` to nearest `maybe`   |
-|  `lhs ?. rhs`  | None-coalessing member access                       |
-|  `lhs ?# rhs`  | None-coalessing array/dictionary access             |
-|   `lhs !`      | Unwrap result, propagate error to nearest `try`     |
-|   `lhs ^`      | Dereference typed pointer                           |
-|     `... rhs`  | Spread array into array                             |
-|       `& rhs`  | Spread tuple into tuple (same type)                 |
-|  `lhs ... rhs` | Exclusive range                                     |
-| `lhs ..= rhs`  | Inclusive range                                     |
-| `lhs \|> rhs`  | Pipeline                                            |
-|   `lhs = rhs`  | Assignment or declaration                           |
-|  `lhs += rhs`  | Increment                                           |
-|  `lhs -= rhs`  | Decrement                                           |
-| `lhs: T = rhs` | Explicit typed declaration                          |
-|   `lhs + rhs`  | Addition                                            |
-|   `lhs - rhs`  | Subtraction                                         |
-|       `+ rhs`  | Unary positive                                      |
-|       `- rhs`  | Sign flip                                           |
-|   `lhs * rhs`  | Multiplication                                      |
-|   `lhs / rhs`  | Exact division (float)                              |
-|  `lhs // rhs`  | Floor division (int)                                |
-|  `lhs rem rhs` | Modulo (sign matches `lhs`)                         |
-|  `lhs mod rhs` | Floor modulo (sign matches `rhs`)                   |
-|  `lhs ** rhs`  | Exponentiation (right-associative)                  |
-|  `lhs == rhs`  | Equality                                            |
-|  `lhs != rhs`  | Inequality                                          |
-|   `lhs > rhs`  | Greater than                                        |
-|   `lhs < rhs`  | Less than                                           |
-|  `lhs >= rhs`  | Greater than or equal                               |
-|  `lhs <= rhs`  | Less than or equal                                  |
-| `lhs band rhs` | Bitwise AND                                         |
-| `lhs bor rhs`  | Bitwise OR                                          |
-| `lhs xor rhs`  | Bitwise XOR                                         |
-|    `bnot rhs`  | Bitwise NOT                                         |
-|  `lhs << rhs`  | Shift left                                          |
-|  `lhs >> rhs`  | Shift right                                         |
-| `lhs >>> rhs`  | Unsigned shift right                                |
-|  `lhs <> rhs`  | Concatenation                                       |
-| `lhs and rhs`  | Logical AND                                         |
-|  `lhs or rhs`  | Logical OR                                          |
-|     `not rhs`  | Logical NOT                                         |
+| Operator       | Meaning                                              |
+|:--------------:|:-----------------------------------------------------|
+|   `lhs . rhs`  | Member access                                        |
+|   `lhs # rhs`  | Direct array/dictionary index                        |
+|   `lhs #[rhs]` | Safe array/dictionary index                          |
+|   `lhs ?`      | Unwrap question, propagate `None` to nearest `maybe` |
+|  `lhs ?. rhs`  | None-coalessing member access                        |
+|  `lhs ?# rhs`  | None-coalessing array/dictionary access              |
+|   `lhs !`      | Unwrap result, propagate error to nearest `try`      |
+|   `lhs ^`      | Dereference typed pointer                            |
+|     `... rhs`  | Spread array into array                              |
+|       `& rhs`  | Spread tuple into tuple (same type)                  |
+|  `lhs ... rhs` | Exclusive range                                      |
+| `lhs ..= rhs`  | Inclusive range                                      |
+| `lhs \|> rhs`  | Pipeline                                             |
+|   `lhs = rhs`  | Assignment or declaration                            |
+|  `lhs += rhs`  | Increment                                            |
+|  `lhs -= rhs`  | Decrement                                            |
+| `lhs: T = rhs` | Explicit typed declaration                           |
+|   `lhs + rhs`  | Addition                                             |
+|   `lhs - rhs`  | Subtraction                                          |
+|       `+ rhs`  | Unary positive                                       |
+|       `- rhs`  | Sign flip                                            |
+|   `lhs * rhs`  | Multiplication                                       |
+|   `lhs / rhs`  | Exact division (float)                               |
+|  `lhs // rhs`  | Floor division (int)                                 |
+|  `lhs rem rhs` | Modulo (sign matches `lhs`)                          |
+|  `lhs mod rhs` | Floor modulo (sign matches `rhs`)                    |
+|  `lhs ** rhs`  | Exponentiation (right-associative)                   |
+|  `lhs == rhs`  | Equality                                             |
+|  `lhs != rhs`  | Inequality                                           |
+|   `lhs > rhs`  | Greater than                                         |
+|   `lhs < rhs`  | Less than                                            |
+|  `lhs >= rhs`  | Greater than or equal                                |
+|  `lhs <= rhs`  | Less than or equal                                   |
+| `lhs band rhs` | Bitwise AND                                          |
+| `lhs bor rhs`  | Bitwise OR                                           |
+| `lhs xor rhs`  | Bitwise XOR                                          |
+|    `bnot rhs`  | Bitwise NOT                                          |
+|  `lhs << rhs`  | Shift left                                           |
+|  `lhs >> rhs`  | Shift right                                          |
+| `lhs >>> rhs`  | Unsigned shift right                                 |
+|  `lhs <> rhs`  | Concatenation                                        |
+| `lhs and rhs`  | Logical AND                                          |
+|  `lhs or rhs`  | Logical OR                                           |
+|     `not rhs`  | Logical NOT                                          |
 
 __Remainder vs. Modulo:__
 
@@ -3027,12 +3027,12 @@ The practical case where it matters is things like clock arithmetic, array wrapp
 
 ### Key Type Modifiers & Postfix Operators
 
-| Syntax     | Meaning            | Note                                                     |
-|:-----------|:-------------------|:---------------------------------------------------------|
-| `T?`, `x?` | Maybe              | Unwraps a maybe; propagates `None` to nearest `maybe`.   |
-| `T!`, `x!` | Result / Error     | Unwraps a result; propagates error to nearest `try`.     |
-| `T#`, `x#` | Array / Dict Index | `T#N` is fixed-size. Access: `array#index`.              |
-| `T^`, `x^` | Pointer            | Dereference a pointer.                                   |
+| Syntax     | Meaning            | Note                                                      |
+|:-----------|:-------------------|:----------------------------------------------------------|
+| `T?`, `x?` | Question           | Unwraps a question; propagates `None` to nearest `maybe`. |
+| `T!`, `x!` | Result / Error     | Unwraps a result; propagates error to nearest `try`.      |
+| `T#`, `x#` | Array / Dict Index | `T#N` is fixed-size. Access: `array#index`.               |
+| `T^`, `x^` | Pointer            | Dereference a pointer.                                    |
 
 ---
 
