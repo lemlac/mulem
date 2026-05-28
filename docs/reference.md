@@ -798,7 +798,7 @@ print("{addAll(1, 2, 3)}")  -- Prints "6"
 
 ```
 -- With pattern matching:
-addAll(...nums: [int]): int =
+addAll(...nums: [*int]): int =
     match nums is
     | []            = 0
     | [x]           = x
@@ -1491,7 +1491,7 @@ b: ThreeInts = (0, ...list)   -- == (0, 1, 2), truncated at the end
 Tuples may also collect any remaining positional components into an array, just like variadic parameters in functions.
 
 ```
-TwoOrMoreInts :: (int, int, ...[int])
+TwoOrMoreInts :: (int, int, ...[*int])
 
 list = [1, 2]
 a: TwoOrMoreInts = (...list)              -- == (1, 2, [])
@@ -2310,8 +2310,8 @@ asyncIterFn(n): iter[async[int]] =
         val = await fetch(i)
         yield val
 
-asyncCollect(n): async[[int]] =
-    mu ret: [int] = []
+asyncCollect(n): async[[*int]] =
+    mu ret: [*int] = []
     loop (await x) in asyncIterFn(n) then
         ret <>= x
     ret
