@@ -148,7 +148,7 @@ x = 1 \
   + 5 + 6
 ```
 
-In Mulem, you use a tilde (`~`) for this. It will treate whitespace *before* and *after* it as a single space (` `). This allows you to easily format your code anyway you prefer.
+In Mulem, you use a tilde (`~`) for this. It will treate whitespace *before* and *after* it as a single space (` `). This allows you to easily format your code anyway you prefer. The tilde `~` character is used exclusively for expression splitting.
 
 ```
 x = 1 ~
@@ -255,7 +255,7 @@ There are 3 rules that Mulem follows:
 3. If all brackets are closed, return to block mode at the end of a line.
 
 ```
-apiFetch((result) =      -- This starts a block for the function.
+apiFetch(fn(result) =    -- This starts a block for the function.
     if result > 0 then   -- Whitespace is significant here.
         print("Success! {result}")
     else
@@ -1638,19 +1638,13 @@ do:label
     break:label
 ```
 
-Inline `do` will start a sequence of expressions separated by semicolons `;` that ends at a new line or (when inside a bracket) at a comma or closing bracket. The last expression in that sequence is the value of that slot. For example, in the example shown earlier:
+Inline `do` will start a sequence of expressions separated by semicolons `;` that ends at a new line or (when inside a bracket) at a comma or closing bracket. The last expression in that sequence is the value of that slot.
 
 ```
-(getX(), (print("fetching y"); getY()))
+(a, do b(); c, d)    -- == (a, c, d) with side effect b()
 ```
 
-We can also write it as this:
-
-```
-(getX(), do print("fetching y"); getY())
-```
-
-Adding `do` makes it's clear that `;` is connected to `do` and not the parentheses. You can read it as **do** `print("fetching y")` **then** `getY()`.
+Adding `do` makes it's clear that `;` is connected to `do` and not the parentheses.
 
 #### `if` / `else`
 
