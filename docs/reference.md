@@ -835,13 +835,13 @@ cannotChangeX(2) -- Prints "2"
 print("{x}")     -- Prints "1"
 ```
 
-To capture a mutable variable, write `~` at the end of the function signature. This goes after the parameters and before the return type `: T =`. List each *mutable* (`mu`) variables that the function uses. This helps make it easy to see which functions depend on mutable variables and which ones don't since `~` doesn't appear in type notation or anywhere else to the left of the equals sign `=` in function signatures except for captures. 
+To capture a mutable variable, write `\` at the end of the function signature. This goes after the parameters and before the return type `: T =`. List each *mutable* (`mu`) variables that the function uses. This helps make it easy to see which functions depend on mutable variables and which ones don't since `\` doesn't appear in type notation or anywhere else to the left of the equals sign `=` in function signatures except for captures. 
 
 This follows the same practice that `import` and inheriting where all words in a given scope are listed out clearly so that there are no accident name collisions or hidden gotchas.
 
 ```
 amount = 1               -- Immutable variable, doesn't need to be captured.
-mu count = 0             -- Mutable variables, must be captured with `~`.
+mu count = 0             -- Mutable variables, must be captured with `\`.
 mu squared = 1
 mu cubed = 1
    
