@@ -2821,11 +2821,11 @@ sort[T] :: where =
 
 ### Manual Implementation
 
-Generics will automatically generate code based on their parameters, but you can also implement them by hand using pattern matching. If you only want to use the manual implementations for a generic function, you can set its body to `not return`. This creates a virtual function that can be overloaded later. If you use a function that is defined with `not return`, it will throw a compile-time error.
+Generics will automatically generate code based on their parameters, but you can also implement them by hand using pattern matching. If you only want to use the manual implementations for a generic function, you can set its body to `unimplemented[]`. This creates a virtual function that can be overloaded later. If you use a function that is defined with `unimplemented[]`, it will throw a compile-time error.
 
 ```
 -- Forces every type to have its own implementation
-increment[T] :: (ref c: T): void = not return
+increment[T] :: (ref c: T): void = unimplemented[]
 
 Counter :: struct = value: int
 
@@ -2965,10 +2965,10 @@ do
 
 ## Reserved Keywords
 
-Mulem has 41 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard maybes (`Some`, `None`), are built-in symbols but *not* strict keywords.
+Mulem has 42 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard maybes (`Some`, `None`), are built-in symbols but *not* strict keywords.
 
 **The Keyword List:**
-`and`, `as`, `await`, `band`, `bor`, `break`, `catch`, `continue`, `defer`, `do`, `else`, `enum`, `error`, `fallthrough`, `fn`, `if`, `impl`, `import`, `in`, `is`, `loop`, `match`, `maybe`, `mod`, `not`, `opt`, `or`, `out`, `proto`, `raise`, `ref`, `rem`, `return`, `self`, `struct`, `then`, `try`, `until`, `void`, `where`, `xor`, `yield`.
+`and`, `as`, `await`, `band`, `bnot`, `bor`, `break`, `catch`, `continue`, `defer`, `do`, `else`, `enum`, `error`, `fallthrough`, `fn`, `if`, `impl`, `import`, `in`, `is`, `loop`, `match`, `maybe`, `mod`, `not`, `opt`, `or`, `out`, `proto`, `raise`, `ref`, `rem`, `return`, `self`, `struct`, `then`, `try`, `until`, `void`, `where`, `xor`, `yield`.
 
 ---
 
@@ -2978,7 +2978,7 @@ Mulem has 41 reserved keywords. Note that built-in types (`int`, `str`), boolean
 |:------|:---------------------------|:------------------------------------------|
 | 12    | Member access/Function     | `.` `?.` `#` `?#` `()`                    |
 | 11    | Postfix                    | `?` `!` `^`                               |
-| 10    | Unary                      | `+` `-` `not`                             |
+| 10    | Unary                      | `+` `-` `not` `bnot`                      |
 | 9     | Exponent                   | `**` (right-associative)                  |
 | 8     | Multiplicative / Shift     | `*` `/` `//` `rem` `mod` `<<` `>>` `>>>`  |
 | 7     | Additive / Concat          | `+` `-` `<>`                              |
@@ -3028,20 +3028,14 @@ Mulem has 41 reserved keywords. Note that built-in types (`int`, `str`), boolean
 | `lhs band rhs` | Bitwise AND                                         |
 | `lhs bor rhs`  | Bitwise OR                                          |
 | `lhs xor rhs`  | Bitwise XOR                                         |
+|    `bnot rhs`  | Bitwise NOT                                         |
 |  `lhs << rhs`  | Shift left                                          |
 |  `lhs >> rhs`  | Shift right                                         |
 | `lhs >>> rhs`  | Unsigned shift right                                |
 |  `lhs <> rhs`  | Concatenation                                       |
 | `lhs and rhs`  | Logical AND                                         |
 |  `lhs or rhs`  | Logical OR                                          |
-|     `not rhs`  | Logical NOT (or bitwise NOT for numbers)            |
-
-`not` behaves like the `!` prefix operator in some languages which use both logical NOT and bitwise NOT depending on the type.
-
-```
-not False == True
-not 5 == -6
-```
+|     `not rhs`  | Logical NOT                                         |
 
 __Remainder vs. Modulo:__
 
