@@ -148,46 +148,41 @@ x = 1 \
   + 5 + 6
 ```
 
-In Mulem, you use a caret (`^`) for this. It will treate whitespace *before* and *after* it as a single space (` `). This allows you to easily format your code anyway you prefer. The caret `^` character is used exclusively for expression splitting.
+In Mulem, you use a colon (`:`) for this. It will collapse whitespace *before* it, ensuring everything lines up.
 
 ```
-x = 1 ^
-  + 2 + 3 ^
-  + 4 ^
-  + 5 + 6
-
 x = 1
-  ^ + 2 + 3
-  ^ + 4
-  ^ + 5 + 6
+  : + 2 + 3
+  : + 4
+  : + 5 + 6
 ```
 
-Indentation is lenient with expression splitting. As long as there's one or more `^` characters in between two tokens in an expression, then it belongs to the same expression.
+Indentation is lenient with expression splitting. As long as there's a `_` character at the start of a line, then it belongs to the same expression.
 
 ```
 do
     a
-        ^ + b ^    -- Double is fine.
-      ^ * c
-        ^ - d ^
-     ^ e
-    ^ rem f        -- Indentation must match the block.
-      ^ band g
+        : + b
+      : * c
+        : - d
+     : e
+    : rem f        -- Indentation must be the same or more as the block.
+      : band g
 ```
 
 It's recommended to keep the indentation the same. This is especially useful for long `if` statement.
 
 ```
-if a or b
-^ and c or d        -- Each `~` line is in the `if` condition.
-^ and e or f
-^ then              -- Block starts here.
+if    a or b
+: and c or d        -- Each `~` line is in the `if` condition.
+: and e or f
+: then              -- Block starts here.
     print("True")
 else
     print("False")
 ```
 
-Mulem has no implicit lookahead. When in a block, all line breaks end an expression unless ignored explicitly with `^`. 
+Mulem has no implicit lookahead. When in a block, all line breaks end an expression unless ignored explicitly with `:`. 
 
 ### Block Expressions
 
@@ -2216,10 +2211,10 @@ Chain multiple `maybe` / `else` together untill you get a fallback:
 
 ```
 getFirst(a: int, b: int, c: int): int =
-    ^ maybe getA(a)? else
-    ^ maybe getB(b)? else
-    ^ maybe getC(c)? else
-    ^ 0
+    : maybe getA(a)? else
+    : maybe getB(b)? else
+    : maybe getC(c)? else
+    : 0
 ```
 
 Or use the `None`-coalescing operator (`?:`).
