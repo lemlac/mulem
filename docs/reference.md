@@ -157,6 +157,15 @@ x = 1
   : + 5 + 6
 ```
 
+Method chaining:
+
+```
+object.method1()
+    : .method2()
+    : .method3()
+    : .method4()
+```
+
 Indentation is lenient with expression splitting. As long as there's a `_` character at the start of a line, then it belongs to the same expression.
 
 ```
@@ -371,11 +380,11 @@ When mixed with `do`, multiple expressions separated by semicolons `;` on one li
 |> print("{$}")                  -- Print result.
 ```
 
-Note that `|>` at the beginning of a line is different from `~ |>` which is a split expression on the next line. The pipe will continue after it.
+Note that `|>` at the beginning of a line is different from `: |>` which is a split expression on the next line. The pipe will continue after it.
 
 ```
 |> fetchA()
-~ |> fetchB(&$)
+: |> fetchB(&$)
 |> fetchC(&$)
 |> print("{$}")
 ```
