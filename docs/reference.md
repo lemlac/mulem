@@ -3047,12 +3047,12 @@ The practical case where it matters is things like clock arithmetic, array wrapp
 
 ### Key Type Modifiers & Postfix Operators
 
-| Syntax     | Meaning            | Note                                                      |
-|:-----------|:-------------------|:----------------------------------------------------------|
-| `T?`, `x?` | Question           | Unwraps a question; propagates `None` to nearest `maybe`. |
-| `T!`, `x!` | Exclamation        | Unwraps a exclamation; propagates error to nearest `try`.      |
-| `T#`, `x#` | Array / Dict Index | `T#N` is fixed-size. Access: `array#index`.               |
-| `T^`, `x^` | Pointer            | Dereference a pointer.                                    |
+| Syntax        | Meaning            | Note                                                      |
+|:--------------|:-------------------|:----------------------------------------------------------|
+|  `T?`, `x?`   | Question           | Unwraps a question; propagates `None` to nearest `maybe`. |
+|  `T!`, `x!`   | Exclamation        | Unwraps a exclamation; propagates error to nearest `try`. |
+| `[T]`, `x^[]` | Array / Dict Index | `[N*T]` is fixed-size. Access: `array^[index]`.           |
+|  `T^`, `x^`   | Pointer            | Dereference a pointer.                                    |
 
 ---
 
