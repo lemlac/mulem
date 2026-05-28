@@ -541,7 +541,7 @@ Functions do not automatically capture mutable variables. Any assignment inside 
 ```
 mu count = 0
 
-addCount() \ (count) =
+addCount() / (count) =
     count += 1
 
 addCount()
