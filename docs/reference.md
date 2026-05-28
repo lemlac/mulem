@@ -266,6 +266,19 @@ apiFetch(fn(result) =    -- This starts a block for the function.
                          -- New line ends then inline expression, switch to block mode and continue to next line.
 ```
 
+`fn(result) =` starts a block where white space is significant. If block start and ends where visualized with curly braces, it would look like this:
+
+```
+apiFetch(fn(result) ={     -- Start block
+    if result > 0 then{    -- Nested block
+        print("Success! {result}")
+    }else{                 -- Indentation ends first if block
+        print("Failure! {result}")
+}})                        -- `)` closes all non-bracket blocks inside it
+```
+
+`=` + (line break), `then` + (line break), and `else` + (line break) start whitespace-significant blocks, and `)` ends the bracket sequence and all non-bracket sequences inside it. 
+
 Nesting works freely. You only need to worry about closing the bracket when you're done with the block. 
 
 ```
