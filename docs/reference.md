@@ -288,7 +288,7 @@ renderScene(
         try
             loadHighResAssets()!
         catch
-        | AssetError(msg) then
+        | AssetError(msg) =
             print("Error: {msg}")
             loadFallbackAssets()
     else
@@ -303,13 +303,13 @@ renderScene(
 
 ### Pattern Splitting
 
-A **pattern** is special type of expression. It's a sequence of enumerable members separated by vertical bars (`|`). Some keywords can start a pattern which terminates at `then`. When a pattern keyword is at the end of a line, the lines following it that start with `|` point to the same pattern sequence. This is similar to expression splitting, so we call it **pattern splitting.**
+A **pattern** is special type of expression. It's a sequence of enumerable members separated by vertical bars (`|`). Some keywords can start a pattern sequence. When a pattern keyword is at the end of a line, the lines following it that start with `|` point to the same pattern sequence. This is similar to expression splitting, so we call it **pattern splitting.**
 
 ```
 match expr is
-| Pattern(x) then
+| Pattern(x) =
     print("{x}")
-| then        -- Wildcard
+| (_) =           -- Wildcard
     print("no match")
 ```
 
@@ -669,9 +669,9 @@ Instead, one function can be defined with multiple definitions using `match ... 
 
 ```
 safeDivide(...) = match (...) is
-| (x: float, y: float if y != 0.0): float then
+| (x: float, y: float if y != 0.0): float =
     x / y
-| (x: float, y: float): float then
+| (x: float, y: float): float =
     0.0
 ```
 
@@ -800,20 +800,20 @@ print("{addAll(1, 2, 3)}")  -- Prints "6"
 -- With pattern matching:
 addAll(...nums: int#): int =
     match nums is
-    | []            then 0
-    | [x]           then x
-    | [x, ...rest]  then x + addAll(...rest)
+    | []            = 0
+    | [x]           = x
+    | [x, ...rest]  = x + addAll(...rest)
 ```
 
 A name is optional after `...`. You can use the symbol by itself to pass it to another function or itself in a functional loop. 
 
 ```
 addAll(...) = match (...) is
-| (x: int, ...): int then
+| (x: int, ...): int =
     x + addAll(...)
-| (x: int): int then
+| (x: int): int =
     x
-| (): int then
+| (): int =
     0
 
 logAndAdd(msg: str, ...) =
@@ -1106,7 +1106,7 @@ Notation:
 - **Basic**: `x: T`
 - **Functions**: `f(x: T): T`
 - **Questions**: `T?`
-- **Results**: `T!` or T!E` where `E` is an `error` type
+- **Exclamation**: `T!` or T!E` where `E` is an `error` type
 - **Arrays**: `T#` or `T#N` where `N` is the length
 - **Multi-dimensional Arrays**: `T##`, an extra `#` for each dimension, each dimension can be fixed or dynamic: `T#N#`, `T##N`, `T#N#N`, `T#N##`, etc.
 - **Dictionaries**: `T#U`
@@ -1167,9 +1167,9 @@ sizeOfPtr  = sizeof[ptr]    -- == 4 or 8
 
 ```
 match value is
-| True then
+| True =
     print("It's true!")
-| False then
+| False =
     print("It's false!")
 ```
 
@@ -1420,31 +1420,23 @@ do
 
 #### Arrays
 
-Array types are declared with the hash symbol (`#`). This was chosen because the `#` is commonly used for numbers. For example, `#1` is read `number 1`. A number after the `#` makes it a fixed length array `type#N`. Arrays are statically sized when written `type#N`; `type#` is the dynamic form. Items are separated with commas (`,`). Index is done with the `#[]` operator. When the index is a number literal, you can omit the `[]`, similar to `.` (member access) for tuples.
+Array types are declared with square brackets around their type (`[T]`). A number after a mulitplication mark `*` makes it a fixed length array `[N*T]`. Arrays are statically sized when written `[T*N]`, while `[T]` is the dynamic form. Items are separated with commas (`,`). Index is done with the `^[]` operator. 
 
 ```
-list: int#4 = [1, 2, 3, 4]
+list: [4*int] = [1, 2, 3, 4]
 print("length of list: {len(list)}")
-compressedList = [list#0 + list#1, list#2 + list#3]
-doubleArray: int#2#2 = [[1, 2], [3, 4]]
-item = doubleArray#1#0    -- The 2nd row, 1st column
-print("{item}")           -- Prints "3"
+compressedList = [list^[0] + list^[1], list^[2] + list^[3]]
+doubleArray: [3*[2*int]] = [[1, 2], [3, 4], [5, 6]]
+item = doubleArray^[1]^[0]    -- The 2nd row, 1st column
+item = doubleArray^[1,0]      -- Or seperated with commas
+print("{item}")               -- Prints "3"
 ```
 
-This builds on the visible symmetry between type notation and their value expressions:
-
-| Type | Notation | Expression |
-|:---------|:------:|:--------:|
-| **Results**  | `T!`  | `x!`  |
-| **Question** | `T?`  | `x?`  |
-| **Pointers** | `T^`  | `x^`  |
-| **Arrays**   | `T#N` | `x#n` |
-
-Accessing directly with a number literal `#N` gives you a type `T`. To access with a variable, you must use `#[n]` which returns a maybe type `T?`. This you must unwrap this with `maybe` and/or one of the question-type operators: `?`, `?:`, `?.`, `?#`.
+Direct access to an array is only allowed when the result is guaranteed. If not, you need to wrap it in `deref[]` which will check each dereference operator `^` / `^[]` inside of it. This will return a question type `T?`, `Some(T)` if successful or `None` if unsuccessful. 
 
 ```
-i = 2
-print("{ list#[i] ?: 0 }")   -- Prints "3" because list#2 is 3
+i = randInt()                        -- Undeterministic number.
+print("{ deref[list^[i]] ?: -1 }")   -- Prints "-1" if deref failed.
 ```
 
 In general, you'll mostly be using arrays by iterating or piping them. 
@@ -1486,7 +1478,7 @@ c = a <> b                      -- == [1, 2, 3, 0, 1, 2, 3, 4]
 d = [0, ...a <> b, 5, ...c, 6]  -- == [0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 1, 2, 3, 0, 1, 2, 3, 4, 6]
 ```
 
-If you spread an array into a tuple, the type must be known at compile-time and the tuple must have compatible components. Positional components will map to array indexes or iterator yields based on where the spread is placed inside the tuple. If the tuple runs out of space, the spread will be truncated. This works similar to variadic parameters in functions.
+If you spread an array into a tuple, the type must be known and the tuple must have compatible components. Positional components will map to array indexes or iterator yields based on where the spread is placed inside the tuple. If the tuple runs out of space, the spread will be truncated. This works similar to variadic parameters in functions.
 
 ```
 ThreeInts :: (int, int, int)
@@ -1512,18 +1504,18 @@ d: TwoOrMoreInts = (-2, -1, 0, ...list)   -- == (-2, -1, [0, 1, 2])
 
 #### Dictionaries
 
-Dictionaries are a subtype of arrays. Instead of numbers, each item is given a **key.** A dictionary's type is the type of the value `V` and the type of the key `K` join with a hash `#` in between: `V#K`. This makes it semantically clear that they are a subtype of arrays. Dictionaries also use the same operator to access items. The type passed to the `#` operator must match the key type. Each key is marked with `[]:` in the array.
+Dictionaries are a subtype of arrays. Instead of numbers, each item is given a **key.** A dictionary's type is the type of the value `V` and the type of the key `K` join with a hash `:` in between: `[K: V]`. This makes it semantically clear that they are a subtype of arrays. Dictionaries also use the same operator to access items. The type passed to the `^[]` operator must match the key type. Each key is marked with `[]:` in the array.
 
 ```
-dict: float#float = [
+dict: [float: float] = [
     [1.0f]: 10.0f,
     [1.5f]: 15.0f,
     [2.0f]: 20.0f,
 ]
-print("{ dict#1.5f }")   -- Prints "15.0"
+print("{ dict^[1.5f] }")   -- Prints "15.0"
 ```
 
-If the key type is `str` and a key is a valid variable name, then the square brackets before `:` can be omitted. You can access it like a member with `.` but with `#`. This makes it easier to distinguish compile-time access `.` and run-time access `#`. 
+If the key type is `str` and a key is a valid variable name, then the square brackets before `:` can be omitted. You can access it like a member with `.` if it can be guaranteed.
 
 ```
 dict: int#str = [
@@ -1532,14 +1524,21 @@ dict: int#str = [
     c: 3,
     ["invalid name"]: 127,
 ]
-print("{ dict#["b"] ?: 0 }")   -- Prints "2"
-print("{ dict#"b" }")          -- Prints "2",
+print("{ dict^["b"] }")   -- Prints "2"
+print("{ dict.b }")       -- Prints "2",
+```
+
+Like with arrays, undeterministic access to a dictionary requires using `deref[]` to convert it into a question type `T?`.
+
+```
+key = input()                          -- Undeterministic string.
+print("{ deref[dict^[key]] ?: -1 }")   -- Prints "-1" if deref failed.
 ```
 
 You can iterate through a dictioary like with arrays. This is the recommend way of using dictionaries. 
 
 ```
-loop (val, key) in dict then
+loop (key, val) in dict then
     print("{key} = {val}")
 ```
 
@@ -1561,7 +1560,7 @@ if result == Null then
     raise NotFound
 ```
 
-Sometimes, it's necessary to dig deep into the unsafe territory. The `^` is the symbol associated with pointers, analogues to `?` for qeustion types, `!` for result types, and `#` for arrays. It can be used in type notation, but it's also the operator to dereference a pointer. Thy type must be known at compile-time. Dereferencing an opaque pointer `ptr` is a compile-time error. In the type notation, `T^` prevents the pointer from mutating its memory or `T^mu` allows mutation with `^ =` (dereference + assignment). 
+Sometimes, it's necessary to dig deep into the unsafe territory. The `^` is the symbol associated with pointers, analogues to `?` for question types, `!` for exclamation types. It can be used in type notation, but it's also the operator to dereference a pointer. Thy type must be known at compile-time. Dereferencing an opaque pointer `ptr` is a compile-time error. In the type notation, `T^` prevents the pointer from mutating its memory or `T^mu` allows mutation with `^ =` (dereference + assignment). 
 
 ```
 mu x = 0                 -- `ptr` type takes a reference and creates a generic pointer.
@@ -1580,19 +1579,28 @@ Pointer types have 2 kinds of mutability: one for the reference, and one for the
 | `mu x: T^`   | mutable pointer to immutable memory   |         Yes          |      **No**       | *I need to switch what I'm looking at.* |
 | `mu x: T^mu` | mutable pointer to mutable memory     |         Yes          |        Yes        | *I need full control.* |
 
+Like with arrays and dictionaries, use `deref[]` to safely dereference a pointer.
+
+```
+if defer[xPtr^] is Some(x) then
+    print("x = {x}")
+else
+    print("x is gone")
+```
+
 ---
 
 ## Control Flow
 
-* [__`do`__](#do): Creates a scoped block. Can be labeled (`do:label`).
+* [__`do`__](#do): Creates a scoped block. Can be labeled (`do.label`).
 * [__`if` / `else`__](#if--else): `if x > 0 then x else -x`
 * [__`loop`__](#loop): Universal looping keyword.
   * _Unconditional:_ `loop _`
   * _While:_ `loop cond then _`
   * _For-each:_ `loop x in array then _`
   * _Do-while-not:_ `loop _ until cond`
-* [__`match` / `is`__](#match--is): Pattern Matching
-* [__`try` / `catch`__](#try--catch): Resolves Results (`T!`).
+* [__`match` / `is`__](#match--is): Pattern matching
+* [__`try` / `catch`__](#try--catch): Resolves exclamation types (`T!`).
 * [__`maybe` / `else`__](#maybe--else): Resolves question types (`T?`). If any `?` inside fails, the block short-circuits.
 
 All branching constructs share the same block / inline pattern:
@@ -1621,7 +1629,7 @@ do expr; expr
 do
     body
 
-do:label
+do.label
     body
 ```
 
@@ -1634,11 +1642,11 @@ x =
         y + 1       -- block's value is 2
 ```
 
-Any starting block can be given a label with `:label` after its starting keyword. Use this to call `break` on a specific label. 
+Any starting block can be given a label with `.label` after its starting keyword. Use this to call `break.` on a specific label. 
 
 ```
-do:label
-    break:label
+do.label
+    break.label
 ```
 
 Inline `do` will start a sequence of expressions separated by semicolons `;` that ends at a new line or (when inside a bracket) at a comma or closing bracket. The last expression in that sequence is the value of that slot.
@@ -1793,20 +1801,20 @@ loop Pattern(opt x) in listOfPatterns then
 Both accept an optional label to target an outer loop.
 
 ```
-loop:outer x in 0...100 then
-    loop:inner y in 0...100 then
+loop.outer x in 0...100 then
+    loop y in 0...100 then
         if x * y >= 100 then
-            break:inner
+            continue.outer
         if x * y == 77 then
-            break:outer
+            break.outer
 ```
 
 Pass a value to `break`, that becomes the value of the block, analogous to `return` for function.
 
 ```
-x = do:block
+x = do.block
     if cond then
-        break:block 5
+        break.block 5
     4
 
 print("{x}")     -- Prints either "4" or "5"
@@ -1816,42 +1824,42 @@ print("{x}")     -- Prints either "4" or "5"
 
 ```
 match expr is
-| Pattern1(x) then expr
-| then expr
+| Pattern1(x) = expr
+| (_) = expr
 ```
 
 The next control flow methods are based on pattern match. Generally, you see the word `is`, you next thing to expect after it is a pattern: `value is Pattern(x)`.
 
 #### `match` / `is`
 
-Enum/error branching. Exhaustive by default. `| then` for the default case.
+Enum/error branching. Exhaustive by default. `| (_) =` for the default case.
 
 ```
 match expr is
-| ptrn then
+| ptrn =
     body
-| ptrn then
+| ptrn =
     body
-| then
+| (_) =
     body
 
-match expr is (ptrn: expr | ptrn: expr | expr)
+match expr is (| ptrn = expr | ptrn = expr | (_) = expr)
 ```
 
-When inline, the patterns after `is` need to be in parentheses and `then` is replaced with `:`.
+When inline, the patterns after `is` need to be in parentheses.
 
 ```
 -- Simple value mapping
 color = match status is (
-    | Ok  : "green"
-    | Err : "red"
-    |       "gray"
+    | Ok  = "green"
+    | Err = "red"
+    | (_) =  "gray"
 )
 
 -- Inside another expression
 result = process(data) |> match $ is (
-    | Success(v) : v * 2
-    | Failure(e) : do print("Failure: {e}"); 0
+    | Success(v) = v * 2
+    | Failure(e) = do print("Failure: {e}"); 0
 )
 ```
 
@@ -1859,42 +1867,42 @@ The patterns map to the type passed in after `match`, so you only need to refere
 
 ```
 match choice is
-| First then               -- Each pattern can case starts its on block.
+| First =                  -- Each pattern can case starts its on block.
     print("First")         -- Ident for the new block.
-| Second(x) then           -- Continue this for each case.
+| Second(x) =              -- Continue this for each case.
     print("Second({x})")   -- ……
-| Third{val} then          -- ……
+| Third{val} =             -- ……
     print("Third \{ val={val} }")
-                           -- All choices were exhausted, so no `| then` is necessary.
+                           -- All choices were exhausted, so no `| (_) =` is necessary.
 ```
 
 ```
-result = match x is (Ptrn1: 5 | Ptrn2: 6 | 7)
+result = match x is (| Ptrn1 = 5 | Ptrn2 = 6 | (_) = 7)
 --
-message = match e is (OpenError{filename}: "Open error: {filename}" | "Unknown error")
+message = match e is (| OpenError{filename} = "Open error: {filename}" | (_) = "Unknown error")
 ```
 
 You can have multiple patterns match to one case. If any of the patterns destructure with a variable, the same variable name and type must be in all patterns. If not, use a wildcard `(_)` in each pattern or omit the data part entirely to disable destructuring. Otherwise, use a fallback in the pattern.
 
 ```
 match choice is
-| First then
+| First =
     print("First")
-| Second(val) | Third{val} then          -- `val` must be in all patterns
+| Second(val) | Third{val} =             -- `val` must be in all patterns
     print("Second or Third, val={val}")
 ```
 
 ```
 -- `First` doesn't have any values, so destructuring must be disabled.
 match choice is
-| First | Second | Third then
+| First | Second | Third =
     print("First, Second, or Third")
 ```
 
 ```
 -- Fallback, `val` is converted to question type `T?`:
 match choice is
-| First | Second(opt val) | Third{opt val} then
+| First | Second(opt val) | Third{opt val} =
     print("First, Second, or Third: {maybe val? else "None"}")
 ```
 
@@ -1904,14 +1912,14 @@ Proceeds to the next case, which must not destructure new values, unless fallbac
 
 ```
 match choice is
-| First then
+| First =
     print("First")
     fallthrough
-| Second(opt x) then    -- `opt x` in pattern wraps the variable in a question type
+| Second(opt x) =           -- `opt x` in pattern wraps the variable in a question type
     if x is Some(x) then
         print("Definitely Second: {x}")
     -- Implicit break.
-| then
+| (_) =
     print("No match")
 ```
 
@@ -1928,13 +1936,13 @@ Add `if` inside a pattern to conditionally match.
 
 ```
 match choice is
-| Second(x if x > 0) then
+| Second(x if x > 0) =
     print("Positive: {x}")
-| Second(x if x < 0) then
+| Second(x if x < 0) =
     print("Negative: {x}")
-| Second(x) then
+| Second(x) =
     print("Zero")
-| then
+| (_) =
     print("No match")
 ```
 
@@ -2055,33 +2063,33 @@ if x is Some(x) then
 
 ### Error/None Control Flow
 
-Error and null handling is done through the `try` and `maybe` keywords. These blocks are for unwrapping the 2 monadic types in Mulem: *maybes* `T?` and *results* `T!`. When resolving a monadic, you go in *reverse order* that was notated by the type. Think of it like a box: you start from the outside and work your way in.
+Error and null handling is done through the `try` and `maybe` keywords. These blocks are for unwrapping the 2 monadic types in Mulem: *questions* `T?` and *exclamations* `T!`. When resolving a monadic, you go in *reverse order* that was notated by the type. Think of it like a box: you start from the outside and work your way in.
 
 - `T?` is a *question type:* it may contain a value or be `None`.
-- `T!E` is a *result type:* it may contain a value or an error of type `E`.
+- `T!E` is a *exclamation type:* it may contain a value or an error of type `E`.
 
 | Mulem's Type | Other Languages                  | In Plain English                                                             | Layers | Resolve Order             |
 |:----------|:---------------------------------|:-----------------------------------------------------------------------------|-------:|:----------------------------|
-| `T?`      | `Question<T>`                       | A question                                                                      |      1 | `?`                         |
+| `T?`      | `Option<T>`                       | An option                                                                      |      1 | `?`                         |
 | `T!E`     | `Result<T, E>`                   | A result with 1 possible error                                               |      1 | `!`                         |
-| `T?!E`    | `Result<Question<T>, E>`            | A result with 1 possible error of a question                                    |      2 | `!` *then* `?`            |
-| `T??`     | `Question<Question<T>>`                | A question of a question                                                           |      2 | `?` *then* `?`            |
-| `T?!E!F`  | `Result<Question<T>, E\|F>`         | A result with 2 possible errors of a question                                  |      2 | `!` *then* `?`            |
-| `T!E?`    | `Question<Result<T, E>>`            | A question of a result with 1 possible error                                   |      2 | `?` *then* `!`            |
-| `T?!E?`   | `Question<Result<Question<T>, E>`      | A question of a result with 1 possible error of a question                       |      3 | `?` *then* `!` *then* `?` |
-| `T!E?!F`  | `Result<Question<Result<T, E>>, F>` | An result with 1 possible error of a question of result with 1 possible error |      3 | `!` *then* `?` *then* `!` |
+| `T?!E`    | `Result<Option<T>, E>`            | A result with 1 possible error for an option                                    |      2 | `!` *then* `?`            |
+| `T??`     | `Option<Option<T>>`                | An option of an option                                                           |      2 | `?` *then* `?`            |
+| `T?!E!F`  | `Result<Option<T>, E\|F>`         | A result with 2 possible errors for an option                                  |      2 | `!` *then* `?`            |
+| `T!E?`    | `Option<Result<T, E>>`            | An option of a result with 1 possible error                                   |      2 | `?` *then* `!`            |
+| `T?!E?`   | `Option<Result<Option<T>, E>`      | An option of a result with 1 possible error for an option                       |      3 | `?` *then* `!` *then* `?` |
+| `T!E?!F`  | `Result<Option<Result<T, E>>, F>` | A result with 1 possible error for an option of result with 1 possible error |      3 | `!` *then* `?` *then* `!` |
 
 Think of each `?` or `!` on a *type* as a **layer.** When you call the same `?` or `!` in an *expression,* you **unwrap** that layer.
 
 ```
-x: int!Error = getRiskyInt()   -- Get wrapped result value.
-y: int = x!                    -- Unwrap the result
+x: int!Error = getRiskyInt()   -- Get wrapped value.
+y: int = x!                    -- Unwrap the exclamation
                                -- Which is equivalent to…
 y =
     match x is
-    | Ok(val) then
+    | Ok(val) =
         val                    -- Get the Ok value.
-    | Error(e) then
+    | Error(e) =
         return Error(e)        -- Exit block, return error if a function
 ```
 
@@ -2091,9 +2099,9 @@ y: int = x?               -- Unwrap the question.
                           -- Which is equivalent to…
 y =
     match x is
-    | Some(val) then
+    | Some(val) =
         val               -- Get the Some value.
-    | None then
+    | None =
         return None       -- Exit block, return None if a function
 ```
 
@@ -2103,17 +2111,17 @@ y =
 try
     risky()!
 catch
-| Error(e) then    -- Catch specific error type.
+| Error(e) =       -- Catch specific error type.
     body
-| (e) then         -- Catch all remaining error type.
+| (e) =            -- Catch all remaining error type.
     body
-| then             -- Catch all remaining error type, but disregard value.
+| (_) =            -- Catch all remaining error type, but disregard value.
     body
 
-try risky()! catch (Error(e) then expr | then expr)
+try risky()! catch (| Error(e) = expr | (_) = expr)
 ```
 
-Error handling. Unwrap result types with `!` inside a `try` block. Unhandled errors propagate upward. Like with `match _ is`, inline `try _ catch` needs parentheses around the pattern matching section after `catch`.
+Error handling. Unwrap exclamation types with `!` inside a `try` block. Unhandled errors propagate upward. Like with `match _ is`, inline `try _ catch` needs parentheses around the pattern matching section after `catch`.
 
 ```
 try
@@ -2121,7 +2129,7 @@ try
     b = doSomething2(a)!
     b
 catch
-| Error(e) then
+| Error(e) =
     print("Error: {e}")
     0
 ```
@@ -2133,10 +2141,10 @@ try
     final = process(data, data2)
     final
 catch
-| IOError(e) then
+| IOError(e) =
     print("IO failed: {e}")
     defaultValue
-| ValidationError(e) then
+| ValidationError(e) =
     raise Err(e)
 ```
 
@@ -2146,20 +2154,20 @@ result: int = try
     data2 = anotherRisky()!
     process(data, data2)
 catch
-| IOError(e) then
+| IOError(e) =
     print("IO failed: {e}")
     0              -- fallback value
-| ValidationError(e) then
+| ValidationError(e) =
     raise Err(e)   -- Escape function with error
 ```
 
-Inline form. If you only have a whildcard case `( | x)`, you just write the value `x`.
+Inline form. If you only have a whildcard case `(| (_) = x)`, you just write the value `x`.
 
 ```
 result = try divide(1, 0)! catch 0.0
 ```
 
-Using `!` inside a function automatically infers a result return type `T!`.
+Using `!` inside a function automatically infers a exclamation return type `T!`.
 
 ```
 riskyFn(a: int): int! =
@@ -2226,7 +2234,7 @@ Another example of a use for `maybe`:
 ```
 crunchData(): int?!Error!CustomError =                                -- Multiple error types
     value: int? = someFunc()!
-    -- Question to Result
+    -- Question to Exclamation
     data: int = maybe value? else raise CustomError("Not found")      -- Exist function on fallback
     data
 ```
@@ -2248,7 +2256,7 @@ isThirteen(x) =
 
 #### `raise`
 
-Return out of the function with an error value. The function must return a result type `T!`. If declared `T!E` where `E` is an `error` type, then the type passed to `raise` must match.
+Return out of the function with an error value. The function must return a exclamation type `T!`. If declared `T!E` where `E` is an `error` type, then the type passed to `raise` must match.
 
 ```
 -- T!E is inferred:
@@ -2258,8 +2266,8 @@ alwaysFail() =
 try
     alwaysFail()!
 catch
-| (e) then                -- Catch all errors.
-    print("Error{e}")
+| (e) =                -- Catch all errors.
+    print("Error: {e}")
 ```
 
 #### `yield`
@@ -2309,7 +2317,7 @@ asyncCollect(n): async[int#] =
     ret
 ```
 
-Unlike in other languages where *promises* or *futures* can either resolve or reject, async types in Mulem **only resolve.** Instead you can use a result type `T!E` inside an `async[T!E]` function. Unwrap it like you would a result type. Because this is common, `await` has special rules in regards to the `!` and `?` opeerators when placed after it.
+Unlike in other languages where *promises* or *futures* can either resolve or reject, async types in Mulem **only resolve.** Instead you can use an exclamation type `T!E` inside an `async[T!E]` function. Unwrap it like you would an exclamation type. Because this is common, `await` has special rules in regards to the `!` and `?` opeerators when placed after it.
 
 ```
 await! x == (await x)!      -- Unwrap an `async[T!E]`
@@ -2497,17 +2505,17 @@ When pattern match, the fill path to the type doesn't need to named on each case
 
 ```
 match a is
-| First then
+| First =
     print("first!")
-| Second(_) then
+| Second(_) =
     print("second!")
-| Third{_} then
+| Third{_} =
     print("third!")
 ```
 
 ### Error Types (`error`)
 
-Errors are bit like both `struct` and `enum`. Each `error` type represents a member of a potential **error tagged union** that's summed up per function with a result `T!E` return type. Every `try` / `catch` block matches patterns to the summed error tagged union in its block based on each `!` point. Result types flatten, so `Result[Result[T, E], F]` would become `Result[T, E|F]` where `E|F` is a tagged union of each possible error in that result. Instantiation works the same as structs.
+Errors are bit like both `struct` and `enum`. Each `error` type represents a member of a potential **error tagged union** that's summed up per function with a exclamation type `T!E` return type. Every `try` / `catch` block matches patterns to the summed error tagged union in its block based on each `!` point. Exclamation types flatten, so `Exclamation[Exclamation[T, E], F]` would become `Exclamation[T, E|F]` where `E|F` is a tagged union of each possible error in that exclamation. Instantiation works the same as structs.
 
 ```
 OutOfBounds :: error                 -- No data.
@@ -2524,11 +2532,11 @@ divide(num: float, dem: float): float!DivideByZero =
 try
     divide(1, 0)!
 catch
-| DivideByZero{val} then
+| DivideByZero{val} =
     print("Can't divide {val} by zero!")
 ```
 
-Uncaught errors in a `try` / `catch` block are implicitly reraised. Each `catch` pattern removes a possible error from the result type of that block. When all possible errors have a `catch` arm, the value of that block is automatically unwrapped so that `Result[T, ()]` becomes just `T`. 
+Uncaught errors in a `try` / `catch` block are implicitly reraised. Each `catch` pattern removes a possible error from the exclamation type of that block. When all possible errors have a `catch` arm, the value of that block is automatically unwrapped so that `Exclamation[T, ()]` becomes just `T`. 
 
 ### Prototypes (`proto`)
 
@@ -2577,11 +2585,11 @@ MyStruct :: impl[MyPrototype] =
 MyEnum :: impl[MyPrototype] =
     speak(self) =
         match self is
-        | First then
+        | First =
             "I am a MyEnum of First"
-        | Second(x) then
+        | Second(x) =
             "I am a MyEnum of Second({x})"
-        | Third{val} then
+        | Third{val} =
             "I am a MyEnum of Third \{ val={val} }"
 ```
 
@@ -2888,7 +2896,7 @@ Mulem's unconventional choices are intentional, prioritizing readability, explic
 * __Readability First:__ Significant whitespace avoids bracket clutter, while the strict block/inline switching rules (`:` vs `()`) prevent you from fighting the formatter.
 * __Traceable Dependencies:__ The language forces you to explicitly name what you bring into scope. There are no glob imports or implicit mutable state captures. `import`, inheriting, and `\` (capturing) all use explicit listing.
 * __Unified Concepts:__ `::` is the universal operator for top-level, compile-time definitions (structs, aliases, constants).
-* __Type and Expression Symmetry:__ `?` (Questions) and `!` (Results) work identically whether used in type definitions or as unwrapping operators.
+* __Type and Expression Symmetry:__ `?` (Questions) and `!` (Exclamation) work identically whether used in type definitions or as unwrapping operators.
 * __Scalable Patterns:__ Simple tasks use simple syntax (e.g., `fn(x) = x`), but the language easily scales up to explicit types, memory models, and generic constraints as complexity demands.
 
 ---
@@ -2918,7 +2926,7 @@ User :: impl[Speaker] =
 FetchError :: error = (str)
 
 (-- 
-    A function returning a Result type (User or an Error).
+    A function returning an exclamation type (User or an Error).
     It captures no outside state.
 --)
 fetchUser(id: int): User! =
@@ -2933,12 +2941,12 @@ fetchUser(id: int): User! =
 --)
 do
     try
-        -- Fetch the user, unwrap the result, and pipe it forward
+        -- Fetch the user, unwrap the exclamation, and pipe it forward
         fetchUser(1)!
-        |> print($.speak()); $
+        |> do print($.speak()); $
         |> print("User is {$.age} years old."); $
     catch
-    | FetchError(e) then
+    | FetchError(e) =
         print("Failed to fetch user: {e}")
 ```
 
@@ -2957,7 +2965,7 @@ Mulem has 42 reserved keywords. Note that built-in types (`int`, `str`), boolean
 
 | Level | Category                   | Operators                                 |
 |:------|:---------------------------|:------------------------------------------|
-| 12    | Member access/Function     | `.` `?.` `#` `?#` `()`                    |
+| 12    | Member access/Function     | `.` `^[]` `()`                            |
 | 11    | Postfix                    | `?` `!` `^`                               |
 | 10    | Unary                      | `+` `-` `not` `bnot`                      |
 | 9     | Exponent                   | `**` (right-associative)                  |
@@ -2974,12 +2982,9 @@ Mulem has 42 reserved keywords. Note that built-in types (`int`, `str`), boolean
 | Operator       | Meaning                                              |
 |:--------------:|:-----------------------------------------------------|
 |   `lhs . rhs`  | Member access                                        |
-|   `lhs # rhs`  | Direct array/dictionary index                        |
-|   `lhs #[rhs]` | Safe array/dictionary index                          |
+|   `lhs ^[rhs]` | Array/dictionary index                               |
 |   `lhs ?`      | Unwrap question, propagate `None` to nearest `maybe` |
-|  `lhs ?. rhs`  | None-coalessing member access                        |
-|  `lhs ?# rhs`  | None-coalessing array/dictionary access              |
-|   `lhs !`      | Unwrap result, propagate error to nearest `try`      |
+|   `lhs !`      | Unwrap exclamation, propagate error to nearest `try` |
 |   `lhs ^`      | Dereference typed pointer                            |
 |     `... rhs`  | Spread array into array                              |
 |       `& rhs`  | Spread tuple into tuple (same type)                  |
@@ -3045,7 +3050,7 @@ The practical case where it matters is things like clock arithmetic, array wrapp
 | Syntax     | Meaning            | Note                                                      |
 |:-----------|:-------------------|:----------------------------------------------------------|
 | `T?`, `x?` | Question           | Unwraps a question; propagates `None` to nearest `maybe`. |
-| `T!`, `x!` | Result / Error     | Unwraps a result; propagates error to nearest `try`.      |
+| `T!`, `x!` | Exclamation        | Unwraps a exclamation; propagates error to nearest `try`.      |
 | `T#`, `x#` | Array / Dict Index | `T#N` is fixed-size. Access: `array#index`.               |
 | `T^`, `x^` | Pointer            | Dereference a pointer.                                    |
 
