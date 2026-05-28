@@ -2885,4 +2885,38 @@ The practical case where it matters is things like clock arithmetic, array wrapp
 
 ---
 
+I have some ideas: instead of `=` for both declaration and mutation, it could just be for declaration and `:=` will be for mutation. And instead of `fn(x) = `, any `name(x) = ` will produce a lambda function, anonymous one being `_(x) = `.
+
+
+```
+-- `=` — declaration / shadowing
+a = 0
+a = 1
+a = 'a'
+f(x) = x*x
+
+-- `:=` / operator + `=` — mutation
+mu x: int = 0
+x := 1
+x := 2
+x += 1
+mu cb(int): int
+f1(x: int): int = x + 1
+f2(x: int): int = x - 1
+cb := f1
+x := cb(x)
+cb := f2
+x := cb(x)
+
+-- `name(x) = ` — lambda, `_` for anonymous
+apiCall(_(result) =
+    if result > 1 then
+        print("Success! {result}")
+    else
+        print("Fail! {result}")
+)
+```
+
+---
+
 *This document captures the current state of the Mulem design. The language is still evolving.*
