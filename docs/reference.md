@@ -2320,9 +2320,9 @@ asyncCollect(n): async[[int]] =
 Unlike in other languages where *promises* or *futures* can either resolve or reject, async types in Mulem **only resolve.** Instead you can use an exclamation type `T!E` inside an `async[T!E]` function. Unwrap it like you would an exclamation type. Because this is common, `await` has special rules in regards to the `!` and `?` opeerators when placed after it.
 
 ```
-await! x == (await x)!      -- Unwrap an `async[T!E]`
-await? x == (await x)?      -- Unwrap an `async[T?]`
-await!? x == (await x)!?    -- Unwrap an `async[T?!E]`
+(await!  x) == (await x)!      -- Unwrap an `async[T!E]`
+(await?  x) == (await x)?      -- Unwrap an `async[T?]`
+(await!? x) == (await x)!?     -- Unwrap an `async[T?!E]`
 ```
 
 #### `defer`
