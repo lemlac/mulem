@@ -781,10 +781,10 @@ print("{addOptional(1)}")     -- Prints "1"
 print("{addOptional(1, 1)}")  -- Prints "2"
 ```
 
-Use `...` to collect all arguments into a single variable. The variable should be type `T#` (an array).
+Use `...` to collect all arguments into a single variable. The variable should be type `[T]` (an array).
 
 ```
-addAll(...nums: int#): int =
+addAll(...nums: [int]): int =
     mu sum: int = 0
     loop n in nums:
         sum += n
@@ -798,7 +798,7 @@ print("{addAll(1, 2, 3)}")  -- Prints "6"
 
 ```
 -- With pattern matching:
-addAll(...nums: int#): int =
+addAll(...nums: [int]): int =
     match nums is
     | []            = 0
     | [x]           = x
@@ -1107,9 +1107,9 @@ Notation:
 - **Functions**: `f(x: T): T`
 - **Questions**: `T?`
 - **Exclamation**: `T!` or T!E` where `E` is an `error` type
-- **Arrays**: `T#` or `T#N` where `N` is the length
-- **Multi-dimensional Arrays**: `T##`, an extra `#` for each dimension, each dimension can be fixed or dynamic: `T#N#`, `T##N`, `T#N#N`, `T#N##`, etc.
-- **Dictionaries**: `T#U`
+- **Arrays**: `[T]` or `[N*T]` where `N` is the length
+- **Multi-dimensional Arrays**: `[[T]]`, an extra `[]` for each dimension, each dimension can be fixed or dynamic: `[[N*T]]`, `[N*[T]]`, `[N*[M*T]]`, `[[[N*T]]]`, etc.
+- **Dictionaries**: `[U:T]`
 - **Inferred**: omit the annotation entirely
 
 ### Built-in Types
@@ -1446,7 +1446,7 @@ loop x in list then
     print("{x}")     -- No need to use `#`
 ```
 
-At least one operand in a chain of `<>` operations must be an array `T#`. Other operands can be type `T#` or `T`. If all are type `T`, you can put an empty array `[]` in the chain start a new one. 
+At least one operand in a chain of `<>` operations must be an array `[T]`. Other operands can be type `[T]` or `T`. If all are type `T`, you can put an empty array `[]` in the chain start a new one. 
 
 ```
 a = 1 <> 2 <> 3 <> 4 <> []  -- == [1, 2, 3, 4]
@@ -1456,12 +1456,12 @@ c = b <> 6 <> 7 <> 8        -- == [0, 1, 2, 3, 4, 5, 6, 7, 8]
 
 `<>` is either right or left associative depending on the type on the left-hand side.
 
-- `T# <> T#` – left associative
-- `T# <> T` – left associative
-- `T <> T#` - right associative
+- `[T] <> [T]` – left associative
+- `[T] <> T` – left associative
+- `T <> [T]` - right associative
 - `T <> T` - right associative
 
-Because any `lhs <> rhs` returns `T#`, the chain becomes left-associative at the first `T#` operand. The example gets parsed like this:
+Because any `lhs <> rhs` returns `[T]`, the chain becomes left-associative at the first `[T]` operand. The example gets parsed like this:
 
 ```
 a = ( 1 <> ( 2 <> ( 3 <> ( 4 <> [] ) ) ) )     -- right associative for whole chain
@@ -1491,7 +1491,7 @@ b: ThreeInts = (0, ...list)   -- == (0, 1, 2), truncated at the end
 Tuples may also collect any remaining positional components into an array, just like variadic parameters in functions.
 
 ```
-TwoOrMoreInts :: (int, int, ...int#)
+TwoOrMoreInts :: (int, int, ...[int])
 
 list = [1, 2]
 a: TwoOrMoreInts = (...list)              -- == (1, 2, [])
@@ -1518,7 +1518,7 @@ print("{ dict^[1.5f] }")   -- Prints "15.0"
 If the key type is `str` and a key is a valid variable name, then the square brackets before `:` can be omitted. You can access it like a member with `.` if it can be guaranteed.
 
 ```
-dict: int#str = [
+dict: [str:int] = [
     a: 1,
     b: 2,
     c: 3,
@@ -2310,8 +2310,8 @@ asyncIterFn(n): iter[async[int]] =
         val = await fetch(i)
         yield val
 
-asyncCollect(n): async[int#] =
-    mu ret: int# = []
+asyncCollect(n): async[[int]] =
+    mu ret: [int] = []
     loop (await x) in asyncIterFn(n) then
         ret <>= x
     ret
@@ -2711,11 +2711,11 @@ List[T, N] :: where =
     N: const int      -- A constant `int` that must be known at compile time
 
 List[T, N] :: struct =
-    data: T#N
+    data: [N*T]
 
 List[T, N] :: impl =
     init() =
-        data: T#N = [...loop _ in 0..N then default]
+        data: [N*T] = [...loop _ in 0..N then default]
         List[T, N](data: data)
 ```
 
@@ -2725,7 +2725,7 @@ Types can require a certain `proto` to have been implemented:
 sort[T] :: where =
     T: impl[Comparable]      -- This type T needs to have implemented `Comparable`.
 
-sort[T] :: (arr: T#): T# = _
+sort[T] :: (arr: [T]): [T] = _
 ```
 
 This is the bread and butter of generic programming. Without it, you can't write a generic `sort`, `min`, `max`, or any algorithm that requires behavior from its type parameter. 
@@ -2741,10 +2741,10 @@ serialize[T] :: where =
 
 ```
 lookup[V, K] :: where =
-    V: impl[Hashable]    -- V is a type T#K
+    V: impl[Hashable]    -- V is a type [K:T]
     K: keyof[V]
 
---       V  = T#K
+--       V  = [K:T]
 -- keyof[V] = K
 -- valof[V] = T
 lookup[V, K] :: (dict: V, key: K): valof[V]? = _
@@ -2756,7 +2756,7 @@ lookup[V, K] :: (dict: V, key: K): valof[V]? = _
 transform[T, U] :: where =
     U: typeof[fn(T): U]  -- U is whatever the mapping function returns
 
-transform[T, U] :: (arr: T#, f: fn(T): U): U# = ...
+transform[T, U] :: (arr: [T], f: fn(T): U): [U] = ...
 ```
 
 ```
@@ -2800,7 +2800,7 @@ zip[A, B, C] :: where =
 
 ```
 flatten[T] :: where =
-    T: T##          -- T must be a 2D array, inner type inferred
+    T: [[T]]          -- T must be a 2D array, inner type inferred
 ```
 
 ```
