@@ -148,50 +148,50 @@ x = 1 \
   + 5 + 6
 ```
 
-In Mulem, you use a colon (`:`) for this. It will collapse whitespace *before* it, ensuring everything lines up.
+In Mulem, you use a colon (`.`) for this. It will collapse whitespace *before* it, ensuring everything lines up.
 
 ```
 x = 1
-  : + 2 + 3
-  : + 4
-  : + 5 + 6
+  . + 2 + 3
+  . + 4
+  . + 5 + 6
 ```
 
 Method chaining:
 
 ```
 object.method1()
-    : .method2()
-    : .method3()
-    : .method4()
+    . .method2()
+    . .method3()
+    . .method4()
 ```
 
-Indentation is lenient with expression splitting. As long as there's a `_` character at the start of a line, then it belongs to the same expression.
+Indentation is lenient with expression splitting. As long as there's a `.` character at the start of a line, then it belongs to the same expression.
 
 ```
 do
     a
-        : + b
-      : * c
-        : - d
-     : e
-    : rem f        -- Indentation must be the same or more as the block.
-      : band g
+        . + b
+      . * c
+        . - d
+     . e
+    . rem f        -- Indentation must be the same or more as the block.
+      . band g
 ```
 
 It's recommended to keep the indentation the same. This is especially useful for long `if` statement.
 
 ```
 if    a or b
-: and c or d        -- Each `~` line is in the `if` condition.
-: and e or f
-: then              -- Block starts here.
+. and c or d        -- Each `~` line is in the `if` condition.
+. and e or f
+. then              -- Block starts here.
     print("True")
 else
     print("False")
 ```
 
-Mulem has no implicit lookahead. When in a block, all line breaks end an expression unless ignored explicitly with `:`. 
+Mulem has no implicit lookahead. When in a block, all line breaks end an expression unless ignored explicitly with `.`. 
 
 ### Block Expressions
 
@@ -380,11 +380,11 @@ When mixed with `do`, multiple expressions separated by semicolons `;` on one li
 |> print("{$}")                  -- Print result.
 ```
 
-Note that `|>` at the beginning of a line is different from `: |>` which is a split expression on the next line. The pipe will continue after it.
+Note that `|>` at the beginning of a line is different from `. |>` which is a split expression on the next line. The pipe will continue after it.
 
 ```
 |> fetchA()
-: |> fetchB(&$)
+. |> fetchB(&$)
 |> fetchC(&$)
 |> print("{$}")
 ```
@@ -2220,10 +2220,10 @@ Chain multiple `maybe` / `else` together untill you get a fallback:
 
 ```
 getFirst(a: int, b: int, c: int): int =
-    : maybe getA(a)? else
-    : maybe getB(b)? else
-    : maybe getC(c)? else
-    : 0
+    . maybe getA(a)? else
+    . maybe getB(b)? else
+    . maybe getC(c)? else
+    . 0
 ```
 
 Or use the `None`-coalescing operator (`?:`).
