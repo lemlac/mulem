@@ -533,7 +533,7 @@ Functions do not automatically capture mutable variables. Any assignment inside 
 ```
 mu count = 0
 
-addCount() % (count) =
+addCount() \ (count) =
     count += 1
 
 addCount()
@@ -845,7 +845,7 @@ mu count = 0             -- Mutable variables, must be captured with `~`.
 mu squared = 1
 mu cubed = 1
    
-addCount() % (count, squared, cube): int =     -- Capture 3 variables at once.
+addCount() \ (count, squared, cube): int =     -- Capture 3 variables at once.
     count += amount                            -- Mutate captured variables inside the function.
     squared = count * count
     cubed = squared * count
@@ -856,7 +856,7 @@ addCount()
 print("{count}, {squared}, {cubed}")     -- Prints "3, 9, 27"
 ```
 
-Error messages will highlight cases where someone would be confused about `%` in a function signature:
+Error messages will highlight cases where someone would be confused about `\` in a function signature:
 
 **Forgot to capture a mutable variable:**
 ```
@@ -864,19 +864,19 @@ mu count = 0
 addCount() =
     count += 1    -- Error here
 ```
-> `count` is mutable but not captured. Did you mean `addCount() % (count) =`?
+> `count` is mutable but not captured. Did you mean `addCount() \ (count) =`?
 
 **Accidentally tried to capture an immutable:**
 ```
 x = 1
-f() % (x) =
+f() \ (x) =
     x + 1
 ```
-> `x` is immutable and is captured automatically — remove `% (x)` from the signature.
+> `x` is immutable and is captured automatically — remove `\ (x)` from the signature.
 
 **Captured a variable that doesn't exist in scope:**
 ```
-f() % (ghost) =
+f() \ (ghost) =
     ghost + 1
 ```
 > `ghost` is not defined in the enclosing scope. Captures must refer to mutable variables in the outer scope.
@@ -888,7 +888,7 @@ forEach([1,2,3], fn(x) =
     count += x
 )
 ```
-> `count` is mutable but not captured by this lambda. Did you mean `fn(x) % (count) =`?
+> `count` is mutable but not captured by this lambda. Did you mean `fn(x) \ (count) =`?
 
 #### Lambda Functions
 
@@ -930,7 +930,7 @@ Capturing also works inside lambda functions just like with named functions.
 
 ```
 mu count = 0
-forEach([1, 2, 3, 4], fn(x) % (count) =
+forEach([1, 2, 3, 4], fn(x) \ (count) =
     count += x
 )
 ```
@@ -1034,11 +1034,11 @@ When capturing variables, each returned function needs to capture them separatel
 
 ```
 mu count = 0
-curryAddCount(a: int) % (count): (int): (int): int =
+curryAddCount(a: int) \ (count): (int): (int): int =
     count += a                                   -- (1) Evaluated immediately
-    (b: int) = fn % (count): (int): int   -- (2) Suspends and captures `count`
+    (b: int) = fn \ (count): (int): int   -- (2) Suspends and captures `count`
     count += b                                   -- (3) Evaluated when second `fn` is called
-    (c: int) = fn % (count): int
+    (c: int) = fn \ (count): int
     count += c
     count
 
@@ -2905,7 +2905,7 @@ How this is implemented is outside of the scope of this document. That will be s
 Mulem's unconventional choices are intentional, prioritizing readability, explicit data tracing, and scalable complexity:
 
 * __Readability First:__ Significant whitespace avoids bracket clutter, while the strict block/inline switching rules (`:` vs `()`) prevent you from fighting the formatter.
-* __Traceable Dependencies:__ The language forces you to explicitly name what you bring into scope. There are no glob imports or implicit mutable state captures. `import`, inheriting, and `%` (capturing) all use explicit listing.
+* __Traceable Dependencies:__ The language forces you to explicitly name what you bring into scope. There are no glob imports or implicit mutable state captures. `import`, inheriting, and `\` (capturing) all use explicit listing.
 * __Unified Concepts:__ `::` is the universal operator for top-level, compile-time definitions (structs, aliases, constants).
 * __Type and Expression Symmetry:__ `?` (Maybes) and `!` (Results) work identically whether used in type definitions or as unwrapping operators.
 * __Scalable Patterns:__ Simple tasks use simple syntax (e.g., `fn(x) = x`), but the language easily scales up to explicit types, memory models, and generic constraints as complexity demands.
