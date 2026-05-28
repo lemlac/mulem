@@ -781,10 +781,10 @@ print("{addOptional(1)}")     -- Prints "1"
 print("{addOptional(1, 1)}")  -- Prints "2"
 ```
 
-Use `...` to collect all arguments into a single variable. The variable should be type `[T]` (an array).
+Use `...` to collect all arguments into a single variable. The variable should be type `[*T]` (an array).
 
 ```
-addAll(...nums: [int]): int =
+addAll(...nums: *int): int =
     mu sum: int = 0
     loop n in nums:
         sum += n
@@ -1107,8 +1107,8 @@ Notation:
 - **Functions**: `f(x: T): T`
 - **Questions**: `T?`
 - **Exclamation**: `T!` or T!E` where `E` is an `error` type
-- **Arrays**: `[T]` or `[N*T]` where `N` is the length
-- **Multi-dimensional Arrays**: `[[T]]`, an extra `[]` for each dimension, each dimension can be fixed or dynamic: `[[N*T]]`, `[N*[T]]`, `[N*[M*T]]`, `[[[N*T]]]`, etc.
+- **Arrays**: `[*T]` or `[N*T]` where `N` is the length
+- **Multi-dimensional Arrays**: `[**T]`, an extra `*` for each dimension, each dimension can be fixed or dynamic: `[*N*T]`, `[N**T]`, `[N*M*T]`, `[**N*T]`, etc.
 - **Dictionaries**: `[U:T]`
 - **Inferred**: omit the annotation entirely
 
@@ -1420,23 +1420,23 @@ do
 
 #### Arrays
 
-Array types are declared with square brackets around their type (`[T]`). A number after a mulitplication mark `*` makes it a fixed length array `[N*T]`. Arrays are statically sized when written `[T*N]`, while `[T]` is the dynamic form. Items are separated with commas (`,`). Index is done with the `^[]` operator. 
+Array types are declared with square brackets around their type (`[*T]`). A number before the mulitplication mark `*` makes it a fixed length array `[N*T]`. Arrays are statically sized when written `[N*T]`, while `[*T]` is the dynamic form. Items are separated with commas (`,`). Index is done with the `.[]` operator. 
 
 ```
 list: [4*int] = [1, 2, 3, 4]
 print("length of list: {len(list)}")
-compressedList = [list^[0] + list^[1], list^[2] + list^[3]]
-doubleArray: [3*[2*int]] = [[1, 2], [3, 4], [5, 6]]
-item = doubleArray^[1]^[0]    -- The 2nd row, 1st column
-item = doubleArray^[1,0]      -- Or seperated with commas
+compressedList = [list.[0] + list.[1], list.[2] + list.[3]]
+doubleArray: [3*2*int] = [[1, 2], [3, 4], [5, 6]]
+item = doubleArray.[1].[0]    -- The 2nd row, 1st column
+item = doubleArray.[1,0]      -- Or seperated with commas
 print("{item}")               -- Prints "3"
 ```
 
-Direct access to an array is only allowed when the result is guaranteed. If not, you need to wrap it in `deref[]` which will check each dereference operator `^` / `^[]` inside of it. This will return a question type `T?`, `Some(T)` if successful or `None` if unsuccessful. 
+Direct access to an array is only allowed when the result is guaranteed. If not, you need to wrap it in `deref[]` which will check each dereference operator `^` / `.[]` inside of it. This will return a question type `T?`, `Some(T)` if successful or `None` if unsuccessful. 
 
 ```
 i = randInt()                        -- Undeterministic number.
-print("{ deref[list^[i]] ?: -1 }")   -- Prints "-1" if deref failed.
+print("{ deref[list.[i]] ?: -1 }")   -- Prints "-1" if deref failed.
 ```
 
 In general, you'll mostly be using arrays by iterating or piping them. 
@@ -1446,7 +1446,7 @@ loop x in list then
     print("{x}")     -- No need to use `#`
 ```
 
-At least one operand in a chain of `<>` operations must be an array `[T]`. Other operands can be type `[T]` or `T`. If all are type `T`, you can put an empty array `[]` in the chain start a new one. 
+At least one operand in a chain of `<>` operations must be an array `[*T]`. Other operands can be type `[*T]` or `T`. If all are type `T`, you can put an empty array `[]` in the chain start a new one. 
 
 ```
 a = 1 <> 2 <> 3 <> 4 <> []  -- == [1, 2, 3, 4]
@@ -1456,12 +1456,12 @@ c = b <> 6 <> 7 <> 8        -- == [0, 1, 2, 3, 4, 5, 6, 7, 8]
 
 `<>` is either right or left associative depending on the type on the left-hand side.
 
-- `[T] <> [T]` – left associative
-- `[T] <> T` – left associative
-- `T <> [T]` - right associative
+- `[*T] <> [*T]` – left associative
+- `[*T] <> T` – left associative
+- `T <> [*T]` - right associative
 - `T <> T` - right associative
 
-Because any `lhs <> rhs` returns `[T]`, the chain becomes left-associative at the first `[T]` operand. The example gets parsed like this:
+Because any `lhs <> rhs` returns `[*T]`, the chain becomes left-associative at the first `[*T]` operand. The example gets parsed like this:
 
 ```
 a = ( 1 <> ( 2 <> ( 3 <> ( 4 <> [] ) ) ) )     -- right associative for whole chain
@@ -1504,7 +1504,7 @@ d: TwoOrMoreInts = (-2, -1, 0, ...list)   -- == (-2, -1, [0, 1, 2])
 
 #### Dictionaries
 
-Dictionaries are a subtype of arrays. Instead of numbers, each item is given a **key.** A dictionary's type is the type of the value `V` and the type of the key `K` join with a hash `:` in between: `[K: V]`. This makes it semantically clear that they are a subtype of arrays. Dictionaries also use the same operator to access items. The type passed to the `^[]` operator must match the key type. Each key is marked with `[]:` in the array.
+Dictionaries are a subtype of arrays. Instead of numbers, each item is given a **key.** A dictionary's type is the type of the value `V` and the type of the key `K` join with a hash `:` in between: `[K: V]`. This makes it semantically clear that they are a subtype of arrays. Dictionaries also use the same operator to access items. The type passed to the `.[]` operator must match the key type. Each key is marked with `[]:` in the array.
 
 ```
 dict: [float: float] = [
@@ -1512,7 +1512,7 @@ dict: [float: float] = [
     [1.5f]: 15.0f,
     [2.0f]: 20.0f,
 ]
-print("{ dict^[1.5f] }")   -- Prints "15.0"
+print("{ dict.[1.5f] }")   -- Prints "15.0"
 ```
 
 If the key type is `str` and a key is a valid variable name, then the square brackets before `:` can be omitted. You can access it like a member with `.` if it can be guaranteed.
@@ -1524,7 +1524,7 @@ dict: [str:int] = [
     c: 3,
     ["invalid name"]: 127,
 ]
-print("{ dict^["b"] }")   -- Prints "2"
+print("{ dict.["b"] }")   -- Prints "2"
 print("{ dict.b }")       -- Prints "2",
 ```
 
@@ -1532,7 +1532,7 @@ Like with arrays, undeterministic access to a dictionary requires using `deref[]
 
 ```
 key = input()                          -- Undeterministic string.
-print("{ deref[dict^[key]] ?: -1 }")   -- Prints "-1" if deref failed.
+print("{ deref[dict.[key]] ?: -1 }")   -- Prints "-1" if deref failed.
 ```
 
 You can iterate through a dictioary like with arrays. This is the recommend way of using dictionaries. 
@@ -2725,7 +2725,7 @@ Types can require a certain `proto` to have been implemented:
 sort[T] :: where =
     T: impl[Comparable]      -- This type T needs to have implemented `Comparable`.
 
-sort[T] :: (arr: [T]): [T] = _
+sort[T] :: (arr: [*T]): [*T] = _
 ```
 
 This is the bread and butter of generic programming. Without it, you can't write a generic `sort`, `min`, `max`, or any algorithm that requires behavior from its type parameter. 
@@ -2756,7 +2756,7 @@ lookup[V, K] :: (dict: V, key: K): valof[V]? = _
 transform[T, U] :: where =
     U: typeof[fn(T): U]  -- U is whatever the mapping function returns
 
-transform[T, U] :: (arr: [T], f: fn(T): U): [U] = ...
+transform[T, U] :: (arr: [*T], f: fn(T): U): [U] = ...
 ```
 
 ```
@@ -2800,7 +2800,7 @@ zip[A, B, C] :: where =
 
 ```
 flatten[T] :: where =
-    T: [[T]]          -- T must be a 2D array, inner type inferred
+    T: [**T]          -- T must be a 2D array, inner type inferred
 ```
 
 ```
@@ -2965,7 +2965,7 @@ Mulem has 42 reserved keywords. Note that built-in types (`int`, `str`), boolean
 
 | Level | Category                   | Operators                                 |
 |:------|:---------------------------|:------------------------------------------|
-| 12    | Member access/Function     | `.` `^[]` `()`                            |
+| 12    | Member access/Function     | `.` `.[]` `()`                            |
 | 11    | Postfix                    | `?` `!` `^`                               |
 | 10    | Unary                      | `+` `-` `not` `bnot`                      |
 | 9     | Exponent                   | `**` (right-associative)                  |
@@ -2982,7 +2982,7 @@ Mulem has 42 reserved keywords. Note that built-in types (`int`, `str`), boolean
 | Operator       | Meaning                                              |
 |:--------------:|:-----------------------------------------------------|
 |   `lhs . rhs`  | Member access                                        |
-|   `lhs ^[rhs]` | Array/dictionary index                               |
+|   `lhs .[rhs]` | Array/dictionary index                               |
 |   `lhs ?`      | Unwrap question, propagate `None` to nearest `maybe` |
 |   `lhs !`      | Unwrap exclamation, propagate error to nearest `try` |
 |   `lhs ^`      | Dereference typed pointer                            |
@@ -3047,12 +3047,12 @@ The practical case where it matters is things like clock arithmetic, array wrapp
 
 ### Key Type Modifiers & Postfix Operators
 
-| Syntax        | Meaning            | Note                                                      |
-|:--------------|:-------------------|:----------------------------------------------------------|
-|  `T?`, `x?`   | Question           | Unwraps a question; propagates `None` to nearest `maybe`. |
-|  `T!`, `x!`   | Exclamation        | Unwraps a exclamation; propagates error to nearest `try`. |
-| `[T]`, `x^[]` | Array / Dict Index | `[N*T]` is fixed-size. Access: `array^[index]`.           |
-|  `T^`, `x^`   | Pointer            | Dereference a pointer.                                    |
+| Syntax         | Meaning            | Note                                                      |
+|:---------------|:-------------------|:----------------------------------------------------------|
+|  `T?`, `x?`    | Question           | Unwraps a question; propagates `None` to nearest `maybe`. |
+|  `T!`, `x!`    | Exclamation        | Unwraps a exclamation; propagates error to nearest `try`. |
+| `[*T]`, `x.[]` | Array / Dict Index | `[N*T]` is fixed-size. Access: `array.[index]`.           |
+|  `T^`, `x^`    | Pointer            | Dereference a pointer.                                    |
 
 ---
 
