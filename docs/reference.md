@@ -154,12 +154,12 @@ In Mulem, you use a tilde (`~`) for this. It will treate whitespace *before* and
 x = 1 ~
   + 2 + 3 ~
   + 4 ~
-  + 5 + 6 ~
+  + 5 + 6
 
 x = 1
-~ + 2 + 3
-~ + 4
-~ + 5 + 6
+  ~ + 2 + 3
+  ~ + 4
+  ~ + 5 + 6
 ```
 
 Indentation is lenient with expression splitting. As long as there's a tilde (`~`) in between two tokens in an expression, then it belongs to the same expression.
