@@ -1974,7 +1974,7 @@ match choice is
     print("No match")
 ```
 
-#### `.is`
+#### `is` / `then`
 
 ```
 expr is ptrn then expr
@@ -1984,31 +1984,31 @@ Extract a single binding inline. Requires a guaranteed match or optional binding
 
 ```
 -- Guaranteed match (exhaustive type):
-result = value is Pattern(x) then x
+result = (value is Pattern(x) then x)
 ```
 
 ```
 -- With fallback (non-exhaustive):
-result = value is Pattern(opt x) then x                              -- Get wrapped Some(x) or None
-result = value is Pattern(opt x) then maybe x? else "fallback"       -- Unwrap with fallback
-result = value is Pattern(opt x = "fallback") then x                 -- Automatic fallback
+result = (value is Pattern(opt x) then x)                              -- Get wrapped Some(x) or None
+result = (value is Pattern(opt x) then maybe x? else "fallback")       -- Unwrap with fallback
+result = (value is Pattern(opt x = "fallback") then x)                 -- Automatic fallback
 ```
 
 ```
 -- Multiple bindings:
-result = value is Pattern(opt x = 0, opt y = 0) then (x, y)
+result = (value is Pattern(opt x = 0, opt y = 0) then (x, y))
 ```
 
 ```
 -- Arbitrary expression over bindings:
-result = value is Pattern(opt x = 0, opt y = 0) then x + y
+result = (value is Pattern(opt x = 0, opt y = 0) then x + y)
 ```
 
 Pairs naturally with pipelining.
 
 ```
 getValue()
-|> $ is Pattern(opt x = "fallback") then x
+|> ($ is Pattern(opt x = "fallback") then x)
 |> doSomethingWith($)
 ```
 
