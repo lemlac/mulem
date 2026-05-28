@@ -2976,7 +2976,7 @@ Mulem has 42 reserved keywords. Note that built-in types (`int`, `str`), boolean
 | 4     | Comparison                 | `==` `!=` `<` `>` `<=` `>=`               |
 | 3     | Logical AND                | `and`                                     |
 | 2     | Logical OR / None-Coalesce | `or` `?:`                                 |
-| 1     | Pipeline                   | `|>`                                      |
+| 1     | Pipeline                   | `\|>`                                     |
 | 0     | Assignment / Spread        | `=` `+=` `-=` `&` `...`                   |
 
 | Operator       | Meaning                                              |
