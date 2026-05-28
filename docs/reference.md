@@ -1450,29 +1450,6 @@ loop x in list then
     print("{x}")     -- No need to use `#`
 ```
 
-At least one operand in a chain of `<>` operations must be an array `[*T]`. Other operands can be type `[*T]` or `T`. If all are type `T`, you can put an empty array `[]` in the chain start a new one. 
-
-```
-a = 1 <> 2 <> 3 <> 4 <> []  -- == [1, 2, 3, 4]
-b = 0 <> a <> 5             -- == [0, 1, 2, 3, 4, 5]
-c = b <> 6 <> 7 <> 8        -- == [0, 1, 2, 3, 4, 5, 6, 7, 8]
-```
-
-`<>` is either right or left associative depending on the type on the left-hand side.
-
-- `[*T] <> [*T]` – left associative
-- `[*T] <> T` – left associative
-- `T <> [*T]` - right associative
-- `T <> T` - right associative
-
-Because any `lhs <> rhs` returns `[*T]`, the chain becomes left-associative at the first `[*T]` operand. The example gets parsed like this:
-
-```
-a = ( 1 <> ( 2 <> ( 3 <> ( 4 <> [] ) ) ) )     -- right associative for whole chain
-b = ( 0 <> ( a <> 5 ) )                        -- left associative, then right associative
-c = ( ( ( b <> 6 ) <> 7 ) <> 8 )               -- left associative for whole chain
-```
-
 Use the spread operator `...` to spread an array into another array. This must be the first prefix operator in an expression, and it must be in a compatiable array or tuple literal. It always goes last in the slot's expression, so extra parentheses aren't necessary: `...a <> b` == `...(a <> b)`.
 
 ```
