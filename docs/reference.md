@@ -1762,7 +1762,7 @@ Pattern matching works. All patterns must have fallbacks. *(See [Pattern Fallbac
 
 ```
 loop Pattern(opt x) in listOfPatterns then
-    if x is Some(x):
+    if x is Some(x) then
         print("Found match: {x}")
 ```
 
@@ -2226,7 +2226,7 @@ Exits out of a function. If a value is after it, that value is the return value,
 
 ```
 isThirteen(x) =
-    if x == 13:
+    if x == 13 then
         return True  -- Exits the function and returns true.
     False            -- Returns false.
 ```
