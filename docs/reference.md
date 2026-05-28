@@ -84,7 +84,7 @@ expr
 Certain keywords and symbols such as `do` or `then` start a block when they are at the end of a line. Increased indentation is expected on the next line, and decreasing indentation exits the block.
 
 ```
-do         -- Line ends with `block`, expecting a new block.
+do         -- Line ends with `do`, expecting a new block.
 expr       -- Error: expected indentation missing at line 2.
 
 do
@@ -162,7 +162,7 @@ x = 1
 ~ + 5 + 6
 ```
 
-Indentation is lenient with expression splitting. As long as there's a backslash (`\`) in between two tokens in an expression, then it belongs to the same expression.
+Indentation is lenient with expression splitting. As long as there's a tilde (`~`) in between two tokens in an expression, then it belongs to the same expression.
 
 ```
 do
@@ -255,7 +255,7 @@ There are 3 rules that Mulem follows:
 3. If all brackets are closed, return to block mode at the end of a line.
 
 ```
-apiFetch(fn(result) =    -- This starts a block for the function.
+apiFetch((result) =      -- This starts a block for the function.
     if result > 0 then   -- Whitespace is significant here.
         print("Success! {result}")
     else
@@ -268,22 +268,19 @@ Nesting works freely. You only need to worry about closing the bracket when you'
 
 ```
 -- Complicated logic…
-f1(if cond then
-    try
-        f2(block
-            expr
-            expr
-        )
-    catch
-    | (e) then
-        void
-else
-    f3(fn() =
-        expr
-        expr
-        expr
-    )
-, expr)
+renderScene(
+    if settings.quality == Ultra then
+        try
+            loadHighResAssets()!
+        catch
+        | AssetError(msg) then
+            print("Error: {msg}")
+            loadFallbackAssets()
+    else
+        loadFallbackAssets()
+    ,
+    camera: activeCamera
+)
 -- But it all makes sense following the 3 rules.
 ```
 
@@ -315,8 +312,12 @@ Mulem has mix of symbolic and word-form operators. For a complete list, see [Tab
 Increment and decrement are the same as assignement:
 
 ```
-i += 1   -- i = i + 1
-i -= 1   -- i = i - 1
+i += 1     -- i = i + 1
+i -= 1     -- i = i - 1
+i *= 2     -- i = i * 2
+i /= 2     -- i = i / 2
+i //= 2    -- i = i // 2
+s <>= "a"  -- s = s <> "a"
 ```
 
 ### Function Calls
@@ -544,7 +545,7 @@ Functions do not automatically capture mutable variables. Any assignment inside 
 ```
 mu count = 0
 
-addCount() \ (count) =
+addCount() % (count) =
     count += 1
 
 addCount()
@@ -661,13 +662,13 @@ f(x: int): int = x   -- Shadows previous f
 f()                  -- Error: f expects 1 argument.
 ```
 
-Instead, one function can be defined with multiple definitions using `fn is`. The next patterns will have function signatures and their bodies. The first function signature to match will go. This can also work for lambda functions. 
+Instead, one function can be defined with multiple definitions using `match ... is`. The next patterns will have function signatures and their bodies. The first function signature to match will go. This can also work for lambda functions. 
 
 ```
-safeDivide = fn is
-| (x: float, y: float if y != 0.0): float =
+safeDivide(...) = match (...) is
+| (x: float, y: float if y != 0.0): float then
     x / y
-| (x: float, y: float): float =
+| (x: float, y: float): float then
     0.0
 ```
 
@@ -804,12 +805,12 @@ addAll(...nums: int#): int =
 A name is optional after `...`. You can use the symbol by itself to pass it to another function or itself in a functional loop. 
 
 ```
-addAll = fn is
-| (x: int, ...): int =
+addAll(...) = match (...) is
+| (x: int, ...): int then
     x + addAll(...)
-| (x: int): int =
+| (x: int): int then
     x
-| (): int =
+| (): int then
     0
 
 logAndAdd(msg: str, ...) =
@@ -856,7 +857,7 @@ mu count = 0             -- Mutable variables, must be captured with `~`.
 mu squared = 1
 mu cubed = 1
    
-addCount() \ (count, squared, cube): int =     -- Capture 3 variables at once.
+addCount() % (count, squared, cube): int =     -- Capture 3 variables at once.
     count += amount                            -- Mutate captured variables inside the function.
     squared = count * count
     cubed = squared * count
@@ -867,7 +868,7 @@ addCount()
 print("{count}, {squared}, {cubed}")     -- Prints "3, 9, 27"
 ```
 
-Error messages will highlight cases where someone would be confused about `\` in a function signature:
+Error messages will highlight cases where someone would be confused about `%` in a function signature:
 
 **Forgot to capture a mutable variable:**
 ```
@@ -875,19 +876,19 @@ mu count = 0
 addCount() =
     count += 1    -- Error here
 ```
-> `count` is mutable but not captured. Did you mean `addCount() \ (count) =`?
+> `count` is mutable but not captured. Did you mean `addCount() % (count) =`?
 
 **Accidentally tried to capture an immutable:**
 ```
 x = 1
-f() \ (x) =
+f() % (x) =
     x + 1
 ```
-> `x` is immutable and is captured automatically — remove `\ (x)` from the signature.
+> `x` is immutable and is captured automatically — remove `% (x)` from the signature.
 
 **Captured a variable that doesn't exist in scope:**
 ```
-f() \ (ghost) =
+f() % (ghost) =
     ghost + 1
 ```
 > `ghost` is not defined in the enclosing scope. Captures must refer to mutable variables in the outer scope.
@@ -899,7 +900,7 @@ forEach([1,2,3], fn(x) =
     count += x
 )
 ```
-> `count` is mutable but not captured by this lambda. Did you mean `fn(x) \ (count) =`?
+> `count` is mutable but not captured by this lambda. Did you mean `fn(x) % (count) =`?
 
 #### Lambda Functions
 
@@ -941,7 +942,7 @@ Capturing also works inside lambda functions just like with named functions.
 
 ```
 mu count = 0
-forEach([1, 2, 3, 4], fn(x) \ (count) =
+forEach([1, 2, 3, 4], fn(x) % (count) =
     count += x
 )
 ```
@@ -1045,11 +1046,11 @@ When capturing variables, each returned function needs to capture them seperatel
 
 ```
 mu count = 0
-curryAddCount(a: int) \ (count): (int): (int): int =
+curryAddCount(a: int) % (count): (int): (int): int =
     count += a                                   -- (1) Evaluated immediately
-    (b: int) = fn \ (count): (int): int   -- (2) Suspends and captures `count`
-    count += b                                   -- (3) Evaluated when second fn is called
-    (c: int) = fn \ (count): int
+    (b: int) = fn % (count): (int): int   -- (2) Suspends and captures `count`
+    count += b                                   -- (3) Evaluated when second `fn` is called
+    (c: int) = fn % (count): int
     count += c
     count
 
@@ -2909,7 +2910,7 @@ This connects the same explicit-list convention as `inherit` and capturing — *
 |:----------|:------------------------------------|
 | `import`  | Names from another module.          |
 | `inherit` | Members from another struct.        |
-| `\ (x)`   | Mutable variables from outer scope. |
+| `% (x)`   | Mutable variables from outer scope. |
 
 ### Memory Models
 
@@ -2933,7 +2934,7 @@ How this is implemented is outside of the scope of this document. That will be s
 Mulem's unconventional choices are intentional, prioritizing readability, explicit data tracing, and scalable complexity:
 
 * __Readability First:__ Significant whitespace avoids bracket clutter, while the strict block/inline switching rules (`:` vs `()`) prevent you from fighting the formatter.
-* __Traceable Dependencies:__ The language forces you to explicitly name what you bring into scope. There are no glob imports or implicit mutable state captures. `import`, `inherit`, and `\` (capturing) all use explicit listing.
+* __Traceable Dependencies:__ The language forces you to explicitly name what you bring into scope. There are no glob imports or implicit mutable state captures. `import`, `inherit`, and `%` (capturing) all use explicit listing.
 * __Unified Concepts:__ `::` is the universal operator for top-level, compile-time definitions (structs, aliases, constants).
 * __Type and Expression Symmetry:__ `?` (Maybes) and `!` (Results) work identically whether used in type definitions or as unwrapping operators.
 * __Scalable Patterns:__ Simple tasks use simple syntax (e.g., `fn(x) = x`), but the language easily scales up to explicit types, memory models, and generic constraints as complexity demands.
