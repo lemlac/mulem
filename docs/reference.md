@@ -117,7 +117,7 @@ Is it `getX(), print("fetching y")` then `getY(), getZ()`, or is it a tuple of `
 (getX(), do print("fetching y"); getY(), getZ())  -- OK: isolated via inline 'do'
 ```
 
-The `do` here says to start a sequence that's seperated by semi-colons `;`. The comma `,` ends the sequence. It's now clear that `print(…)` is only there to run side effects after `getX()`, and the value of the expression is the tuple `(x, y, z)`.
+The `do` here says to start a sequence that's separated by semi-colons `;`. The comma `,` ends the sequence. It's now clear that `print(…)` is only there to run side effects after `getX()`, and the value of the expression is the tuple `(x, y, z)`.
 
 That's why the rule *"`,` and `;` cannot be mixed at the same nesting level"* is in place. It prevents the disagreement of what `(a, b; c, d)` means. `(a, do b; c, d)` makes it clear that `do b;` is a side-effect and `c` is the value for the slot. Each `;` after `do` can be read as "then" like **do** *this* **then** *that.*
 
@@ -319,18 +319,6 @@ i /= 2     -- i = i / 2
 i //= 2    -- i = i // 2
 s <>= "a"  -- s = s <> "a"
 ```
-
-### Function Calls
-
-Function can be called in 3 ways:
-
-```
-function(a, b, c)   -- positional
-function{a, b, c}   -- named, turns into {a: a, b: b, c: c}
-function x          -- spread tuple into function
-```
-
-`function x` is short for `function(&x)`, where `&` is the tuple spread operator.
 
 ### Pipelining `|>`
 
@@ -849,7 +837,7 @@ print("{x}")     -- Prints "1"
 
 To capture a mutable variable, write `~` at the end of the function signature. This goes after the parameters and before the return type `: T =`. List each *mutable* (`mu`) variables that the function uses. This helps make it easy to see which functions depend on mutable variables and which ones don't since `~` doesn't appear in type notation or anywhere else to the left of the equals sign `=` in function signatures except for captures. 
 
-This follows the same practice that `import` and `inherit` where all words in a given scope are listed out clearly so that there are no accident name collisions or hidden gotchas.
+This follows the same practice that `import` and inheriting where all words in a given scope are listed out clearly so that there are no accident name collisions or hidden gotchas.
 
 ```
 amount = 1               -- Immutable variable, doesn't need to be captured.
@@ -1042,7 +1030,7 @@ curryFn('a')('b')('c')             -- Works the same.
 
 Now all the functions line up together, and the next parameters resemble normal assignment. Each `() = fn` is an explicit suspension point from the function similar to `yeild` or `await`. The remaining part of the function becomes the body of the next function. 
 
-When capturing variables, each returned function needs to capture them seperately.
+When capturing variables, each returned function needs to capture them separately.
 
 ```
 mu count = 0
@@ -1152,7 +1140,7 @@ implementLater(): int = default[]
 You can also get the size of any type with the compile-time function `sizeof`. It returns a constant `uint` (unsigned integer) with the number of bytes of memory that type requires. The exact sizes of some types like `int` or `float` might vary, but you can rely on `byte` and `bool` being 1 byte each. There's also the `void` type which represents no data. `ptr` depends on the pointer size of the system. 
 
 ```
-sizeOfChar = sizeof[byte]   -- == 1
+sizeOfByte = sizeof[byte]   -- == 1
 sizeOfBool = sizeof[bool]   -- == 1
 sizeOfVoid = sizeof[void]   -- == 0
 sizeOfPtr  = sizeof[ptr]    -- == 4 or 8
@@ -1866,7 +1854,7 @@ match choice is
 ```
 
 ```
-restult = match x is (Ptrn1: 5 | Ptrn2: 6 | 7)
+result = match x is (Ptrn1: 5 | Ptrn2: 6 | 7)
 --
 message = match e is (OpenError{filename}: "Open error: {filename}" | "Unknown error")
 ```
@@ -2618,7 +2606,7 @@ MyEnum :: impl[MyPrototype] =
 
 ### Inheritance and Visibility
 
-Even though structs cannot be extended the usual way, they can **inherit** from other structs using the `inherit` keyword. This works similarly to **importing.** It marks members that map to members of another struct, making conversion possible. It follows the same convention for pattern matching like destructuring. *(See [Destructuring](#destructuring).)* 
+Even though structs cannot be extended the usual way, they can **inherit** from other structs using destructuring. This works similarly to **importing.** It marks members that map to members of another struct, making conversion possible. It follows the same convention for pattern matching like destructuring. *(See [Destructuring](#destructuring).)* 
 
 ```
 Vector2 :: struct =
@@ -2626,12 +2614,7 @@ Vector2 :: struct =
     y: float
 
 Vector3 :: struct =
-    inherit Vector2.x       -- Seperate each inherited member.
-    inherit Vector2.y
-    z: float
-
-Vector3 :: struct =
-    inherit Vector2{x, y}   -- Or in one line.
+    {x, y}: Vector2        -- Grab members of Vector2
     z: float
 
 v3 = Vector3(x: 1.0, y: 2.0, z: 3.0)
@@ -2642,7 +2625,7 @@ print("{radius2d(v3)}") -- This works because Vector3 inherits from Vector2.
 
 When you inherit, you don't just pick out some members. The entire parent struct exists in the child struct in memory, but only some members are visible. 
 
-All members of a type are public by default. When making a subtype, inherited members become private to the subtype unless explicitly redeclared with `inherit`. This encourages separating public and private data into distinct types rather than using access modifiers.
+All members of a type are public by default. When making a subtype, inherited members become private to the subtype unless explicitly redeclared. This encourages separating public and private data into distinct types rather than using access modifiers.
 
 ```
 PrivateFields :: struct =
@@ -2650,7 +2633,7 @@ PrivateFields :: struct =
     secret: int
 
 PublicFields :: struct =
-    inherit PrivateFields.val     -- Redeclared, `val` is public / `secret` is private
+    {val}: PrivateFields     -- Redeclared, `val` is public / `secret` is private
     other: int
 ```
 
@@ -2898,13 +2881,7 @@ In this example, you would import `addThing` like this (assuming the file is inc
 myModule{addThing} :: import
 ```
 
-This connects the same explicit-list convention as `inherit` and capturing — *no hidden dependencies, everything that can affect behavior is named.* The three together form a consistent rule across the language:
-
-| Keyword   | "I am explicitly pulling in…"       |
-|:----------|:------------------------------------|
-| `import`  | Names from another module.          |
-| `inherit` | Members from another struct.        |
-| `% (x)`   | Mutable variables from outer scope. |
+This connects the same explicit-list convention as inheriting and capturing — *no hidden dependencies, everything that can affect behavior is named.* The three together form a consistent rule across the language.
 
 ### Memory Models
 
@@ -2928,7 +2905,7 @@ How this is implemented is outside of the scope of this document. That will be s
 Mulem's unconventional choices are intentional, prioritizing readability, explicit data tracing, and scalable complexity:
 
 * __Readability First:__ Significant whitespace avoids bracket clutter, while the strict block/inline switching rules (`:` vs `()`) prevent you from fighting the formatter.
-* __Traceable Dependencies:__ The language forces you to explicitly name what you bring into scope. There are no glob imports or implicit mutable state captures. `import`, `inherit`, and `%` (capturing) all use explicit listing.
+* __Traceable Dependencies:__ The language forces you to explicitly name what you bring into scope. There are no glob imports or implicit mutable state captures. `import`, inheriting, and `%` (capturing) all use explicit listing.
 * __Unified Concepts:__ `::` is the universal operator for top-level, compile-time definitions (structs, aliases, constants).
 * __Type and Expression Symmetry:__ `?` (Maybes) and `!` (Results) work identically whether used in type definitions or as unwrapping operators.
 * __Scalable Patterns:__ Simple tasks use simple syntax (e.g., `fn(x) = x`), but the language easily scales up to explicit types, memory models, and generic constraints as complexity demands.
@@ -2988,10 +2965,10 @@ do
 
 ## Reserved Keywords
 
-Mulem has 42 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard maybes (`Some`, `None`), are built-in symbols but *not* strict keywords.
+Mulem has 41 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard maybes (`Some`, `None`), are built-in symbols but *not* strict keywords.
 
 **The Keyword List:**
-`and`, `as`, `await`, `band`, `bor`, `break`, `catch`, `continue`, `defer`, `do`, `else`, `enum`, `error`, `fallthrough`, `fn`, `if`, `impl`, `import`, `in`, `inherit`, `is`, `loop`, `match`, `maybe`, `mod`, `not`, `opt`, `or`, `out`, `proto`, `raise`, `ref`, `rem`, `return`, `self`, `struct`, `then`, `try`, `until`, `void`, `where`, `xor`, `yield`.
+`and`, `as`, `await`, `band`, `bor`, `break`, `catch`, `continue`, `defer`, `do`, `else`, `enum`, `error`, `fallthrough`, `fn`, `if`, `impl`, `import`, `in`, `is`, `loop`, `match`, `maybe`, `mod`, `not`, `opt`, `or`, `out`, `proto`, `raise`, `ref`, `rem`, `return`, `self`, `struct`, `then`, `try`, `until`, `void`, `where`, `xor`, `yield`.
 
 ---
 
