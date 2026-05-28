@@ -2875,22 +2875,22 @@ increment(b)   -- T is inferred bool which has no implementation, compile-time e
 ## Importing and Modules
 
 * **Modules:** Declare with `moduleName :: mod`. Only one per file.
-* **Imports:** Must be explicit. `import a.b{c, d}`. Use `in "path"` for direct file imports.
+* **Imports:** Must be explicit. `a.b{c, d} :: import`. Use `import "path"` for direct file imports.
 
-Use `import` to import something, optionally giving the import an alias with `as`. You can either import a single export like `import a.b.c` or multiple at once using destructuring rules `import a.b{c, d}`. *(See [Destructuring](#destructuring).)* Note that there is no `.` before the `{`. This follows the same convention that destructuring with tuples does. All imports must be **explicitly** declared—no `import a.b._`. This helps prevent naming conflicts and track where things have been defined.
+Use `import` to import something, optionally giving the import an alias with `as`. You can either import a single export like `a.b{c} :: import` or multiple at once using destructuring rules `a.b{c, d} :: import`. *(See [Destructuring](#destructuring).)* This follows the same convention as destructuring with tuples. All imports must be **explicitly** declared—no `import a.b.*`. This helps prevent naming conflicts and track where things have been defined.
 
 The most common import will likely be the `print` function, which will be defined somewhere in a standard library.
 
 ```
-import std.print     -- This is just an example and not final.
+std{print} :: import    -- This is just an example and not final.
 
 print("Hello, world!")
 ```
 
-Modules are named with the keyword `mod` near the top before anything is defined. This is the name you'll use when importing your module. **There can only be one `mod` declaration per file.** Multiple `mod` declarations is a syntax error. Imports are based on the include path when compiling or running a script. To import from a file by direct filepath, use `in "path"` after `import`.
+Modules are named with the keyword `mod` near the top before anything is defined. This is the name you'll use when importing your module. **There can only be one `mod` declaration per file.** Multiple `mod` declarations is a syntax error. Imports are based on the include path when compiling or running a script. To import from a file by direct filepath, use `import "path"`.
 
 ```
-import someModule{thing} in "../../somewhere.mu"
+someModule{thing} :: import "../../somewhere.mu"
 
 myModule :: mod
 
@@ -2900,7 +2900,7 @@ addThing(x) = x + thing
 In this example, you would import `addThing` like this (assuming the file is included):
 
 ```
-import myModule.addThing
+myModule{addThing} :: import
 ```
 
 This connects the same explicit-list convention as `inherit` and capturing — *no hidden dependencies, everything that can affect behavior is named.* The three together form a consistent rule across the language:
@@ -2918,7 +2918,7 @@ Mulem is multi-paradigm: different functions, structs, or modules can use differ
 Modules define how memory is handled with the `memory` module setting. By default, modules use a garbage collector. Some options include `Collect(GC)` (default),  `Count(ARC)` (reference counting), and `Manual`. `GC` and `ARC` represent the standard garbage collector and reference counter respectively, but others can be defined and used instead.
 
 ```
-import std.mem{Count, ARC}
+std.mem{Count, ARC} :: import
 
 moduleThatUsesReferenceCounting :: mod =
     memory: Count[ARC]
@@ -2933,7 +2933,7 @@ How this is implemented is outside of the scope of this document. That will be s
 Mulem's unconventional choices are intentional, prioritizing readability, explicit data tracing, and scalable complexity:
 
 * __Readability First:__ Significant whitespace avoids bracket clutter, while the strict block/inline switching rules (`:` vs `()`) prevent you from fighting the formatter.
-* __Traceable Dependencies:__ The language forces you to explicitly name what you bring into scope. There are no glob imports or implicit mutable state captures. `import`, `inherit`, and `%` (capturing) all use explicit listing.
+* __Traceable Dependencies:__ The language forces you to explicitly name what you bring into scope. There are no glob imports or implicit mutable state captures. `import`, `inherit`, and `\` (capturing) all use explicit listing.
 * __Unified Concepts:__ `::` is the universal operator for top-level, compile-time definitions (structs, aliases, constants).
 * __Type and Expression Symmetry:__ `?` (Maybes) and `!` (Results) work identically whether used in type definitions or as unwrapping operators.
 * __Scalable Patterns:__ Simple tasks use simple syntax (e.g., `fn(x) = x`), but the language easily scales up to explicit types, memory models, and generic constraints as complexity demands.
@@ -2945,7 +2945,7 @@ Mulem's unconventional choices are intentional, prioritizing readability, explic
 Here is a quick synthesized example showing how Mulem's structs, implementations, pipelining, and error handling might look in a real script:
 
 ```
-import std.print
+std{print} :: import
 
 exampleApp :: mod
 
