@@ -148,50 +148,39 @@ x = 1 \
   + 5 + 6
 ```
 
-In Mulem, you use a colon (`.`) for this. It will collapse whitespace *before* it, ensuring everything lines up.
+In Mulem, backslashes will collapse whitespace *before* and *after* it, allowing you to use either styles.
 
 ```
 x = 1
-  . + 2 + 3
-  . + 4
-  . + 5 + 6
+  \ + 2 + 3
+  \ + 4
+  \ + 5 + 6
 ```
 
 Method chaining:
 
 ```
 object.method1()
-    . .method2()
-    . .method3()
-    . .method4()
+    \ .method2()
+    \ .method3()
+    \ .method4()
 ```
 
-Indentation is lenient with expression splitting. As long as there's a `.` character at the start of a line, then it belongs to the same expression.
-
-```
-do
-    a
-        . + b
-      . * c
-        . - d
-     . e
-    . rem f        -- Indentation must be the same or more as the block.
-      . band g
-```
+Indentation is lenient with expression splitting. As long as there's a `\` character in between, then it belongs to the same expression.
 
 It's recommended to keep the indentation the same. This is especially useful for long `if` statement.
 
 ```
 if    a or b
-. and c or d        -- Each `~` line is in the `if` condition.
-. and e or f
-. then              -- Block starts here.
+\ and c or d        -- Each `\` line is in the `if` condition.
+\ and e or f
+\ then              -- Block starts here.
     print("True")
 else
     print("False")
 ```
 
-Mulem has no implicit lookahead. When in a block, all line breaks end an expression unless ignored explicitly with `.`. 
+Mulem has no implicit lookahead. When in a block, all line breaks end an expression unless ignored explicitly with `\`. 
 
 ### Block Expressions
 
@@ -380,11 +369,11 @@ When mixed with `do`, multiple expressions separated by semicolons `;` on one li
 |> print("{$}")                  -- Print result.
 ```
 
-Note that `|>` at the beginning of a line is different from `. |>` which is a split expression on the next line. The pipe will continue after it.
+Note that `|>` at the beginning of a line is different from `\ |>` which is a split expression on the next line. The pipe will continue after it.
 
 ```
 |> fetchA()
-. |> fetchB(&$)
+\ |> fetchB(&$)
 |> fetchC(&$)
 |> print("{$}")
 ```
@@ -854,7 +843,7 @@ cannotChangeX(2) -- Prints "2"
 print("{x}")     -- Prints "1"
 ```
 
-To capture a mutable variable, write `\` at the end of the function signature. This goes after the parameters and before the return type `: T =`. List each *mutable* (`mu`) variables that the function uses. This helps make it easy to see which functions depend on mutable variables and which ones don't since `\` doesn't appear in type notation or anywhere else to the left of the equals sign `=` in function signatures except for captures. 
+To capture a mutable variable, write `/` at the end of the function signature. This goes after the parameters and before the return type `: T =`. List each *mutable* (`mu`) variables that the function uses. This helps make it easy to see which functions depend on mutable variables and which ones don't since `/` doesn't appear in type notation or anywhere else to the left of the equals sign `=` in function signatures except for captures. 
 
 This follows the same practice that `import` and inheriting where all words in a given scope are listed out clearly so that there are no accident name collisions or hidden gotchas.
 
@@ -864,7 +853,7 @@ mu count = 0             -- Mutable variables, must be captured with `\`.
 mu squared = 1
 mu cubed = 1
    
-addCount() \ (count, squared, cube): int =     -- Capture 3 variables at once.
+addCount() / (count, squared, cube): int =     -- Capture 3 variables at once.
     count += amount                            -- Mutate captured variables inside the function.
     squared = count * count
     cubed = squared * count
@@ -874,40 +863,6 @@ addCount()
 addCount()
 print("{count}, {squared}, {cubed}")     -- Prints "3, 9, 27"
 ```
-
-Error messages will highlight cases where someone would be confused about `\` in a function signature:
-
-**Forgot to capture a mutable variable:**
-```
-mu count = 0
-addCount() =
-    count += 1    -- Error here
-```
-> `count` is mutable but not captured. Did you mean `addCount() \ (count) =`?
-
-**Accidentally tried to capture an immutable:**
-```
-x = 1
-f() \ (x) =
-    x + 1
-```
-> `x` is immutable and is captured automatically — remove `\ (x)` from the signature.
-
-**Captured a variable that doesn't exist in scope:**
-```
-f() \ (ghost) =
-    ghost + 1
-```
-> `ghost` is not defined in the enclosing scope. Captures must refer to mutable variables in the outer scope.
-
-**Mutated without capturing, inside a lambda:**
-```
-mu count = 0
-forEach([1,2,3], fn(x) =
-    count += x
-)
-```
-> `count` is mutable but not captured by this lambda. Did you mean `fn(x) \ (count) =`?
 
 #### Lambda Functions
 
@@ -949,7 +904,7 @@ Capturing also works inside lambda functions just like with named functions.
 
 ```
 mu count = 0
-forEach([1, 2, 3, 4], fn(x) \ (count) =
+forEach([1, 2, 3, 4], fn(x) / (count) =
     count += x
 )
 ```
@@ -1053,11 +1008,11 @@ When capturing variables, each returned function needs to capture them separatel
 
 ```
 mu count = 0
-curryAddCount(a: int) \ (count): (int): (int): int =
+curryAddCount(a: int) / (count): (int): (int): int =
     count += a                                   -- (1) Evaluated immediately
-    (b: int) = fn \ (count): (int): int   -- (2) Suspends and captures `count`
+    (b: int) = fn / (count): (int): int   -- (2) Suspends and captures `count`
     count += b                                   -- (3) Evaluated when second `fn` is called
-    (c: int) = fn \ (count): int
+    (c: int) = fn / (count): int
     count += c
     count
 
@@ -2682,113 +2637,6 @@ optionInt = Some[int](1)
 
 The syntax `[]` was chosen so that generic type inference will take precedence. `meta(a, b)` means to *call the instantiated function that `meta` returns with inferred types* whereas `meta[a, b]` means to *call the abstract function `meta` with these exact values.* This also makes it easy to distinguish actual function calls from macros/inlining. This removes the need for the more conventional arrow bracket `<>` syntax, which can get confusing. For example, in `f( g < a, b > ( c ) )`, is `g` a generic function or is that comparing two values and passing the results to `f`? The square bracket syntax removes this ambiguity, `f( g [ a, b ] ( c ) )`. This makes it semantically clear that you're doing a compile-time function call followed by a run-time function call. 
 
-### Where Block
-
-This is not required for all meta functions but is useful for defining what patterns each parameter is expected to be. It must be the first definition, and any subsequent definitions should have patterns that match the `where` clause. One common pattern is simply `type` which indicates that a parameter is any literal type. 
-
-```
-List[T, N] :: where =
-    T: type           -- `type` refers to any literal type, i.e. not a value
-    N: const int      -- A constant `int` that must be known at compile time
-
-List[T, N] :: struct =
-    data: [N*T]
-
-List[T, N] :: impl =
-    init() =
-        data: [N*T] = [...loop _ in 0..N then default]
-        List[T, N](data: data)
-```
-
-Types can require a certain `proto` to have been implemented:
-
-```
-sort[T] :: where =
-    T: impl[Comparable]      -- This type T needs to have implemented `Comparable`.
-
-sort[T] :: (arr: [*T]): [*T] = _
-```
-
-This is the bread and butter of generic programming. Without it, you can't write a generic `sort`, `min`, `max`, or any algorithm that requires behavior from its type parameter. 
-
-*"Types can also have multiple `proto` requirments."*
-
-```
-serialize[T] :: where =
-    T: impl[Serializable] & impl[Comparable]     -- This type T needs both `Serializable` and `Comparable`.
-```
-
-*"The key type of this dictionary must implement Hashable."*
-
-```
-lookup[V, K] :: where =
-    V: impl[Hashable]    -- V is a type [K:T]
-    K: keyof[V]
-
---       V  = [K:T]
--- keyof[V] = K
--- valof[V] = T
-lookup[V, K] :: (dict: V, key: K): valof[V]? = _
-```
-
-*"The return type of this function must match the element type of the array."*
-
-```
-transform[T, U] :: where =
-    U: typeof[fn(T): U]  -- U is whatever the mapping function returns
-
-transform[T, U] :: (arr: [*T], f: fn(T): U): [U] = ...
-```
-
-```
-Matrix[T, R, C] :: where =
-    T: impl[Numeric]
-    R: const int & (R > 0)    -- Must be positive
-    C: const int & (C > 0)
-
--- Constraint across parameters:
-Slice[T, Start, End] :: where =
-    Start: const int
-    End: const int
-    End >= Start            -- Relationship between parameters
-```
-
-```
--- A generic pair type
-Pair[A, B] :: where =
-    A: impl[Comparable]
-    B: impl[Comparable]
-
-Pair[A, B] :: struct =
-    first: A
-    second: B
-
--- Pair is only Comparable if both A and B are
-Pair[A, B] :: impl[Comparable] =
-    compare(self, other: Pair[A, B]): int =
-        r = self.first.compare(other.first)
-        if r != 0 then r else self.second.compare(other.second)
-```
-
-*"These two type parameters must be the same type."*
-
-```
-zip[A, B, C] :: where =
-    C == (A, B)     -- C must be exactly a tuple of A and B
-```
-
-*"This parameter must be a specific projection of another."*
-
-```
-flatten[T] :: where =
-    T: [**T]          -- T must be a 2D array, inner type inferred
-```
-
-```
-sort[T] :: where =
-    T: impl[Comparable] else "sort requires T to implement Comparable — define `compare(self, other: T): int` on your type"
-```
-
 ### Manual Implementation
 
 Generics will automatically generate code based on their parameters, but you can also implement them by hand using pattern matching. If you only want to use the manual implementations for a generic function, you can set its body to `unimplemented[]`. This creates a virtual function that can be overloaded later. If you use a function that is defined with `unimplemented[]`, it will throw a compile-time error.
@@ -2875,7 +2723,7 @@ How this is implemented is outside of the scope of this document. That will be s
 Mulem's unconventional choices are intentional, prioritizing readability, explicit data tracing, and scalable complexity:
 
 * __Readability First:__ Significant whitespace avoids bracket clutter, while the strict block/inline switching rules (`:` vs `()`) prevent you from fighting the formatter.
-* __Traceable Dependencies:__ The language forces you to explicitly name what you bring into scope. There are no glob imports or implicit mutable state captures. `import`, inheriting, and `\` (capturing) all use explicit listing.
+* __Traceable Dependencies:__ The language forces you to explicitly name what you bring into scope. There are no glob imports or implicit mutable state captures. `import`, inheriting, and `/` (capturing) all use explicit listing.
 * __Unified Concepts:__ `::` is the universal operator for top-level, compile-time definitions (structs, aliases, constants).
 * __Type and Expression Symmetry:__ `?` (Questions) and `!` (Exclamation) work identically whether used in type definitions or as unwrapping operators.
 * __Scalable Patterns:__ Simple tasks use simple syntax (e.g., `fn(x) = x`), but the language easily scales up to explicit types, memory models, and generic constraints as complexity demands.
