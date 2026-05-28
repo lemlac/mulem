@@ -148,46 +148,46 @@ x = 1 \
   + 5 + 6
 ```
 
-In Mulem, you use a tilde (`~`) for this. It will treate whitespace *before* and *after* it as a single space (` `). This allows you to easily format your code anyway you prefer. The tilde `~` character is used exclusively for expression splitting.
+In Mulem, you use a caret (`^`) for this. It will treate whitespace *before* and *after* it as a single space (` `). This allows you to easily format your code anyway you prefer. The caret `^` character is used exclusively for expression splitting.
 
 ```
-x = 1 ~
-  + 2 + 3 ~
-  + 4 ~
+x = 1 ^
+  + 2 + 3 ^
+  + 4 ^
   + 5 + 6
 
 x = 1
-  ~ + 2 + 3
-  ~ + 4
-  ~ + 5 + 6
+  ^ + 2 + 3
+  ^ + 4
+  ^ + 5 + 6
 ```
 
-Indentation is lenient with expression splitting. As long as there's a tilde (`~`) in between two tokens in an expression, then it belongs to the same expression.
+Indentation is lenient with expression splitting. As long as there's one or more `^` characters in between two tokens in an expression, then it belongs to the same expression.
 
 ```
 do
     a
-        ~ + b ~    -- Double is fine.
-      ~ * c
-        ~ - d ~
-     ~ e
-    ~ rem f        -- Indentation must match the block.
-      ~ band g
+        ^ + b ^    -- Double is fine.
+      ^ * c
+        ^ - d ^
+     ^ e
+    ^ rem f        -- Indentation must match the block.
+      ^ band g
 ```
 
 It's recommended to keep the indentation the same. This is especially useful for long `if` statement.
 
 ```
 if a or b
-~ and c or d        -- Each `~` line is in the `if` condition.
-~ and e or f
-~ then              -- Block starts here.
+^ and c or d        -- Each `~` line is in the `if` condition.
+^ and e or f
+^ then              -- Block starts here.
     print("True")
 else
     print("False")
 ```
 
-Mulem has no implicit lookahead. When in a block, all line breaks end an expression unless ignored explicitly with `~`. 
+Mulem has no implicit lookahead. When in a block, all line breaks end an expression unless ignored explicitly with `^`. 
 
 ### Block Expressions
 
@@ -1560,13 +1560,13 @@ if result == Null then
     raise NotFound
 ```
 
-Sometimes, it's necessary to dig deep into the unsafe territory. The `^` is the symbol associated with pointers, analogues to `?` for question types, `!` for exclamation types. It can be used in type notation, but it's also the operator to dereference a pointer. Thy type must be known at compile-time. Dereferencing an opaque pointer `ptr` is a compile-time error. In the type notation, `T^` prevents the pointer from mutating its memory or `T^mu` allows mutation with `^ =` (dereference + assignment). 
+Sometimes, it's necessary to dig deep into the unsafe territory. The `~` is the symbol associated with pointers, analogues to `?` for question types, `!` for exclamation types. It can be used in type notation, but it's also the operator to dereference a pointer. Thy type must be known at compile-time. Dereferencing an opaque pointer `ptr` is a compile-time error. In the type notation, `T~` prevents the pointer from mutating its memory or `T~mu` allows mutation with `~ =` (dereference + assignment). 
 
 ```
 mu x = 0                 -- `ptr` type takes a reference and creates a generic pointer.
-xPtr: int^mu = ptr(x)    -- Convert `ptr` to `int^mu`, type is known.
-xPtr^ = 1                -- Mutate the memory.
-print("{xPtr^}")         -- Prints "1".
+xPtr: int~mu = ptr(x)    -- Convert `ptr` to `int~mu`, type is known.
+xPtr~ = 1                -- Mutate the memory.
+print("{xPtr~}")         -- Prints "1".
 print("{x}")             -- Prints "1".
 ```
 
@@ -1574,15 +1574,15 @@ Pointer types have 2 kinds of mutability: one for the reference, and one for the
 
 |     Type     | What It Means                         | Can reassign pointer | Can mutate memory | *Think…* |
 |:------------:|:--------------------------------------|:--------------------:|:-----------------:|:---------|
-|    `x: T^`   | immutable pointer to immutable memory |       **No**         |      **No**       | *This will never change.* |
-|    `x: T^mu` | immutable pointer to mutable memory   |       **No**         |        Yes        | *Like a more low-level `ref`.* |
-| `mu x: T^`   | mutable pointer to immutable memory   |         Yes          |      **No**       | *I need to switch what I'm looking at.* |
-| `mu x: T^mu` | mutable pointer to mutable memory     |         Yes          |        Yes        | *I need full control.* |
+|    `x: T~`   | immutable pointer to immutable memory |       **No**         |      **No**       | *This will never change.* |
+|    `x: T~mu` | immutable pointer to mutable memory   |       **No**         |        Yes        | *Like a more low-level `ref`.* |
+| `mu x: T~`   | mutable pointer to immutable memory   |         Yes          |      **No**       | *I need to switch what I'm looking at.* |
+| `mu x: T~mu` | mutable pointer to mutable memory     |         Yes          |        Yes        | *I need full control.* |
 
 Like with arrays and dictionaries, use `deref[]` to safely dereference a pointer.
 
 ```
-if defer[xPtr^] is Some(x) then
+if defer[xPtr~] is Some(x) then
     print("x = {x}")
 else
     print("x is gone")
@@ -2216,10 +2216,10 @@ Chain multiple `maybe` / `else` together untill you get a fallback:
 
 ```
 getFirst(a: int, b: int, c: int): int =
-    ~ maybe getA(a)? else
-    ~ maybe getB(b)? else
-    ~ maybe getC(c)? else
-    ~ 0
+    ^ maybe getA(a)? else
+    ^ maybe getB(b)? else
+    ^ maybe getC(c)? else
+    ^ 0
 ```
 
 Or use the `None`-coalescing operator (`?:`).
@@ -2966,7 +2966,7 @@ Mulem has 42 reserved keywords. Note that built-in types (`int`, `str`), boolean
 | Level | Category                   | Operators                                 |
 |:------|:---------------------------|:------------------------------------------|
 | 12    | Member access/Function     | `.` `.[]` `()`                            |
-| 11    | Postfix                    | `?` `!` `^`                               |
+| 11    | Postfix                    | `?` `!` `~`                               |
 | 10    | Unary                      | `+` `-` `not` `bnot`                      |
 | 9     | Exponent                   | `**` (right-associative)                  |
 | 8     | Multiplicative / Shift     | `*` `/` `//` `rem` `mod` `<<` `>>` `>>>`  |
@@ -2985,7 +2985,7 @@ Mulem has 42 reserved keywords. Note that built-in types (`int`, `str`), boolean
 |   `lhs .[rhs]` | Array/dictionary index                               |
 |   `lhs ?`      | Unwrap question, propagate `None` to nearest `maybe` |
 |   `lhs !`      | Unwrap exclamation, propagate error to nearest `try` |
-|   `lhs ^`      | Dereference typed pointer                            |
+|   `lhs ~`      | Dereference typed pointer                            |
 |     `... rhs`  | Spread array into array                              |
 |       `& rhs`  | Spread tuple into tuple (same type)                  |
 |  `lhs ... rhs` | Exclusive range                                      |
@@ -3052,7 +3052,7 @@ The practical case where it matters is things like clock arithmetic, array wrapp
 |  `T?`, `x?`    | Question           | Unwraps a question; propagates `None` to nearest `maybe`. |
 |  `T!`, `x!`    | Exclamation        | Unwraps a exclamation; propagates error to nearest `try`. |
 | `[*T]`, `x.[]` | Array / Dict Index | `[N*T]` is fixed-size. Access: `array.[index]`.           |
-|  `T^`, `x^`    | Pointer            | Dereference a pointer.                                    |
+|  `T~`, `x~`    | Pointer            | Dereference a pointer.                                    |
 
 ---
 
