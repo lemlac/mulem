@@ -155,14 +155,14 @@ a = 2
 a = 'a'
 ```
 
-Declare a variable with a type and it will be locked to that type until declared again with `: T`. Use `: _` to remove the locked type.
+Declare a variable with a type and it will be locked to that type until declared again with `: T`. Use `: *` to remove the locked type.
 
 ```mulem
 c: char
 c = 'c'
 c = 0        -- Error!
 c: int = 0   -- OK!
-c: _
+c: *
 c = 'c'
 c = 0        -- OK!
 ```
@@ -177,7 +177,7 @@ lunch =
         "sandwich"
 ```
 
-Mutable variables are declared with the keyword `mu` before it. They must be set with the `:=` operator or any compound assignment operators such as `+:=` or `-:=`. Shadowing a mutable variable with `=` will throw an error unless redeclared with `: T` / `: _`. 
+Mutable variables are declared with the keyword `mu` before it. They must be set with the `:=` operator or any compound assignment operators such as `+:=` or `-:=`. Shadowing a mutable variable with `=` will throw an error unless redeclared with `: T` / `: *`. 
 
 ```mulem
 mu i = 0
