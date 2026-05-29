@@ -152,7 +152,7 @@ a = 2
 a = 'a'
 ```
 
-Declare a variable with a type and it will be locked to that type until reclared with `: T`. Use `: _` to remove the locked type.
+Declare a variable with a type and it will be locked to that type until declared again with `: T`. Use `: _` to remove the locked type.
 
 ```mulem
 c: char
@@ -188,8 +188,8 @@ i -= 1
 Tuples can be destructured like this:
 
 ```mulem
-(a, b) = (1, 2)
-{x, y} = (x: 3, y: 4)
+(a, b) = (1, 2)        -- Positional tuple.
+{x, y} = (x: 3, y: 4)  -- Named tuple.
 ```
 
 When tuples are mixed, you can either use `(…) & {…}` or `{0 as x, …}`.
@@ -200,7 +200,7 @@ tuple = (1, 2, x: 3, y: 4)
 {0 as a, 1 as b, x, y} = tuple
 ```
 
-Tuples can be spread into a function using the `&` prefix operator. Function can have named parameters in the same manner as desctructuring.
+Tuples can be spread into a function using the `&` prefix operator. Functions can have named parameters in the same manner as desctructuring.
 
 ```mulem
 add(a: int, b: int) & {x: int, y: int}: int =
@@ -245,13 +245,23 @@ xRef: T%mu = %mu x    -- Error!
 
 ## Meta Assignment
 
-Meta assignments are made with `::`. These mark special data that tells the compiler the meanings of words and symbols. This includes things like constants, aliases, types, compile-time functions, and generics. This unifies many different concepts in programming without needing a lot of prefixed keywords, helping keep the name of assignments to the left. More on each of those later in this document.
+Meta assignments are made with `::`. These mark special data that tells the compiler the meaning of words and symbols. This includes things like constants, aliases, types, compile-time functions, and generics. This unifies many different concepts in programming without needing a lot of prefixed keywords, helping keep the name of assignments to the left. More on each of those later in this document.
 
-For now know that to make a constant, you can replace `: T =` with `:: const T =`. This is different from an immutable variable. It treats the expression as if it where a literal. To infer the type, drop the `const T` so you just have `:: =`.
+To make a constant, you can replace `: T =` with `:: const T =`. This is different from an immutable variable. It treats the expression as if it where a literal. To infer the type, drop the `const T` so you just have `:: =`.
 
 ```
 PI :: comst float = 3.14159265
 NAMESPACE :: = "development"
+```
+
+Constants can have arguments like functions to make inline functions. These use the square brackets `[]` instead of parentheses `()`. *See [Meta Functions](#meta-functions) for more details.*
+
+```
+MAX[a: int, b: int] :: const int =
+    if a > b then a else b
+
+MAX[5, 10]    -- Result: 10
+MAX[7, 3]     -- Result: 7
 ```
 
 [TOC](#table-of-contents)
