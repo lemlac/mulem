@@ -634,9 +634,7 @@ a = byte('a')
 
 ### Strings
 
-
-
-### ArraysStrings (`str`) are immutable 1D arrays of characters `char`. 
+Strings (`str`) are immutable 1D arrays of characters `char`. 
 
 |    Form     | Purpose                                                                    |
 |:-----------:|:---------------------------------------------------------------------------|
@@ -706,6 +704,68 @@ rawString = ''It's okay to put an apostrophe (') in the string.''
 filePath = ''C:\files\on\windows.txt''
 template = ''Insert here → {{variable}}''
 ```
+
+### Arrays
+
+Array types are declared with square brackets around their type (`[*T]`). A number before the mulitplication mark `*` makes it a fixed length array `[N*T]`. Arrays are statically sized when written `[N*T]`, while `[*T]` is the dynamic form. Items are separated with commas (`,`). Index is done with the `.[]` operator. 
+
+```mulem
+list: [4*int] = [1, 2, 3, 4]
+print("length of list: {len(list)}")
+compressedList = [list.[0] + list.[1], list.[2] + list.[3]]
+doubleArray: [3*2*int] = [[1, 2], [3, 4], [5, 6]]
+item = doubleArray.[1].[0]    -- The 2nd row, 1st column
+item = doubleArray.[1,0]      -- Or seperated with commas
+print("{item}")               -- Prints "3"
+```
+
+Direct access to an array is only allowed when the result is guaranteed. If not, you need to wrap it in `deref[]` which will check each dereference operator `^` / `.[]` inside of it. This will return a question type `T?`, `Some(T)` if successful or `None` if unsuccessful. 
+
+```mulem
+i = randInt()                        -- Undeterministic number.
+print("{ deref[list.[i]] ?: -1 }")   -- Prints "-1" if deref failed.
+```
+
+In general, you'll mostly be using arrays by iterating or piping them. 
+
+```mulem
+loop x in list then
+    print("{x}")     -- No need to use `#`
+```
+
+Use the spread operator `...` to spread an array into another array. This must be the first prefix operator in an expression, and it must be in a compatiable array or tuple literal. It always goes last in the slot's expression, so extra parentheses aren't necessary: `...a <> b` == `...(a <> b)`.
+
+```mulem
+a = [1, 2, 3]
+b = [0, ...a, 4]                -- == [0, 1, 2, 3, 4]
+c = a <> b                      -- == [1, 2, 3, 0, 1, 2, 3, 4]
+d = [0, ...a <> b, 5, ...c, 6]  -- == [0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 1, 2, 3, 0, 1, 2, 3, 4, 6]
+```
+
+If you spread an array into a tuple, the type must be known and the tuple must have compatible components. Positional components will map to array indexes or iterator yields based on where the spread is placed inside the tuple. If the tuple runs out of space, the spread will be truncated. This works similar to variadic parameters in functions.
+
+```mulem
+ThreeInts :: (int, int, int)
+
+list = [1, 2, 3]
+a: ThreeInts = (...list)      -- == (1, 2, 3)
+b: ThreeInts = (0, ...list)   -- == (0, 1, 2), truncated at the end
+```
+
+Tuples may also collect any remaining positional components into an array, just like variadic parameters in functions.
+
+```mulem
+TwoOrMoreInts :: (int, int, ...[*int])
+
+list = [1, 2]
+a: TwoOrMoreInts = (...list)              -- == (1, 2, [])
+b: TwoOrMoreInts = (0, ...list)           -- == (0, 1, [2])
+c: TwoOrMoreInts = (-1, 0, ...list)       -- == (-1, 0, [1, 2])
+d: TwoOrMoreInts = (-2, -1, 0, ...list)   -- == (-2, -1, [0, 1, 2])
+```
+
+*Mulem separates tuple and array spread to preserve =type safety and avoid runtime surprises. `&` always preserves tuple structure; `...` always preserves array structure.*
+
 
 ### Tuples
 
@@ -874,40 +934,6 @@ The practical case where it matters is things like clock arithmetic, array wrapp
 |  `T!`, `x!`    | Exclamation        | Unwraps a exclamation; propagates error to nearest `try`. |
 | `[*T]`, `x.[]` | Array / Dict Index | `[N*T]` is fixed-size. Access: `array.[index]`.           |
 |  `T^`, `x^`    | Pointer            | Dereference a pointer.                                    |
-
----
-
-I have some ideas: instead of `=` for both declaration and mutation, it could just be for declaration and `:=` will be for mutation. And instead of `fn(x) = `, any `name(x) = ` will produce a lambda function, anonymous one being `_(x) = `.
-
-
-```mulem
--- `=` — declaration / shadowing
-a = 0
-a = 1
-a = 'a'
-f(x) = x*x
-
--- `:=` / operator + `=` — mutation
-mu x: int = 0
-x := 1
-x := 2
-x += 1
-mu cb(int): int
-f1(x: int): int = x + 1
-f2(x: int): int = x - 1
-cb := f1
-x := cb(x)
-cb := f2
-x := cb(x)
-
--- `name(x) = ` — lambda, `_` for anonymous
-apiCall(_(result) =
-    if result > 1 then
-        print("Success! {result}")
-    else
-        print("Fail! {result}")
-)
-```
 
 [TOC](#table-of-contents)
 
@@ -1732,64 +1758,6 @@ do
 
 #### Arrays
 
-Array types are declared with square brackets around their type (`[*T]`). A number before the mulitplication mark `*` makes it a fixed length array `[N*T]`. Arrays are statically sized when written `[N*T]`, while `[*T]` is the dynamic form. Items are separated with commas (`,`). Index is done with the `.[]` operator. 
-
-```mulem
-list: [4*int] = [1, 2, 3, 4]
-print("length of list: {len(list)}")
-compressedList = [list.[0] + list.[1], list.[2] + list.[3]]
-doubleArray: [3*2*int] = [[1, 2], [3, 4], [5, 6]]
-item = doubleArray.[1].[0]    -- The 2nd row, 1st column
-item = doubleArray.[1,0]      -- Or seperated with commas
-print("{item}")               -- Prints "3"
-```
-
-Direct access to an array is only allowed when the result is guaranteed. If not, you need to wrap it in `deref[]` which will check each dereference operator `^` / `.[]` inside of it. This will return a question type `T?`, `Some(T)` if successful or `None` if unsuccessful. 
-
-```mulem
-i = randInt()                        -- Undeterministic number.
-print("{ deref[list.[i]] ?: -1 }")   -- Prints "-1" if deref failed.
-```
-
-In general, you'll mostly be using arrays by iterating or piping them. 
-
-```mulem
-loop x in list then
-    print("{x}")     -- No need to use `#`
-```
-
-Use the spread operator `...` to spread an array into another array. This must be the first prefix operator in an expression, and it must be in a compatiable array or tuple literal. It always goes last in the slot's expression, so extra parentheses aren't necessary: `...a <> b` == `...(a <> b)`.
-
-```mulem
-a = [1, 2, 3]
-b = [0, ...a, 4]                -- == [0, 1, 2, 3, 4]
-c = a <> b                      -- == [1, 2, 3, 0, 1, 2, 3, 4]
-d = [0, ...a <> b, 5, ...c, 6]  -- == [0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 1, 2, 3, 0, 1, 2, 3, 4, 6]
-```
-
-If you spread an array into a tuple, the type must be known and the tuple must have compatible components. Positional components will map to array indexes or iterator yields based on where the spread is placed inside the tuple. If the tuple runs out of space, the spread will be truncated. This works similar to variadic parameters in functions.
-
-```mulem
-ThreeInts :: (int, int, int)
-
-list = [1, 2, 3]
-a: ThreeInts = (...list)      -- == (1, 2, 3)
-b: ThreeInts = (0, ...list)   -- == (0, 1, 2), truncated at the end
-```
-
-Tuples may also collect any remaining positional components into an array, just like variadic parameters in functions.
-
-```mulem
-TwoOrMoreInts :: (int, int, ...[*int])
-
-list = [1, 2]
-a: TwoOrMoreInts = (...list)              -- == (1, 2, [])
-b: TwoOrMoreInts = (0, ...list)           -- == (0, 1, [2])
-c: TwoOrMoreInts = (-1, 0, ...list)       -- == (-1, 0, [1, 2])
-d: TwoOrMoreInts = (-2, -1, 0, ...list)   -- == (-2, -1, [0, 1, 2])
-```
-
-*Mulem separates tuple and array spread to preserve =type safety and avoid runtime surprises. `&` always preserves tuple structure; `...` always preserves array structure.*
 
 #### Dictionaries
 
@@ -3149,4 +3117,5 @@ Mulem has 42 reserved keywords. Note that built-in types (`int`, `str`), boolean
 ---
 
 *This document captures the current state of the Mulem design. The language is still evolving.*
+
 
