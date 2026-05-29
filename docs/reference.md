@@ -32,7 +32,7 @@ Comments are made with two minus signs `--`.
 (-- (-- Nested Comment --) --)
 ```
 
-### Duel Whitespace-Bracket System
+### Dual Whitespace-Bracket System
 
 Mulem is whitespace significant. Indentation determines when blocks start and end. Expressions are split by line-breaks and semi-colons (`;`). The value of each block is the last expression evaluated in it. 
 
@@ -55,7 +55,7 @@ Certain keywords and symbols can start a block. Indentation can only increase if
 - `try`
 - `maybe`
 
-Some keywords start a patter-matching sequence. When these words are at the end of a line, each line below it starting with a `|` at the same indentation will belong to the same sequence. These are the words:
+Some keywords start a pattern-matching sequence. When these words are at the end of a line, each line below it starting with a `|` at the same indentation will belong to the same sequence. These are the words:
 
 - `is`
 - `catch`
@@ -177,14 +177,19 @@ lunch =
         "sandwich"
 ```
 
-Mutable variables are declared with the keyword `mu` before it. They must be set with the `:=` operator or any compound assignment operators such as `+:=` or `-:=`
+Mutable variables are declared with the keyword `mu` before it. They must be set with the `:=` operator or any compound assignment operators such as `+:=` or `-:=`. Shadowing a mutable variable with `=` will throw an error unless redeclared with `: T` / `: _`. 
 
 ```mulem
 mu i = 0
 i := 1
 i +:= 1
 i -:= 1
+i = 1   -- Error!
+i: int  -- Shadow i
+i = 1   -- OK!
 ```
+
+`:=`​ and `=`​ are separated so that you don't accidentally mistype a variable name and create a new variable in scope. It also makes it easier to create compound assignment of custom operators such as `rem:=`​. 
 
 ### Destructuring
 
@@ -253,7 +258,7 @@ Meta assignments are made with `::`. These mark special data that tells the comp
 To make a constant, you can replace `: T =` with `:: const T =`. This is different from an immutable variable. It treats the expression as if it where a literal. To infer the type, drop the `const T` so you just have `:: =`.
 
 ```
-PI :: comst float = 3.14159265
+PI :: const float = 3.14159265
 NAMESPACE :: = "development"
 ```
 
@@ -674,10 +679,10 @@ Chain multiple `maybe` / `else` together untill you get a fallback:
 
 ```mulem
 getFirst(a: int, b: int, c: int): int =
-    . maybe getA(a)? else
-    . maybe getB(b)? else
-    . maybe getC(c)? else
-    . 0
+    \ maybe getA(a)? else
+    \ maybe getB(b)? else
+    \ maybe getC(c)? else
+    \ 0
 ```
 
 Or use the `None`-coalescing operator (`?:`).
@@ -1085,7 +1090,7 @@ template = ''Insert here → {{variable}}''
 
 ### Arrays
 
-Array types are declared with square brackets around their type (`[*T]`). A number before the mulitplication mark `*` makes it a fixed length array `[N*T]`. Arrays are statically sized when written `[N*T]`, while `[*T]` is the dynamic form. Items are separated with commas (`,`). Index is done with the `^[]` and `.[]` operators. 
+Array types are declared with square brackets around their type (`[*T]`). A number before the multiplication mark `*` makes it a fixed length array `[N*T]`. Arrays are statically sized when written `[N*T]`, while `[*T]` is the dynamic form. Items are separated with commas (`,`). Index is done with the `^[]` and `.[]` operators. 
 
 ```mulem
 list: [4*int] = [1, 2, 3, 4]
@@ -1679,7 +1684,6 @@ __Compound Assignment Operators:__
 |  `lhs *:= rhs`   | `lhs := lhs * rhs`              |
 |  `lhs /:= rhs`   | `lhs := lhs / rhs`              |
 | `lhs <<:= rhs`   | `lhs := lhs << rhs`             |
-| `lhs >>:= rhs`   | `lhs := rhs >> lhs` *(flipped)* |
 | `lhs <>:= rhs`   | `lhs := lhs <> rhs`             |
 | `lhs rem:= rhs`  | `lhs := lhs rem rhs`            |
 | `lhs mod:= rhs`  | `lhs := lhs mod rhs`            |
@@ -1689,8 +1693,6 @@ __Compound Assignment Operators:__
 | `lhs shl:= rhs`  | `lhs := lhs shl rhs`            |
 | `lhs shr:= rhs`  | `lhs := lhs shr rhs`            |
 | `lhs shru:= rhs` | `lhs := lhs shru rhs`           |
-
-`>>:=` is flipped since the return type matches the right hand side of `>>` instead of the left.
 
 ### Key Type Modifiers & Postfix Operators
 
@@ -1906,22 +1908,21 @@ This gives you a great deal of flexibility in how you choose to express your cod
 |:-----------------|:------------------|:-----------------------------------|
 | *(none)*         | Pass by copy      | No                                 |
 | `mu`             | Pass by copy      | Yes                                |
-| `in`             | Pass by reference | No                                 |
-| `ref`            | Pass by reference | Yes                                |
+| `ref`            | Pass by reference | Yes / No                           |
 | `out`            | Unset reference   | Yes (Must be assigned)             |
 | `opt`            | Optional argument | Wraps in T?`                       |
 
 Function parameters can be declared like variables. Likewise, you can modify their mutability and reference-ness the same way.
 
+`ref` is used to infer a `T%` (immutable reference) or `T%mu` (mutable reference). Wether it's immutable or mutable depends on the usage in the function.
+
 ```mulem
-increment(ref x: int) =
+increment(ref x) =
     x +:= 1
 
 mu y = 0
 increment(y)
 ```
-
-`in` and `out` are complements of each other. One is **read-only** (`in`) and the other is **write-only** (`out`). `ref` combines these two to pass a variable that you can both **read and write** to.
 
 `out` parameters are guaranteed‑set references. They behave like `ref`, except they begin the function in an *unset* state. Use an `out` parameter when a function’s job is to produce a value rather than consume one. An `out` parameter must not remain unset in any branch of the function. It must either be:
 
@@ -2576,10 +2577,10 @@ do
 
 ## Reserved Keywords
 
-Mulem has 38 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard question `T?` members (`Some`, `None`), are built-in symbols but *not* strict keywords.
+Mulem has 37 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard question `T?` members (`Some`, `None`), are built-in symbols but *not* strict keywords.
 
 **The Keyword List:**
-`and`, `as`, `await`, `break`, `catch`, `continue`, `defer`, `do`, `else`, `enum`, `error`, `fallthrough`, `fn`, `if`, `impl`, `import`, `in`, `is`, `loop`, `match`, `maybe`, `mod`, `not`, `opt`, `or`, `out`, `proto`, `raise`, `ref`, `rem`, `return`, `self`, `struct`, `then`, `try`, `until`, `void`, `where`, `yield`.
+`and`, `as`, `await`, `break`, `catch`, `continue`, `defer`, `do`, `else`, `enum`, `error`, `fallthrough`, `fn`, `if`, `impl`, `import`, `in`, `is`, `loop`, `match`, `maybe`, `mod`, `not`, `opt`, `or`, `out`, `proto`, `raise`, `ref`, `return`, `self`, `struct`, `then`, `try`, `until`, `void`, `where`, `yield`.
 
 [TOC](#table-of-contents)
 
