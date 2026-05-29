@@ -807,6 +807,35 @@ loop (key, val) in dict then
 
 ### Tuples
 
+Tuples use commas (`,`) to separate components for both **positional** (`()`) and **named** (`{}`) tuples. 
+
+Product unions with the `&` operator can be used for both types and values. When combining two or more positional tuples, the positions of subsequent tuples get bumped up by the number of positions in the previous tuples, i.e. `(a, b) & (c, d)` becomes `(a, b, c, d)`. When you combine two or more named tuples, conflicting named parameters override each other with the last tuple taking priority—much like how shadowing works. So if you have `{x: 1} & {x: 2}`, the result is just `{x: 2}` since it overrides the `x` of the previous tuple. Positional tuples and named tuples can be combined together for example `(0, 1) & {x: 2}`. The shorthand for this is to write named parameters in a positional tuple like `(0, 1, x: 2)`. 
+
+You can think of it like every tuple always having both dimensions, just with most slots empty:
+
+| Type                     | Value          | Positional | Named  |
+|:-------------------------|:---------------|:---------|:---------|
+| `(int, int)`             | `(0, 1)`       | `(0, 1)` | `{}`     |
+| `{x: int}`               | `(x: 2)`       | `()`     | `{x: 2}` |
+| `(int, int) & {x: int}`  | `(0, 1, x: 2)` | `(0, 1)` | `{x: 2}` |
+| `{x: int} & (int, int)`  | `(x: 2, 0, 1)` | `(0, 1)` | `{x: 2}` |
+
+So `&` has different commutativity rules depending on what's being combined:
+
+|      Combination  | Commutative? |        Rule                 |
+|:-----------------------:|:---:|:-------------------------------|
+| Positional & Positional | No  | Positions concatenate in order |
+|      Named & Named      | No  | Conflicts resolve last-wins    |
+| Positional & Named      | Yes | Orthogonal, no interaction     |
+
+This makes the algebra quite principled. The only cases where order matters are also the cases where a conflict is actually possible — two positional slots or two named slots with the same key. When there's no possible conflict, order is irrelevant.
+
+It also means the shorthand `(0, 1, x: 2)` isn't really special syntax. It's the natural representation of a tuple that has both dimensions populated.
+
+Every opaque type by itself is its own tuple, so for example `char` and `(char)` are the same. This means that in the example, `int & float & char` is the equal to `(int, float, char)`.  Creating a product type of opaque types like primitives and enums coerce into a positional tuple, e.g. `int & float & char` becomes `(int, float, char)`. 
+
+Combining empty tuples produces an empty tuple `() & () == ()`. The same is true for empty named tuples `{} & {} == {}`. This also means that empty positional tuples and empty named tuples are equivalent `() == {}`. Both tuples have zero dimensions in both positional and named components; therefore they are equivalent. Saying `() & {} & ()` or `{} & ()` and any combination of empty tuples all are the same type.
+
 ### Pointers `T^`
 
 Raw pointers are type `ptr`. These cannot be dereferenced. They are ideally used for FFI to pass to functions of external libraries. You can also check if it's `Null`.
@@ -2721,36 +2750,7 @@ sumUnion     ::  int | float | char                    -- Is the size of the lar
 
 #### Tuples
 
-Every opaque type by itself is its own tuple, so for example `char` and `(char)` are the same. This means that in the example, `int & float & char` is the equal to `(int, float, char)`.
 
-Tuples use commas (`,`) to separate components for both positional (`()`) and named (`{}`) tuples. This follows the same rules that function parameters does. *(See [Function Declarations](#function-declarations).)*
-
-Product unions with the `&` operator can be used for both types and values. When combining two or more positional tuples, the positions of subsequent tuples get bumped up by the number of positions in the previous tuples, i.e. `(a, b) & (c, d)` becomes `(a, b, c, d)`. When you combine two or more named tuples, conflicting named parameters override each other with the last tuple taking priority—much like how shadowing works. So if you have `{x: 1} & {x: 2}`, the result is just `{x: 2}` since it overrides the `x` of the previous tuple. Positional tuples and named tuples can be combined together for example `(0, 1) & {x: 2}`. The shorthand for this is to write named parameters in a positional tuple like `(0, 1, x: 2)`. 
-
-You can think of it like every tuple always having both dimensions, just with most slots empty:
-
-| Type                     | Value          | Positional | Named  |
-|:-------------------------|:---------------|:---------|:---------|
-| `(int, int)`             | `(0, 1)`       | `(0, 1)` | `{}`     |
-| `{x: int}`               | `(x: 2)`       | `()`     | `{x: 2}` |
-| `(int, int) & {x: int}`  | `(0, 1, x: 2)` | `(0, 1)` | `{x: 2}` |
-| `{x: int} & (int, int)`  | `(x: 2, 0, 1)` | `(0, 1)` | `{x: 2}` |
-
-So `&` has different commutativity rules depending on what's being combined:
-
-|      Combination  | Commutative? |        Rule                 |
-|:-----------------------:|:---:|:-------------------------------|
-| Positional & Positional | No  | Positions concatenate in order |
-|      Named & Named      | No  | Conflicts resolve last-wins    |
-| Positional & Named      | Yes | Orthogonal, no interaction     |
-
-This makes the algebra quite principled. The only cases where order matters are also the cases where a conflict is actually possible — two positional slots or two named slots with the same key. When there's no possible conflict, order is irrelevant.
-
-It also means the shorthand `(0, 1, x: 2)` isn't really special syntax. It's the natural representation of a tuple that has both dimensions populated.
-
-Opaque types like primitives and enums coerce into a tuple of one, so creating a product type of them creates a positional tuple, e.g. `int & float & char` becomes `(int, float, char)`. 
-
-Combining empty tuples produces an empty tuple `() & () == ()`. The same is true for empty named tuples `{} & {} == {}`. This also means that empty positional tuples and empty named tuples are equivalent `() == {}`. Both tuples have zero dimensions in both positional and named components; therefore they are equivalent. Saying `() & {} & ()` or `{} & ()` and any combination of empty tuples all are the same type.
 
 ### Constants
 
