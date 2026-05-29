@@ -16,6 +16,7 @@ __Mulem__ is a general-purpose, expression-oriented language designed to balance
 - __[Types](#types)__
 - __[Meta Functions](#meta-functions)__
 - __[Operators](#operators)__
+- __[Advanced](#advanced)__
 
 ---
 
@@ -565,6 +566,140 @@ defer free[student]
 ---
 
 ## Operators
+
+| Level | Category                   | Operators                                 |
+|:------|:---------------------------|:------------------------------------------|
+| 12    | Member access/Function     | `.` `.[]` `^[]` `()`                            |
+| 11    | Postfix/Prefix                   | `?` `!` `^` `%` `%mu`                              |
+| 10    | Unary                      | `+` `-` `not` `bnot`                      |
+| 9     | Exponent                   | `**` (right-associative)                  |
+| 8     | Multiplicative / Shift     | `*` `/` `//` `rem` `mod` `<<` `>>` `>>>`  |
+| 7     | Additive / Concat          | `+` `-` `<>`                              |
+| 6     | Bitwise                    | `band` `bor` `xor`                        |
+| 5     | Range                      | `..` `..=`                               |
+| 4     | Comparison                 | `==` `!=` `<` `>` `<=` `>=`               |
+| 3     | Logical AND                | `and`                                     |
+| 2     | Logical OR / None-Coalesce | `or` `?:`                                 |
+| 1     | Pipeline                   | `\|>`                                     |
+| 0     | Assignment / Spread        | `=` `+=` `-=` `&` `*`                   |
+
+| Operator       | Meaning                                              |
+|:--------------:|:-----------------------------------------------------|
+|   `lhs . rhs`  | Member access                                        |
+|   `lhs .[rhs]` | Safe array/dictionary index                               |
+|   `lhs ^[rhs]` | Raw array/dictionary index                               |
+|   `lhs ?`      | Unwrap question, propagate `None` to nearest `maybe` |
+|   `lhs !`      | Unwrap exclamation, propagate error to nearest `try` |
+|   `lhs ^`      | Dereference typed pointer                            |
+|   `% rhs`      | Get immutable reference                            |
+|   `%mu rhs`      | Get mutable reference                            |
+|     `* rhs`  | Spread array into array                              |
+|       `& rhs`  | Spread tuple into tuple (same type)                  |
+|  `lhs .. rhs` | Exclusive range                                      |
+| `lhs ..= rhs`  | Inclusive range                                      |
+| `lhs \|> rhs`  | Pipeline                                             |
+|   `lhs = rhs`  | Assignment or declaration                            |
+|  `lhs += rhs`  | Increment                                            |
+|  `lhs -= rhs`  | Decrement                                            |
+| `lhs: T = rhs` | Explicit typed declaration                           |
+|   `lhs + rhs`  | Addition                                             |
+|   `lhs - rhs`  | Subtraction                                          |
+|       `+ rhs`  | Unary positive                                       |
+|       `- rhs`  | Sign flip                                            |
+|   `lhs * rhs`  | Multiplication                                       |
+|   `lhs / rhs`  | Exact division (float)                               |
+|  `lhs // rhs`  | Floor division (int)                                 |
+|  `lhs rem rhs` | Modulo (sign matches `lhs`)                          |
+|  `lhs mod rhs` | Floor modulo (sign matches `rhs`)                    |
+|  `lhs ** rhs`  | Exponentiation (right-associative)                   |
+|  `lhs == rhs`  | Equality                                             |
+|  `lhs != rhs`  | Inequality                                           |
+|   `lhs > rhs`  | Greater than                                         |
+|   `lhs < rhs`  | Less than                                            |
+|  `lhs >= rhs`  | Greater than or equal                                |
+|  `lhs <= rhs`  | Less than or equal                                   |
+| `lhs band rhs` | Bitwise AND                                          |
+| `lhs bor rhs`  | Bitwise OR                                           |
+| `lhs xor rhs`  | Bitwise XOR                                          |
+|    `bnot rhs`  | Bitwise NOT                                          |
+|  `lhs << rhs`  | Shift left                                           |
+|  `lhs >> rhs`  | Shift right                                          |
+| `lhs >>> rhs`  | Unsigned shift right                                 |
+|  `lhs <> rhs`  | Concatenation                                        |
+| `lhs and rhs`  | Logical AND                                          |
+|  `lhs or rhs`  | Logical OR                                           |
+|     `not rhs`  | Logical NOT                                          |
+
+__Remainder vs. Modulo:__
+
+- **`rem` is "remainder"** *(C-style modulo)* — what's left over after truncating toward zero. The result takes the sign of what you started with.
+
+```mulem
+ 7 rem  3 ==  1    -- positive because 7 is positive
+-7 rem  3 == -1    -- negative because -7 is negative
+ 7 rem -3 ==  1    -- positive because 7 is positive
+-7 rem -3 == -1    -- negative because -7 is negative
+```
+
+- **`mod` is "true modulo"** — the mathematical kind where the result always lives in the range `[0, divisor)`. The result takes the sign of what you're dividing *by*.
+
+```mulem
+ 7 mod  3 ==  1    -- same as above, no difference here
+-7 mod  3 ==  2    -- "wraps around": -7 mod 3 = 2 in math
+ 7 mod -3 == -2    -- wraps the other way
+-7 mod -3 == -1    -- same as % here
+```
+
+The practical case where it matters is things like clock arithmetic, array wrapping, or anything where you want `(-1) mod n` to give you `n - 1` instead of `-1`. With `rem` you'd have to write `((x rem n) + n) rem n` — the classic defensive idiom.
+
+### Key Type Modifiers & Postfix Operators
+
+| Syntax         | Meaning            | Note                                                      |
+|:---------------|:-------------------|:----------------------------------------------------------|
+|  `T?`, `x?`    | Question           | Unwraps a question; propagates `None` to nearest `maybe`. |
+|  `T!`, `x!`    | Exclamation        | Unwraps a exclamation; propagates error to nearest `try`. |
+| `[*T]`, `x.[]` | Array / Dict Index | `[N*T]` is fixed-size. Access: `array.[index]`.           |
+|  `T^`, `x^`    | Pointer            | Dereference a pointer.                                    |
+
+---
+
+I have some ideas: instead of `=` for both declaration and mutation, it could just be for declaration and `:=` will be for mutation. And instead of `fn(x) = `, any `name(x) = ` will produce a lambda function, anonymous one being `_(x) = `.
+
+
+```mulem
+-- `=` — declaration / shadowing
+a = 0
+a = 1
+a = 'a'
+f(x) = x*x
+
+-- `:=` / operator + `=` — mutation
+mu x: int = 0
+x := 1
+x := 2
+x += 1
+mu cb(int): int
+f1(x: int): int = x + 1
+f2(x: int): int = x - 1
+cb := f1
+x := cb(x)
+cb := f2
+x := cb(x)
+
+-- `name(x) = ` — lambda, `_` for anonymous
+apiCall(_(result) =
+    if result > 1 then
+        print("Success! {result}")
+    else
+        print("Fail! {result}")
+)
+```
+
+[TOC](#table-of-contents)
+
+---
+
+## Advanced
 
 [TOC](#table-of-contents)
 
@@ -3009,131 +3144,8 @@ Mulem has 42 reserved keywords. Note that built-in types (`int`, `str`), boolean
 
 ## Table of Operators
 
-| Level | Category                   | Operators                                 |
-|:------|:---------------------------|:------------------------------------------|
-| 12    | Member access/Function     | `.` `.[]` `()`                            |
-| 11    | Postfix                    | `?` `!` `~`                               |
-| 10    | Unary                      | `+` `-` `not` `bnot`                      |
-| 9     | Exponent                   | `**` (right-associative)                  |
-| 8     | Multiplicative / Shift     | `*` `/` `//` `rem` `mod` `<<` `>>` `>>>`  |
-| 7     | Additive / Concat          | `+` `-` `<>`                              |
-| 6     | Bitwise                    | `band` `bor` `xor`                        |
-| 5     | Range                      | `...` `..=`                               |
-| 4     | Comparison                 | `==` `!=` `<` `>` `<=` `>=`               |
-| 3     | Logical AND                | `and`                                     |
-| 2     | Logical OR / None-Coalesce | `or` `?:`                                 |
-| 1     | Pipeline                   | `\|>`                                     |
-| 0     | Assignment / Spread        | `=` `+=` `-=` `&` `...`                   |
-
-| Operator       | Meaning                                              |
-|:--------------:|:-----------------------------------------------------|
-|   `lhs . rhs`  | Member access                                        |
-|   `lhs .[rhs]` | Array/dictionary index                               |
-|   `lhs ?`      | Unwrap question, propagate `None` to nearest `maybe` |
-|   `lhs !`      | Unwrap exclamation, propagate error to nearest `try` |
-|   `lhs ~`      | Dereference typed pointer                            |
-|     `... rhs`  | Spread array into array                              |
-|       `& rhs`  | Spread tuple into tuple (same type)                  |
-|  `lhs ... rhs` | Exclusive range                                      |
-| `lhs ..= rhs`  | Inclusive range                                      |
-| `lhs \|> rhs`  | Pipeline                                             |
-|   `lhs = rhs`  | Assignment or declaration                            |
-|  `lhs += rhs`  | Increment                                            |
-|  `lhs -= rhs`  | Decrement                                            |
-| `lhs: T = rhs` | Explicit typed declaration                           |
-|   `lhs + rhs`  | Addition                                             |
-|   `lhs - rhs`  | Subtraction                                          |
-|       `+ rhs`  | Unary positive                                       |
-|       `- rhs`  | Sign flip                                            |
-|   `lhs * rhs`  | Multiplication                                       |
-|   `lhs / rhs`  | Exact division (float)                               |
-|  `lhs // rhs`  | Floor division (int)                                 |
-|  `lhs rem rhs` | Modulo (sign matches `lhs`)                          |
-|  `lhs mod rhs` | Floor modulo (sign matches `rhs`)                    |
-|  `lhs ** rhs`  | Exponentiation (right-associative)                   |
-|  `lhs == rhs`  | Equality                                             |
-|  `lhs != rhs`  | Inequality                                           |
-|   `lhs > rhs`  | Greater than                                         |
-|   `lhs < rhs`  | Less than                                            |
-|  `lhs >= rhs`  | Greater than or equal                                |
-|  `lhs <= rhs`  | Less than or equal                                   |
-| `lhs band rhs` | Bitwise AND                                          |
-| `lhs bor rhs`  | Bitwise OR                                           |
-| `lhs xor rhs`  | Bitwise XOR                                          |
-|    `bnot rhs`  | Bitwise NOT                                          |
-|  `lhs << rhs`  | Shift left                                           |
-|  `lhs >> rhs`  | Shift right                                          |
-| `lhs >>> rhs`  | Unsigned shift right                                 |
-|  `lhs <> rhs`  | Concatenation                                        |
-| `lhs and rhs`  | Logical AND                                          |
-|  `lhs or rhs`  | Logical OR                                           |
-|     `not rhs`  | Logical NOT                                          |
-
-__Remainder vs. Modulo:__
-
-- **`rem` is "remainder"** *(C-style modulo)* — what's left over after truncating toward zero. The result takes the sign of what you started with.
-
-```mulem
- 7 rem  3 ==  1    -- positive because 7 is positive
--7 rem  3 == -1    -- negative because -7 is negative
- 7 rem -3 ==  1    -- positive because 7 is positive
--7 rem -3 == -1    -- negative because -7 is negative
-```
-
-- **`mod` is "true modulo"** — the mathematical kind where the result always lives in the range `[0, divisor)`. The result takes the sign of what you're dividing *by*.
-
-```mulem
- 7 mod  3 ==  1    -- same as above, no difference here
--7 mod  3 ==  2    -- "wraps around": -7 mod 3 = 2 in math
- 7 mod -3 == -2    -- wraps the other way
--7 mod -3 == -1    -- same as % here
-```
-
-The practical case where it matters is things like clock arithmetic, array wrapping, or anything where you want `(-1) mod n` to give you `n - 1` instead of `-1`. With `rem` you'd have to write `((x rem n) + n) rem n` — the classic defensive idiom.
-
-### Key Type Modifiers & Postfix Operators
-
-| Syntax         | Meaning            | Note                                                      |
-|:---------------|:-------------------|:----------------------------------------------------------|
-|  `T?`, `x?`    | Question           | Unwraps a question; propagates `None` to nearest `maybe`. |
-|  `T!`, `x!`    | Exclamation        | Unwraps a exclamation; propagates error to nearest `try`. |
-| `[*T]`, `x.[]` | Array / Dict Index | `[N*T]` is fixed-size. Access: `array.[index]`.           |
-|  `T~`, `x~`    | Pointer            | Dereference a pointer.                                    |
-
----
-
-I have some ideas: instead of `=` for both declaration and mutation, it could just be for declaration and `:=` will be for mutation. And instead of `fn(x) = `, any `name(x) = ` will produce a lambda function, anonymous one being `_(x) = `.
-
-
-```mulem
--- `=` — declaration / shadowing
-a = 0
-a = 1
-a = 'a'
-f(x) = x*x
-
--- `:=` / operator + `=` — mutation
-mu x: int = 0
-x := 1
-x := 2
-x += 1
-mu cb(int): int
-f1(x: int): int = x + 1
-f2(x: int): int = x - 1
-cb := f1
-x := cb(x)
-cb := f2
-x := cb(x)
-
--- `name(x) = ` — lambda, `_` for anonymous
-apiCall(_(result) =
-    if result > 1 then
-        print("Success! {result}")
-    else
-        print("Fail! {result}")
-)
-```
 
 ---
 
 *This document captures the current state of the Mulem design. The language is still evolving.*
+
