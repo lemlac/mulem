@@ -342,12 +342,12 @@ getCount()       -- Result: 3
 
 ## Control Flow
 
-- [__`do`__](#do) – Basic block
-- [__`if` / `else`__](#if--else) – Boolean branching
-- [__`match` / `is`__](#match--is) – Pattern matching
-- [__`loop`__](#loop) – Iteration
-- [__`maybe` / `else`__](#maybe--else) – Coalescing
-- [__`try` / `catch`__](#try--else) – Error handling
+- __[`do`__](#do)__ – Basic block
+- __[`if` / `else`](#if--else)__ – Boolean branching
+- __[`match` / `is`](#match--is)__ – Pattern matching
+- __[`loop`](#loop)__ – Iteration
+- __[`maybe` / `else`](#maybe--else)__ – Coalescing
+- __[`try` / `catch`](#try--catch)__ – Error handling
 
 ### `do`
 
@@ -448,38 +448,38 @@ catch
 
 ## Types
 
-- __Primitives:__
+- __[Primitives](#primitives):__
   - `: byte = 0y`
   - `: bool = False or True`
   - `: char = '\0'`
   - `: int = 0i`
   - `: uint = 0u`
   - `: float = 0.0`
-- __Strings:__
+- __[Strings](#strings):__
   - `: str` – immutable `char` array
   - `"Single Line String"`
   - `"""Multi-Line String"""`
   - `''Raw String''`
-- __Arrays:__
+- __[Arrays](#arrays):__
   - `: [*T]` – dyanmic array
   - `: [N*T]` – fixed array
   - `: [**T]` – 2D dyanmic array
   - `: [N*M*T]` – 2D fixed array
-- __Dictionaries:__
+- __[Dictionaries](#dictionaries):__
   - `: [K:T]` – `K` is key type, `T` is value type
-- __Tuples:__
+- __[Tuples](#tuples):__
   - `: (T, U)` – Position tuple
   - `: {x: V}` – Named tuple
   - `: (T, U) & {x: V}` or `: {0: T, 1: U, x: V}` – Mixed tuple
-- __Pointers:__
+- __[Pointers](#pointers-t):__
   - `: ptr` – Raw pointer
   - `: T^` – Typed pointer
-- __Questions:__
+- __[Questions](#questions-t):__
   - `: T?` – `Some(T)` or `None`
-- __Exclamations:__
+- __[Exclamations](#exclamations-t):__
   - `: T!E` – `Ok(T)` or `Err(E)`
   - `: T!` – Error type inferred
-- __Custom Types:__
+- __[Custom Types](#custom-types):__
   - `:: _` — Alias to another type
   - `:: struct` — Structural data
   - `:: enum` — Sum types / tagged unions
@@ -494,7 +494,7 @@ catch
 
 ### Tuples
 
-### Pointers
+### Pointers `T^`
 
 Raw pointers are type `ptr`. These cannot be dereferenced. They are ideally used for FFI to pass to functions of external libraries. You can also check if it's `Null`.
 
@@ -548,9 +548,9 @@ defer free[student]
 -- Use student freely below.
 ```
 
-### Questions
+### Questions `T?`
 
-### Exclamation
+### Exclamation `T!E`
 
 ### Custom Types
 
