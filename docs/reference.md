@@ -1253,7 +1253,7 @@ Student :: struct =
 student: Student^mu = alloc[ Student(name: "John", grade: 'A') ]?
 defer free[student]
 
-student^.name := "John Smith
+student^.name := "John Smith"
 ```
 
 `alloc` will check the size of the type passed to it and allocate that much space, returning a `T^mu?` (safe pointer). If successful, it will run the expression inside the square brackets and return `Some(T^mu)`. If not, it will return `None`. Hence `?` after it to unwrap the return value. `T^mu` can also be downgraded to `T^` if you don't plan to change the data.
@@ -1270,6 +1270,21 @@ By default, they're isn't an ownership model in Mulem. If you don't plan on usin
 student = getStudent()
 defer free[student]
 -- Use student freely below.
+```
+
+When you are sure that a pointer exists, you can use `^.` for raw access, but if you aren't sure you can use just `.` to do a safe pointer check. This will return a `T%mu?` of that member.
+
+```
+student^.name := "John Smith"    -- Raw access
+student.name? := "John Smith"    -- Safe access
+```
+
+`student.name` is a safe pointer operation like `.[]` for arrays, so you would write `student.name?`; because `student` isn't a question type `T?` but `student._` returns a question type of `T%mu?` of that member.
+
+This makes it easier to chain when you have a safe pointer `T^?`/`T^mu?`
+
+```
+pointer?.field1?.field2?.field3?    -- Unwrap each field
 ```
 
 ### Questions `T?` and Exclamations `T!E`
