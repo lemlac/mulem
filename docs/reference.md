@@ -17,6 +17,8 @@ __Mulem__ is a general-purpose, expression-oriented language designed to balance
 - __[Meta Functions](#meta-functions)__
 - __[Operators](#operators)__
 - __[Advanced](#advanced)__
+- __[Code Sample](#putting-it-all-together)__
+- __[Reserved Keywords](#reserved-keywords)__
 
 ---
 
@@ -350,6 +352,7 @@ getCount()       -- Result: 3
 - __[`maybe` / `else`](#maybe--else)__ – Coalescing
 - __[`try` / `catch`](#try--catch)__ – Error handling
 - __[`return` + `raise`](#try--catch)__ – Exiting a function
+- __[`defer`](#defer)__ – Clean-up
 
 ### `do`
 
@@ -364,6 +367,30 @@ do.label
     break.label
 ```
 
+Creates a new scope. Its value is the last expression evaluated.
+
+```mulem
+x =
+    do
+        y = 1
+        y + 1       -- block's value is 2
+```
+
+Any starting block can be given a label with `.label` after its starting keyword. Use this to call `break.` on a specific label. 
+
+```mulem
+do.label
+    break.label
+```
+
+Inline `do` will start a sequence of expressions separated by semicolons `;` that ends at a new line or (when inside a bracket) at a comma or closing bracket. The last expression in that sequence is the value of that slot.
+
+```mulem
+(a, do b(); c, d)    -- == (a, c, d) with side effect b()
+```
+
+Adding `do` makes it's clear that `;` is connected to `do` and not the parentheses.
+
 ### `if` / `else`
 
 ```mulem
@@ -373,6 +400,29 @@ if cond then
     body
 else
     expr
+```
+
+Basic Boolean branching.
+
+```mulem
+x = if x > 0 then x else -x
+
+if x > 0 then
+     print("positive")
+else
+    print("non-positive")
+```
+
+Use `or`/`and` to compare multiple booleans at once.
+
+```mulem
+a = True
+b = False
+
+if a and b then           -- True and False == False
+    print("This will not print")
+else if a or b then       -- True or False == True
+    print("This will print")
 ```
 
 ### `match` / `is`
@@ -389,9 +439,62 @@ match expr is
     body
 ```
 
-### `loop`
+Enum/error branching. Exhaustive by default. `| (*) =` for the default case.
 
 ```mulem
+match expr is
+| ptrn =
+    body
+| ptrn =
+    body
+| (*) =
+    body
+
+match expr is (| ptrn = expr | ptrn = expr | (*) = expr)
+```
+
+When inline, the patterns after `is` need to be in parentheses.
+
+```mulem
+-- Simple value mapping
+color = match status is (
+    | Ok  = "green"
+    | Err = "red"
+    | (*) =  "gray"
+)
+
+-- Inside another expression
+result = process(data) |> match $ is (
+    | Success(v) = v * 2
+    | Failure(e) = do print("Failure: {e}"); 0
+)
+```
+
+The patterns map to the type passed in after `match`, so you only need to reference the members of that type in each pattern.
+
+```mulem
+match choice is
+| First =                  -- Each pattern can case starts its on block.
+    print("First")         -- Ident for the new block.
+| Second(x) =              -- Continue this for each case.
+    print("Second({x})")   -- ……
+| Third{val} =             -- ……
+    print("Third \{ val={val} }")
+                           -- All choices were exhausted, so no `| (*) =` is necessary.
+```
+
+```mulem
+result = match x is (| Ptrn1 = 5 | Ptrn2 = 6 | (*) = 7)
+--
+message = match e is (| OpenError{filename} = "Open error: {filename}" | (*) = "Unknown error")
+```
+
+### `loop`
+
+The universal loop keyword. All loop forms share the same `loop` keyword.
+
+```mulem
+-- Unconditional (break manually):
 loop
     body
     break
@@ -400,19 +503,126 @@ loop.label
     body
     break.label
 
+-- While condition is true:
 loop cond then
     body
-else
-    body
 
+-- For-each:
 loop x in expr then
     body
 
 [*loop x in expr then x]
 
+-- Do-until (runs at least once):
 loop
     body
 until cond
+```
+
+`else` after `loop cond` runs if the loop body never executed.
+
+```mulem
+loop False then
+    void
+else
+    print("Never ran")
+```
+
+When the parser encounters `loop`, it enters a *loop subject state.* Semicolons encountered in this state do not terminate the statement; they serve as delimiters for the step expressions. This state remains active until the parser matches the loop's body terminator (`then` or `until`).
+
+When you have one or more semicolons `;` in the subject of a `loop` before `then`, the first in the sequence will be the loop's subject field (such as a condition or `in` expression) and the other expressions will run at the end of each iteration of the loop. 
+
+```mulem
+-- The Dangerous Way
+mu i = 1
+loop i <= 100 then
+    if i rem 10 == 0 then
+        print("{i}!!!")
+        continue
+        -- OOPS! We forgot to do `i +:= 1` before continuing. 
+        -- Infinite loop on i = 10!
+    print("{i}")
+    i +:= 1
+
+-- The Safe Way
+mu i = 1
+loop i <= 100; i +:= 1 then
+    if i rem 10 == 0 then
+        print("{i}!!!")
+        continue    -- Automatically triggers `i +:= 1` before checking condition again
+    print("{i}")
+```
+
+```mulem
+-- Track index of `loop / in`
+mu idx = 0
+loop item in inventory; idx +:= 1 then
+    print("Slot {idx}: {item}")
+```
+
+Because `do` blocks isolate scopes and inline expressions sequence seamlessly, you can combine `do` and `loop` to create a traditional, strictly scoped counter loop without requiring a distinct `for` keyword:
+
+```mulem
+-- C-style for loop
+do mu i = 1; loop i <= 100; i +:= 1 then
+    if i rem 10 == 0 then
+        print("{i}!!!")
+        continue
+    print("{i}")
+
+-- 'i' is automatically out of scope and cleaned up here
+```
+
+Inlined `loop x in` returns a lazy iterator collected with `*`.
+
+```mulem
+doubled = [*loop x in list then x * 2]
+```
+
+Destructuring works in loop variables.
+
+```mulem
+loop (x, y, z) in listOfTuples then
+    print("{x}, {y}, {z}")
+```
+
+Pattern matching works. All patterns must have fallbacks. *(See [Pattern Fallback](#pattern-fallbacks).)* This is because if you have an array/iterator of enums, it would be hard to determine if they're all a particular pattern. This ensures any mismatches are handled inside the loop. 
+
+```mulem
+loop Pattern(opt x) in listOfPatterns then
+    if x is Some(x) then
+        print("Found match: {x}")
+```
+
+This can be combined with `maybe` to automatically skip when there's a mismatch.
+
+```mulem
+loop Pattern(opt x) in listOfPatterns then
+    maybe print("Found match: {x?}")
+```        
+
+#### `break` / `continue`
+
+Both accept an optional label to target an outer loop.
+
+```mulem
+loop.outer x in 0..100 then
+    loop y in 0..100 then
+        if x * y >= 100 then
+            continue.outer
+        if x * y == 77 then
+            break.outer
+```
+
+Pass a value to `break`, that becomes the value of the block, analogous to `return` for function.
+
+```mulem
+x = do.block
+    if cond then
+        break.block 5
+    4
+
+print("{x}")     -- Prints either "4" or "5"
 ```
 
 ### `maybe` / `else`
@@ -424,6 +634,67 @@ maybe
     body?
 else
     expr
+```
+
+None-coalescing. Unwrap question types with `?` inside an `maybe` block. If any `?` returns `None`, the block short-circuits.
+
+```mulem
+maybe
+    a = getA()?
+    b = getB()?
+    c = maybe getC()? else 0     -- Fallback
+    print("{a + b + c}")
+else
+    print("Didn't work")
+```
+
+Inline form.
+
+```mulem
+a = Some(10)
+x = maybe f(a?) else "fallback"
+```
+
+Using `?` inside a function automatically infers a question return type `T?`.
+
+```mulem
+addStuff(a: int, b: int): int? =
+    x = getA()?
+    y = getB()?
+    x + y
+```
+
+Nested questions unwrap with multiple `??`:
+
+```mulem
+unnest(x: int??): int? = x??
+```
+
+Chain multiple `maybe` / `else` together untill you get a fallback:
+
+```mulem
+getFirst(a: int, b: int, c: int): int =
+    . maybe getA(a)? else
+    . maybe getB(b)? else
+    . maybe getC(c)? else
+    . 0
+```
+
+Or use the `None`-coalescing operator (`?:`).
+
+```mulem
+getFirst(a: int, b: int, c: int): int =
+    getA(a) ?: getB(b) ?: getC(c) ?: 0
+```
+
+Another example of a use for `maybe`:
+
+```mulem
+crunchData(): int?!Error!CustomError =                                -- Multiple error types
+    value: int? = someFunc()!
+    -- Question to Exclamation
+    data: int = maybe value? else raise CustomError("Not found")      -- Exist function on fallback
+    data
 ```
 
 ### `try` / `catch`
@@ -442,6 +713,61 @@ catch
     body
 | (*) =
     body
+```
+
+Error handling. Unwrap exclamation types with `!` inside a `try` block. Unhandled errors propagate upward. Like with `match … is`, inline `try … catch` needs parentheses around the pattern matching section after `catch`.
+
+```mulem
+try
+    a = doSomething1(x)!
+    b = doSomething2(a)!
+    b
+catch
+| Error(e) =
+    print("Error: {e}")
+    0
+```
+
+```mulem
+try
+    data = riskyOperation()!
+    data2 = anotherRisky()!
+    final = process(data, data2)
+    final
+catch
+| IOError(e) =
+    print("IO failed: {e}")
+    defaultValue
+| ValidationError(e) =
+    raise Err(e)
+```
+
+```mulem
+result: int = try
+    data = riskyOperation()!
+    data2 = anotherRisky()!
+    process(data, data2)
+catch
+| IOError(e) =
+    print("IO failed: {e}")
+    0              -- fallback value
+| ValidationError(e) =
+    raise Err(e)   -- Escape function with error
+```
+
+Inline form. If you only have a whildcard case `(| (*) = x)`, you just write the value `x`.
+
+```mulem
+result = try divide(1, 0)! catch 0.0
+```
+
+Using `!` inside a function automatically infers a exclamation return type `T!`.
+
+```mulem
+riskyFn(a: int): int! =
+    b = step1(a)!
+    c = step2(b)!
+    c
 ```
 
 ### `return` + `raise`
@@ -467,6 +793,33 @@ try
 catch
 | (e) =                -- Catch all errors.
     print("Error: {e}")
+```
+
+### `defer`
+
+Runs after a function done. For iterator functions, this is when the iterator was broken or exhausted. For asynchronous functions, this is when the asynchronous type is resolved or rejected. Each `defer` statement go in reverse order: *first-in last-out*. It can be one line `defer …` or a block `defer do`. Generally though it's just one line like `defer cleanUp()`. 
+
+```mulem
+deferPrint() =
+    defer print("Last")
+    print("First")
+    defer print("Second to last")
+    print("Second")
+    defer print("Middle")
+    print("Done")
+
+deferPrint()
+```
+
+Prints:
+
+```mulem
+First
+Second
+Done
+Middle
+Second to last
+Last
 ```
 
 [TOC](#table-of-contents)
@@ -789,7 +1142,7 @@ c: TwoOrMoreInts = (-1, 0, *list)       -- == (-1, 0, [1, 2])
 d: TwoOrMoreInts = (-2, -1, 0, *list)   -- == (-2, -1, [0, 1, 2])
 ```
 
-*Mulem separates tuple and array spread to preserve =type safety and avoid runtime surprises. `&` always preserves tuple structure; `...` always preserves array structure.*
+*Mulem separates tuple and array spread to preserve =type safety and avoid runtime surprises. `&` always preserves tuple structure; `*` always preserves array structure.*
 
 ### Dictionaries
 
@@ -1053,15 +1406,15 @@ b = MyEnum.Second(2)
 c = MyEnum.Third(val: 3)
 ```
 
-When pattern match, the fill path to the type doesn't need to named on each case, only the name of each member. Use `_` while destructuring to discard the members data.
+When pattern match, the fill path to the type doesn't need to named on each case, only the name of each member. Use `*` while destructuring to discard the members data.
 
 ```mulem
 match a is
 | First =
     print("first!")
-| Second(_) =
+| Second(*) =
     print("second!")
-| Third{_} =
+| Third{*} =
     print("third!")
 ```
 
@@ -1092,7 +1445,7 @@ Uncaught errors in a `try` / `catch` block are implicitly reraised. Each `catch`
 
 ### Prototypes (`proto`)
 
-A `proto` is an abstract interface — a named contract with no data. It is equivalent to a `virtual class` / `trait` / `interface` in other languages. Each member is a function, also called a **method**. Methods that have a parameter named `self` at the beginning will be called like methods on the instance of that type, i.e. `self.method(_)`. This is equivalent to saying `typeof[self].method(self, _)`.
+A `proto` is an abstract interface — a named contract with no data. It is equivalent to a `virtual class` / `trait` / `interface` in other languages. Each member is a function, also called a **method**. Methods that have a parameter named `self` at the beginning will be called like methods on the instance of that type, i.e. `self.method(*)`. This is equivalent to saying `typeof[self].method(self, *)`.
 
 ```mulem
 MyPrototype :: proto =
@@ -1150,6 +1503,77 @@ MyEnum :: impl[MyPrototype] =
 ---
 
 ## Meta Functions
+
+Adding a parameter before the double colon (`::`) turns it into a **meta function.** *A meta‑function is a compile‑time function that returns code, types, or values.* Parameters are put in square brackets `[]` to distinguish them from regular functions which use parentheses `()`. The result is treated like a constant for run-time code. 
+
+You can define a meta function by adding a parameter before the double colons and writing an expression after it. Like constants, they don't output a value in memory when compiled, useful for collecting repeated code. Unlike regular functions, meta function cannot be passed to another function. They only exist at compile-time. Each parameter is a variable within the expression, so you don't need to wrap them in parentheses `()` like with C macros. 
+
+```mulem
+max[a, b] :: = if a > b then a else b
+min[a, b] :: = if a < b then a else b
+```
+
+You can also have multi-line meta function like regular functions. Each meta function creates a new scope. Defining variables that could bleed into the surrounding scope is not allowed. The last expression is the return value. Call it like a function using `[]`. 
+
+```mulem
+doSomethingComplicated[x] :: =
+    x = x + 1
+    x = x / 2
+    x * x
+
+value = doSomethingComplicated[3]
+```
+
+These two are the same thing:
+
+```mulem
+value =
+    x = (3) + 1
+    x = x / 2
+    x * x
+```
+
+Some more examples using the `[]` notation:
+
+```mulem
+max[a, b] :: = if a > b then a else b
+min[a, b] :: = if a < b then a else b
+print("{ max[0, 1] }")           -- Prints "1"
+print("{ min[0, 1] }")           -- Prints "0"
+print("{ max[1+2, 3+4] }")       -- Prints "7"
+
+f(x) = x * x
+g(x) = x + 2
+maxAdd[a, b] :: = if a > b then fn(c) = a + c else fn(c) = b + c
+print("{ maxAdd[ f(0), g(0) ] (1) }")
+```
+
+The compiler will read the body of the macro and understand where to insert its parameters, so if a parameter gets shadowed, then it will no longer insert it for the rest of that scope. 
+
+You can also define a type with a meta function. The meta functions parameters in `[]` will be inferred if it returns a function or type and you call it with parentheses `()`. In other words, `meta(*)` is equal to `meta[_](*)`. 
+
+```mulem
+-- Note that this is not the actual definition for a question type `T?`. This is just a user-defined enum that uses the same pattern.
+Option[T] :: enum =
+    Some(T)
+    None
+
+Some[T] :: Option[T].Some
+None[T] :: Option[T].None
+
+optionInt = Some(1)
+```
+
+Type parameters can be omitted at the call site if they can be fully inferred from the value arguments, in which case the call uses only parentheses `()`. It can also be called explicitly by making an alias for it or calling with both brackets at the same time `[]()`
+
+```mulem
+SomeInt :: Some[int]
+optionInt = SomeInt(1)
+
+optionInt = Some[int](1)
+```
+
+The syntax `[]` was chosen so that generic type inference will take precedence. `meta(a, b)` means to *call the instantiated function that `meta` returns with inferred types* whereas `meta[a, b]` means to *call the abstract function `meta` with these exact values.* This also makes it easy to distinguish actual function calls from macros/inlining. This removes the need for the more conventional arrow bracket `<>` syntax, which can get confusing. For example, in `f( g < a, b > ( c ) )`, is `g` a generic function or is that comparing two values and passing the results to `f`? The square bracket syntax removes this ambiguity, `f( g [ a, b ] ( c ) )`. This makes it semantically clear that you're doing a compile-time function call followed by a run-time function call. 
 
 [TOC](#table-of-contents)
 
@@ -1285,9 +1709,22 @@ __Compound Assignment Operators:__
 
 [TOC](#table-of-contents)
 
+- __[Operator Overloading](#operator-overloading)__
+- __[Pipelining](#pipelining)__
+- __[Parameter Modifiers](#parameter-modifiers)__
+- __[Lambda Functions](#lambda-functions)__
+- __[Pattern Matching](#pattern-matching)__
+- __[Iterator / Async Functions](#iterator-async-functions)__
+- __[Inheritance and Visibility](#inheritance-and-visibility)__
+- __[Manual Implementation](#manual-implementation)__
+- __[Importing and Modules](#importing-and-modules)__
+
+- __[Code Sample](#putting-it-all-together)__
+- __[Reserved Keywords](#reserved-keywords)__
+
 ---
 
-## Operator Overloading 
+### Operator Overloading 
 
 Each operator is a prototype that can be implemented on a type.
 
@@ -1324,9 +1761,7 @@ impl Remainder
 15 rem 12    -- Result: 3
 ```
 
----
-
-# --OUTDATED--
+[Advanced](#advanced) / [TOC](#table-of-contents)
 
 ---
 
@@ -1380,7 +1815,7 @@ Note that `|>` at the beginning of a line is different from `\ |>` which is a sp
 |> print("{$}")
 ```
 
-*Is the same as...*
+*Is the same as…*
 
 ```mulem
 |> fetchA() |> fetchB(&$)    -- Goes back to this line.
@@ -1461,187 +1896,11 @@ print("User: {user.name}, born: {user.dob}")  -- Prints "User: John Smith, born:
 
 This gives you a great deal of flexibility in how you choose to express your code.
 
-## Basic Bindings
+[Advanced](#advanced) / [TOC](#table-of-contents)
 
-There are two types of bindings: basic `=` and meta `::`. See [Meta Bindings](#meta-bindings-) below for details about `::`.
+---
 
-### Variable Declarations
-
-```mulem
-x = 42          -- inferred
-y: int = 42     -- explicit type
-z: _ = 42       -- forced inference
-mu counter = 0  -- mutable
-```
-
-Variables are declared with just the equals sign (`=`). Type is inferred, but can be declared with a colon (`:`). You can also use `: _ =` instead to declare and infer the type at the same time. This is useful for shadowing mutable variables. *(See [Mutability](#mutability).)* For now, just know that anytime you see `:` before `=`, *it always declares a new variable,* and if you see just `=`, *it's either declaring or mutating a variable.*
-
-```mulem
-a = 0               -- Implicit declaration, type inferred.
-b: int = 1          -- Explicit type.
-c: _ = 2            -- Explicit declaration, inferred type.
-```
-
-Variables are immutable, but declaring it again shadows it. Any subsequent `=` on an immutable variable is an implicit declaration. Redeclaring a variable with the same name is called **shadowing.** This makes Mulem flexible while still having the advantages of being statically typed.
-
-```mulem
-a = 1
-a = 2           -- New variable, shadows previous `a`.
-a = "hello"     -- Type can change when shadowing.
-```
-
-You can also shadow a variable using its previous value. 
-
-```mulem
-i = 0
-i = i + 1     -- Sets new `i` based on old `i`.
-i +:= 1        -- Does the same thing.
-```
-
-`=` is a void statement and may not be used inside expressions that expect a non-void value. Use `==` for comparison and `as` for inline assignment.
-
-```mulem
--- Error:
-if x = 0 then
-    void
-
--- Correct:
-if x == 0 then
-    void
-```
-
-### Mutability (`mu`)
-
-Mutable variables are declared with `mu`. Setting them later mutates the value rather than shadowing it.
-
-```mulem
-mu count = 0
-count +:= 1          -- Mutates count.
-count: _ = 0        -- Shadows count with a new immutable variable.
-```
-
-A mutable variable may be declared without an initial value, but cannot be used until it is set.
-
-```mulem
-mu x: int
-x = 1
-doSomething(x)      -- OK now.
-```
-
-Functions do not automatically capture mutable variables. Any assignment inside a function to an outer mutable variable creates a new local variable unless explicitly captured. *(See [Capturing](#capturing).)*
-
-```mulem
-mu count = 0
-
-addCount() / (count) =
-    count +:= 1
-
-addCount()
-print("{count}")    -- "1"
-```
-
-### References (`ref`)
-
-#### Destructuring
-
-```mulem
-(a, b) = (0, 1)                             -- Positional.
-{x} = {x: 2}                                -- Named.
-(a, b) & {x} = (0, 1, x: 2)                 -- Mixed.
-{x as y} = {x: 2}                           -- Alias.
-{x as y: int} = {x: 2}                      -- Alias with type.
-{0 as a, 1 as b} = (3, 4)                   -- Positional by index.
-(_, b, _) & {x, _} = (0, 1, 2, x: 3, y: 4)  -- Skip with `_`.
-```
-
-When destructuring a named type, the type may be placed after the last tuple.
-
-```mulem
-Thing :: {x: int, y: int}
-{x, y}: Thing = thing
-{x, y} = thing              -- Or infer.
-```
-
-### Function Declarations
-
-* __Basic:__ `add(a, b) = a + b`
-* __Parameter Modifiers:__ `mu` / `ref` / `in` / `out` / `opt`
-* __Lambdas:__ `fn(x) = x + 1`
-
-Functions are declared by adding parentheses `()` and the name and before the colon `:` or equals sign `=`. The return type and parameter types can be either explicitly declared or inferred based on usage.
-
-```mulem
-add(a: int, b: int): int = a + b
--- Or inferred:
-add(a, b) = a + b
-
-result = add(1, 2)
-```
-
-This keeps function declarations short and sweet. Anyone familar with algebra will be able to recognize its format and understand what it means right away.
-
-```mulem
-f(x) = x*x + 2*x + 1
-```
-
-Functions can be a block statement by placing a new line and indentation after the equals sign `=`. This allows you to put multiple lines in one function. The last line evaluated is the return value.
-
-`fn` is a reserve word for lambda functions. Declaring a function with this name will throw an error.
-
-```mulem
-fn(x) 
-```
-
-The arguments of a function are a **tuple.** The share the same syntax. Arguments are separated by commas `,`. Trailing commas are ignored, but leading commas and double commas are considered a syntax error. 
-
-```mulem
-add3(a, b, c) = a + b + c
--- Also okay:
-add3(a, b, c,) = a + b + c
-
-add3(1, 2, 3,)   -- This is okay.
-add(
-    1,
-    2,
-    3,           -- Useful if you list arguments in a block.
-)
-
-(-- Uncommenting this would get an error:
-add3(,1,2, ,3,,) -- This is not okay.
---)
-```
-
-Functions can also be declared with `mu` to be set later. This type is called a **function pointer.** It lets you treat functions that same way you do with variables.
-
-```mulem
-mu action(int, int): int
-add(a, b) = a + b
-sub(a, b) = a - b
-action = add
-print("1 + 1 = {action(1, 1)}")  -- Prints "2".
-action = sub
-print("1 - 1 = {action(1, 1)}")  -- Prints "0".
-```
-
-Standard function overloading isn't possible because that would shadow the previous definitions.
-
-```mulem
-f(): int = 0
-f(x: int): int = x   -- Shadows previous f
-f()                  -- Error: f expects 1 argument.
-```
-
-Instead, one function can be defined with multiple definitions using `match ... is`. The next patterns will have function signatures and their bodies. The first function signature to match will go. This can also work for lambda functions. 
-
-```mulem
-safeDivide(...) = match ... is
-| (x: float, y: float if y /== 0.0): float =
-    x / y
-| (x: float, y: float): float =
-    0.0
-```
-
-#### Parameter Modifiers
+### Parameter Modifiers
 
 | Modifier         | Behavior          | Mutable inside function?           |
 |:-----------------|:------------------|:-----------------------------------|
@@ -1698,7 +1957,7 @@ setInt(as n)                      -- out parameter
 
 Languages that use return values for this kind of thing (`n = setInt()`) imply the value comes out of the function through the normal return channel, which is misleading when the mechanism is actually a reference parameter. `setInt(as n)` makes the call-site declaration explicit without requiring you to pre-declare a `mu` variable just to hand it in.
 
-### Optional Parameters
+#### Optional Parameters
 
 Parameters can be made optional with the `opt` modifier. This wraps the variable in type `T?`. If the parameter is missing, it will be set to `None`.
 
@@ -1747,10 +2006,10 @@ print("{addOptional(1)}")     -- Prints "1"
 print("{addOptional(1, 1)}")  -- Prints "2"
 ```
 
-Use `...` to collect all arguments into a single variable. The variable should be type `[*T]` (an array).
+Use `*` to collect all arguments into a single variable. The variable should be type `[*T]` (an array).
 
 ```mulem
-addAll(...nums: [*int]): int =
+addAll(*nums: [*int]): int =
     mu sum: int = 0
     loop n in nums:
         sum +:= n
@@ -1764,26 +2023,26 @@ print("{addAll(1, 2, 3)}")  -- Prints "6"
 
 ```mulem
 -- With pattern matching:
-addAll(...nums: [*int]): int =
+addAll(*nums: [*int]): int =
     match nums is
     | []            = 0
     | [x]           = x
-    | [x, ...rest]  = x + addAll(...rest)
+    | [x, *rest]  = x + addAll(*rest)
 ```
 
-A name is optional after `...`. You can use the symbol by itself to pass it to another function or itself in a functional loop. 
+A name is optional after `*`. You can use the symbol by itself to pass it to another function or itself in a functional loop. 
 
 ```mulem
-addAll(...) = match ... is
-| (x: int, ...): int =
-    x + addAll(...)
+addAll(*) = match (*) is
+| (x: int, *): int =
+    x + addAll(*)
 | (x: int): int =
     x
 | (): int =
     0
 
-logAndAdd(msg: str, ...) =
-    print("{msg} {addAll(...)}")
+logAndAdd(msg: str, *) =
+    print("{msg} {addAll(*)}")
 
 logAndAdd("Sum =")           -- Prints "Sum = 0"
 logAndAdd("Sum =", 1)        -- Prints "Sum = 1"
@@ -1791,55 +2050,13 @@ logAndAdd("Sum =", 1, 2)     -- Prints "Sum = 3"
 logAndAdd("Sum =", 1, 2, 3)  -- Prints "Sum = 6"
 ```
 
-- `(match)` — dispatch on arguments, `|` arms follow
-- `(...)` — accept and forward whatever arguments received to the next function
+[Advanced](#advanced) / [TOC](#table-of-contents)
 
-#### Capturing
+---
 
-Immutable variables can be captured without any issue. They can't change, so they can't affect the output of the function. And if you try to set an immutable variable within a function, it will only get shadowed within the scope of the function. This includes capturing other functions which are also immutable by default.
+### Lambda Functions
 
-**By default, functions cannot capture mutable variables.**
-
-This is an intentional decision for better safety in Mulem. Functions don't automatically capture mutable variables. Instead, any variable set inside a function is treated like a new variable. This helps prevent accidentally mutating a variable that you didn't mean to and encourage good functional programming practices.
-
-```mulem
-x = 1
-
-addFromX(y) = x + y
-addFromX2(y, z) = addFromX(y) + z
-
-cannotChangeX(newX) =
-    x = newX
-    print("{x}")
-
-cannotChangeX(2) -- Prints "2"
-print("{x}")     -- Prints "1"
-```
-
-To capture a mutable variable, write `/` at the end of the function signature. This goes after the parameters and before the return type `: T =`. List each *mutable* (`mu`) variables that the function uses. This helps make it easy to see which functions depend on mutable variables and which ones don't since `/` doesn't appear in type notation or anywhere else to the left of the equals sign `=` in function signatures except for captures. 
-
-This follows the same practice that `import` and inheriting where all words in a given scope are listed out clearly so that there are no accident name collisions or hidden gotchas.
-
-```mulem
-amount = 1               -- Immutable variable, doesn't need to be captured.
-mu count = 0             -- Mutable variables, must be captured with `\`.
-mu squared = 1
-mu cubed = 1
-   
-addCount() / (count, squared, cube): int =     -- Capture 3 variables at once.
-    count +:= amount                            -- Mutate captured variables inside the function.
-    squared = count * count
-    cubed = squared * count
-
-addCount()
-addCount()
-addCount()
-print("{count}, {squared}, {cubed}")     -- Prints "3, 9, 27"
-```
-
-#### Lambda Functions
-
-Define a function within an expression with the keyword `fn` in the pattern `fn(x) = x`. This is useful for passing functions to other functions.
+Define a function within an expression with any name. For demonstration purposes, we'll use the name `fn` in the pattern `fn(x) = x`. This is useful for passing functions to other functions.
 
 ```mulem
 (fn(arg) = expr)
@@ -1850,7 +2067,7 @@ Define a function within an expression with the keyword `fn` in the pattern `fn(
 ```
 
 ```mulem
-map(array, action) = [...loop x in array then action(x)]
+map(array, action) = [*loop x in array then action(x)]
 array0 = [1, 2, 3, 4]
 array1 = map(array0, fn(x) = x + 1)   -- Inline
 array2 = map(array0, fn(x) =          -- Multi-line
@@ -1891,24 +2108,7 @@ curriedFn(a: int): (int): (int): int = _                 -- Immutable declaratio
 mu curriedFnPtr(int): (int): (int): int = curriedFn      -- Mutable declaration. 
 ```
 
-Normally, functions can have an implicit return, but this poses a problem for curried functions…
-
-```mulem
-curriedFn(a: int): (int): (int): int = 
-    fn(b: int) =          -- Is this a lambda function or a function declaration named `fn`?
-        …
-```
-
-`fn(x) = ` is a lambda expression, but `name(x) = ` is a function declaration. Since `name(x) = ` is a function declaration, Mulem would interpret `fn(b: int) = ` as declaring a local function named `fn` — which then fails because `fn` is reserved. If you try to declare a function with the name `fn`, Mulem will throw an error to prevent it.
-
-```mulem
-(-- 
-fn(a, b) = a + b  -- Error: `fn` is a reserved keyword and cannot be used as a name
-fn(1, 2)          -- Error: `fn` is a reserved keyword and cannot be used as a name
---)
-```
-
-If Mulem could implicitly return lambda functions, that wouldn't solve the issue, say you have a function like this:
+The return type can be implied. Each function defined at the bottom is the implied return.
 
 ```mulem
 curryFn(a: char) =
@@ -1917,37 +2117,6 @@ curryFn(a: char) =
         print("In function 2: {b}")
         fn(c: char) =
             print("In function 3: {c}")
-```
-
-The problem is `fn(b: char) =` looks like a function definition. If you typo'd `fn`, you would get silent errors:
-
-```mulem
-curryFn(a: char) =
-    print("In function 1: {a}")
-    fun(b: char) =           -- Declare a function named `fun` and never use it. This function now returns `void`.
-        print("In function 2: {b}")
-        fn(c: char) =
-            print("In function 3: {c}")
-```
-
-To solve this issue, you either must wrap the function in parentheses or explicitly say `return fn` in order to curry functions. This ensures that `fn(x) =` is only used in expressions and not accidentally declaring a new function. 
-
-```mulem
-curryFn(a: char): (char): (char): void =
-    print("In function 1: {a}")
-    return fn(b: char): (char): void =          -- Note: types can be inferred, but it's written out for demonstration purposes.
-        print("In function 2: {b}")
-        return fn(c: char): void =
-            print("In function 3: {c}")
--- or --
-curryFn(a: char): (char): (char): void =
-    print("In function 1: {a}")
-    (fn(b: char): (char): void =
-        print("In function 2: {b}")
-        (fn(c: char): void =
-            print("In function 3: {c}")
-        )
-    )
 
 curryFn('a')('b')('c')
 (-- Prints:
@@ -1957,532 +2126,60 @@ curryFn('a')('b')('c')
 --)
 ```
 
-There can be a lot of indentation when you curry functions like this. Is there a way we could write this more elegantly? *Yes!*
-
-```mulem
-curryFn(a: char): (char): (char): void =
-    print("In function 1: {a}")
-    (b: char) = fn: (char): void              -- Parameters go on the left, return goes on the right.
-    print("In function 2: {b}")
-    (c) = fn                                  -- Types can also be inferred.
-    print("In function 3: {c}")
-
-curryFn('a')('b')('c')             -- Works the same.
-(-- Prints:
-"In function 1: a"
-"In function 2: b"
-"In function 3: c"
---)
-```
-
-Now all the functions line up together, and the next parameters resemble normal assignment. Each `() = fn` is an explicit suspension point from the function similar to `yeild` or `await`. The remaining part of the function becomes the body of the next function. 
-
 When capturing variables, each returned function needs to capture them separately.
 
 ```mulem
 mu count = 0
-curryAddCount(a: int) / (count): (int): (int): int =
+curryAddCount(a: int) % (mu count): (int): (int): int =
     count +:= a                                   -- (1) Evaluated immediately
-    (b: int) = fn / (count): (int): int   -- (2) Suspends and captures `count`
-    count +:= b                                   -- (3) Evaluated when second `fn` is called
-    (c: int) = fn / (count): int
-    count +:= c
-    count
+    fn(b: int) % (mu count): (int): int =         -- (2) Suspends and captures `count`
+        count +:= b                               -- (3) Evaluated when second `fn` is called
+        fn(c: int) % (mu count): int =
+            count +:= c
+            count
 
 print("{ curryAddCount(1)(2)(3) } == { count }")   -- Prints "6 == 6"
 ```
 
-If a curried function takes no parameters, put an empty tuple `()` on the left. 
-
-```mulem
-curryLoop() =
-    loop
-        print("I'm looping!")
-        () = fn   -- Suspend function.
-
-next = curryLoop()       -- Prints "I'm looping!"
-next = next()            -- Prints "I'm looping!"
-next = next()            -- Prints "I'm looping!"
-next = next()            -- Prints "I'm looping!"
-```
-
-#### Named Parameters
-
-```mulem
-add{ a: int, b: int }: int = a + b
-add(b: 1, a: 2)             -- Order doesn't matter.
-```
-
-Mixed positional and named.
-
-```mulem
-add(x: int) & {a: int, b: int}: int = x + a + b
-add(1, a: 2, b: 3)
-add(a: 2, 1, b: 3)          -- Named params can go anywhere.
-```
-
-Positional parameters may be set by number at the call site.
-
-```mulem
-isGreaterThan(a, b) = a > b
-isGreaterThan(0: 10, 1: 5)  -- a=10, b=5 → True
-isGreaterThan(1: 10, 0: 5)  -- a=5,  b=10 → False
-```
+[Advanced](#advanced) / [TOC](#table-of-contents)
 
 ---
-
-## Types
-
-Notation:
-
-- **Basic**: `x: T`
-- **Functions**: `f(x: T): T`
-- **Questions**: `T?`
-- **Exclamation**: `T!` or T!E` where `E` is an `error` type
-- **Arrays**: `[*T]` or `[N*T]` where `N` is the length
-- **Multi-dimensional Arrays**: `[**T]`, an extra `*` for each dimension, each dimension can be fixed or dynamic: `[*N*T]`, `[N**T]`, `[N*M*T]`, `[**N*T]`, etc.
-- **Dictionaries**: `[U:T]`
-- **Inferred**: omit the annotation entirely
-
-
-
-
-
-#### Strings
-
-
-
-To make a multi-line raw string, add an at sign `@` before and after triple quotation marks `"""`. The number of `@`s must match to close the raw string. 
-
-|  Opening | Closing  |
-|---------:|:---------|
-|   `@"""` | `"""@`   |
-|  `@@"""` | `"""@@`  |
-| `@@@"""` | `"""@@@` |
-
-*etc…*
-
-```mulem
--- Add a `@` to escape the `"""` within the string.
-bigDocument = @"""
-    This  "
-   is   """      """
-  all       """
-  in  "         "
-   a     """" "
-    string
-"""@
--- Matching number of `@` closes the string.
-
--- `@@"""` to escape the `"""@@` within the string.
-nestedDocument = @@"""
-bigDocument = @"""
-    This  "
-   is   """      """
-  all       """
-  in  "         "
-   a     """" "
-    string
-"""@      
-"""@@
--- `"""@@` closes the matching `@@"""`.
-```
-
-Sometimes, we just want to copy and paste string data without formatting it. We can take advantage of the fact that brackets start as whitespace insensitive. All whitespace and characters are put into the string without formatting until it gets to the matching `"""@` marker and closing bracket. Then, re-ident in the next line to resume the block. This is useful for debugging and embedding data in code.
-
-```mulem
-do
-    do
-        do
-            do                       -- Deeply nest block.
-                nestedRawString = (  -- Put raw string on the next line without indenting.
-@"""                       
-                       
-    Indentation  
-  doesn't matter     
- here.              
-
-"""@
-                )                    -- Re-indent to return to the block.
-                print("{nestedRawString}")
-```
-
-What it prints:
-
-```mulem
-                       
-                       
-    Indentation  
-  doesn't matter     
- here.              
-                  
-   
-```
-
-`@"""…"""@` inherits the `"""` closing-position trim anchor, so if you *do* want controlled indentation trimming, you still get it from where you place the closing `"""@`. That makes the two systems consistent with each other and interchangeable.
-
-```mulem
-do
-    do
-        do
-            do                       -- Deeply nest block.
-                nestedRawString =
-                    @"""                       
-                                           
-                        Indentation  
-                      doesn't matter     
-                     here.              
-                    
-                    """@
-                print("{nestedRawString}")
-```
-
-#### Arrays
-
-
-#### Dictionaries
-
-#### Pointers
-
-Although most things can be achieved without manual manipulation of pointers, some low level code requires it. Opaque pointers use the type `ptr`. This represents a pointer where the type that it represents is unknown. It's ideal for FFI where you need to pass a pointer a around and let an external library handle it. 
-
-```mulem
-result: ptr = ExternalLib.getSomething()
-ExternalLib.doSomethingWith(result)
-```
-
-You can manually check if the pointer is `Null` and give a helpful error message in scripts. `Null` is a `ptr` type that points to the NULL pointer. It's distinct from `None` which is an varied question type `T?`. 
-
-```mulem
-result: ptr = ExternalLib.getSomething()
-if result == Null then
-    print("No result found")
-    raise NotFound
-```
-
-Sometimes, it's necessary to dig deep into the unsafe territory. The `~` is the symbol associated with pointers, analogues to `?` for question types, `!` for exclamation types. It can be used in type notation, but it's also the operator to dereference a pointer. Thy type must be known at compile-time. Dereferencing an opaque pointer `ptr` is a compile-time error. In the type notation, `T~` prevents the pointer from mutating its memory or `T~mu` allows mutation with `~ =` (dereference + assignment). 
-
-```mulem
-mu x = 0                 -- `ptr` type takes a reference and creates a generic pointer.
-xPtr: int~mu = ptr(x)    -- Convert `ptr` to `int~mu`, type is known.
-xPtr~ = 1                -- Mutate the memory.
-print("{xPtr~}")         -- Prints "1".
-print("{x}")             -- Prints "1".
-```
-
-Pointer types have 2 kinds of mutability: one for the reference, and one for the pointer variable itself. Here is a table of each kind and what it means.
-
-|     Type     | What It Means                         | Can reassign pointer | Can mutate memory | *Think…* |
-|:------------:|:--------------------------------------|:--------------------:|:-----------------:|:---------|
-|    `x: T~`   | immutable pointer to immutable memory |       **No**         |      **No**       | *This will never change.* |
-|    `x: T~mu` | immutable pointer to mutable memory   |       **No**         |        Yes        | *Like a more low-level `ref`.* |
-| `mu x: T~`   | mutable pointer to immutable memory   |         Yes          |      **No**       | *I need to switch what I'm looking at.* |
-| `mu x: T~mu` | mutable pointer to mutable memory     |         Yes          |        Yes        | *I need full control.* |
-
-Like with arrays and dictionaries, use `deref[]` to safely dereference a pointer.
-
-```mulem
-if deref[xPtr~] is Some(x) then
-    print("x = {x}")
-else
-    print("x is gone")
-```
-
----
-
-## Control Flow
-
-* [__`do`__](#do): Creates a scoped block. Can be labeled (`do.label`).
-* [__`if` / `else`__](#if--else): `if x > 0 then x else -x`
-* [__`loop`__](#loop): Universal looping keyword.
-  * _Unconditional:_ `loop _`
-  * _While:_ `loop cond then _`
-  * _For-each:_ `loop x in array then _`
-  * _Do-while-not:_ `loop _ until cond`
-* [__`match` / `is`__](#match--is): Pattern matching
-* [__`try` / `catch`__](#try--catch): Resolves exclamation types (`T!`).
-* [__`maybe` / `else`__](#maybe--else): Resolves question types (`T?`). If any `?` inside fails, the block short-circuits.
-
-All branching constructs share the same block / inline pattern:
-
-```mulem
--- Block form
-keyword subject then
-    body
-keyword
-    body
-
--- Inline expression form
-keyword subject then expr
-keyword expr
-```
-
-`then` is used to separate a subject and expression when a keyword block is in-lined. 
-
-**Any variables created in the subject field shadow any variables in the parent scope.** This prevents accidental mutations and unintended side-effects. 
-
-#### `do`
-
-```mulem
-do expr; expr
-
-do
-    body
-
-do.label
-    body
-```
-
-Creates a new scope. Its value is the last expression evaluated.
-
-```mulem
-x =
-    do
-        y = 1
-        y + 1       -- block's value is 2
-```
-
-Any starting block can be given a label with `.label` after its starting keyword. Use this to call `break.` on a specific label. 
-
-```mulem
-do.label
-    break.label
-```
-
-Inline `do` will start a sequence of expressions separated by semicolons `;` that ends at a new line or (when inside a bracket) at a comma or closing bracket. The last expression in that sequence is the value of that slot.
-
-```mulem
-(a, do b(); c, d)    -- == (a, c, d) with side effect b()
-```
-
-Adding `do` makes it's clear that `;` is connected to `do` and not the parentheses.
-
-#### `if` / `else`
-
-```mulem
-if cond then expr else expr
-if cond then
-    body
-else
-    body
-```
-
-Basic Boolean branching.
-
-```mulem
-x = if x > 0 then x else -x
-
-if x > 0 then
-     print("positive")
-else
-    print("non-positive")
-```
-
-Use `or`/`and` to compare multiple booleans at once.
-
-```mulem
-a = True
-b = False
-
-if a and b then           -- True and False == False
-    print("This will not print")
-else if a or b then       -- True or False == True
-    print("This will print")
-```
-
-#### `loop`
-
-The universal loop keyword. All loop forms share the same `loop` keyword.
-
-```mulem
--- Unconditional (break manually):
-loop
-    body
-    break
-
--- While condition is true:
-loop cond then
-    body
-
--- For-each:
-loop x in expr then
-    body
-
--- Do-until (runs at least once):
-loop
-    body
-until cond
-```
-
-`else` after `loop cond` runs if the loop body never executed.
-
-```mulem
-loop False then
-    void
-else
-    print("Never ran")
-```
-
-When the parser encounters `loop`, it enters a *loop subject state.* Semicolons encountered in this state do not terminate the statement; they serve as delimiters for the step expressions. This state remains active until the parser matches the loop's body terminator (`then` or `until`).
-
-When you have one or more semicolons `;` in the subject of a `loop` before `then`, the first in the sequence will be the loop's subject field (such as a condition or `in` expression) and the other expressions will run at the end of each iteration of the loop. 
-
-```mulem
--- The Dangerous Way
-mu i = 1
-loop i <= 100 then
-    if i rem 10 == 0 then
-        print("{i}!!!")
-        continue
-        -- OOPS! We forgot to do `i +:= 1` before continuing. 
-        -- Infinite loop on i = 10!
-    print("{i}")
-    i +:= 1
-
--- The Safe Way
-mu i = 1
-loop i <= 100; i +:= 1 then
-    if i rem 10 == 0 then
-        print("{i}!!!")
-        continue    -- Automatically triggers `i +:= 1` before checking condition again
-    print("{i}")
-```
-
-```mulem
--- Track index of `loop / in`
-mu idx = 0
-loop item in inventory; idx +:= 1 then
-    print("Slot {idx}: {item}")
-```
-
-Because `do` blocks isolate scopes and inline expressions sequence seamlessly, you can combine `do` and `loop` to create a traditional, strictly scoped counter loop without requiring a distinct `for` keyword:
-
-```mulem
--- C-style for loop
-do mu i = 1; loop i <= 100; i +:= 1 then
-    if i rem 10 == 0 then
-        print("{i}!!!")
-        continue
-    print("{i}")
-
--- 'i' is automatically out of scope and cleaned up here
-```
-
-Inlined `loop x in` returns a lazy iterator collected with `...`.
-
-```mulem
-doubled = [...loop x in list then x * 2]
-```
-
-Destructuring works in loop variables.
-
-```mulem
-loop (x, y, z) in listOfTuples then
-    print("{x}, {y}, {z}")
-```
-
-Pattern matching works. All patterns must have fallbacks. *(See [Pattern Fallback](#pattern-fallbacks).)* This is because if you have an array/iterator of enums, it would be hard to determine if they're all a particular pattern. This ensures any mismatches are handled inside the loop. 
-
-```mulem
-loop Pattern(opt x) in listOfPatterns then
-    if x is Some(x) then
-        print("Found match: {x}")
-```
-
-This can be combined with `maybe` to automatically skip when there's a mismatch.
-
-```mulem
-loop Pattern(opt x) in listOfPatterns then
-    maybe print("Found match: {x?}")
-```        
-
-#### `break` / `continue`
-
-Both accept an optional label to target an outer loop.
-
-```mulem
-loop.outer x in 0...100 then
-    loop y in 0...100 then
-        if x * y >= 100 then
-            continue.outer
-        if x * y == 77 then
-            break.outer
-```
-
-Pass a value to `break`, that becomes the value of the block, analogous to `return` for function.
-
-```mulem
-x = do.block
-    if cond then
-        break.block 5
-    4
-
-print("{x}")     -- Prints either "4" or "5"
-```
 
 ### Pattern Matching
 
 ```mulem
 match expr is
 | Pattern1(x) = expr
-| (_) = expr
+| (*) = expr
 ```
 
 The next control flow methods are based on pattern match. Generally, you see the word `is`, you next thing to expect after it is a pattern: `value is Pattern(x)`.
 
-#### `match` / `is`
+#### `fallthrough`
 
-Enum/error branching. Exhaustive by default. `| (_) =` for the default case.
-
-```mulem
-match expr is
-| ptrn =
-    body
-| ptrn =
-    body
-| (_) =
-    body
-
-match expr is (| ptrn = expr | ptrn = expr | (_) = expr)
-```
-
-When inline, the patterns after `is` need to be in parentheses.
-
-```mulem
--- Simple value mapping
-color = match status is (
-    | Ok  = "green"
-    | Err = "red"
-    | (_) =  "gray"
-)
-
--- Inside another expression
-result = process(data) |> match $ is (
-    | Success(v) = v * 2
-    | Failure(e) = do print("Failure: {e}"); 0
-)
-```
-
-The patterns map to the type passed in after `match`, so you only need to reference the members of that type in each pattern.
+Proceeds to the next case, which must not destructure new values, unless fallbacks are used.
 
 ```mulem
 match choice is
-| First =                  -- Each pattern can case starts its on block.
-    print("First")         -- Ident for the new block.
-| Second(x) =              -- Continue this for each case.
-    print("Second({x})")   -- ……
-| Third{val} =             -- ……
-    print("Third \{ val={val} }")
-                           -- All choices were exhausted, so no `| (_) =` is necessary.
+| First =
+    print("First")
+    fallthrough
+| Second(opt x) =           -- `opt x` in pattern wraps the variable in a question type
+    if x is Some(x) then
+        print("Definitely Second: {x}")
+    -- Implicit break.
+| (*) =
+    print("No match")
 ```
 
-```mulem
-result = match x is (| Ptrn1 = 5 | Ptrn2 = 6 | (_) = 7)
---
-message = match e is (| OpenError{filename} = "Open error: {filename}" | (_) = "Unknown error")
-```
+#### Pattern Fallback
 
-You can have multiple patterns match to one case. If any of the patterns destructure with a variable, the same variable name and type must be in all patterns. If not, use a wildcard `(_)` in each pattern or omit the data part entirely to disable destructuring. Otherwise, use a fallback in the pattern.
+If a pattern can't be **guaranteed** for any reason, then you must have a **fallback.** There are two options available:
+
+- __Optional binding:__ `Pattern(opt x)` — wraps `x` in type `T?`, `Some(x)` if it matched, `None` if it didn't
+- __Default value:__ `Pattern(opt x = default)` — `x` is type `T`, if it didn't match `x` is set to `default`
+
+You can have multiple patterns match to one case. If any of the patterns destructure with a variable, the same variable name and type must be in all patterns. If not, use a wildcard `(*)` in each pattern or omit the data part entirely to disable destructuring. Otherwise, use a fallback in the pattern.
 
 ```mulem
 match choice is
@@ -2506,30 +2203,6 @@ match choice is
     print("First, Second, or Third: {maybe val? else "None"}")
 ```
 
-#### `fallthrough`
-
-Proceeds to the next case, which must not destructure new values, unless fallbacks are used.
-
-```mulem
-match choice is
-| First =
-    print("First")
-    fallthrough
-| Second(opt x) =           -- `opt x` in pattern wraps the variable in a question type
-    if x is Some(x) then
-        print("Definitely Second: {x}")
-    -- Implicit break.
-| (_) =
-    print("No match")
-```
-
-#### Pattern Fallback
-
-If a pattern can't be **guaranteed** for any reason, then you must have a **fallback.** There are two options available:
-
-- __Optional binding:__ `Pattern(opt x)` — wraps `x` in type `T?`, `Some(x)` if it matched, `None` if it didn't
-- __Default value:__ `Pattern(opt x = default)` — `x` is type `T`, if it didn't match `x` is set to `default`
-
 #### Pattern Guards
 
 Add `if` inside a pattern to conditionally match.
@@ -2542,7 +2215,7 @@ match choice is
     print("Negative: {x}")
 | Second(x) =
     print("Zero")
-| (_) =
+| (*) =
     print("No match")
 ```
 
@@ -2626,7 +2299,7 @@ else
     print("Either none of those nested patterns matched or x is negative.")
 ```
 
-### `loop` + `is`
+#### `loop` + `is`
 
 Loop while a pattern matches.
 
@@ -2635,7 +2308,7 @@ loop nextValue() is Some(x) then
     print("{x}")
 ```
 
-### `until` + `is`
+#### `until` + `is`
 
 Loop until a pattern matches. Bindings are in scope below the loop.
 
@@ -2661,155 +2334,19 @@ if x is Some(x) then
     print("{x}")
 ```
 
-### Error/None Control Flow
+[Advanced](#advanced) / [TOC](#table-of-contents)
 
-Error and null handling is done through the `try` and `maybe` keywords. These blocks are for unwrapping the 2 monadic types in Mulem: *questions* `T?` and *exclamations* `T!`. When resolving a monadic, you go in *reverse order* that was notated by the type. Think of it like a box: you start from the outside and work your way in.
+---
 
-#### `try` / `catch`
-
-```mulem
-try
-    risky()!
-catch
-| Error(e) =       -- Catch specific error type.
-    body
-| (e) =            -- Catch all remaining error type.
-    body
-| (_) =            -- Catch all remaining error type, but disregard value.
-    body
-
-try risky()! catch (| Error(e) = expr | (_) = expr)
-```
-
-Error handling. Unwrap exclamation types with `!` inside a `try` block. Unhandled errors propagate upward. Like with `match _ is`, inline `try _ catch` needs parentheses around the pattern matching section after `catch`.
-
-```mulem
-try
-    a = doSomething1(x)!
-    b = doSomething2(a)!
-    b
-catch
-| Error(e) =
-    print("Error: {e}")
-    0
-```
-
-```mulem
-try
-    data = riskyOperation()!
-    data2 = anotherRisky()!
-    final = process(data, data2)
-    final
-catch
-| IOError(e) =
-    print("IO failed: {e}")
-    defaultValue
-| ValidationError(e) =
-    raise Err(e)
-```
-
-```mulem
-result: int = try
-    data = riskyOperation()!
-    data2 = anotherRisky()!
-    process(data, data2)
-catch
-| IOError(e) =
-    print("IO failed: {e}")
-    0              -- fallback value
-| ValidationError(e) =
-    raise Err(e)   -- Escape function with error
-```
-
-Inline form. If you only have a whildcard case `(| (_) = x)`, you just write the value `x`.
-
-```mulem
-result = try divide(1, 0)! catch 0.0
-```
-
-Using `!` inside a function automatically infers a exclamation return type `T!`.
-
-```mulem
-riskyFn(a: int): int! =
-    b = step1(a)!
-    c = step2(b)!
-    c
-```
-
-#### `maybe` / `else`
-
-None-coalescing. Unwrap question types with `?` inside an `maybe` block. If any `?` returns `None`, the block short-circuits.
-
-```mulem
-maybe
-    a = getA()?
-    b = getB()?
-    c = maybe getC()? else 0     -- Fallback
-    print("{a + b + c}")
-else
-    print("Didn't work")
-```
-
-Inline form.
-
-```mulem
-a = Some(10)
-x = maybe f(a?) else "fallback"
-```
-
-Using `?` inside a function automatically infers a question return type `T?`.
-
-```mulem
-addStuff(a: int, b: int): int? =
-    x = getA()?
-    y = getB()?
-    x + y
-```
-
-Nested questions unwrap with multiple `??`:
-
-```mulem
-unnest(x: int??): int? = x??
-```
-
-Chain multiple `maybe` / `else` together untill you get a fallback:
-
-```mulem
-getFirst(a: int, b: int, c: int): int =
-    . maybe getA(a)? else
-    . maybe getB(b)? else
-    . maybe getC(c)? else
-    . 0
-```
-
-Or use the `None`-coalescing operator (`?:`).
-
-```mulem
-getFirst(a: int, b: int, c: int): int =
-    getA(a) ?: getB(b) ?: getC(c) ?: 0
-```
-
-Another example of a use for `maybe`:
-
-```mulem
-crunchData(): int?!Error!CustomError =                                -- Multiple error types
-    value: int? = someFunc()!
-    -- Question to Exclamation
-    data: int = maybe value? else raise CustomError("Not found")      -- Exist function on fallback
-    data
-```
-
-### Function Control Flow
-
-These keywords change the control flow within a function.
+### Iterator / Async Functions
 
 #### `yield`
 
-Exits out of a function with an `iter[_]` type. The return value of the function must be of type `iter[T]` where T is the yield type. When you have `yield` in your function, the actual return value in the function body is discarded, and using `return _` in it is a compile-time error. Use of `yield` will infer the return type to be `iter[_]`. 
+Exits out of a function with an `iter[_]` type. The return value of the function must be of type `iter[T]` where T is the yield type. When you have `yield` in your function, the actual return value in the function body is discarded, and using `return …` in it is a compile-time error. Use of `yield` will infer the return type to be `iter[_]`. 
 
 ```mulem
 countUpTo(n: int): iter[int] =
-    loop i in 0...n then
+    loop i in 0..n then
         yield i
 ```
 
@@ -2839,7 +2376,7 @@ Both `yield` and `await` can be used together in an `iter[async[_]]` type. The t
 
 ```mulem
 asyncIterFn(n): iter[async[int]] =
-    loop i in 0...n then
+    loop i in 0..n then
         val = await fetch(i)
         yield val
 
@@ -2858,74 +2395,9 @@ Unlike in other languages where *promises* or *futures* can either resolve or re
 (await!? x) == (await x)!?     -- Unwrap an `async[T?!E]`
 ```
 
-#### `defer`
-
-Runs after a function done. For iterator functions, this is when the iterator was broken or exhausted. For asynchronous functions, this is when the asynchronous type is resolved or rejected. Each `defer` statement go in reverse order: *first-in last-out*. It can be one line `defer _` or a block `defer:`. Generally though it's just one line like `defer cleanUp()`. 
-
-```mulem
-deferPrint() =
-    defer print("Last")
-    print("First")
-    defer print("Second to last")
-    print("Second")
-    defer print("Middle")
-    print("Done")
-
-deferPrint()
-```
-
-Prints:
-
-```mulem
-First
-Second
-Done
-Middle
-Second to last
-Last
-```
+[Advanced](#advanced) / [TOC](#table-of-contents)
 
 ---
-
-## Meta Bindings (`::`)
-
-Variable and functions primarily use the equals sign (`=`) and are for storing actual data within a program, but there's another type of binding used for abstract values for the compiler to know about like constants, types, inline-functions, and generics. This type of declaration is **constant**; in other words, they cannot be *mutated* or *shadowed.* Depending on what it is, subsequent `::` of the same name will *modify its definition.* The most common is `:: impl` with adds methods and static variables to a meta binding. 
-
-* **Aliases:** `numberType :: int`
-* **Constants:** `PI :: const float = 3.14`
-* **Structs:** `MyStruct :: struct = _`
-
-Other languages often use a set of prefixed keywords to define these things, but the `::` symbol keeps the name of the variable on the left.
-
-- `const PI`, `struct MyStruct`, `enum MyEnum`
-- `PI :: const`, `MyStruct :: struct, `MyEnum :: enum`
-
-Meta bindings are meant to resemble definitions. *"This is that."* Only when things get complicated should you have to expand on that. It should be easy and simple to define something. They are like the language file of your API, telling the compiler how to speak your own custom language—not just the language that you *speak* but the language that you *think* in.
-
-
-#### Tuples
-
-
-
-### Constants
-
-Constants are declared with type `const T`. The `const` makes it clear that we're defining a constant value and not an alias or another type of meta binding. After the type is an equals sign `=` and it's value. The type can be inferred with `:: =`. 
-
-```mulem
-PI :: const float = 3.14159
-E  :: = 2.71828                -- Inferred
-```
-
-You can also bind a function to a constant with `const fn`. Define it like you would with basic functions. The `const fn` is opitional for shorthand form, just `:: (param) =` is needed. This can be useful if you need to pass a function multiple times but don't want it to be outputted when compiled.
-
-```mulem
-IDENTITY :: const fn(x) = x     -- Full definition.
-addOne :: (x) = x + 1           -- Shorthand.
-value = addOne(2)               -- Means (fn(x) = x + 1)(2), result is 3.
-array = map([1, 2, 3, 4], addOne)
-```
-
-
 
 ### Inheritance and Visibility
 
@@ -2962,78 +2434,9 @@ PublicFields :: struct =
 
 A subtype cannot accidentally expose or clash with a private inherited member because types only see members that have been explicitly declared within them. This mirrors the convention used for imports.
 
-## Meta Functions
+[Advanced](#advanced) / [TOC](#table-of-contents)
 
-Adding a parameter before the double colon (`::`) turns it into a **meta function.** *A meta‑function is a compile‑time function that returns code, types, or values.* Parameters are put in square brackets `[]` to distinguish them from regular functions which use parentheses `()`. The result is treated like a constant for run-time code. 
-
-You can define a meta function by adding a parameter before the double colons and writing an expression after it. Like constants, they don't output a value in memory when compiled, useful for collecting repeated code. Unlike regular functions, meta function cannot be passed to another function. They only exist at compile-time. Each parameter is a variable within the expression, so you don't need to wrap them in parentheses `()` like with C macros. 
-
-```mulem
-max[a, b] :: = if a > b then a else b
-min[a, b] :: = if a < b then a else b
-```
-
-You can also have multi-line meta function like regular functions. Each meta function creates a new scope. Defining variables that could bleed into the surrounding scope is not allowed. The last expression is the return value. Call it like a function using `[]`. 
-
-```mulem
-doSomethingComplicated[x] :: =
-    x = x + 1
-    x = x / 2
-    x * x
-
-value = doSomethingComplicated[3]
-```
-
-These two are the same thing:
-
-```mulem
-value =
-    x = (3) + 1
-    x = x / 2
-    x * x
-```
-
-Some more examples using the `[]` notation:
-
-```mulem
-max[a, b] :: = if a > b then a else b
-min[a, b] :: = if a < b then a else b
-print("{ max[0, 1] }")           -- Prints "1"
-print("{ min[0, 1] }")           -- Prints "0"
-print("{ max[1+2, 3+4] }")       -- Prints "7"
-
-f(x) = x * x
-g(x) = x + 2
-maxAdd[a, b] :: = if a > b then fn(c) = a + c else fn(c) = b + c
-print("{ maxAdd[ f(0), g(0) ] (1) }")
-```
-
-The compiler will read the body of the macro and understand where to insert its parameters, so if a parameter gets shadowed, then it will no longer insert it for the rest of that scope. 
-
-You can also define a type with a meta function. The meta functions parameters in `[]` will be inferred if it returns a function or type and you call it with parentheses `()`. In other words, `meta(_)` is equal to `meta[_](_)`. 
-
-```mulem
--- Note that this is not the actual definition for a question type `T?`. This is just a user-defined enum that uses the same pattern.
-Option[T] :: enum =
-    Some(T)
-    None
-
-Some[T] :: Option[T].Some
-None[T] :: Option[T].None
-
-optionInt = Some(1)
-```
-
-Type parameters can be omitted at the call site if they can be fully inferred from the value arguments, in which case the call uses only parentheses `()`. It can also be called explicitly by making an alias for it or calling with both brackets at the same time `[]()`
-
-```mulem
-SomeInt :: Some[int]
-optionInt = SomeInt(1)
-
-optionInt = Some[int](1)
-```
-
-The syntax `[]` was chosen so that generic type inference will take precedence. `meta(a, b)` means to *call the instantiated function that `meta` returns with inferred types* whereas `meta[a, b]` means to *call the abstract function `meta` with these exact values.* This also makes it easy to distinguish actual function calls from macros/inlining. This removes the need for the more conventional arrow bracket `<>` syntax, which can get confusing. For example, in `f( g < a, b > ( c ) )`, is `g` a generic function or is that comparing two values and passing the results to `f`? The square bracket syntax removes this ambiguity, `f( g [ a, b ] ( c ) )`. This makes it semantically clear that you're doing a compile-time function call followed by a run-time function call. 
+---
 
 ### Manual Implementation
 
@@ -3064,9 +2467,11 @@ increment(b)   -- T is inferred bool which has no implementation, compile-time e
 --)
 ```
 
+[Advanced](#advanced) / [TOC](#table-of-contents)
+
 ---
 
-## Importing and Modules
+### Importing and Modules
 
 * **Modules:** Declare with `moduleName :: mod`. Only one per file.
 * **Imports:** Must be explicit. `a.b{c, d} :: import`. Use `import "path"` for direct file imports.
@@ -3099,7 +2504,7 @@ myModule{addThing} :: import
 
 This connects the same explicit-list convention as inheriting and capturing — *no hidden dependencies, everything that can affect behavior is named.* The three together form a consistent rule across the language.
 
-### Memory Models
+#### Memory Models
 
 Mulem is multi-paradigm: different functions, structs, or modules can use different memory strategies in the same program. The model is controlled per-module. Boundary crossing between models follows FFI-like rules — automatic marshalling where possible, explicit escapes otherwise.
 
@@ -3112,19 +2517,7 @@ moduleThatUsesReferenceCounting :: mod =
     memory: Count[ARC]
 ```
 
-How this is implemented is outside of the scope of this document. That will be saved for when it's time to make a standard library for Mulem. For now, Mulem will focus on only implementing the garbage collector which will work in both interpreted and compiled mode.
-
----
-
-## Design Philosophy
-
-Mulem's unconventional choices are intentional, prioritizing readability, explicit data tracing, and scalable complexity:
-
-* __Readability First:__ Significant whitespace avoids bracket clutter, while the strict block/inline switching rules (`:` vs `()`) prevent you from fighting the formatter.
-* __Traceable Dependencies:__ The language forces you to explicitly name what you bring into scope. There are no glob imports or implicit mutable state captures. `import`, inheriting, and `/` (capturing) all use explicit listing.
-* __Unified Concepts:__ `::` is the universal operator for top-level, compile-time definitions (structs, aliases, constants).
-* __Type and Expression Symmetry:__ `?` (Questions) and `!` (Exclamation) work identically whether used in type definitions or as unwrapping operators.
-* __Scalable Patterns:__ Simple tasks use simple syntax (e.g., `fn(x) = x`), but the language easily scales up to explicit types, memory models, and generic constraints as complexity demands.
+[Advanced](#advanced) / [TOC](#table-of-contents)
 
 ---
 
@@ -3177,6 +2570,8 @@ do
         print("Failed to fetch user: {e}")
 ```
 
+[TOC](#table-of-contents)
+
 ---
 
 ## Reserved Keywords
@@ -3186,10 +2581,7 @@ Mulem has 38 reserved keywords. Note that built-in types (`int`, `str`), boolean
 **The Keyword List:**
 `and`, `as`, `await`, `break`, `catch`, `continue`, `defer`, `do`, `else`, `enum`, `error`, `fallthrough`, `fn`, `if`, `impl`, `import`, `in`, `is`, `loop`, `match`, `maybe`, `mod`, `not`, `opt`, `or`, `out`, `proto`, `raise`, `ref`, `rem`, `return`, `self`, `struct`, `then`, `try`, `until`, `void`, `where`, `yield`.
 
----
-
-## Table of Operators
-
+[TOC](#table-of-contents)
 
 ---
 
