@@ -449,6 +449,7 @@ catch
 
 ## Types
 
+- __[Built-in Types](#built-in-types)__
 - __[Primitives](#primitives):__
   - `: byte = 0y`
   - `: bool = False or True`
@@ -487,7 +488,149 @@ catch
   - `:: error` — Custom error types
   - `:: proto` — Virtual interfaces
 
+### Built-in Types
+
+Some built-in types include `byte`, `int`, `uint`, `float`, `bool`, `char`, `str`, and `ptr`. Note that although built-in types use lowercase names, they are not *keywords*. This is just a naming convention. *It's recommended that users create custom types with capitalized names to differentiate from built-in types.*
+
+```mulem
+myByte: byte = 255y
+myInt: int = -1234
+myInt: uint = 5678
+myFloat: float = 12.34
+myBool: bool = True
+myChar: char = 'a'
+myStr: str = "Hello"
+myPtr: ptr = ExternalLib.getSomething()
+```
+
+You can get the type of any variable with the compile-time function `typeof`. This fetches the type of that symbol at that point during compile time. *(See [Meta Functions](#meta-functions).)*
+
+```mulem
+x = 0
+y: typeof[x] = 1    -- Ensures that x and y have the same type.
+```
+
+You can also get the default value of any type with the compile-time function `default`. The type needs to have a default value defined which is yet to be determined how, but they're already defined for basic types.
+
+```mulem
+x = default[byte]   -- == 0y
+x = default[int]    -- == 0
+x = default[float]  -- == 0.0
+x = default[bool]   -- == False
+x = default[char]   -- == '\0'
+x = default[str]    -- == ""
+x = default[ptr]    -- == Null
+```
+
+`default[]` can also infer the type. This can be useful in certain situations, like if you want to leave a function that returns something empty so that you can implement it later.
+
+```mulem
+implementLater(): int = default[]
+```
+
+You can also get the size of any type with the compile-time function `sizeof`. It returns a constant `uint` (unsigned integer) with the number of bytes of memory that type requires. The exact sizes of some types like `int` or `float` might vary, but you can rely on `byte` and `bool` being 1 byte each. There's also the `void` type which represents no data. `ptr` depends on the pointer size of the system. 
+
+```mulem
+sizeOfByte = sizeof[byte]   -- == 1
+sizeOfBool = sizeof[bool]   -- == 1
+sizeOfVoid = sizeof[void]   -- == 0
+sizeOfPtr  = sizeof[ptr]    -- == 4 or 8
+```
+
 ### Primitives
+
+The following are types used for basic arithmetics such numbers are characters.
+
+#### Booleans
+
+`bool` is a built-in enum type with its only members being `False` and `True`. This means you can also pattern match with a bool, although it's recommended to use `if`/`else` instead. Enum-members are capitalized by convention. 
+
+```mulem
+match value is
+| True =
+    print("It's true!")
+| False =
+    print("It's false!")
+```
+
+These two are the same thing.
+
+```mulem
+if value then
+    print("It's true!")
+else
+    print("It's false!")
+```
+
+#### Numbers
+
+There are several number types. More may be added in the future, but for now we'll focus on the 3 main types. For any of these types, you can add a suffix to explicitly declare a number literal with a particular type. This one works for regular base 10 notation, not scientific notation or alternative base notation.
+
+| Type    | Meaning               | Suffix | Examples                       |
+|:--------|:-----------------------|:----|:---------------------------------|
+| `int`   | signed integer         | `i` | `1`, `2i`, `10i`, `0xabcdef`     |
+| `uint`  | unsigned integer       | `u` | `1`, `0u`, `5u`, `0x10ff`        |
+| `float` | floating ploint number | `f` | `1.0`, `1.5f`, `100f`, `2.0e100` |
+
+A number literal starts with a digit `0123456789` followed by zero or more other digits, letters, or underscores `_`. All number literals are case-insensitive, so `1.0f == 1.0F`.
+
+You can place underscores `_` anywhere in a number to break it up into segments. This doesn't change the value.
+
+- Examples: `1_234`, `1_000_000`, `0b1111_0000`, `0xab_cd_ef`
+
+The sign is considered an operator and not a part of the constant itself. This gets automatically calculated in constant expressions at compile-time so that it seems like it's a part of the constant.
+
+- `- 1` → `minus` + `1` → `signflip(1)` → `-1`
+
+The exception to this rule is in scientific notation: the sign after `e` is a part of the number itself. There must not be a space between `e` and the sign `-`/`+`. The sign is optional for positive exponent values.
+
+- Examples: `2e-100`, `5.0e+76`, `6.8E-128`, `10e3`
+
+A period in a place where a decimal is expected, then it's part of the number literal and not `.` for member/component access. This is space sensitive.
+
+Leading zeros are allowed also and don't affect the value. Unless there's a base letter, it's still in base 10, unlike in most C languages where a leading 0 switches to base 8.
+
+- Examples: `001`, `009`, `000100`, `000u`, `010.0f`
+
+Changing the base involves adding a `0` + either the letter `b`, `o`, or `x` to the start of the number.
+
+| Prefix | Base | Valid Digts                           |
+|:------:|:----:|:-------------------------------------:|
+| `0b`   | 2    | `01`                                  |
+| `0o`   | 8    | `01234567`                            |
+| `0x`   | 16   | `0123456789abcdef` (case insensitive) |
+
+#### Characters
+
+Characters or `char` are written with apostrophes (`'…'`) *(also called single quotes).* They store 1 byte of data. You can also do arithmetic on them like with numbers.
+
+```mulem
+a = 'a'
+b = a + 1
+print("{b}")   -- Print "b", the letter after 'a'
+c = b + 1
+print("{c}")   -- Print "c", the letter after 'b'
+```
+
+Characters can be escaped with a backslash `\` between the quotes. Some letters have special values like `\t` for tabs, `\n` for new lines, etc. All the standard stuff you would expect from a modern language. 
+
+```mulem
+apostrophe = '\''
+tab = '\t'
+newLine = '\n'
+nullChar = '\0'
+unicode = '\uFFFF'
+```
+
+#### Bytes
+
+Bytes `byte` are 8-bit unsigned integers. You can write a byte literal by putting `y` at the end of an integer. It must be in the range of 0 to 255 (inclusive).
+
+```mulem
+min = 0y
+max = 255y
+a = byte('a')
+```
 
 ### Strings
 
@@ -1423,152 +1566,9 @@ Notation:
 - **Dictionaries**: `[U:T]`
 - **Inferred**: omit the annotation entirely
 
-### Built-in Types
 
-Some built-in types include `byte`, `int`, `uint`, `float`, `bool`, `char`, `str`, and `ptr`. Note that although built-in types use lowercase names, they are not *keywords*. This is just a naming convention. *It's recommended that users create custom types with capitalized names to differentiate from built-in types.*
 
-```mulem
-myByte: byte = 255y
-myInt: int = -1234
-myInt: uint = 5678
-myFloat: float = 12.34
-myBool: bool = True
-myChar: char = 'a'
-myStr: str = "Hello"
-myPtr: ptr = ExternalLib.getSomething()
-```
 
-You can get the type of any variable with the compile-time function `typeof`. This fetches the type of that symbol at that point during compile time. *(See [Meta Functions](#meta-functions).)*
-
-```mulem
-x = 0
-y: typeof[x] = 1    -- Ensures that x and y have the same type.
-```
-
-You can also get the default value of any type with the compile-time function `default`. The type needs to have a default value defined which is yet to be determined how, but they're already defined for basic types.
-
-```mulem
-x = default[byte]   -- == 0y
-x = default[int]    -- == 0
-x = default[float]  -- == 0.0
-x = default[bool]   -- == False
-x = default[char]   -- == '\0'
-x = default[str]    -- == ""
-x = default[ptr]    -- == Null
-```
-
-`default[]` can also infer the type. This can be useful in certain situations, like if you want to leave a function that returns something empty so that you can implement it later.
-
-```mulem
-implementLater(): int = default[]
-```
-
-You can also get the size of any type with the compile-time function `sizeof`. It returns a constant `uint` (unsigned integer) with the number of bytes of memory that type requires. The exact sizes of some types like `int` or `float` might vary, but you can rely on `byte` and `bool` being 1 byte each. There's also the `void` type which represents no data. `ptr` depends on the pointer size of the system. 
-
-```mulem
-sizeOfByte = sizeof[byte]   -- == 1
-sizeOfBool = sizeof[bool]   -- == 1
-sizeOfVoid = sizeof[void]   -- == 0
-sizeOfPtr  = sizeof[ptr]    -- == 4 or 8
-```
-
-#### Booleans
-
-`bool` is a built-in enum type with its only members being `False` and `True`. This means you can also pattern match with a bool, although it's recommended to use `if`/`else` instead. Enum-members are capitalized by convention. 
-
-```mulem
-match value is
-| True =
-    print("It's true!")
-| False =
-    print("It's false!")
-```
-
-These two are the same thing.
-
-```mulem
-if value then
-    print("It's true!")
-else
-    print("It's false!")
-```
-
-#### Numbers
-
-There are several number types. More may be added in the future, but for now we'll focus on the 3 main types. For any of these types, you can add a suffix to explicitly declare a number literal with a particular type. This one works for regular base 10 notation, not scientific notation or alternative base notation.
-
-| Type    | Meaning               | Suffix | Examples                       |
-|:--------|:-----------------------|:----|:---------------------------------|
-| `int`   | signed integer         | `i` | `1`, `2i`, `10i`, `0xabcdef`     |
-| `uint`  | unsigned integer       | `u` | `1`, `0u`, `5u`, `0x10ff`        |
-| `float` | floating ploint number | `f` | `1.0`, `1.5f`, `100f`, `2.0e100` |
-
-A number literal starts with a digit `0123456789` followed by zero or more other digits, letters, or underscores `_`. All number literals are case-insensitive, so `1.0f == 1.0F`.
-
-You can place underscores `_` anywhere in a number to break it up into segments. This doesn't change the value.
-
-- Examples: `1_234`, `1_000_000`, `0b1111_0000`, `0xab_cd_ef`
-
-The sign is considered an operator and not a part of the constant itself. This gets automatically calculated in constant expressions at compile-time so that it seems like it's a part of the constant.
-
-- `- 1` → `minus` + `1` → `signflip(1)` → `-1`
-
-The exception to this rule is in scientific notation: the sign after `e` is a part of the number itself. There must not be a space between `e` and the sign `-`/`+`. The sign is optional for positive exponent values.
-
-- Examples: `2e-100`, `5.0e+76`, `6.8E-128`, `10e3`
-
-Another rule is that if there's a period in a place where a decimal is expected, then it's part of the number literal and not `.` for member/component access. This is space sensitive.
-
-*What the tokenizer sees:*
-
-- `1.0` is a float `1.0`.
-- `1. 0` is a float `1.` followed by int `0`.
-- `1 .0` is an int `1` followed by access `.` to its `0`th component.
-- `1.0.0` is a float `1.0`  followed by access `.` to its `0`th component.
-
-Leading zeros are allowed also and don't affect the value. Unless there's a base letter, it's still in base 10, unlike in most C languages where a leading 0 switches to base 8.
-
-- Examples: `001`, `009`, `000100`, `000u`, `010.0f`
-
-Changing the base involves adding a `0` + either the letter `b`, `o`, or `x` to the start of the number.
-
-| Prefix | Base | Valid Digts                           |
-|:------:|:----:|:-------------------------------------:|
-| `0b`   | 2    | `01`                                  |
-| `0o`   | 8    | `01234567`                            |
-| `0x`   | 16   | `0123456789abcdef` (case insensitive) |
-
-#### Characters
-
-Characters or `char` are written with apostrophes (`'…'`) *(also called single quotes).* They store 1 byte of data. You can also do arithmetic on them like with numbers.
-
-```mulem
-a = 'a'
-b = a + 1
-print("{b}")   -- Print "b", the letter after 'a'
-c = b + 1
-print("{c}")   -- Print "c", the letter after 'b'
-```
-
-Characters can be escaped with a backslash `\` between the quotes. Some letters have special values like `\t` for tabs, `\n` for new lines, etc. All the standard stuff you would expect from a modern language. 
-
-```mulem
-apostrophe = '\''
-tab = '\t'
-newLine = '\n'
-nullChar = '\0'
-unicode = '\uFFFF'
-```
-
-#### Bytes
-
-Bytes `byte` are 8-bit unsigned integers. You can write a byte literal by putting `y` at the end of an integer or by putting @ in front of a `char` literal. It must be in the range of 0 to 255 (inclusive).
-
-```mulem
-min = 0y
-max = 255y
-a = @'a'
-```
 
 #### Strings
 
