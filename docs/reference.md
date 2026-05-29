@@ -1056,6 +1056,45 @@ __Compound Assignment Operators:__
 
 ---
 
+## Operator Overloading 
+
+Each operator is a prototype that can be implemented on a type.
+
+```
+Vector2D :: struct =
+    x: float
+    y: float
+
+Vector2D :: impl[Add] =
+    op[+](self as lhs, rhs: Vector2D): Vector2D =
+        Vector2D(
+            x: lhs.x + rhs.x,
+            y: lhs.y + rhs.y,
+        )
+
+v1 = Vector2D(x: 1, y: 2)
+v2 = Vector2D(x: 3, y: 4)
+
+v1 + v2   -- Result: Vector2D(x: 4, y: 6)
+```
+
+Custom operators can be defined with `op`. These must be defined above where they will be used so that the lexer can correctly identify user-defined operators.
+
+```
+Remainder :: op[order: 5.0, symbol: "rem", side: op.Infix]
+
+int :: impl[Remainder] =
+    @inlined
+    op[rem](self as lhs, rhs: int): int =
+        lhs - rhs * (lhs // rhs)
+
+impl Remainder
+
+15 rem 12    -- Result: 3
+```
+
+---
+
 # --OUTDATED--
 
 ---
