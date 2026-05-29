@@ -11,8 +11,8 @@ __Mulem__ is a general-purpose, expression-oriented language designed to balance
 - __[Basics](#basics)__
 - __[Assignment](#assignment)__
 - __[Meta Assignment](#meta-assignment)__
-- __[Control Flow](#control-flow)__
 - __[Functions](#functions)__
+- __[Control Flow](#control-flow)__
 - __[Types](#types)__
 - __[Meta Functions](#meta-functions)__
 - __[Operators](#operators)__
