@@ -140,12 +140,41 @@ c = 'c'
 c = 0   -- Error
 ```
 
+Adding a new line and indentation after the `=` starts a block. The last expression evaluated in the block is the value of that variable.
+
+```
+lunch =
+    if getDayOfWeek() == "Tuesday" then
+        "tacos"
+    else
+        "sandwich"
+```
+
 Functions are declared with parentheses before the equals sign. Parameter types and return type can be inferred.
 
 ```
 f(x: int): int = x*x
 g(x) = x*x*x
 g(2)    -- Result: 8
+```
+
+Functions can have multiple lines by adding a line break after the `=` sign. The last expression evalued is the implied return.
+
+```
+isThirteen(x) =
+    if x == 13 then
+        return True
+    False
+```
+
+```
+fib(n) = 
+    if n < 1 then
+        0
+    else if n < 2 then
+        1
+    else
+        fib(n - 1) + fib(n - 2)
 ```
 
 Mutable variables are declared with the keyword `mu` before it. They must be set with the `:=` operator or any compound assignment operators such as `+=` or `-=`
@@ -169,20 +198,11 @@ cb := f2
 cb(1)     -- Result: 0
 ```
 
-Lambda functions are created with a leading period `.` before a function definition `.(x) = `. A name can be written after it to create a self-reference inside the lambda function `.name(x) = `.
+Lambda functions are created with a leading period `.` before a function definition like `.(x) = `. A name can be written after it to create a self-reference inside the lambda function `.name(x) = `.
 
 ```
 cb := .(x) = x * 2
 cb(2)     -- Result: 4
-```
-
-Functions can have multiple lines by adding a line break after the `=` sign.
-
-```
-isThirteen(x) =
-    if x == 13 then
-        return True
-    False           -- Last expression is implied return value
 ```
 
 ## Types
@@ -267,14 +287,25 @@ tuple = (1, 2, x: 3, y: 4)
 Tuples can be spread into a function using the `&` prefix operator. Function can have named parameters in the same manner as desctructuring.
 
 ```
-add(a: int, b: int) & {x: int, y: int} =
+add(a: int, b: int) & {x: int, y: int}: int =
     a + b + x + y
 
 add(&tuple)              -- Result: 10
 add(5, 6, x: 7, y: 8)    -- Result: 26
 ```
 
+A reference points to the same memory location as another variable. Its mutability is carried over.
+
+```
+mu x = 0
+ref xRef = x
+xRef := 1
+x        -- Value: 1
+```
+
 ---
+
+# --OUTDATED--
 
 ---
 
@@ -430,16 +461,6 @@ b: int = 1          -- Explicit type.
 c: _ = 2            -- Explicit declaration, inferred type.
 ```
 
-Adding a new line and indentation after the `=` starts a block. The last expression evaluated in the block is the value of that variable.
-
-```
-lunch =
-    if getDayOfWeek() == "Tuesday" then
-        "tacos"
-    else
-        "sandwich"
-```
-
 Variables are immutable, but declaring it again shadows it. Any subsequent `=` on an immutable variable is an implicit declaration. Redeclaring a variable with the same name is called **shadowing.** This makes Mulem flexible while still having the advantages of being statically typed.
 
 ```
@@ -500,15 +521,6 @@ print("{count}")    -- "1"
 
 ### References (`ref`)
 
-A reference points to the same memory location as another variable. Its mutability is carried over.
-
-```
-mu x = 0
-ref xRef = x
-xRef = 1
-print("{x}")        -- "1"
-```
-
 #### Destructuring
 
 ```
@@ -552,16 +564,6 @@ f(x) = x*x + 2*x + 1
 ```
 
 Functions can be a block statement by placing a new line and indentation after the equals sign `=`. This allows you to put multiple lines in one function. The last line evaluated is the return value.
-
-```
-fib(n) = 
-    if n < 1 then
-        0
-    else if n < 2 then
-        1
-    else
-        fib(n - 1) + fib(n - 2)
-```
 
 `fn` is a reserve word for lambda functions. Declaring a function with this name will throw an error.
 
