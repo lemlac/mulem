@@ -941,7 +941,183 @@ raise Error(code: -1)
 raise Error("message", code: -1)
 ```
 
-### Custom Types
+## Custom Types
+
+Custom types are made with `::` (meta assignment).
+
+### Aliases
+
+Assigning a type after `::` creates an alias. 
+
+```mulem
+numberType :: int
+```
+
+This alias is unique to the scope. Modifying it only affects the alias and not the original type. This prevents accidental conflictions between modules. *(See [Implementation](#implementing-impl).)*
+
+You can also create aliases for basic product types or sum types.
+
+```mulem
+tuple        ::  int , float , char                    -- Also called a "positional tuple".
+alsoTuple    :: (int , float , char)                   -- Optional parentheses.
+namedTuple   :: {count: int, scale: float, code: char} -- Position not guaranteed.
+mixedTuple   :: (int, float) & {code: char}            -- Has both positional and named components.
+productUnion ::  int & float & char                    -- Is the size of all types combined.
+sumUnion     ::  int | float | char                    -- Is the size of the largest type
+.
+```
+
+### Structural Types (`struct`)
+
+Structs are product types—or in other words—plain data containers. They cannot extend other structs, but can inherit members of other structs. *(See [Inheritance and Visibility](#inheritance-and-visibility).)*
+
+Put an equals sign after the `struct`. This makes it easier to tell type definitions from aliases and lets the parser know that it's starting a block since a block always starts after a `:` or `=`. `=` was chosen over `:` to show that the block is some sort of data rather than control flow. This makes it clear that when you see `=` at the end of a line, something is being defined. It also resembles the familiar `var: type = value` but the `::` makes it clear that this isn't a run-time value. 
+
+```mulem
+MyStruct :: struct =
+    name: str
+    value: int
+```
+
+You can write it with one line, separating each member with a comma `,`.
+
+```mulem
+MyStruct :: struct = name: str, value: int
+```
+
+Instantiate a struct by calling it like a function. Each member is treated like a named argument.
+
+```mulem
+myObject = MyStruct(name: "Foobar", value: 1)
+```
+
+Structs are transparent. They can be destructured like named tuples. 
+
+```mulem
+TransparentThing :: struct =
+    a: int
+    b: int
+
+{a, b} = TransparentThing(a: 1, b: 2)
+print("a: {a}, b: {b}")
+```
+
+### Enumerable Types (`enum`)
+
+Enums are sum types. They define a closed set of variants. Variants may carry data turning them into a tagged union. Like with `struct`, place an `=` after `enum` before starting the block. 
+
+```mulem
+MyEnum :: enum =
+    First
+    Second(int)
+    Third{val: int}
+```
+
+The inline version works the same.
+
+```mulem
+MyEnum :: enum = First, Second(int), Third{val: int}
+```
+
+Like structs, instantiate by calling the member like a function unless it doesn't carry any data.
+
+```mulem
+a = MyEnum.First
+b = MyEnum.Second(2)
+c = MyEnum.Third(val: 3)
+```
+
+When pattern match, the fill path to the type doesn't need to named on each case, only the name of each member. Use `_` while destructuring to discard the members data.
+
+```mulem
+match a is
+| First =
+    print("first!")
+| Second(_) =
+    print("second!")
+| Third{_} =
+    print("third!")
+```
+
+### Error Types (`error`)
+
+Errors are bit like both `struct` and `enum`. Each `error` type represents a member of a potential **error tagged union** that's summed up per function with a exclamation type `T!E` return type. Every `try` / `catch` block matches patterns to the summed error tagged union in its block based on each `!` point. Exclamation types flatten, so `Exclamation[Exclamation[T, E], F]` would become `Exclamation[T, E|F]` where `E|F` is a tagged union of each possible error in that exclamation. Instantiation works the same as structs.
+
+```mulem
+OutOfBounds :: error                 -- No data.
+ErrorMessage :: error = (str)        -- Attach a position tuple.
+DivideByZero :: error = value: int   -- Attach named member
+```
+
+```mulem
+divide(num: float, dem: float): float!DivideByZero =
+    if dem == 0.0 then
+        raise DivideByZero(val: num)     -- Causes branch in `try` block when called with `!`.
+    num / dem
+
+try
+    divide(1, 0)!
+catch
+| DivideByZero{val} =
+    print("Can't divide {val} by zero!")
+```
+
+Uncaught errors in a `try` / `catch` block are implicitly reraised. Each `catch` pattern removes a possible error from the exclamation type of that block. When all possible errors have a `catch` arm, the value of that block is automatically unwrapped so that `Exclamation[T, ()]` becomes just `T`. 
+
+### Prototypes (`proto`)
+
+A `proto` is an abstract interface — a named contract with no data. It is equivalent to a `virtual class` / `trait` / `interface` in other languages. Each member is a function, also called a **method**. Methods that have a parameter named `self` at the beginning will be called like methods on the instance of that type, i.e. `self.method(_)`. This is equivalent to saying `typeof[self].method(self, _)`.
+
+```mulem
+MyPrototype :: proto =
+    speak(self): str
+```
+
+### Implementing (`impl`)
+
+Methods and trait implementations are added separately with `impl`. Much like `proto`, `self` in the first parameter of a method refers to the current instance. You can also add static values that are attached to the type itself. Use `.` to access static values and methods like with structs.
+
+```mulem
+MyStruct :: impl =
+    staticValue = 1234
+    init(name: str, value: int): MyStruct =
+        MyStruct(name: name, value: value)
+
+print("{ MyStruct.staticValue }")
+```
+
+A method with `self` as the first parameter are callable as a method on the instance. `self` refers to the instance, analogous to `self` / `this` in other languages. You can optionally give it another name with `as`. 
+
+```mulem
+MyType :: struct = foo: str
+
+MyType :: impl =
+    method1(self) = self.foo              -- `self` is a `MyType`.
+    method2(self as this) = this.foo      -- Can be aliased with `as`.
+    method3(self as myType) = myType.foo  -- Alias name can be any valid variable name.
+
+x = MyType(foo: "bar")
+print("{ x.method1() }")  -- Prints "foo"
+print("{ x.method2() }")  -- Prints "foo"
+print("{ x.method3() }")  -- Prints "foo"
+```
+
+To implement from a prototype, add the proto's name in the square brackets. Each implementation gets their own `impl[]` block. 
+
+```mulem
+MyStruct :: impl[MyPrototype] =
+    speak(self) = "I am a MyStruct \{ name={self.name}, value={self.value} }"
+
+MyEnum :: impl[MyPrototype] =
+    speak(self) =
+        match self is
+        | First =
+            "I am a MyEnum of First"
+        | Second(x) =
+            "I am a MyEnum of Second({x})"
+        | Third{val} =
+            "I am a MyEnum of Third \{ val={val} }"
+```
 
 [TOC](#table-of-contents)
 
@@ -2727,26 +2903,6 @@ Other languages often use a set of prefixed keywords to define these things, but
 
 Meta bindings are meant to resemble definitions. *"This is that."* Only when things get complicated should you have to expand on that. It should be easy and simple to define something. They are like the language file of your API, telling the compiler how to speak your own custom language—not just the language that you *speak* but the language that you *think* in.
 
-### Aliases
-
-Assigning a type after `::` creates an alias. 
-
-```mulem
-numberType :: int
-```
-
-This alias is unique to the scope. Modifying it only affects the alias and not the original type. This prevents accidental conflictions between modules. *(See [Implementation](#implementing-impl).)*
-
-You can also create aliases for basic product types or sum types.
-
-```mulem
-tuple        ::  int , float , char                    -- Also called a "positional tuple".
-alsoTuple    :: (int , float , char)                   -- Optional parentheses.
-namedTuple   :: {count: int, scale: float, code: char} -- Position not guaranteed.
-mixedTuple   :: (int, float) & {code: char}            -- Has both positional and named components.
-productUnion ::  int & float & char                    -- Is the size of all types combined.
-sumUnion     ::  int | float | char                    -- Is the size of the largest type.
-```
 
 #### Tuples
 
@@ -2770,157 +2926,7 @@ value = addOne(2)               -- Means (fn(x) = x + 1)(2), result is 3.
 array = map([1, 2, 3, 4], addOne)
 ```
 
-### Structural Types (`struct`)
 
-Structs are product types—or in other words—plain data containers. They cannot extend other structs, but can inherit members of other structs. *(See [Inheritance and Visibility](#inheritance-and-visibility).)*
-
-Put an equals sign after the `struct`. This makes it easier to tell type definitions from aliases and lets the parser know that it's starting a block since a block always starts after a `:` or `=`. `=` was chosen over `:` to show that the block is some sort of data rather than control flow. This makes it clear that when you see `=` at the end of a line, something is being defined. It also resembles the familiar `var: type = value` but the `::` makes it clear that this isn't a run-time value. 
-
-```mulem
-MyStruct :: struct =
-    name: str
-    value: int
-```
-
-You can write it with one line, separating each member with a comma `,`.
-
-```mulem
-MyStruct :: struct = name: str, value: int
-```
-
-Instantiate a struct by calling it like a function. Each member is treated like a named argument.
-
-```mulem
-myObject = MyStruct(name: "Foobar", value: 1)
-```
-
-Structs are transparent. They can be destructured like named tuples. 
-
-```mulem
-TransparentThing :: struct =
-    a: int
-    b: int
-
-{a, b} = TransparentThing(a: 1, b: 2)
-print("a: {a}, b: {b}")
-```
-
-### Enumerable Types (`enum`)
-
-Enums are sum types. They define a closed set of variants. Variants may carry data turning them into a tagged union. Like with `struct`, place an `=` after `enum` before starting the block. 
-
-```mulem
-MyEnum :: enum =
-    First
-    Second(int)
-    Third{val: int}
-```
-
-The inline version works the same.
-
-```mulem
-MyEnum :: enum = First, Second(int), Third{val: int}
-```
-
-Like structs, instantiate by calling the member like a function unless it doesn't carry any data.
-
-```mulem
-a = MyEnum.First
-b = MyEnum.Second(2)
-c = MyEnum.Third(val: 3)
-```
-
-When pattern match, the fill path to the type doesn't need to named on each case, only the name of each member. Use `_` while destructuring to discard the members data.
-
-```mulem
-match a is
-| First =
-    print("first!")
-| Second(_) =
-    print("second!")
-| Third{_} =
-    print("third!")
-```
-
-### Error Types (`error`)
-
-Errors are bit like both `struct` and `enum`. Each `error` type represents a member of a potential **error tagged union** that's summed up per function with a exclamation type `T!E` return type. Every `try` / `catch` block matches patterns to the summed error tagged union in its block based on each `!` point. Exclamation types flatten, so `Exclamation[Exclamation[T, E], F]` would become `Exclamation[T, E|F]` where `E|F` is a tagged union of each possible error in that exclamation. Instantiation works the same as structs.
-
-```mulem
-OutOfBounds :: error                 -- No data.
-ErrorMessage :: error = (str)        -- Attach a position tuple.
-DivideByZero :: error = value: int   -- Attach named member
-```
-
-```mulem
-divide(num: float, dem: float): float!DivideByZero =
-    if dem == 0.0 then
-        raise DivideByZero(val: num)     -- Causes branch in `try` block when called with `!`.
-    num / dem
-
-try
-    divide(1, 0)!
-catch
-| DivideByZero{val} =
-    print("Can't divide {val} by zero!")
-```
-
-Uncaught errors in a `try` / `catch` block are implicitly reraised. Each `catch` pattern removes a possible error from the exclamation type of that block. When all possible errors have a `catch` arm, the value of that block is automatically unwrapped so that `Exclamation[T, ()]` becomes just `T`. 
-
-### Prototypes (`proto`)
-
-A `proto` is an abstract interface — a named contract with no data. It is equivalent to a `virtual class` / `trait` / `interface` in other languages. Each member is a function, also called a **method**. Methods that have a parameter named `self` at the beginning will be called like methods on the instance of that type, i.e. `self.method(_)`. This is equivalent to saying `typeof[self].method(self, _)`.
-
-```mulem
-MyPrototype :: proto =
-    speak(self): str
-```
-
-### Implementing (`impl`)
-
-Methods and trait implementations are added separately with `impl`. Much like `proto`, `self` in the first parameter of a method refers to the current instance. You can also add static values that are attached to the type itself. Use `.` to access static values and methods like with structs.
-
-```mulem
-MyStruct :: impl =
-    staticValue = 1234
-    init(name: str, value: int): MyStruct =
-        MyStruct(name: name, value: value)
-
-print("{ MyStruct.staticValue }")
-```
-
-A method with `self` as the first parameter are callable as a method on the instance. `self` refers to the instance, analogous to `self` / `this` in other languages. You can optionally give it another name with `as`. 
-
-```mulem
-MyType :: struct = foo: str
-
-MyType :: impl =
-    method1(self) = self.foo              -- `self` is a `MyType`.
-    method2(self as this) = this.foo      -- Can be aliased with `as`.
-    method3(self as myType) = myType.foo  -- Alias name can be any valid variable name.
-
-x = MyType(foo: "bar")
-print("{ x.method1() }")  -- Prints "foo"
-print("{ x.method2() }")  -- Prints "foo"
-print("{ x.method3() }")  -- Prints "foo"
-```
-
-To implement from a prototype, add the proto's name in the square brackets. Each implementation gets their own `impl[]` block. 
-
-```mulem
-MyStruct :: impl[MyPrototype] =
-    speak(self) = "I am a MyStruct \{ name={self.name}, value={self.value} }"
-
-MyEnum :: impl[MyPrototype] =
-    speak(self) =
-        match self is
-        | First =
-            "I am a MyEnum of First"
-        | Second(x) =
-            "I am a MyEnum of Second({x})"
-        | Third{val} =
-            "I am a MyEnum of Third \{ val={val} }"
-```
 
 ### Inheritance and Visibility
 
