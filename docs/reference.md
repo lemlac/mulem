@@ -13,7 +13,7 @@ __Mulem__ is a general-purpose, expression-oriented language designed to balance
 - __[Control Flow](#control-flow)__
 - __[Functions](#functions)__
 - __[Types](#types)__
-- __[Meta Assigment](#meta-assignment)__
+- __[Meta Assignment](#meta-assignment)__
 - __[Operators](#operators)__
 
 ---
@@ -47,6 +47,7 @@ Certain keywords and symbols can start a block. Indentation can only increase if
 - `=`/`:` (any assignment) 
 - `do`
 - `then`
+- `else`
 - `try`
 - `maybe`
 
@@ -150,12 +151,13 @@ a = 2
 a = 'a'
 ```
 
-Declare a variable with a type and it will be locked to that type in the scope. 
+Declare a variable with a type and it will be locked to that type until reclared with `: T`.
 
 ```
 c: char
 c = 'c'
-c = 0   -- Error
+c = 0        -- Error!
+c: int = 0   -- OK!
 ```
 
 Adding a new line and indentation after the `=` starts a block. The last expression evaluated in the block is the value of that variable.
@@ -204,6 +206,8 @@ add(&tuple)              -- Result: 10
 add(5, 6, x: 7, y: 8)    -- Result: 26
 ```
 
+### Reference
+
 A reference points to the same memory location as another variable. Its mutability is carried over.
 
 ```
@@ -213,17 +217,15 @@ xRef := 1
 x        -- Value: 1
 ```
 
-[TOC](#table-of-contents)
+Explicit reference types are `T%` (immutable) and `T%mu` (mutable). Use `%` and `%mu` prefix operators to get a memory address.
 
----
-
-## Control Flow
-
-- __`if` / `else`__ – Boolean branching
-- __`match` / `is`__ – Pattern matching
-- __`loop`__ – Iteration
-- __`maybe` / `else`__ – Coalescing
-- __`try` / `catch`__ – Error handling
+```
+mu x = 0
+xRef: T% = %x
+xRef := 1  -- Error!
+xRef: T%mu = %mu x
+xRef := 1  -- OK!
+```
 
 [TOC](#table-of-contents)
 
@@ -279,20 +281,128 @@ cb(2)     -- Result: 4
 
 ### Capturing
 
-Function capture immutable variables automatically. Mutable variables must be captured with `/` in the function signature.
+Functions capture immutable variables automatically. Mutable variables must be captured with `%` in the function signature. If the function mutates the variable, then it should have `mu` before the variable name.
 
 ```
-amount = 1
-mu count = 0
+amount = 1     -- Automatically captured.
+mu count = 0   -- Must be explicitly captured.
 
-increment() / (count): int =
+increment() % (mu count): void =
     count += amount
+
+getCount() % (count): int =
     count
 
 increment()      -- Result: 1
 increment()      -- Result: 2
 increment()      -- Result: 3
-count            -- Value: 3
+getCount()       -- Result: 3
+```
+
+[TOC](#table-of-contents)
+
+---
+
+## Control Flow
+
+- [__`do`__](#do) – Basic block
+- [__`if` / `else`__](#if--else) – Boolean branching
+- [__`match` / `is`__](#match--is) – Pattern matching
+- [__`loop`__](#loop) – Iteration
+- [__`maybe` / `else`__](#maybe--else) – Coalescing
+- [__`try` / `catch`__](#try--else) – Error handling
+
+### `do`
+
+```
+do expr; expr
+
+do
+    body
+
+do.label
+    body
+    break.label
+```
+
+### `if` / `else`
+
+```
+if cond then expr else expr
+
+if cond then
+    body
+else
+    expr
+```
+
+### `match` / `is`
+
+```
+match expr is (| ptrn(*) = expr | ptrn = expr | (*) = expr)
+
+match expr is
+| ptrn(*) =
+    body
+| ptrn =
+    body
+| (*) =
+    body
+```
+
+### `loop`
+
+```
+loop
+    body
+    break
+
+loop.label
+    body
+    break.label
+
+loop cond then
+    body
+else
+    body
+
+loop x in expr then
+    body
+
+[*loop x in expr then x]
+
+loop
+    body
+until cond
+```
+
+### `maybe` / `else`
+
+```
+maybe expr? else expr
+
+maybe
+    body?
+else
+    expr
+```
+
+### `try` / `catch`
+
+```
+try expr! catch expr
+
+try expr! catch (| ptrn(*) = expr | ptrn = expr | (*) = expr)
+
+try
+    body!
+catch
+| ptrn(*) =
+    body
+| ptrn =
+    body
+| (*) =
+    body
 ```
 
 [TOC](#table-of-contents)
