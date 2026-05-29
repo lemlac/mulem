@@ -454,6 +454,79 @@ catch
   - `: T!E` – `Ok(T)` or `Err(E)`
   - `: T!` – Error type inferred
 - __Custom Types:__
+  - `:: _` — Alias to another type
+  - `:: struct` — Structural data
+  - `:: enum` — Sum types / tagged unions
+  - `:: error` — Custom error types
+  - `:: proto` — Virtual interfaces
+
+### Primitives
+
+### Strings
+
+### Arrays
+
+### Tuples
+
+### Pointers
+
+Raw pointers are type `ptr`. These cannot be dereferenced. They are ideally used for FFI to pass to functions of external libraries. You can also check if it's `Null`.
+
+```mulem
+o: ptr = externalLibrary.getObject()
+if o != Null then
+    externalLibrary.useObject(o)
+else
+    print("Initialization failed")
+```
+
+Typed pointers are type `T^`. They're are like references but dereferenced with the `^` postfix operator.
+
+```mulem
+mu x = 0
+xPtr: int^mu = %mu x
+xPtr^ := 1
+x             -- Value: 1
+```
+
+Safe pointers are made by wrapping `T^` or `T^mu` in `Some`. If you pass in `Some(Null)`, it will be converted to `None`.
+
+To allocate memory on the heap, use the `alloc[]` and `free[]` functions.
+
+```mulem
+Student :: struct =
+    name: str
+    grade: char
+
+student: Student^mu = alloc[ Student(
+    name: "John",
+    grade: 'A' ) ]?
+defer free[student]
+
+student^.name := "John Smith
+```
+
+`alloc` will check the size of the type passed to it and allocate that much space, returning a `T^mu?` (safe pointer). If successful, it will run the expression inside the square brackets and return `Some(T^mu)`. If not, it will return `None`. Hence `?` after it to unwrap the return value. `T^mu` can also be downgraded to `T^` if you don't plan to change the data.
+
+`free` will free the memory to a pointer and convert it to `Null` even if it was declared immutable to prevent dangling pointers.
+
+`defer` will run an expression at the end of a function.
+
+This won't prevent all memory safety issues. Mulem isn't aiming to be the next Rust. Think of this memory model as more of an upgraded C — less need to do arithmetics like `malloc(N * sizeof(T))` or remembering to call `free(p)` before the end of a function.
+
+By default, they're isn't an ownership model in Mulem. If you don't plan on using a pointer after getting one from a function, you can put `defer free[p]` on the next line.
+
+```mulem
+student = getStudent()
+defer free[student]
+-- Use student freely below.
+```
+
+### Questions
+
+### Exclamation
+
+### Custom Types
 
 [TOC](#table-of-contents)
 
