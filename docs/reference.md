@@ -342,7 +342,7 @@ getCount()       -- Result: 3
 
 ## Control Flow
 
-- __[`do`__](#do)__ – Basic block
+- __[`do`](#do)__ – Basic block
 - __[`if` / `else`](#if--else)__ – Boolean branching
 - __[`match` / `is`](#match--is)__ – Pattern matching
 - __[`loop`](#loop)__ – Iteration
@@ -476,7 +476,7 @@ catch
   - `: T^` – Typed pointer
 - __[Questions](#questions-t):__
   - `: T?` – `Some(T)` or `None`
-- __[Exclamations](#exclamations-t):__
+- __[Exclamations](#exclamations-t-e):__
   - `: T!E` – `Ok(T)` or `Err(E)`
   - `: T!` – Error type inferred
 - __[Custom Types](#custom-types):__
@@ -550,7 +550,7 @@ defer free[student]
 
 ### Questions `T?`
 
-### Exclamation `T!E`
+### Exclamations `T!E`
 
 ### Custom Types
 
