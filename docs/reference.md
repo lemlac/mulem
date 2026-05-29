@@ -4,329 +4,279 @@
 
 __Mulem__ is a general-purpose, expression-oriented language designed to balance conciseness and eloquence. It delivers highly readable syntax, robust safety mechanisms, granular execution control, and expressive data pipelining. Supporting both interpretation and compilation, Mulem is ideally suited for systems programming, AI, and game development.
 
-This document is not focused on when you would apply any of the mechanics described. It's just describing the mechanics themselves within the Mulem programming language.
-
 ---
 
-## Core Design Philosophy
-
-- **Expression-oriented**: Almost everything is an expression and returns a value.
-- **Significant whitespace** with smart inline support.
-- **Modern error & option handling**: `?` and `!` propagation
-- **Flexible**: Multi-paradigm (functional, procedural, low-level).
-
-## Lexical Conventions
-
-- **Indentation**: Significant (4 spaces recommended).
-- **Line endings**: Newlines (`\n`, `\r`, or `\r\n`) or semicolons `;` separate expressions.
-- **Comments**:
-  - Single-line: `-- comment`
-  - Block: `(-- comment --)` (nesting allowed)
-- **Strings**:
-  - `"double quotes"` with `{interpolation}`
-  - `''raw strings''`
-  - `"""multi-line strings"""`
-
-### Whitespace and Indentation
-
-Whitespace is significant. Indentation marks where blocks begin and end. Four (4) spaces per level is recommended. The use of tabs or spaces must be the same throughout a block. 
-
-Statements are separated by newlines or semicolons (`;`). The two are interchangeable *in most cases.* The one thing to know is that if you see a semiclon (`;`) outside of a string or comment, then the expression **always** ends. Newlines may be `\n`, `\r`, or `\r\n` and have special rules that will be explained further.
-
-### Comments
+Comments are made with two minus signs `--`.
 
 ```
--- Single-line comment.
-
-(--
-    Multi-line comment.
---)
-
-(--
-    (-- Nesting is allowed. --)
---)
+-- Single Line Comment
+(-- Mulit-Line Comment --)
+(-- (-- Nested Comment --) --)
 ```
 
-### Lexical Categories
+## Duel Whitespace-Bracket System
 
-| Category             | Examples                                            |
-|:---------------------|:----------------------------------------------------|
-| Words                | `x`, `PI`, `1`, `3.14`, `0xABCDEF`,                 |
-| String/Char literals | `'a'`, `"foo"`, `"""big string"""`, `''raw''`       |
-| Delimiters           | `,` (tuples/arrays), `;` (expressions)              |
-| Symbols              | `~!@#%^&*-+=\|:<.>/?` (excluding `--`)              |
-| Brackets             | `()`, `[]`, `{}`                                    |
-| Whitespace           | spaces, tabs, newlines                              |
-
----
-
-## Expressions and Blocks
-
-A program is a sequence of expressions. Each expression is separated by lines or grouped together on one line and delimitted with semicolons (`;`). Semi-colons at the end of a line are ignored.
+Mulem is whitespace significant. Indentation determines when blocks start and end. Expressions are split by line-breaks and semi-colons (`;`). The value of each block is the last expression evaluated in it. 
 
 ```
+block
+    expr
+
 expr
 expr
 
 expr; expr
-
-expr;
-expr;
 ```
 
-Whitespace is significant. When expressions are sperated by lines, the indentation can't be higher unless it's the start of a new block. 
+Certain keywords and symbols can start a block. Indentation can only increase if the previous line ends in a block-starting token. These tokens are:
 
-```
-expr
-    expr   -- Error: unexpected indentation at line 2.
-```
-
-Certain keywords and symbols such as `do` or `then` start a block when they are at the end of a line. Increased indentation is expected on the next line, and decreasing indentation exits the block.
-
-```
-do         -- Line ends with `do`, expecting a new block.
-expr       -- Error: expected indentation missing at line 2.
-
-do
-    expr   -- Start of the new block.
-    expr   -- Both expressions are in the same block.
-
-expr       -- Decreasing indentation exits the block.
-```
-
-Each sequence starts a new scope. For example:
-
-```
-(do x = 2; x + 1)
-```
-
-`x` is isolated to inside the `do` sequence, and the result of the expression is `2 + 1`. 
-
-Bracket expressions `()`/`[]`/`{}` are white-space insensitive and only delimited with commas `,` until a keyword changes the sequence type. That's what `do` is doing here. It changes the sequence type from brackets to an inline `do` expression. When a non-bracket sequence sees `,` or a closing bracket, it automatically bubbles up to the nearest bracket sequence. 
-
-Given that `;` and `,` can both exist inside an expression, you *have* to define their relative precedence. There's no neutral option. For example:
-
-```
-(getX(), print("fetching y"); getY(), getZ())
-```
-
-Is it `getX(), print("fetching y")` then `getY(), getZ()`, or is it a tuple of `getX()`, `print("fetching y"); getY()`, and `getZ()`? To maintain syntactic clarity and eliminate operator precedence ambiguity between commas (slot separators) and semicolons (expression sequencers), `,` and `;` **cannot be mixed at the same nesting level**. You must resolve this by explicitly isolating the sequenced expressions. This can be done by wrapping one sequence in an inline `do` expression:
-
-```
-(getX(), print("fetching y"); getY(), getZ())     -- Error: unexpected character: ";"
-(getX(), do print("fetching y"); getY(), getZ())  -- OK: isolated via inline 'do'
-```
-
-The `do` here says to start a sequence that's separated by semi-colons `;`. The comma `,` ends the sequence. It's now clear that `print(…)` is only there to run side effects after `getX()`, and the value of the expression is the tuple `(x, y, z)`.
-
-That's why the rule *"`,` and `;` cannot be mixed at the same nesting level"* is in place. It prevents the disagreement of what `(a, b; c, d)` means. `(a, do b; c, d)` makes it clear that `do b;` is a side-effect and `c` is the value for the slot. Each `;` after `do` can be read as "then" like **do** *this* **then** *that.*
-
-### Expression Splitting
-
-Semicolons and newlines are ignored—as far as syntax is concerned—when they are inside a multi-line comment `(-- --)` or string `"""…"""`. 
-
-```
-x = 1 + (-- New lines and semicolons ignored here;
-   --) 2
-```
-
-```
-s = """
-    Big
-    string;
-    """
-```
-
-Otherwise, a semicolon always ends an expression. 
-
-It's not always clear if `- 1` at the start of a line means *subtract 1* or *negative 1.* Some languages use a backslash (`\`) for this, but that has its downsides. With backslashes, they all go at the end of the a line which hardly ever line up without manual formatting.
-
-```
-x = 1 \
-  + 2 + 3 \
-  + 4 \
-  + 5 + 6
-```
-
-In Mulem, backslashes will collapse whitespace *before* and *after* it, allowing you to use either styles.
-
-```
-x = 1
-  \ + 2 + 3
-  \ + 4
-  \ + 5 + 6
-```
-
-Method chaining:
-
-```
-object.method1()
-    \ .method2()
-    \ .method3()
-    \ .method4()
-```
-
-Indentation is lenient with expression splitting. As long as there's a `\` character in between, then it belongs to the same expression.
-
-It's recommended to keep the indentation the same. This is especially useful for long `if` statement.
-
-```
-if    a or b
-\ and c or d        -- Each `\` line is in the `if` condition.
-\ and e or f
-\ then              -- Block starts here.
-    print("True")
-else
-    print("False")
-```
-
-Mulem has no implicit lookahead. When in a block, all line breaks end an expression unless ignored explicitly with `\`. 
-
-### Block Expressions
-
-A block wraps multiple expressions into one. Each block is a new scope. Newline after certain keywords or symbols and indentation starts a block. The last expression evaluated in a block is its value. Use `void` to leave a block empty.
-
-
-```
-x =
-    expr
-    expr    -- Value that x gets set to.
-
-do
-    expr
-    expr    -- This is the block's value.
-
-do
-    void    -- Empty block.
-```
-
-__Keywords that can start a block:__
-
+- `=`/`:` (any assignment) 
 - `do`
 - `then`
-- `else`
-- `loop`
 - `try`
 - `maybe`
 
-__Symbols that can start a block:__
-- `=` *(for assignment or functions)*
-- *Opening brackets:* `(`/`[`/`{`
-
-### Inline Expressions
-
-Any block keyword or symbol is inlined when a new line is absent after it.
-
-```
-if x then "True" else "False"    -- Inline form.
-
-if x then                        -- Block form.
-    "True"
-else
-    "False"
-```
-
-### Inline Mode / Block Mode
-
-- **Block mode** — indentation is meaningful, newlines end expressions
-- **Inline mode** — indentation is ignored, brackets determine structure
-
-To switch from block mode to inline mode (and vice versa):
-
-```
-(if cond then    -- Start a block inside inline expression
-    expr
-else
-    expr
-) + expr         -- Close block and continue inline expression
-```
-
-Mulem takes special care when switching between block mode and inline mode, allowing coders to format their code naturally and elegantly. No special keywords like `do…end` or curly braces `{}` are needs, and once you see it, you'll realize it's quite intuitive. 
-
-There are 3 rules that Mulem follows:
-
-1. Any line ending in certain keywords/symbols starts a block (significant whitespace).
-2. When inside a bracket `(`/`[`/`{`, the matching bracket `)`/`]`/`}` or comma `,` ends the block and switches back to inline mode (insignificant whitespace)
-3. If all brackets are closed, return to block mode at the end of a line.
-
-```
-apiFetch(fn(result) =    -- This starts a block for the function.
-    if result > 0 then   -- Whitespace is significant here.
-        print("Success! {result}")
-    else
-        print("Failure! {result}")
-)                        -- Bracket match, switch back to the inline mode.
-                         -- New line ends then inline expression, switch to block mode and continue to next line.
-```
-
-`fn(result) =` starts a block where white space is significant. If block start and ends where visualized with curly braces, it would look like this:
-
-```
-apiFetch(fn(result) ={     -- Start block
-    if result > 0 then{    -- Nested block
-        print("Success! {result}")
-    }else{                 -- Indentation ends first if block
-        print("Failure! {result}")
-}})                        -- `)` closes all non-bracket blocks inside it
-```
-
-`=` + (line break), `then` + (line break), and `else` + (line break) start whitespace-significant blocks, and `)` ends the bracket sequence and all non-bracket sequences inside it. 
-
-Nesting works freely. You only need to worry about closing the bracket when you're done with the block. 
-
-```
--- Complicated logic…
-renderScene(
-    if settings.quality == Ultra then  -- Start block
-        try
-            loadHighResAssets()!
-        catch
-        | AssetError(msg) =
-            print("Error: {msg}")
-            loadFallbackAssets()
-    else
-        loadFallbackAssets()
-    ,                                   -- Ends the `if` / `else` block
-    camera: activeCamera
-)
--- But it all makes sense following the 3 rules.
-```
-
-*The core idea…* Mulem let's you write code that looks like the structure it describes. Blocks of logic get indentation. Inline expressions stay on one line. The switching rules exist so you never have to fight the formatter to achieve either one.
-
-### Pattern Splitting
-
-A **pattern** is special type of expression. It's a sequence of enumerable members separated by vertical bars (`|`). Some keywords can start a pattern sequence. When a pattern keyword is at the end of a line, the lines following it that start with `|` point to the same pattern sequence. This is similar to expression splitting, so we call it **pattern splitting.**
-
-```
-match expr is
-| Pattern(x) =
-    print("{x}")
-| (_) =           -- Wildcard
-    print("no match")
-```
-
-__Keywords that can start a pattern sequence:__
+Some keywords start a patter-matching sequence. When these words are at the end of a line, each line below it starting with a `|` at the same indentation will belong to the same sequence. These are the words:
 
 - `is`
 - `catch`
 
+Whitespace becomes insignificant when inside brackets `()`/`[]`/`{}`. Slots in a bracket are delimited with commas `,`.
+
+```
+(
+    expr1_0 +
+    expr1_1 +
+    expr1_2,
+    expr2_0
+)
+```
+
+The two systems can mix: when a block starter is in a bracket, it can start a whitespace significant zone within the brackets. All sequences end when a closing bracket or comma is found.
+
+```
+(do
+    expr1
+    expr2
+    expr3, expr4)
+```
+
+In this example, the result is a tuple of `(expr3, expr4)`.
+
+The benefit of this is that you can mix the two when you need them, such as passing a lambda function into a function.
+
+```
+apiCall(.(result) =
+    if result > 0 then
+        print("Success! {result}")
+    else
+        print("Failure! {result}")
+)
+```
+
+Whitespace is strict when it's significant. Expressions always end when there's a line break.
+
+```
+x = 0
++ 1
++ 2
+--  `x` is 0
+```
+
+To prevent this, you have some options. The easiest is to surround an expression in brackets.
+
+```
+x = (0
++ 1
++ 2)
+-- `x` is 3
+```
+
+The other option is to use backslashes (`\`), either at the end or beginning of a line. 
+
+```
+x = 0 \
++ 1 \
++ 2
+
+x = 0
+\ + 1
+\ + 2
+```
+
+This also applies to method chaining.
+
+```
+(object.method1()
+    .method2()
+    .method3())
+object.method1()
+    \.method2()
+    \.method3()
+```
+
+## Assignment
+
+Variables can be declared with the equals sign `=`. Type notation uses `: T =` but can be inferred.
+
+```
+a = 0
+b: int = 2
+```
+
+These are immutable variables. When the type is inferred, immutable variables can be shadowed with any type.
+
+```
+a = 1
+a = 2
+a = 'a'
+```
+
+Declare a variable with a type and it will be locked to that type in the scope. 
+
+```
+c: char
+c = 'c'
+c = 0   -- Error
+```
+
+Functions are declared with parentheses before the equals sign. Parameter types and return type can be inferred.
+
+```
+f(x: int): int = x*x
+g(x) = x*x*x
+g(2)    -- Result: 8
+```
+
+Mutable variables are declared with the keyword `mu` before it. They must be set with the `:=` operator or any compound assignment operators such as `+=` or `-=`
+
+```
+mu i = 0
+i := 1
+i += 1
+i -= 1
+```
+
+Functions can also be mutable. Create a mutable function and it becomes a function pointer. You can set it to point to different functions.
+
+```
+mu cb(int): int
+f1(x) = x + 1
+f2(x) = x - 1
+cb := f1
+cb(1)     -- Result: 2
+cb := f2
+cb(1)     -- Result: 0
+```
+
+Lambda functions are created with a leading period `.` before a function definition `.(x) = `. A name can be written after it to create a self-reference inside the lambda function `.name(x) = `.
+
+```
+cb := .(x) = x * 2
+cb(2)     -- Result: 4
+```
+
+Functions can have multiple lines by adding a line break after the `=` sign.
+
+```
+isThirteen(x) =
+    if x == 13 then
+        return True
+    False           -- Last expression is implied return value
+```
+
+## Types
+
+- __Primitives:__
+  - `: byte = 0y`
+  - `: bool = False or True`
+  - `: char = '\0'`
+  - `: int = 0i`
+  - `: uint = 0u`
+  - `: float = 0.0`
+- __Strings:__
+  - `: str` – immutable `char` array
+  - `"Single Line String"`
+  - `"""Multi-Line String"""`
+  - `''Raw String''`
+- __Arrays:__
+  - `: [*T]` – dyanmic array
+  - `: [N*T]` – fixed array
+  - `: [**T]` – 2D dyanmic array
+  - `: [N*M*T]` – 2D fixed array
+- __Dictionaries:__
+  - `: [K:T]` – `K` is key type, `T` is value type
+- __Tuples:__
+  - `: (T, U)` – Position tuple
+  - `: {x: V}` – Named tuple
+  - `: (T, U) & {x: V}` or `: {0: T, 1: U, x: V}` – Mixed tuple
+- __Pointers:__
+  - `: ptr` – Raw pointer
+  - `: T^` – Typed pointer
+- __Questions:__
+  - `: T?` – `Some(T)` or `None`
+- __Exclamations:__
+  - `: T!E` – `Ok(T)` or `Err(E)`
+  - `: T!` – Error type inferred
+- __Custom Types:__
+
+## Control Flow
+
+- __`if` / `else`__ – Boolean branching
+- __`match` / `is`__ – Pattern matching
+- __`loop`__ – Iteration
+- __`maybe` / `else`__ – Coalescing
+- __`try` / `catch`__ – Error handling
+- __`with`__ – Mutating
+
+## Capturing
+
+Function capture immutable variables automatically. Mutable variables must be captured with `with` in the function signature.
+
+```
+amount = 1
+mu count = 0
+
+increment() with (count): int =
+    count += amount
+    count
+
+increment()      -- Result: 1
+increment()      -- Result: 2
+increment()      -- Result: 3
+count            -- Value: 3
+```
+
+## Destructuring
+
+Tuples can be destructured like this:
+
+```
+(a, b) = (1, 2)
+{x, y} = (x: 3, y: 4)
+```
+
+When tuples are mixed, you can either use `(…) & {…}` or `{0 as x, …}`.
+
+```
+tuple = (1, 2, x: 3, y: 4)
+(a, b) & {x, y} = tuple
+{0 as a, 1 as b, x, y} = tuple
+```
+
+Tuples can be spread into a function using the `&` prefix operator. Function can have named parameters in the same manner as desctructuring.
+
+```
+add(a: int, b: int) & {x: int, y: int} =
+    a + b + x + y
+
+add(&tuple)              -- Result: 10
+add(5, 6, x: 7, y: 8)    -- Result: 26
+```
+
 ---
 
-## Operators
-
-Mulem has mix of symbolic and word-form operators. For a complete list, see [Table of Operators](#table-of-operators) at the end of this document.
-
-Increment and decrement are the same as assignement:
-
-```
-i += 1     -- i = i + 1
-i -= 1     -- i = i - 1
-i *= 2     -- i = i * 2
-i /= 2     -- i = i / 2
-i //= 2    -- i = i // 2
-s <>= "a"  -- s = s <> "a"
-```
+---
 
 ### Pipelining `|>`
 
