@@ -175,13 +175,13 @@ lunch =
         "sandwich"
 ```
 
-Mutable variables are declared with the keyword `mu` before it. They must be set with the `:=` operator or any compound assignment operators such as `+=` or `-=`
+Mutable variables are declared with the keyword `mu` before it. They must be set with the `:=` operator or any compound assignment operators such as `+:=` or `-:=`
 
 ```mulem
 mu i = 0
 i := 1
-i += 1
-i -= 1
+i +:= 1
+i -:= 1
 ```
 
 ### Destructuring
@@ -326,7 +326,7 @@ amount = 1     -- Automatically captured.
 mu count = 0   -- Must be explicitly captured.
 
 increment() % (mu count): void =
-    count += amount
+    count +:= amount
 
 getCount() % (count): int =
     count
@@ -476,9 +476,8 @@ catch
 - __[Pointers](#pointers-t):__
   - `: ptr` – Raw pointer
   - `: T^` – Typed pointer
-- __[Questions](#questions-t):__
+- __[Questions and Exclamations](#questions-t-and-exclamations-te):__
   - `: T?` – `Some(T)` or `None`
-- __[Exclamations](#exclamations-te):__
   - `: T!E` – `Ok(T)` or `Err(E)`
   - `: T!` – Error type inferred
 - __[Custom Types](#custom-types):__
@@ -707,23 +706,23 @@ template = ''Insert here → {{variable}}''
 
 ### Arrays
 
-Array types are declared with square brackets around their type (`[*T]`). A number before the mulitplication mark `*` makes it a fixed length array `[N*T]`. Arrays are statically sized when written `[N*T]`, while `[*T]` is the dynamic form. Items are separated with commas (`,`). Index is done with the `.[]` operator. 
+Array types are declared with square brackets around their type (`[*T]`). A number before the mulitplication mark `*` makes it a fixed length array `[N*T]`. Arrays are statically sized when written `[N*T]`, while `[*T]` is the dynamic form. Items are separated with commas (`,`). Index is done with the `^[]` and `.[]` operators. 
 
 ```mulem
 list: [4*int] = [1, 2, 3, 4]
 print("length of list: {len(list)}")
-compressedList = [list.[0] + list.[1], list.[2] + list.[3]]
+compressedList = [list^[0] + list^[1], list^[2] + list^[3]]
 doubleArray: [3*2*int] = [[1, 2], [3, 4], [5, 6]]
-item = doubleArray.[1].[0]    -- The 2nd row, 1st column
-item = doubleArray.[1,0]      -- Or seperated with commas
+item = doubleArray^[1]^[0]    -- The 2nd row, 1st column
+item = doubleArray^[1,0]      -- Or seperated with commas
 print("{item}")               -- Prints "3"
 ```
 
-Direct access to an array is only allowed when the result is guaranteed. If not, you need to wrap it in `deref[]` which will check each dereference operator `^` / `.[]` inside of it. This will return a question type `T?`, `Some(T)` if successful or `None` if unsuccessful. 
+If access to an index in an array cannot be guaranteed, you can use the safe access operator `.[]`. For an array of `[*T]`, `.[]` will return type `T?` and `^[]` will return a type `T`.
 
 ```mulem
-i = randInt()                        -- Undeterministic number.
-print("{ deref[list.[i]] ?: -1 }")   -- Prints "-1" if deref failed.
+i = randInt()                 -- Undeterministic number.
+print("{ list.[i] ?: -1 }")   -- Prints "-1" if out of bounds.
 ```
 
 In general, you'll mostly be using arrays by iterating or piping them. 
@@ -733,13 +732,13 @@ loop x in list then
     print("{x}")     -- No need to use `#`
 ```
 
-Use the spread operator `...` to spread an array into another array. This must be the first prefix operator in an expression, and it must be in a compatiable array or tuple literal. It always goes last in the slot's expression, so extra parentheses aren't necessary: `...a <> b` == `...(a <> b)`.
+Use the spread operator `*` to spread an array into another array. This must be the first prefix operator in an expression, and it must be in a compatiable array or tuple literal. It always goes last in the slot's expression, so extra parentheses aren't necessary: `*a <> b` == `*(a <> b)`.
 
 ```mulem
 a = [1, 2, 3]
-b = [0, ...a, 4]                -- == [0, 1, 2, 3, 4]
-c = a <> b                      -- == [1, 2, 3, 0, 1, 2, 3, 4]
-d = [0, ...a <> b, 5, ...c, 6]  -- == [0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 1, 2, 3, 0, 1, 2, 3, 4, 6]
+b = [0, *a, 4]              -- == [0, 1, 2, 3, 4]
+c = a <> b                  -- == [1, 2, 3, 0, 1, 2, 3, 4]
+d = [0, *a <> b, 5, *c, 6]  -- == [0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 1, 2, 3, 0, 1, 2, 3, 4, 6]
 ```
 
 If you spread an array into a tuple, the type must be known and the tuple must have compatible components. Positional components will map to array indexes or iterator yields based on where the spread is placed inside the tuple. If the tuple runs out of space, the spread will be truncated. This works similar to variadic parameters in functions.
@@ -748,24 +747,63 @@ If you spread an array into a tuple, the type must be known and the tuple must h
 ThreeInts :: (int, int, int)
 
 list = [1, 2, 3]
-a: ThreeInts = (...list)      -- == (1, 2, 3)
-b: ThreeInts = (0, ...list)   -- == (0, 1, 2), truncated at the end
+a: ThreeInts = (*list)      -- == (1, 2, 3)
+b: ThreeInts = (0, *list)   -- == (0, 1, 2), truncated at the end
 ```
 
 Tuples may also collect any remaining positional components into an array, just like variadic parameters in functions.
 
 ```mulem
-TwoOrMoreInts :: (int, int, ...[*int])
+TwoOrMoreInts :: (int, int, *int)
 
 list = [1, 2]
-a: TwoOrMoreInts = (...list)              -- == (1, 2, [])
-b: TwoOrMoreInts = (0, ...list)           -- == (0, 1, [2])
-c: TwoOrMoreInts = (-1, 0, ...list)       -- == (-1, 0, [1, 2])
-d: TwoOrMoreInts = (-2, -1, 0, ...list)   -- == (-2, -1, [0, 1, 2])
+a: TwoOrMoreInts = (*list)              -- == (1, 2, [])
+b: TwoOrMoreInts = (0, *list)           -- == (0, 1, [2])
+c: TwoOrMoreInts = (-1, 0, *list)       -- == (-1, 0, [1, 2])
+d: TwoOrMoreInts = (-2, -1, 0, *list)   -- == (-2, -1, [0, 1, 2])
 ```
 
 *Mulem separates tuple and array spread to preserve =type safety and avoid runtime surprises. `&` always preserves tuple structure; `...` always preserves array structure.*
 
+### Dictionaries
+
+Dictionaries are a subtype of arrays. Instead of numbers, each item is given a **key.** A dictionary's type is the type of the value `V` and the type of the key `K` join with a colon `:` in between: `[K: V]`. This makes it semantically clear that they are a subtype of arrays. Dictionaries also use the same operator to access items. The type passed to the `^[]` or `.[]` operators must match the key type. Each key is marked with `[]:` in the array.
+
+```mulem
+dict: [float: float] = [
+    [1.0f]: 10.0f,
+    [1.5f]: 15.0f,
+    [2.0f]: 20.0f,
+]
+print("{ dict^[1.5f] }")   -- Prints "15.0"
+```
+
+If the key type is `str` and a key is a valid variable name, then the square brackets before `:` can be omitted. You can access it like a member with `.`, but this will return a question type `T?` like `.[]`.
+
+```mulem
+dict: [str:int] = [
+    a: 1,
+    b: 2,
+    c: 3,
+    ["invalid name"]: 127,
+]
+print("{ dict.["b"]? }")   -- Prints "2"
+print("{ dict.b? }")       -- Prints "2",
+```
+
+Like with arrays, undeterministic access to a dictionary requires using `deref[]` to convert it into a question type `T?`.
+
+```mulem
+key = input()                          -- Undeterministic string.
+print("{ deref[dict.[key]] ?: -1 }")   -- Prints "-1" if deref failed.
+```
+
+You can iterate through a dictioary like with arrays. This is the recommend way of using dictionaries. 
+
+```mulem
+loop (key, val) in dict then
+    print("{key} = {val}")
+```
 
 ### Tuples
 
@@ -775,7 +813,7 @@ Raw pointers are type `ptr`. These cannot be dereferenced. They are ideally used
 
 ```mulem
 o: ptr = externalLibrary.getObject()
-if o != Null then
+if o /== Null then
     externalLibrary.useObject(o)
 else
     print("Initialization failed")
@@ -799,9 +837,7 @@ Student :: struct =
     name: str
     grade: char
 
-student: Student^mu = alloc[ Student(
-    name: "John",
-    grade: 'A' ) ]?
+student: Student^mu = alloc[ Student(name: "John", grade: 'A') ]?
 defer free[student]
 
 student^.name := "John Smith
@@ -823,9 +859,58 @@ defer free[student]
 -- Use student freely below.
 ```
 
-### Questions `T?`
+### Questions `T?` and Exclamations `T!E`
 
-### Exclamations `T!E`
+These are Mulem's 2 built-in monadic types. 
+
+- `T?` is a *question type:* it may contain a value or be `None`.
+- `T!E` is a *exclamation type:* it may contain a value or an error of type `E`.
+
+| Mulem's Type | Other Languages                  | In Plain English                                                             | Layers | Resolve Order             |
+|:----------|:---------------------------------|:-----------------------------------------------------------------------------|-------:|:----------------------------|
+| `T?`      | `Option<T>`                       | An option                                                                      |      1 | `?`                         |
+| `T!E`     | `Result<T, E>`                   | A result with 1 possible error                                               |      1 | `!`                         |
+| `T?!E`    | `Result<Option<T>, E>`            | A result with 1 possible error for an option                                    |      2 | `!` *then* `?`            |
+| `T??`     | `Option<Option<T>>`                | An option of an option                                                           |      2 | `?` *then* `?`            |
+| `T?!E!F`  | `Result<Option<T>, E\|F>`         | A result with 2 possible errors for an option                                  |      2 | `!` *then* `?`            |
+| `T!E?`    | `Option<Result<T, E>>`            | An option of a result with 1 possible error                                   |      2 | `?` *then* `!`            |
+| `T?!E?`   | `Option<Result<Option<T>, E>`      | An option of a result with 1 possible error for an option                       |      3 | `?` *then* `!` *then* `?` |
+| `T!E?!F`  | `Result<Option<Result<T, E>>, F>` | A result with 1 possible error for an option of result with 1 possible error |      3 | `!` *then* `?` *then* `!` |
+
+Think of each `?` or `!` on a *type* as a **layer.** When you call the same `?` or `!` in an *expression,* you **unwrap** that layer.
+
+```mulem
+x: int? = getSomeInt()    -- Get wrapped value.
+y: int = x?               -- Unwrap the question.
+                          -- Which is equivalent to…
+y =
+    match x is
+    | Some(val) =
+        val               -- Get the Some value.
+    | None =
+        return None       -- Exit block, return None if a function
+```
+
+```mulem
+x: int!Error = getRiskyInt()   -- Get wrapped value.
+y: int = x!                    -- Unwrap the exclamation
+                               -- Which is equivalent to…
+y =
+    match x is
+    | Success(val) =
+        val                    -- Get the Ok value.
+    | Error(e) =
+        return Error(e)        -- Exit block, return error if a function
+```
+
+For basic errors, use the built-in `Error` type. It optionally takes either a `string` (message) or an `int` named parameter `code:`, or both. If a message is missing, it will construct one based on the code, and if a code is missing, it will default to `-1`. 
+
+```
+raise Error()
+raise Error("message")
+raise Error(code: -1)
+raise Error("message", code: -1)
+```
 
 ### Custom Types
 
@@ -841,40 +926,39 @@ defer free[student]
 
 ## Operators
 
-| Level | Category                   | Operators                                 |
-|:------|:---------------------------|:------------------------------------------|
-| 12    | Member access/Function     | `.` `.[]` `^[]` `()`                            |
-| 11    | Postfix/Prefix                   | `?` `!` `^` `%` `%mu`                              |
-| 10    | Unary                      | `+` `-` `not` `bnot`                      |
-| 9     | Exponent                   | `**` (right-associative)                  |
-| 8     | Multiplicative / Shift     | `*` `/` `//` `rem` `mod` `<<` `>>` `>>>`  |
-| 7     | Additive / Concat          | `+` `-` `<>`                              |
-| 6     | Bitwise                    | `band` `bor` `xor`                        |
-| 5     | Range                      | `..` `..=`                               |
-| 4     | Comparison                 | `==` `!=` `<` `>` `<=` `>=`               |
-| 3     | Logical AND                | `and`                                     |
-| 2     | Logical OR / None-Coalesce | `or` `?:`                                 |
-| 1     | Pipeline                   | `\|>`                                     |
-| 0     | Assignment / Spread        | `=` `+=` `-=` `&` `*`                   |
+| Level | Category                   | Operators                        |
+|:------|:---------------------------|:---------------------------------|
+| 11    | Member access/Function     | `.` `.[]` `^[]` `?.` `?.[]` `()` |
+| 10    | Postfix/Prefix             | `?` `!` `^` `%` `%mu`            |
+| 9     | Unary                      | `+` `-` `not`                    |
+| 8     | Exponent                   | `**` (right-associative)         |
+| 7     | Multiplicative / Shift     | `*` `/` `//` `<<` `>>`           |
+| 6     | Additive / Concat          | `+` `-` `<>`                     |
+| 5     | Range                      | `..` `..=`                       |
+| 4     | Comparison                 | `==` `<` `>` `<=` `>=`           |
+| 3     | Logical AND                | `and`                            |
+| 2     | Logical OR / None-Coalesce | `or` `?:`                        |
+| 1     | Pipeline                   | `\|>`                            |
+| 0     | Assignment / Spread        | `=` `:=` `+:=` `-:=` `&` `*`     |
 
 | Operator       | Meaning                                              |
 |:--------------:|:-----------------------------------------------------|
 |   `lhs . rhs`  | Member access                                        |
-|   `lhs .[rhs]` | Safe array/dictionary index                               |
-|   `lhs ^[rhs]` | Raw array/dictionary index                               |
+|   `lhs .[rhs]` | Safe array/dictionary index                          |
+|   `lhs ^[rhs]` | Raw array/dictionary index                           |
 |   `lhs ?`      | Unwrap question, propagate `None` to nearest `maybe` |
+|  `lhs ?. rhs`  | Member access on a question type                     |
+|  `lhs ?.[rhs]` | Safe array/dictionary index on a question type       |
 |   `lhs !`      | Unwrap exclamation, propagate error to nearest `try` |
 |   `lhs ^`      | Dereference typed pointer                            |
-|   `% rhs`      | Get immutable reference                            |
-|   `%mu rhs`      | Get mutable reference                            |
-|     `* rhs`  | Spread array into array                              |
+|       `% rhs`  | Get immutable reference                              |
+|     `%mu rhs`  | Get mutable reference                                |
+|       `* rhs`  | Spread array into array                              |
 |       `& rhs`  | Spread tuple into tuple (same type)                  |
-|  `lhs .. rhs` | Exclusive range                                      |
+|  `lhs .. rhs`  | Exclusive range                                      |
 | `lhs ..= rhs`  | Inclusive range                                      |
 | `lhs \|> rhs`  | Pipeline                                             |
-|   `lhs = rhs`  | Assignment or declaration                            |
-|  `lhs += rhs`  | Increment                                            |
-|  `lhs -= rhs`  | Decrement                                            |
+|   `lhs = rhs`  | Declaration                                          |
 | `lhs: T = rhs` | Explicit typed declaration                           |
 |   `lhs + rhs`  | Addition                                             |
 |   `lhs - rhs`  | Subtraction                                          |
@@ -883,48 +967,75 @@ defer free[student]
 |   `lhs * rhs`  | Multiplication                                       |
 |   `lhs / rhs`  | Exact division (float)                               |
 |  `lhs // rhs`  | Floor division (int)                                 |
-|  `lhs rem rhs` | Modulo (sign matches `lhs`)                          |
-|  `lhs mod rhs` | Floor modulo (sign matches `rhs`)                    |
 |  `lhs ** rhs`  | Exponentiation (right-associative)                   |
 |  `lhs == rhs`  | Equality                                             |
-|  `lhs != rhs`  | Inequality                                           |
 |   `lhs > rhs`  | Greater than                                         |
 |   `lhs < rhs`  | Less than                                            |
 |  `lhs >= rhs`  | Greater than or equal                                |
 |  `lhs <= rhs`  | Less than or equal                                   |
-| `lhs band rhs` | Bitwise AND                                          |
-| `lhs bor rhs`  | Bitwise OR                                           |
-| `lhs xor rhs`  | Bitwise XOR                                          |
-|    `bnot rhs`  | Bitwise NOT                                          |
-|  `lhs << rhs`  | Shift left                                           |
-|  `lhs >> rhs`  | Shift right                                          |
-| `lhs >>> rhs`  | Unsigned shift right                                 |
+|  `lhs << rhs`  | Append to array                                      |
+|  `lhs >> rhs`  | Prepend to array (right-associative)                 |
 |  `lhs <> rhs`  | Concatenation                                        |
 | `lhs and rhs`  | Logical AND                                          |
 |  `lhs or rhs`  | Logical OR                                           |
 |     `not rhs`  | Logical NOT                                          |
 
-__Remainder vs. Modulo:__
+Adding `/` before a comparative operator inverses the result.
 
-- **`rem` is "remainder"** *(C-style modulo)* — what's left over after truncating toward zero. The result takes the sign of what you started with.
+| `not`+Comparative | Result  |
+|:-----------|:---------------|
+| `A /== B`  | `not (A == B)` |
+| `A /> B`   | `not (A > B)`  |
+| `A /< B`   | `not (A < B)`  |
+| `A />= B`  | `not (A >= B)` |
+| `A /<= B`  | `not (A <= B)` |
 
-```mulem
- 7 rem  3 ==  1    -- positive because 7 is positive
--7 rem  3 == -1    -- negative because -7 is negative
- 7 rem -3 ==  1    -- positive because 7 is positive
--7 rem -3 == -1    -- negative because -7 is negative
+Some math operators will be put into a standard library. These will be inlined to ensure performance.
+
+```
+std.math{Arithmetic, Bitwise} :: import
+
+lhs = 1
+rhs = 2
+
+impl[Arithmetic]
+
+lhs rem rhs    -- Remainder (C-Style modulo) `%`
+lhs mod rhs    -- True Modulo
+
+impl[Bitwise]
+
+lhs band rhs   -- Bitwise AND `&`
+lhs bor rhs    -- Bitwise OR `|`
+lhs bxor rhs   -- Bitwise XOR `^`
+bnot rhs       -- Bitwise NOT `~`
+lhs bshl rhs   -- Bitshift Left `<<`
+lhs bshr rhs   -- Bitshift Right `>>`
+lhs bshru rhs  -- Unsigned Bitshift Right `>>>`
 ```
 
-- **`mod` is "true modulo"** — the mathematical kind where the result always lives in the range `[0, divisor)`. The result takes the sign of what you're dividing *by*.
+__Compound Assignment Operators:__
 
-```mulem
- 7 mod  3 ==  1    -- same as above, no difference here
--7 mod  3 ==  2    -- "wraps around": -7 mod 3 = 2 in math
- 7 mod -3 == -2    -- wraps the other way
--7 mod -3 == -1    -- same as % here
-```
+| Operator         | Meaning                         |
+|:----------------:|:--------------------------------|
+|  `lhs := rhs`    | Assignment                      |
+|  `lhs +:= rhs`   | `lhs := lhs + rhs`              |
+|  `lhs -:= rhs`   | `lhs := lhs - rhs`              |
+|  `lhs *:= rhs`   | `lhs := lhs * rhs`              |
+|  `lhs /:= rhs`   | `lhs := lhs / rhs`              |
+| `lhs <<:= rhs`   | `lhs := lhs << rhs`             |
+| `lhs >>:= rhs`   | `lhs := rhs >> lhs` *(flipped)* |
+| `lhs <>:= rhs`   | `lhs := lhs <> rhs`             |
+| `lhs rem:= rhs`  | `lhs := lhs rem rhs`            |
+| `lhs mod:= rhs`  | `lhs := lhs mod rhs`            |
+| `lhs band:= rhs` | `lhs := lhs band rhs`           |
+| `lhs bor:= rhs`  | `lhs := lhs bor rhs`            |
+| `lhs xor:= rhs`  | `lhs := lhs xor rhs`            |
+| `lhs shl:= rhs`  | `lhs := lhs shl rhs`            |
+| `lhs shr:= rhs`  | `lhs := lhs shr rhs`            |
+| `lhs shru:= rhs` | `lhs := lhs shru rhs`           |
 
-The practical case where it matters is things like clock arithmetic, array wrapping, or anything where you want `(-1) mod n` to give you `n - 1` instead of `-1`. With `rem` you'd have to write `((x rem n) + n) rem n` — the classic defensive idiom.
+`>>:=` is flipped since the return type matches the right hand side of `>>` instead of the left.
 
 ### Key Type Modifiers & Postfix Operators
 
@@ -1052,7 +1163,7 @@ The variable type is always inferred, to avoid ambiguity with `:`. Mutability ca
 
 ```mulem
 fetchA() as mu x |> fetchB(x) |> do   -- Create a mutable variable `x`.
-    x += 1                          -- Mutate it.
+    x +:= 1                         -- Mutate it.
     print("{x}")                    -- Print it.
 ```
 
@@ -1114,7 +1225,7 @@ You can also shadow a variable using its previous value.
 ```mulem
 i = 0
 i = i + 1     -- Sets new `i` based on old `i`.
-i += 1        -- Does the same thing.
+i +:= 1        -- Does the same thing.
 ```
 
 `=` is a void statement and may not be used inside expressions that expect a non-void value. Use `==` for comparison and `as` for inline assignment.
@@ -1135,7 +1246,7 @@ Mutable variables are declared with `mu`. Setting them later mutates the value r
 
 ```mulem
 mu count = 0
-count += 1          -- Mutates count.
+count +:= 1          -- Mutates count.
 count: _ = 0        -- Shadows count with a new immutable variable.
 ```
 
@@ -1153,7 +1264,7 @@ Functions do not automatically capture mutable variables. Any assignment inside 
 mu count = 0
 
 addCount() / (count) =
-    count += 1
+    count +:= 1
 
 addCount()
 print("{count}")    -- "1"
@@ -1254,7 +1365,7 @@ Instead, one function can be defined with multiple definitions using `match ... 
 
 ```mulem
 safeDivide(...) = match ... is
-| (x: float, y: float if y != 0.0): float =
+| (x: float, y: float if y /== 0.0): float =
     x / y
 | (x: float, y: float): float =
     0.0
@@ -1275,7 +1386,7 @@ Function parameters can be declared like variables. Likewise, you can modify the
 
 ```mulem
 increment(ref x: int) =
-    x += 1
+    x +:= 1
 
 mu y = 0
 increment(y)
@@ -1372,7 +1483,7 @@ Use `...` to collect all arguments into a single variable. The variable should b
 addAll(...nums: [*int]): int =
     mu sum: int = 0
     loop n in nums:
-        sum += n
+        sum +:= n
     sum
 
 print("{addAll()}")         -- Prints "0"
@@ -1446,7 +1557,7 @@ mu squared = 1
 mu cubed = 1
    
 addCount() / (count, squared, cube): int =     -- Capture 3 variables at once.
-    count += amount                            -- Mutate captured variables inside the function.
+    count +:= amount                            -- Mutate captured variables inside the function.
     squared = count * count
     cubed = squared * count
 
@@ -1497,7 +1608,7 @@ Capturing also works inside lambda functions just like with named functions.
 ```mulem
 mu count = 0
 forEach([1, 2, 3, 4], fn(x) / (count) =
-    count += x
+    count +:= x
 )
 ```
 
@@ -1601,11 +1712,11 @@ When capturing variables, each returned function needs to capture them separatel
 ```mulem
 mu count = 0
 curryAddCount(a: int) / (count): (int): (int): int =
-    count += a                                   -- (1) Evaluated immediately
+    count +:= a                                   -- (1) Evaluated immediately
     (b: int) = fn / (count): (int): int   -- (2) Suspends and captures `count`
-    count += b                                   -- (3) Evaluated when second `fn` is called
+    count +:= b                                   -- (3) Evaluated when second `fn` is called
     (c: int) = fn / (count): int
-    count += c
+    count +:= c
     count
 
 print("{ curryAddCount(1)(2)(3) } == { count }")   -- Prints "6 == 6"
@@ -1760,44 +1871,6 @@ do
 
 
 #### Dictionaries
-
-Dictionaries are a subtype of arrays. Instead of numbers, each item is given a **key.** A dictionary's type is the type of the value `V` and the type of the key `K` join with a hash `:` in between: `[K: V]`. This makes it semantically clear that they are a subtype of arrays. Dictionaries also use the same operator to access items. The type passed to the `.[]` operator must match the key type. Each key is marked with `[]:` in the array.
-
-```mulem
-dict: [float: float] = [
-    [1.0f]: 10.0f,
-    [1.5f]: 15.0f,
-    [2.0f]: 20.0f,
-]
-print("{ dict.[1.5f] }")   -- Prints "15.0"
-```
-
-If the key type is `str` and a key is a valid variable name, then the square brackets before `:` can be omitted. You can access it like a member with `.` if it can be guaranteed.
-
-```mulem
-dict: [str:int] = [
-    a: 1,
-    b: 2,
-    c: 3,
-    ["invalid name"]: 127,
-]
-print("{ dict.["b"] }")   -- Prints "2"
-print("{ dict.b }")       -- Prints "2",
-```
-
-Like with arrays, undeterministic access to a dictionary requires using `deref[]` to convert it into a question type `T?`.
-
-```mulem
-key = input()                          -- Undeterministic string.
-print("{ deref[dict.[key]] ?: -1 }")   -- Prints "-1" if deref failed.
-```
-
-You can iterate through a dictioary like with arrays. This is the recommend way of using dictionaries. 
-
-```mulem
-loop (key, val) in dict then
-    print("{key} = {val}")
-```
 
 #### Pointers
 
@@ -1991,24 +2064,24 @@ loop i <= 100 then
     if i rem 10 == 0 then
         print("{i}!!!")
         continue
-        -- OOPS! We forgot to do `i += 1` before continuing. 
+        -- OOPS! We forgot to do `i +:= 1` before continuing. 
         -- Infinite loop on i = 10!
     print("{i}")
-    i += 1
+    i +:= 1
 
 -- The Safe Way
 mu i = 1
-loop i <= 100; i += 1 then
+loop i <= 100; i +:= 1 then
     if i rem 10 == 0 then
         print("{i}!!!")
-        continue    -- Automatically triggers `i += 1` before checking condition again
+        continue    -- Automatically triggers `i +:= 1` before checking condition again
     print("{i}")
 ```
 
 ```mulem
 -- Track index of `loop / in`
 mu idx = 0
-loop item in inventory; idx += 1 then
+loop item in inventory; idx +:= 1 then
     print("Slot {idx}: {item}")
 ```
 
@@ -2016,7 +2089,7 @@ Because `do` blocks isolate scopes and inline expressions sequence seamlessly, y
 
 ```mulem
 -- C-style for loop
-do mu i = 1; loop i <= 100; i += 1 then
+do mu i = 1; loop i <= 100; i +:= 1 then
     if i rem 10 == 0 then
         print("{i}!!!")
         continue
@@ -2300,7 +2373,7 @@ Loop until a pattern matches. Bindings are in scope below the loop.
 mu i = 0
 loop
     print("Attempts: {i}")
-    i += 1
+    i +:= 1
 until getValue() is Pattern(x)
 
 print("{x}")    -- x is guaranteed set here.
@@ -2321,46 +2394,6 @@ if x is Some(x) then
 ### Error/None Control Flow
 
 Error and null handling is done through the `try` and `maybe` keywords. These blocks are for unwrapping the 2 monadic types in Mulem: *questions* `T?` and *exclamations* `T!`. When resolving a monadic, you go in *reverse order* that was notated by the type. Think of it like a box: you start from the outside and work your way in.
-
-- `T?` is a *question type:* it may contain a value or be `None`.
-- `T!E` is a *exclamation type:* it may contain a value or an error of type `E`.
-
-| Mulem's Type | Other Languages                  | In Plain English                                                             | Layers | Resolve Order             |
-|:----------|:---------------------------------|:-----------------------------------------------------------------------------|-------:|:----------------------------|
-| `T?`      | `Option<T>`                       | An option                                                                      |      1 | `?`                         |
-| `T!E`     | `Result<T, E>`                   | A result with 1 possible error                                               |      1 | `!`                         |
-| `T?!E`    | `Result<Option<T>, E>`            | A result with 1 possible error for an option                                    |      2 | `!` *then* `?`            |
-| `T??`     | `Option<Option<T>>`                | An option of an option                                                           |      2 | `?` *then* `?`            |
-| `T?!E!F`  | `Result<Option<T>, E\|F>`         | A result with 2 possible errors for an option                                  |      2 | `!` *then* `?`            |
-| `T!E?`    | `Option<Result<T, E>>`            | An option of a result with 1 possible error                                   |      2 | `?` *then* `!`            |
-| `T?!E?`   | `Option<Result<Option<T>, E>`      | An option of a result with 1 possible error for an option                       |      3 | `?` *then* `!` *then* `?` |
-| `T!E?!F`  | `Result<Option<Result<T, E>>, F>` | A result with 1 possible error for an option of result with 1 possible error |      3 | `!` *then* `?` *then* `!` |
-
-Think of each `?` or `!` on a *type* as a **layer.** When you call the same `?` or `!` in an *expression,* you **unwrap** that layer.
-
-```mulem
-x: int!Error = getRiskyInt()   -- Get wrapped value.
-y: int = x!                    -- Unwrap the exclamation
-                               -- Which is equivalent to…
-y =
-    match x is
-    | Ok(val) =
-        val                    -- Get the Ok value.
-    | Error(e) =
-        return Error(e)        -- Exit block, return error if a function
-```
-
-```mulem
-x: int? = getSomeInt()    -- Get wrapped value.
-y: int = x?               -- Unwrap the question.
-                          -- Which is equivalent to…
-y =
-    match x is
-    | Some(val) =
-        val               -- Get the Some value.
-    | None =
-        return None       -- Exit block, return None if a function
-```
 
 #### `try` / `catch`
 
@@ -2545,7 +2578,7 @@ countUntil(mu i: int, max: int): iter[int] =
         if i >= max then
             return      -- Break out of the loop and the function.
         yield i
-        i += 1
+        i +:= 1
 ```
 
 #### `await`
@@ -2970,11 +3003,11 @@ Counter :: struct = value: int
 
 -- Specialized for Counter
 increment[Counter] :: (ref c: Counter): void =
-    c.value += 1
+    c.value +:= 1
 
 -- Specialized for float
 increment[float] :: (ref c: float): void =
-    c += 1.0
+    c +:= 1.0
 
 c = Counter(value: 2)
 f = 3.0
@@ -3104,10 +3137,10 @@ do
 
 ## Reserved Keywords
 
-Mulem has 42 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard question `T?` members (`Some`, `None`), are built-in symbols but *not* strict keywords.
+Mulem has 38 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard question `T?` members (`Some`, `None`), are built-in symbols but *not* strict keywords.
 
 **The Keyword List:**
-`and`, `as`, `await`, `band`, `bnot`, `bor`, `break`, `catch`, `continue`, `defer`, `do`, `else`, `enum`, `error`, `fallthrough`, `fn`, `if`, `impl`, `import`, `in`, `is`, `loop`, `match`, `maybe`, `mod`, `not`, `opt`, `or`, `out`, `proto`, `raise`, `ref`, `rem`, `return`, `self`, `struct`, `then`, `try`, `until`, `void`, `where`, `xor`, `yield`.
+`and`, `as`, `await`, `break`, `catch`, `continue`, `defer`, `do`, `else`, `enum`, `error`, `fallthrough`, `fn`, `if`, `impl`, `import`, `in`, `is`, `loop`, `match`, `maybe`, `mod`, `not`, `opt`, `or`, `out`, `proto`, `raise`, `ref`, `rem`, `return`, `self`, `struct`, `then`, `try`, `until`, `void`, `where`, `yield`.
 
 ---
 
