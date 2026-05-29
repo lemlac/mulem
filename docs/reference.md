@@ -476,7 +476,7 @@ catch
   - `: T^` – Typed pointer
 - __[Questions](#questions-t):__
   - `: T?` – `Some(T)` or `None`
-- __[Exclamations](#exclamations-t-e):__
+- __[Exclamations](#exclamations-te):__
   - `: T!E` – `Ok(T)` or `Err(E)`
   - `: T!` – Error type inferred
 - __[Custom Types](#custom-types):__
