@@ -634,7 +634,78 @@ a = byte('a')
 
 ### Strings
 
-### Arrays
+
+
+### ArraysStrings (`str`) are immutable 1D arrays of characters `char`. 
+
+|    Form     | Purpose                                                                    |
+|:-----------:|:---------------------------------------------------------------------------|
+|    `"…"`    | Regular string with `{expr}` interpolation                                 |
+|  `"""…"""`  | Multiline with interpolation; whitespace trimmed at closing `"""` position |
+|   `''…''`   | Inline raw string, no interpolation or escaping                            |
+
+Strings are marked with quotation marks (`"…"`) *(also called double quotes)* and can be formatted with curly braces (`{expr}`) in the string. Use a backslash to write a literal opening curly brace (`\{`). Note that string insertion and named tuples both use curly braces. This shouldn't be an issue though since one is inside strings and the other isn't. Inserted expressions are implicitly converted to strings, so using `str()` isn't necessary. This string is only allowed on a single-line, but literal-line characters can be inserted with `\n`.
+
+```mulem
+name = "world"  
+hello = "Hello, {name}!"
+helloEscaped = "Hello, \{name}!"
+lines = "This \n string \n has \n linebreaks."
+```
+
+Subsequent string literals will automatically concatenate, and the `<>` operator can be used to concatenate non-literal strings.
+
+```mulem
+str1 = "This" " string"
+str2 = " is broken"
+str3 = str1 <> str2 <> " into multiple parts."
+print(str3)
+-- Prints "This string is broken into multiple parts."
+```
+
+Write multi-line strings with `"""` (3 quotation marks). A common issue in programming languages is how to fix the issue of leading whitespace in a multi-line string. Mulem uses significant whitespace, so unindenting the string wouldn't work. We don't want all the leading whitespace to be in the string, but how do we solve this? To fix this issue, whitespace gets trimmed at compile-time based on the positions of the last `"""`. Any spaces before it is automatically trimmed. Much like blocks, having too little indentation is a syntax error inside multi-line strings. This helps keep things readable and consistent and solves the whitespace issue inside strings.
+
+```mulem
+do
+    myStr =
+        """
+        Hello.
+        This string has multiple lines.
+          This line will start with 2 spaces in the string.
+        
+        The lines above and below this are empty.
+    
+        One quotation mark is fine (").
+        Two quotation marks are fine too ("").
+        But three quotation marks like \""" need to be escaped.
+        This is the last line because of the closing quotation marks below it.
+        """
+    
+    print(myStr)
+```
+
+What it will print:
+
+```mulem
+Hello.
+This string has multiple lines.
+  This line will start with 2 spaces in the string.
+
+The lines above and below this are empty.
+
+One quotation mark is fine (").
+Two quotation marks are fine too ("").
+But three quotation marks like """ need to be escaped.
+This is the last line because of the closing quotation marks below it.
+```
+
+Write a basic raw string with `''…''` (two apostrophes). Although apostrophes `'` are used for chars, an empty char isn't possible since the default char is written `'\0'` (null character). A common practice in programming languages uses the double quote `"` for formattable strings and the single quote mark `'` for raw strings, so it should be easy for any programmer to see the parallel. When you write `''`, every character after it **except for new-lines** is in the string until the closing `''`. Escaping with backslashes `\` and insertion with curly braces `{}` are disabled. This is for single-line raw strings only. If there's a line break before the closing `''`, then it's a syntax error. *(See below for multi-line raw strings.)*
+
+```mulem
+rawString = ''It's okay to put an apostrophe (') in the string.''
+filePath = ''C:\files\on\windows.txt''
+template = ''Insert here → {{variable}}''
+```
 
 ### Tuples
 
@@ -1572,77 +1643,7 @@ Notation:
 
 #### Strings
 
-Strings (`str`) are immutable 1D arrays of characters `char`. 
 
-|    Form     | Purpose                                                                    |
-|:-----------:|:---------------------------------------------------------------------------|
-|    `"…"`    | Regular string with `{expr}` interpolation                                 |
-|  `"""…"""`  | Multiline with interpolation; whitespace trimmed at closing `"""` position |
-|   `''…''`   | Inline raw string, no interpolation or escaping                            |
-| `@"""…"""@` | Multiline raw string; `@` count must match to close                        |
-
-Strings are marked with quotation marks (`"…"`) *(also called double quotes)* and can be formatted with curly braces (`{expr}`) in the string. Use a backslash to write a literal opening curly brace (`\{`). Note that string insertion and named tuples both use curly braces. This shouldn't be an issue though since one is inside strings and the other isn't. Inserted expressions are implicitly converted to strings, so using `str()` isn't necessary. This string is only allowed on a single-line, but literal-line characters can be inserted with `\n`.
-
-```mulem
-name = "world"  
-hello = "Hello, {name}!"
-helloEscaped = "Hello, \{name}!"
-lines = "This \n string \n has \n linebreaks."
-```
-
-Subsequent string literals will automatically concatenate, and the `<>` operator can be used to concatenate non-literal strings.
-
-```mulem
-str1 = "This" " string"
-str2 = " is broken"
-str3 = str1 <> str2 <> " into multiple parts."
-print(str3)
--- Prints "This string is broken into multiple parts."
-```
-
-Write multi-line strings with `"""` (3 quotation marks). A common issue in programming languages is how to fix the issue of leading whitespace in a multi-line string. Mulem uses significant whitespace, so unindenting the string wouldn't work. We don't want all the leading whitespace to be in the string, but how do we solve this? To fix this issue, whitespace gets trimmed at compile-time based on the positions of the last `"""`. Any spaces before it is automatically trimmed. Much like blocks, having too little indentation is a syntax error inside multi-line strings. This helps keep things readable and consistent and solves the whitespace issue inside strings.
-
-```mulem
-do
-    myStr =
-        """
-        Hello.
-        This string has multiple lines.
-          This line will start with 2 spaces in the string.
-        
-        The lines above and below this are empty.
-    
-        One quotation mark is fine (").
-        Two quotation marks are fine too ("").
-        But three quotation marks like \""" need to be escaped.
-        This is the last line because of the closing quotation marks below it.
-        """
-    
-    print(myStr)
-```
-
-What it will print:
-
-```mulem
-Hello.
-This string has multiple lines.
-  This line will start with 2 spaces in the string.
-
-The lines above and below this are empty.
-
-One quotation mark is fine (").
-Two quotation marks are fine too ("").
-But three quotation marks like """ need to be escaped.
-This is the last line because of the closing quotation marks below it.
-```
-
-Write a basic raw string with `''…''` (two apostrophes). Although apostrophes `'` are used for chars, an empty char isn't possible since the default char is written `'\0'` (null character). A common practice in programming languages uses the double quote `"` for formattable strings and the single quote mark `'` for raw strings, so it should be easy for any programmer to see the parallel. When you write `''`, every character after it **except for new-lines** is in the string until the closing `''`. Escaping with backslashes `\` and insertion with curly braces `{}` are disabled. This is for single-line raw strings only. If there's a line break before the closing `''`, then it's a syntax error. *(See below for multi-line raw strings.)*
-
-```mulem
-rawString = ''It's okay to put an apostrophe (') in the string.''
-filePath = ''C:\files\on\windows.txt''
-template = ''Insert here → {{variable}}''
-```
 
 To make a multi-line raw string, add an at sign `@` before and after triple quotation marks `"""`. The number of `@`s must match to close the raw string. 
 
