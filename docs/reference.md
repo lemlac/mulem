@@ -349,6 +349,7 @@ getCount()       -- Result: 3
 - __[`loop`](#loop)__ – Iteration
 - __[`maybe` / `else`](#maybe--else)__ – Coalescing
 - __[`try` / `catch`](#try--catch)__ – Error handling
+- __[`return` + `raise`](#try--catch)__ – Exiting a function
 
 ### `do`
 
@@ -441,6 +442,31 @@ catch
     body
 | (*) =
     body
+```
+
+### `return` + `raise`
+
+__`return`__ – Exits out of a function. If a value is after it, that value is the return value, otherwise it's `void`. This must match the return type of the function. Last-line evaluation is still enabled by default.
+
+```mulem
+isThirteen(x) =
+    if x == 13 then
+        return True  -- Exits the function and returns true.
+    False            -- Returns false.
+```
+
+__`raise`__ – Return out of the function with an error value. The function must return a exclamation type `T!`. If declared `T!E` where `E` is an `error` type, then the type passed to `raise` must match.
+
+```mulem
+-- T!E is inferred:
+alwaysFail() =
+    raise MyError("error message")
+
+try
+    alwaysFail()!
+catch
+| (e) =                -- Catch all errors.
+    print("Error: {e}")
 ```
 
 [TOC](#table-of-contents)
@@ -2776,33 +2802,6 @@ crunchData(): int?!Error!CustomError =                                -- Multipl
 ### Function Control Flow
 
 These keywords change the control flow within a function.
-
-#### `return`
-
-Exits out of a function. If a value is after it, that value is the return value, otherwise it's `void`. This must match the return type of the function. Last-line evaluation is still enabled by default.
-
-```mulem
-isThirteen(x) =
-    if x == 13 then
-        return True  -- Exits the function and returns true.
-    False            -- Returns false.
-```
-
-#### `raise`
-
-Return out of the function with an error value. The function must return a exclamation type `T!`. If declared `T!E` where `E` is an `error` type, then the type passed to `raise` must match.
-
-```mulem
--- T!E is inferred:
-alwaysFail() =
-    raise MyError("error message")
-
-try
-    alwaysFail()!
-catch
-| (e) =                -- Catch all errors.
-    print("Error: {e}")
-```
 
 #### `yield`
 
