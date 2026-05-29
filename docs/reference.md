@@ -129,6 +129,8 @@ object.method1()
     \.method3()
 ```
 
+[TOC](#table-of-contents)
+
 ---
 
 ## Assignment
@@ -211,6 +213,8 @@ xRef := 1
 x        -- Value: 1
 ```
 
+[TOC](#table-of-contents)
+
 ---
 
 ## Control Flow
@@ -220,6 +224,8 @@ x        -- Value: 1
 - __`loop`__ – Iteration
 - __`maybe` / `else`__ – Coalescing
 - __`try` / `catch`__ – Error handling
+
+[TOC](#table-of-contents)
 
 ---
 
@@ -289,6 +295,8 @@ increment()      -- Result: 3
 count            -- Value: 3
 ```
 
+[TOC](#table-of-contents)
+
 ---
 
 ## Types
@@ -326,13 +334,19 @@ count            -- Value: 3
   - `: T!` – Error type inferred
 - __Custom Types:__
 
+[TOC](#table-of-contents)
+
 ---
 
 ## Meta Assignment
 
+[TOC](#table-of-contents)
+
 ---
 
 ## Operators
+
+[TOC](#table-of-contents)
 
 ---
 
