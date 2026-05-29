@@ -6,6 +6,20 @@ __Mulem__ is a general-purpose, expression-oriented language designed to balance
 
 ---
 
+## Table of Contents
+
+- __[Basics](#basics)__
+- __[Assignment](#assignment)__
+- __[Control Flow](#control-flow)__
+- __[Functions](#function)__
+- __[Types](#types)__
+- __[Meta Assigment](#meta-assignment)__
+- __[Operators](#operators)__
+
+---
+
+## Basics
+
 Comments are made with two minus signs `--`.
 
 ```
@@ -14,7 +28,7 @@ Comments are made with two minus signs `--`.
 (-- (-- Nested Comment --) --)
 ```
 
-## Duel Whitespace-Bracket System
+### Duel Whitespace-Bracket System
 
 Mulem is whitespace significant. Indentation determines when blocks start and end. Expressions are split by line-breaks and semi-colons (`;`). The value of each block is the last expression evaluated in it. 
 
@@ -66,7 +80,7 @@ In this example, the result is a tuple of `(expr3, expr4)`.
 The benefit of this is that you can mix the two when you need them, such as passing a lambda function into a function.
 
 ```
-apiCall(.(result) =
+apiCall(_(result) =
     if result > 0 then
         print("Success! {result}")
     else
@@ -115,6 +129,8 @@ object.method1()
     \.method3()
 ```
 
+---
+
 ## Assignment
 
 Variables can be declared with the equals sign `=`. Type notation uses `: T =` but can be inferred.
@@ -150,6 +166,65 @@ lunch =
         "sandwich"
 ```
 
+Mutable variables are declared with the keyword `mu` before it. They must be set with the `:=` operator or any compound assignment operators such as `+=` or `-=`
+
+```
+mu i = 0
+i := 1
+i += 1
+i -= 1
+```
+
+### Destructuring
+
+Tuples can be destructured like this:
+
+```
+(a, b) = (1, 2)
+{x, y} = (x: 3, y: 4)
+```
+
+When tuples are mixed, you can either use `(…) & {…}` or `{0 as x, …}`.
+
+```
+tuple = (1, 2, x: 3, y: 4)
+(a, b) & {x, y} = tuple
+{0 as a, 1 as b, x, y} = tuple
+```
+
+Tuples can be spread into a function using the `&` prefix operator. Function can have named parameters in the same manner as desctructuring.
+
+```
+add(a: int, b: int) & {x: int, y: int}: int =
+    a + b + x + y
+
+add(&tuple)              -- Result: 10
+add(5, 6, x: 7, y: 8)    -- Result: 26
+```
+
+A reference points to the same memory location as another variable. Its mutability is carried over.
+
+```
+mu x = 0
+ref xRef = x
+xRef := 1
+x        -- Value: 1
+```
+
+---
+
+## Control Flow
+
+- __`if` / `else`__ – Boolean branching
+- __`match` / `is`__ – Pattern matching
+- __`loop`__ – Iteration
+- __`maybe` / `else`__ – Coalescing
+- __`try` / `catch`__ – Error handling
+
+---
+
+## Functions
+
 Functions are declared with parentheses before the equals sign. Parameter types and return type can be inferred.
 
 ```
@@ -177,15 +252,6 @@ fib(n) =
         fib(n - 1) + fib(n - 2)
 ```
 
-Mutable variables are declared with the keyword `mu` before it. They must be set with the `:=` operator or any compound assignment operators such as `+=` or `-=`
-
-```
-mu i = 0
-i := 1
-i += 1
-i -= 1
-```
-
 Functions can also be mutable. Create a mutable function and it becomes a function pointer. You can set it to point to different functions.
 
 ```
@@ -198,12 +264,32 @@ cb := f2
 cb(1)     -- Result: 0
 ```
 
-Lambda functions are created with a leading period `.` before a function definition like `.(x) = `. A name can be written after it to create a self-reference inside the lambda function `.name(x) = `.
+Lambda functions are created by defining a function in an expression. A name can be given to create a self-reference inside the lambda function, or use `_` to make an anonymous function.
 
 ```
-cb := .(x) = x * 2
+cb := f(x) = x * 2
 cb(2)     -- Result: 4
 ```
+
+### Capturing
+
+Function capture immutable variables automatically. Mutable variables must be captured with `/` in the function signature.
+
+```
+amount = 1
+mu count = 0
+
+increment() / (count): int =
+    count += amount
+    count
+
+increment()      -- Result: 1
+increment()      -- Result: 2
+increment()      -- Result: 3
+count            -- Value: 3
+```
+
+---
 
 ## Types
 
@@ -240,68 +326,13 @@ cb(2)     -- Result: 4
   - `: T!` – Error type inferred
 - __Custom Types:__
 
-## Control Flow
+---
 
-- __`if` / `else`__ – Boolean branching
-- __`match` / `is`__ – Pattern matching
-- __`loop`__ – Iteration
-- __`maybe` / `else`__ – Coalescing
-- __`try` / `catch`__ – Error handling
-- __`with`__ – Mutating
+## Meta Assignment
 
-## Capturing
+---
 
-Function capture immutable variables automatically. Mutable variables must be captured with `with` in the function signature.
-
-```
-amount = 1
-mu count = 0
-
-increment() with (count): int =
-    count += amount
-    count
-
-increment()      -- Result: 1
-increment()      -- Result: 2
-increment()      -- Result: 3
-count            -- Value: 3
-```
-
-## Destructuring
-
-Tuples can be destructured like this:
-
-```
-(a, b) = (1, 2)
-{x, y} = (x: 3, y: 4)
-```
-
-When tuples are mixed, you can either use `(…) & {…}` or `{0 as x, …}`.
-
-```
-tuple = (1, 2, x: 3, y: 4)
-(a, b) & {x, y} = tuple
-{0 as a, 1 as b, x, y} = tuple
-```
-
-Tuples can be spread into a function using the `&` prefix operator. Function can have named parameters in the same manner as desctructuring.
-
-```
-add(a: int, b: int) & {x: int, y: int}: int =
-    a + b + x + y
-
-add(&tuple)              -- Result: 10
-add(5, 6, x: 7, y: 8)    -- Result: 26
-```
-
-A reference points to the same memory location as another variable. Its mutability is carried over.
-
-```
-mu x = 0
-ref xRef = x
-xRef := 1
-x        -- Value: 1
-```
+## Operators
 
 ---
 
