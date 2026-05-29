@@ -1226,7 +1226,7 @@ Raw pointers are type `ptr`. These cannot be dereferenced. They are ideally used
 
 ```mulem
 o: ptr = externalLibrary.getObject()
-if o /== Null then
+if o /= Null then
     externalLibrary.useObject(o)
 else
     print("Initialization failed")
@@ -1505,7 +1505,7 @@ To implement from a prototype, add the proto's name in the square brackets. Each
 
 ```mulem
 MyStruct :: impl[MyPrototype] =
-    speak(self) = "I am a MyStruct \{ name={self.name}, value={self.value} }"
+    speak(self) = "I am a {self.name} and I have ${self.value}."
 
 MyEnum :: impl[MyPrototype] =
     speak(self) =
@@ -1516,6 +1516,17 @@ MyEnum :: impl[MyPrototype] =
             "I am a MyEnum of Second({x})"
         | Third{val} =
             "I am a MyEnum of Third \{ val={val} }"
+```
+
+When importing a prototype, you need to call `impl` on it to activate it in the scope of the module.
+
+```
+{MyStruct, MyPrototype} :: import    -- Import types.
+
+impl MyPrototype                     -- Activate this prototype in scope.
+
+me = MyStruct.init("Bob", 100)
+me.speak()                           -- Prints "I am Bob, and I have $100."
 ```
 
 [TOC](#table-of-contents)
@@ -1610,7 +1621,7 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 | 7     | Multiplicative / Shift     | `*` `/` `//` `<<` `>>`           |
 | 6     | Additive / Concat          | `+` `-` `<>`                     |
 | 5     | Range                      | `..` `..=`                       |
-| 4     | Comparison                 | `==` `<` `>` `<=` `>=`           |
+| 4     | Comparison                 | `==` `/=` `<` `>` `<=` `>=`      |
 | 3     | Logical AND                | `and`                            |
 | 2     | Logical OR / None-Coalesce | `or` `?:`                        |
 | 1     | Pipeline                   | `\|>`                            |
@@ -1644,6 +1655,7 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 |  `lhs // rhs`  | Floor division (int)                                 |
 |  `lhs ** rhs`  | Exponentiation (right-associative)                   |
 |  `lhs == rhs`  | Equality                                             |
+|  `lhs /= rhs`  | Inequality                                           |
 |   `lhs > rhs`  | Greater than                                         |
 |   `lhs < rhs`  | Less than                                            |
 |  `lhs >= rhs`  | Greater than or equal                                |
@@ -1655,16 +1667,6 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 |  `lhs or rhs`  | Logical OR                                           |
 |     `not rhs`  | Logical NOT                                          |
 
-Adding `/` before a comparative operator inverses the result.
-
-| `not`+Comparative | Result  |
-|:-----------|:---------------|
-| `A /== B`  | `not (A == B)` |
-| `A /> B`   | `not (A > B)`  |
-| `A /< B`   | `not (A < B)`  |
-| `A />= B`  | `not (A >= B)` |
-| `A /<= B`  | `not (A <= B)` |
-
 Some math operators will be put into a standard library. These will be inlined to ensure performance.
 
 ```
@@ -1673,20 +1675,20 @@ std.math{Arithmetic, Bitwise} :: import
 lhs = 1
 rhs = 2
 
-impl[Arithmetic]
+impl Arithmetic
 
 lhs rem rhs    -- Remainder (C-Style modulo) `%`
 lhs mod rhs    -- True Modulo
 
-impl[Bitwise]
+impl Bitwise
 
 lhs band rhs   -- Bitwise AND `&`
 lhs bor rhs    -- Bitwise OR `|`
-lhs bxor rhs   -- Bitwise XOR `^`
+lhs xor rhs    -- Bitwise XOR `^`
 bnot rhs       -- Bitwise NOT `~`
-lhs bshl rhs   -- Bitshift Left `<<`
-lhs bshr rhs   -- Bitshift Right `>>`
-lhs bshru rhs  -- Unsigned Bitshift Right `>>>`
+lhs shl rhs    -- Bitshift Left `<<`
+lhs shr rhs    -- Bitshift Right `>>`
+lhs shru rhs   -- Unsigned Bitshift Right `>>>`
 ```
 
 __Compound Assignment Operators:__
@@ -1715,8 +1717,8 @@ __Compound Assignment Operators:__
 |:---------------|:-------------------|:----------------------------------------------------------|
 |  `T?`, `x?`    | Question           | Unwraps a question; propagates `None` to nearest `maybe`. |
 |  `T!`, `x!`    | Exclamation        | Unwraps a exclamation; propagates error to nearest `try`. |
-| `[*T]`, `x.[]` | Array / Dict Index | `[N*T]` is fixed-size. Access: `array.[index]`.           |
 |  `T^`, `x^`    | Pointer            | Dereference a pointer.                                    |
+|  `T%`, `%x`    | Reference          | Get a reference to a place in memory.                     |
 
 [TOC](#table-of-contents)
 
@@ -1757,26 +1759,32 @@ Vector2D :: impl[Add] =
             y: lhs.y + rhs.y,
         )
 
+impl Add      -- Use this prototype in scope.
+
 v1 = Vector2D(x: 1, y: 2)
 v2 = Vector2D(x: 3, y: 4)
 
 v1 + v2   -- Result: Vector2D(x: 4, y: 6)
 ```
 
-Custom operators can be defined with `op`. These must be defined above where they will be used so that the lexer can correctly identify user-defined operators.
+Custom operators can be defined with `op`. These must be defined above where they will be used so that the lexer can correctly identify user-defined operators. The symbol can be either entirely ASCII symbol characters or a valid variable name. It must not conflict with any other operator symbols in scope. If its a valid variable name, then that name can no longer be used as a variable name when the operator is in scope. 
 
 ```
-Remainder :: op[order: 5.0, symbol: "rem", side: op.Infix]
+Remainder :: op[order: 5.0, symbol: "rem", side: op.Infix, rightAssoc: False]
 
 int :: impl[Remainder] =
     @inlined
     op[rem](self as lhs, rhs: int): int =
         lhs - rhs * (lhs // rhs)
 
-impl Remainder
+impl Remainder      -- Use this prototype in scope.
 
 15 rem 12    -- Result: 3
 ```
+
+It has to be defined above where it's being used otherwise if the lexer finds `a b c d​`, it won't know an operator from a variable or in what order they need to go in. 
+
+You don't import the operator itself like `rem`​; you import the operator's prototype `Remainder` in this case​, and if that's in scope, then the operator is in use. Then, anytime the lexer sees `a rem b​` it knows that's an operation with a set order. It won't know what it does; that's for the parser who will look up the implementation of `Remainder​` on `a​`. If you used a custom operator on a type that doesn't implement it, then it would be the same kind of error you get if you used a built-in operator on the wrong types like `string + string`​ instead of `string <> string`​. 
 
 [Advanced](#advanced) / [TOC](#table-of-contents)
 
