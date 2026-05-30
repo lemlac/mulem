@@ -684,7 +684,7 @@ x = maybe f(a?) else "fallback"
 Using `?` inside a function automatically infers a question return type `T?`.
 
 ```mulem
-addStuff(a: int, b: int): int? =
+fn addStuff(a: int, b: int): int? =
     x = getA()?
     y = getB()?
     x + y
@@ -693,13 +693,13 @@ addStuff(a: int, b: int): int? =
 Nested questions unwrap with multiple `??`:
 
 ```mulem
-unnest(x: int??): int? = x??
+fn unnest(x: int??): int? = x??
 ```
 
 Chain multiple `maybe` / `else` together untill you get a fallback:
 
 ```mulem
-getFirst(a: int, b: int, c: int): int =
+fn getFirst(a: int, b: int, c: int): int =
     \ maybe getA(a)? else
     \ maybe getB(b)? else
     \ maybe getC(c)? else
@@ -709,14 +709,14 @@ getFirst(a: int, b: int, c: int): int =
 Or use the `None`-coalescing operator (`?:`).
 
 ```mulem
-getFirst(a: int, b: int, c: int): int =
+fn getFirst(a: int, b: int, c: int): int =
     getA(a) ?: getB(b) ?: getC(c) ?: 0
 ```
 
 Another example of a use for `maybe`:
 
 ```mulem
-crunchData(): int?!Error!CustomError =                                -- Multiple error types
+fn crunchData(): int?!Error!CustomError =                                -- Multiple error types
     value: int? = someFunc()!
     -- Question to Exclamation
     data: int = maybe value? else raise CustomError("Not found")      -- Exist function on fallback
@@ -790,7 +790,7 @@ result = try divide(1, 0)! catch 0.0
 Using `!` inside a function automatically infers a exclamation return type `T!`.
 
 ```mulem
-riskyFn(a: int): int! =
+fn riskyFn(a: int): int! =
     b = step1(a)!
     c = step2(b)!
     c
@@ -801,7 +801,7 @@ riskyFn(a: int): int! =
 __`return`__ – Exits out of a function. If a value is after it, that value is the return value, otherwise it's `void`. This must match the return type of the function. Last-line evaluation is still enabled by default.
 
 ```mulem
-isThirteen(x) =
+fn isThirteen(x) =
     if x == 13 then
         return True  -- Exits the function and returns true.
     False            -- Returns false.
@@ -811,7 +811,7 @@ __`raise`__ – Return out of the function with an error value. The function mus
 
 ```mulem
 -- T!E is inferred:
-alwaysFail() =
+fn alwaysFail() =
     raise MyError("error message")
 
 try
@@ -826,7 +826,7 @@ catch
 Runs after a function done. For iterator functions, this is when the iterator was broken or exhausted. For asynchronous functions, this is when the asynchronous type is resolved or rejected. Each `defer` statement go in reverse order: *first-in last-out*. It can be one line `defer …` or a block `defer do`. Generally though it's just one line like `defer cleanUp()`. 
 
 ```mulem
-deferPrint() =
+fn deferPrint() =
     defer print("Last")
     print("First")
     defer print("Second to last")
