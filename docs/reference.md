@@ -10,8 +10,8 @@ __Mulem__ is a general-purpose, expression-oriented language designed to balance
 
 - __[Basics](#basics)__
 - __[Assignment](#assignment)__
-- __[Meta Assignment](#meta-assignment)__
 - __[Functions](#functions)__
+- __[Meta Assignment](#meta-assignment)__
 - __[Control Flow](#control-flow)__
 - __[Types](#types)__
 - __[Meta Functions](#meta-functions)__
@@ -251,31 +251,6 @@ xRef: T%mu = %mu x    -- Error!
 
 ---
 
-## Meta Assignment
-
-Meta assignments are made with `::`. These mark special data that tells the compiler the meaning of words and symbols. This includes things like constants, aliases, types, compile-time functions, and generics. This unifies many different concepts in programming without needing a lot of prefixed keywords, helping keep the name of assignments to the left. More on each of those later in this document.
-
-To make a constant, you can replace `: T =` with `:: const T =`. This is different from an immutable variable. It treats the expression as if it where a literal. To infer the type, drop the `const T` so you just have `:: =`.
-
-```
-PI :: const float = 3.14159265
-NAMESPACE :: = "development"
-```
-
-Constants can have arguments like functions to make inline functions. These use the square brackets `[]` instead of parentheses `()`. *See [Meta Functions](#meta-functions) for more details.*
-
-```
-MAX[a: int, b: int] :: const int =
-    if a > b then a else b
-
-MAX[5, 10]    -- Result: 10
-MAX[7, 3]     -- Result: 7
-```
-
-[TOC](#table-of-contents)
-
----
-
 ## Functions
 
 Functions are declared with parentheses before the equals sign. Parameter types and return type can be inferred.
@@ -391,6 +366,31 @@ increment()      -- Result: 1
 increment()      -- Result: 2
 increment()      -- Result: 3
 getCount()       -- Result: 3
+```
+
+[TOC](#table-of-contents)
+
+---
+
+## Meta Assignment
+
+Meta assignments are made with `::`. These mark special data that tells the compiler the meaning of words and symbols. This includes things like constants, aliases, types, compile-time functions, and generics. This unifies many different concepts in programming without needing a lot of prefixed keywords, helping keep the name of assignments to the left. More on each of those later in this document.
+
+To make a constant, you can replace `: T =` with `:: const T =`. This is different from an immutable variable. It treats the expression as if it where a literal. To infer the type, drop the `const T` so you just have `:: =`.
+
+```
+PI :: const float = 3.14159265
+NAMESPACE :: = "development"
+```
+
+Constants can have arguments like functions to make inline functions. These use the square brackets `[]` instead of parentheses `()`. *See [Meta Functions](#meta-functions) for more details.*
+
+```
+MAX[a: int, b: int] :: const int =
+    if a > b then a else b
+
+MAX[5, 10]    -- Result: 10
+MAX[7, 3]     -- Result: 7
 ```
 
 [TOC](#table-of-contents)
@@ -1517,7 +1517,7 @@ u of int             -- 1
 u of int             -- 0x01000000 = 16777216
 ```
 
-Overloaded functions are also a kind of untagged union, one that holds different function pointers instead of types. When called, they are automatically determined by the compiler based on its arguments, but there are times when this cannot be determined. Use `of` to pick out a certain definition of an overloaded function when this happens.
+Overloaded functions are also a kind of untagged union, one that holds different function pointers instead of types. When called, they are automatically determined by the compiler based on its arguments, but there are times when this cannot be determined. Use `of` to pick out a certain definition of an overloaded function when this happens. *(See [Function Declarations](#function-declarations-fn).)*
 
 ```mulem
 withOneAndTwo(add of (int, int): int)
