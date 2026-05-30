@@ -319,7 +319,7 @@ cb(1)     -- Result: 0
 
 These types of functions are analogous to regular assignment. They are known as **function pointers** which can either be immutable or mutable. Immutable function pointers can be shadowed, but they cannot be overloaded. You can pass them into other functions as values.
 
-```
+```mulem
 action(x) = x + 1
 action(x) = x + 2   -- Previous action is now shadowed.
 
@@ -330,7 +330,7 @@ array = map([1, 2, 3, 4], action)   -- Pass action as a value
 
 If you only intend to use a function as a function, you can do a **function declaration** using the keyword `fn`. Analogous to `mu`, this changes the behavior of subsequent declarations. Functions declared with `fn` are visible to other functions in the scope. They can be overloaded with new `fn` declarations of the same name.
 
-```
+```mulem
 fn divide(a: int, b: int): int = a // b
 fn divide(a: float, b: float: float = a / b
 
@@ -338,10 +338,10 @@ divide(5, 2)       -- Result: 2
 divide(5.0, 2.0    -- Reuslt: 2.5
 ```
 
-Lambda functions are created by defining a function in an expression. A name can be given to create a self-reference inside the lambda function, or use `_` to make an anonymous function.
+Unlike normal assignment with just `=`, `fn` assignment returns the function that it creates. **Lambda functions** are created by defining a function inside an expression with `fn`. A name can optionally be given to create a self-reference inside the lambda function.
 
 ```mulem
-cb := f(x) = x * 2
+cb := fn(x) = x * 2
 cb(2)     -- Result: 4
 ```
 
@@ -353,10 +353,10 @@ Functions capture immutable variables automatically. Mutable variables must be c
 amount = 1     -- Automatically captured.
 mu count = 0   -- Must be explicitly captured.
 
-increment() % (mu count): void =
+fn increment() % (mu count): void =
     count +:= amount
 
-getCount() % (count): int =
+fn getCount() % (count): int =
     count
 
 increment()      -- Result: 1
