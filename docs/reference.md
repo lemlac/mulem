@@ -357,12 +357,14 @@ fn add(a: float, b: float): float = a + b
 fn withOneAndTwo(f(int, int): int): int = f(1, 2)
 fn withOneAndTwo(f(float, float): float): float = f(1.0, 2.0)
 
-withOneAndTwo(add)      -- Is it int or float?
+withOneAndTwo(add)      -- Is this for ints or floats?
 
 addInt(a: int, b: int): int = add(a, b)
 
 withOneAndTwo(addInt)   -- Resolved.
 ```
+
+`of` is another option. *See [Untagged Unions](#untagged-unions).*
 
 Unlike normal assignment with just `=`, `fn` assignment returns the function that it creates. **Lambda functions** are created by defining a function inside an expression with `fn`. A name can optionally be given to create a self-reference inside the lambda function.
 
