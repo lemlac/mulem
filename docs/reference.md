@@ -1485,6 +1485,43 @@ match a is
     print("third!")
 ```
 
+#### Untagged Unions
+
+`enum` can define a tagged union, but untagged unions can be defined with the `|` inside a type notation. When picking members of a union, use `of` with the type. 
+
+```mulem
+sumUnion :: int | float | char
+
+u: sumUnion = 1
+
+u of int     -- Value is 1
+u of float   -- Read binary representation of int 1 as if it were a float
+u of char    -- Read binary representation of int 1 as if it were a, value is '\1'
+```
+
+This is similar to C unions where it doesn't do any conversion; it only reads whatever data is there with a different type.
+
+Unions will set overflow data to 0 so that if you set a small member and then read from a big member, you won't get undefined behavior. 
+
+The zero-padding interacts with endianness in a way that's deterministic but platform-dependent. The behavior is always defined, just not always portable. 
+
+```mulem
+u: sumUnion = '\1'   -- char (1 byte), remaining bytes zeroed
+
+-- Little-endian: memory is [0x01, 0x00, 0x00, 0x00]
+u of int             -- 1
+
+-- Big-endian: memory is [0x01, 0x00, 0x00, 0x00]  (same bytes)
+u of int             -- 0x01000000 = 16777216
+```
+
+Overloaded functions are also a kind of untagged union, one that holds different function pointers instead of types. When called, they are automatically determined by the compiler based on its arguments, but there are times when this cannot be determined. Use `of` to pick out a certain definition of an overloaded function when this happens.
+
+```mulem
+withOneAndTwo(add of (int, int): int)
+withOneAndTwo(add of (float, float): float)
+```
+
 ### Error Types (`error`)
 
 Errors are bit like both `struct` and `enum`. Each `error` type represents a member of a potential **error tagged union** that's summed up per function with a exclamation type `T!E` return type. Every `try` / `catch` block matches patterns to the summed error tagged union in its block based on each `!` point. Exclamation types flatten, so `Exclamation[Exclamation[T, E], F]` would become `Exclamation[T, E|F]` where `E|F` is a tagged union of each possible error in that exclamation. Instantiation works the same as structs.
