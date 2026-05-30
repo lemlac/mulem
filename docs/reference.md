@@ -1154,8 +1154,8 @@ print("{item}")               -- Prints "3"
 If access to an index in an array cannot be guaranteed, you can use the safe access operator `.[]`. For an array of `[*T]`, `.[]` will return type `T?` and `^[]` will return a type `T`.
 
 ```mulem
-i = randInt()                 -- Undeterministic number.
-print("{ list.[i] ?: -1 }")   -- Prints "-1" if out of bounds.
+i = randInt()    -- Undeterministic number.
+list.[i] ?: -1   -- Fallback to -1 if out of bounds.
 ```
 
 In general, you'll mostly be using arrays by iterating or piping them. 
@@ -1208,7 +1208,7 @@ dict: [float: float] = [
     [1.5f]: 15.0f,
     [2.0f]: 20.0f,
 ]
-print("{ dict^[1.5f] }")   -- Prints "15.0"
+dict^[1.5f]   -- Value is 15.0
 ```
 
 If the key type is `str` and a key is a valid variable name, then the square brackets before `:` can be omitted. You can access it like a member with `.`, but this will return a question type `T?` like `.[]`.
@@ -1220,15 +1220,11 @@ dict: [str:int] = [
     c: 3,
     ["invalid name"]: 127,
 ]
-print("{ dict.["b"]? }")   -- Prints "2"
-print("{ dict.b? }")       -- Prints "2",
-```
-
-Like with arrays, undeterministic access to a dictionary requires using `deref[]` to convert it into a question type `T?`.
-
-```mulem
-key = input()                          -- Undeterministic string.
-print("{ deref[dict.[key]] ?: -1 }")   -- Prints "-1" if deref failed.
+dict^["b"]    -- Value is 2
+dict.["b"]    -- Value is Some(2)
+dict.["b"]?   -- Value is 2
+dict.b        -- Value is Some(2)
+dict.b?       -- Value is 2
 ```
 
 You can iterate through a dictioary like with arrays. This is the recommend way of using dictionaries. 
