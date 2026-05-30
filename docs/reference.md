@@ -305,7 +305,7 @@ startCountdown(fn count(n) =
 
 ### Function Pointers
 
-Immutable function pointers are declared with parentheses before the equals sign. Parameter types and return type can be inferred.
+Immutable function pointers are declared like immutable variables but with parentheses before the equals sign. Parameter types and return type can be inferred.
 
 ```mulem
 f(x: int): int = x*x
@@ -332,7 +332,7 @@ add(x: int) = x + 1       -- function pointer of type (int): int
 add(x: float) = x + 1.0   -- Error! Same as assigning wrong type to a variable
 ```
 
-Functions can also be mutable. You can set it to point to different functions.
+Function pointers can also be mutable. You can set it to point to different functions or assigned a lambda function.
 
 ```mulem
 mu cb(int): int
@@ -342,11 +342,6 @@ cb := f1
 cb(1)     -- Result: 2
 cb := f2
 cb(1)     -- Result: 0
-```
-
-Function pointers can be assigned a lambda function too.
-
-```mulem
 cb := fn(x) = x * 2
 cb(2)     -- Result: 4
 ```
@@ -367,8 +362,7 @@ addInt(a: int, b: int): int = add(a, b)
 withOneAndTwo(addInt)   -- Resolved.
 ```
 
-`of` is another option. *See [Untagged Unions](#untagged-uni
-ons).*
+`of` is another option. *See [Untagged Unions](#untagged-unions).*
 
 ### Capturing
 
@@ -1535,7 +1529,7 @@ u of int             -- 1
 u of int             -- 0x01000000 = 16777216
 ```
 
-Overloaded functions are also a kind of untagged union, one that holds different function pointers instead of types. When called, they are automatically determined by the compiler based on its arguments, but there are times when this cannot be determined. Use `of` to pick out a certain definition of an overloaded function when this happens. *(See [Function Declarations](#function-declarations-fn).)*
+Overloaded functions are also a kind of untagged union, one that holds different function pointers instead of types. When called, they are automatically determined by the compiler based on its arguments, but there are times when this cannot be determined. Use `of` to pick out a certain definition of an overloaded function when this happens. *(See [Functions](#functions).)*
 
 ```mulem
 withOneAndTwo(add of (int, int): int)
