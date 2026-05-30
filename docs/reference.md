@@ -338,6 +338,32 @@ divide(5, 2)       -- Result: 2
 divide(5.0, 2.0    -- Reuslt: 2.5
 ```
 
+Function pointers have the same type strictness as immutable variables, so trying to overload a function pointer will result in an error.
+
+```mulem
+x: int = 5
+x = "hello"  -- Error! Type mismatch
+
+add(x: int) = x + 1       -- function pointer of type (int): int
+add(x: float) = x + 1.0   -- Error! Same as assigning wrong type to a variable
+```
+
+There are reasons to use both. Sometimes overloading creates ambiguities. Function pointers are always exact.
+
+```
+fn add(a: int, b: int): int = a + b
+fn add(a: float, b: float): float = a + b
+
+fn withOneAndTwo(f(int, int): int): int = f(1, 2)
+fn withOneAndTwo(f(float, float): float): float = f(1.0, 2.0)
+
+withOneAndTwo(add)      -- Is it int or float?
+
+addInt(a: int, b: int): int = add(a, b)
+
+withOneAndTwo(addInt)   -- Resolved.
+```
+
 Unlike normal assignment with just `=`, `fn` assignment returns the function that it creates. **Lambda functions** are created by defining a function inside an expression with `fn`. A name can optionally be given to create a self-reference inside the lambda function.
 
 ```mulem
