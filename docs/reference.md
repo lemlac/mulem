@@ -328,7 +328,7 @@ array = map([1, 2, 3, 4], action)   -- Pass action as a value
 
 ### Function Declarations (`fn`)
 
-If you only intend to use a function as a function, you can do a **function declaration** using the keyword `fn`. Analogous to `mu`, this changes the behavior of subsequent declarations. Functions declared with `fn` are visible to other functions in the scope. They can be overloaded with new `fn` declarations of the same name.
+If you don't intend to use a function as a value, you can do a **function declaration** using the keyword `fn`. Analogous to `mu`, this changes the behavior of subsequent declarations. Functions declared with `fn` are visible to other functions in the scope. They can be overloaded with new `fn` declarations of the same name.
 
 ```mulem
 fn divide(a: int, b: int): int = a // b
