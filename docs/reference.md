@@ -1961,7 +1961,7 @@ Function parameters can be declared like variables. Likewise, you can modify the
 `ref` is used to infer a `T%` (immutable reference) or `T%mu` (mutable reference). Wether it's immutable or mutable depends on the usage in the function.
 
 ```mulem
-increment(ref x) =
+fn increment(ref x) =
     x +:= 1
 
 mu y = 0
@@ -1976,7 +1976,7 @@ increment(y)
 This guarantees that the variable is initialized after the call completes.
 
 ```mulem
-setInt(out i): void =
+fn setInt(out i): void =
     i = 3
 
 mu x: int
@@ -1994,10 +1994,10 @@ print("{n}")    -- Prints "3"
 `setInt(as n)` → "Set int as n"—it says exactly what it does. This makes it clear that you're intentionally making a new variable. Using `as` makes the intent unambiguous: you are creating a variable, not passing an existing one. `as` already means "bind this to a name" throughout the language:
 
 ```mulem
-{x as y} = {x: 2}                 -- destructuring
-match choice is Second(x as val)  -- pattern matching
-method(self as this)              -- self aliasing
-setInt(as n)                      -- out parameter
+{x as y} = {x: 2}           -- destructuring
+choice is Second(x as val)  -- pattern matching
+method(self as this)        -- self aliasing
+setInt(as n)                -- out parameter
 ```
 
 Languages that use return values for this kind of thing (`n = setInt()`) imply the value comes out of the function through the normal return channel, which is misleading when the mechanism is actually a reference parameter. `setInt(as n)` makes the call-site declaration explicit without requiring you to pre-declare a `mu` variable just to hand it in.
@@ -2007,7 +2007,7 @@ Languages that use return values for this kind of thing (`n = setInt()`) imply t
 Parameters can be made optional with the `opt` modifier. This wraps the variable in type `T?`. If the parameter is missing, it will be set to `None`.
 
 ```mulem
-addOptional(opt a: int, opt b: int): int =
+fn addOptional(opt a: int, opt b: int): int =
     aVal = a ?: 0    -- Coalesce optional arguments with default value 0.
     bVal = b ?: 0    -- This unwraps their value if they exist or set them to 0.
     aVal + bVal      -- Add the unwrapped values.
@@ -2020,13 +2020,13 @@ print("{addOptional(1, 1)}")  -- Prints "2"
 When calling a function with an explicit `T?`, you give it a value of `T?`. When calling a function with `opt`, you give it a value of `T`. 
 
 ```mulem
-optionalParam(opt val: int) =
+fn optionalParam(opt val: int) =
     if val is Some(x) then
         print("Some({x})")
     else
         print("None")
 
-requiredParam(val: int?) =
+fn requiredParam(val: int?) =
     if val is Some(x) then
         print("{x}")
     else
@@ -2044,7 +2044,7 @@ requiredParam(None)      -- Prints "None"
 `opt` parameters can also have default values. Use `=` to to give an optional parameter a default value. This will make it a type `T`, so unwrapping is unnecessary.
 
 ```mulem
-addOptional(opt a = 0, opt b = 0): int = a + b     -- `a` and `b` are always `int`s
+fn addOptional(opt a = 0, opt b = 0): int = a + b     -- `a` and `b` are always `int`s
 
 print("{addOptional()}")      -- Prints "0"
 print("{addOptional(1)}")     -- Prints "1"
@@ -2054,7 +2054,7 @@ print("{addOptional(1, 1)}")  -- Prints "2"
 Use `*` to collect all arguments into a single variable. The variable should be type `[*T]` (an array).
 
 ```mulem
-addAll(*nums: [*int]): int =
+fn addAll(*nums: [*int]): int =
     mu sum: int = 0
     loop n in nums:
         sum +:= n
@@ -2068,7 +2068,7 @@ print("{addAll(1, 2, 3)}")  -- Prints "6"
 
 ```mulem
 -- With pattern matching:
-addAll(*nums: [*int]): int =
+fn addAll(*nums: [*int]): int =
     match nums is
     | []            = 0
     | [x]           = x
@@ -2078,15 +2078,14 @@ addAll(*nums: [*int]): int =
 A name is optional after `*`. You can use the symbol by itself to pass it to another function or itself in a functional loop. 
 
 ```mulem
-addAll(*) = match (*) is
-| (x: int, *): int =
+fn addAll(x: int, *): int =
     x + addAll(*)
-| (x: int): int =
+fn addAll(x: int): int =
     x
-| (): int =
+fn addAll(): int =
     0
 
-logAndAdd(msg: str, *) =
+fn logAndAdd(msg: str, *) =
     print("{msg} {addAll(*)}")
 
 logAndAdd("Sum =")           -- Prints "Sum = 0"
@@ -2101,7 +2100,7 @@ logAndAdd("Sum =", 1, 2, 3)  -- Prints "Sum = 6"
 
 ### Lambda Functions
 
-Define a function within an expression with any name. For demonstration purposes, we'll use the name `fn` in the pattern `fn(x) = x`. This is useful for passing functions to other functions.
+Define a function within an expression with `fn` + any name. For demonstration purposes, we'll be using anonymous functions in the pattern `fn(x) = x`. This is useful for passing functions to other functions.
 
 ```mulem
 (fn(arg) = expr)
@@ -2390,7 +2389,7 @@ if x is Some(x) then
 Exits out of a function with an `iter[_]` type. The return value of the function must be of type `iter[T]` where T is the yield type. When you have `yield` in your function, the actual return value in the function body is discarded, and using `return …` in it is a compile-time error. Use of `yield` will infer the return type to be `iter[_]`. 
 
 ```mulem
-countUpTo(n: int): iter[int] =
+fn countUpTo(n: int): iter[int] =
     loop i in 0..n then
         yield i
 ```
@@ -2398,7 +2397,7 @@ countUpTo(n: int): iter[int] =
 If you use `yield`, you can only use a void `return` to exit the function. 
 
 ```mulem
-countUntil(mu i: int, max: int): iter[int] =
+fn countUntil(mu i: int, max: int): iter[int] =
      loop
         if i >= max then
             return      -- Break out of the loop and the function.
@@ -2411,7 +2410,7 @@ countUntil(mu i: int, max: int): iter[int] =
 Exits out of a function with an `async[_]` type. The return type of the function must be of type `async[T]` where T is the type that the asynchronous value will resolve in the end. The return value of the asynchronous instance is determined the same way that a non-asynchronous function does it. Use of `await` will infer the return type to be `async[_]`. 
 
 ```mulem
-asyncFn(a, b): async[int] =
+fn asyncFn(a, b): async[int] =
     a = await fetch(a)
     b = await fetch(b)
     a + b
@@ -2420,12 +2419,12 @@ asyncFn(a, b): async[int] =
 Both `yield` and `await` can be used together in an `iter[async[_]]` type. The type suggests it—each yield is of type `async[_]`. Use `loop await` to wait for each async value to resolve in sequential order.
 
 ```mulem
-asyncIterFn(n): iter[async[int]] =
+fn asyncIterFn(n): iter[async[int]] =
     loop i in 0..n then
         val = await fetch(i)
         yield val
 
-asyncCollect(n): async[[*int]] =
+fn asyncCollect(n): async[[*int]] =
     mu ret: [*int] = []
     loop (await x) in asyncIterFn(n) then
         ret <>= x
@@ -2538,7 +2537,7 @@ someModule{thing} :: import "../../somewhere.mu"
 
 myModule :: mod
 
-addThing(x) = x + thing
+fn addThing(x) = x + thing
 ```
 
 In this example, you would import `addThing` like this (assuming the file is included):
@@ -2594,7 +2593,7 @@ FetchError :: error = (str)
     A function returning an exclamation type (User or an Error).
     It captures no outside state.
 --)
-fetchUser(id: int): User! =
+fn fetchUser(id: int): User! =
     if id > 0 then
         User(name: "Alice", age: 30)
     else
