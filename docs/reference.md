@@ -111,27 +111,12 @@ x = (0
 -- `x` is 3
 ```
 
-The other option is to use backslashes (`\`), either at the end or beginning of a line. 
+The exception is access operators. If a line starts with an accesss operator such as `.`, then it will be appended to the previous line.
 
 ```mulem
-x = 0 \
-+ 1 \
-+ 2
-
-x = 0
-\ + 1
-\ + 2
-```
-
-This also applies to method chaining.
-
-```mulem
-(object.method1()
-    .method2()
-    .method3())
 object.method1()
-    \.method2()
-    \.method3()
+    .method2()
+    .method3()
 ```
 
 [TOC](#table-of-contents)
@@ -744,10 +729,10 @@ Chain multiple `maybe` / `else` together untill you get a fallback:
 
 ```mulem
 fn getFirst(a: int, b: int, c: int): int =
-    \ maybe getA(a)? else
-    \ maybe getB(b)? else
-    \ maybe getC(c)? else
-    \ 0
+    ( maybe getA(a)? else
+      maybe getB(b)? else
+      maybe getC(c)? else
+      0 )
 ```
 
 Or use the `None`-coalescing operator (`?:`).
@@ -829,6 +814,12 @@ Inline form. If you only have a whildcard case `(| (*) = x)`, you just write the
 
 ```mulem
 result = try divide(1, 0)! catch 0.0
+```
+
+If you plan to only fallback on any error, you can use the `!:` operator.
+
+```mulem
+result = divide(1, 0) !: 0.0
 ```
 
 Using `!` inside a function automatically infers a exclamation return type `T!`.
@@ -1712,22 +1703,22 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 
 | Level | Category                   | Operators                        |
 |:------|:---------------------------|:---------------------------------|
-| 11    | Member access/Function     | `.` `.[]` `^[]` `?.` `?.[]` `()` |
-| 10    | Postfix/Prefix             | `?` `!` `^` `%` `%mu`            |
+| 11    | Member access/Function     | `.` `^.` `.[]` `^[]` `?.` `?.[]` `()` |
+| 10    | Postfix/Prefix             | `?` `!` `^` `%` `%mu`          |
 | 9     | Unary                      | `+` `-` `not`                    |
-| 8     | Exponent                   | `**` (right-associative)         |
-| 7     | Multiplicative / Shift     | `*` `/` `//` `<<` `>>`           |
+| 8     | Exponent                   | `**` (right-associative)       |
+| 7     | Multiplicative / Shift     | `*` `/` `//` `<<` `>>`          |
 | 6     | Additive / Concat          | `+` `-` `<>`                     |
 | 5     | Range                      | `..` `..=`                       |
 | 4     | Comparison                 | `==` `/=` `<` `>` `<=` `>=`      |
 | 3     | Logical AND                | `and`                            |
-| 2     | Logical OR / None-Coalesce | `or` `?:`                        |
+| 2     | Logical OR / None-Coalesce | `or` `?:` `!:`               |
 | 1     | Pipeline                   | `\|>`                            |
 | 0     | Assignment / Spread        | `=` `:=` `+:=` `-:=` `&` `*`     |
 
 | Operator       | Meaning                                              |
 |:--------------:|:-----------------------------------------------------|
-|   `lhs . rhs`  | Member access                                        |
+|   `lhs . rhs`  | Member access / safe pointer member access                |
 |   `lhs .[rhs]` | Safe array/dictionary index                          |
 |   `lhs ^[rhs]` | Raw array/dictionary index                           |
 |   `lhs ?`      | Unwrap question, propagate `None` to nearest `maybe` |
@@ -1735,6 +1726,7 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 |  `lhs ?.[rhs]` | Safe array/dictionary index on a question type       |
 |   `lhs !`      | Unwrap exclamation, propagate error to nearest `try` |
 |   `lhs ^`      | Dereference typed pointer                            |
+|   `lhs ^. rhs` | Raw pointer member access                           |
 |       `% rhs`  | Get immutable reference                              |
 |     `%mu rhs`  | Get mutable reference                                |
 |       `* rhs`  | Spread array into array                              |
@@ -1764,6 +1756,8 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 | `lhs and rhs`  | Logical AND                                          |
 |  `lhs or rhs`  | Logical OR                                           |
 |     `not rhs`  | Logical NOT                                          |
+|  `lhs ?: rhs`  | `None`- coalescing                                   |
+|  `lhs !: rhs`  | Error-coalescing                                     |
 
 Some math operators will be put into a standard library. These will be inlined to ensure performance.
 
