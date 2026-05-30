@@ -317,6 +317,17 @@ cb := f2
 cb(1)     -- Result: 0
 ```
 
+These types of functions are analogous to regular assignment. They are known as **function pointers** which can either be immutable or mutable. Immutable function pointers can be shadowed, but they cannot be overloaded. You can pass them into other functions as values.
+
+```
+action(x) = x + 1
+action(x) = x + 2   -- Previous action is now shadowed.
+
+array = map([1, 2, 3, 4], action)   -- Pass action as a value
+```
+
+If you only intend to use a function as a function, you can do a **function declaration** using the keyword `fn`. Analogous to `mu`, this changes the behavior of subsequent declarations. Functions declared with `fn` are visible to other functions in the scope. They can be overloaded with new `fn` declarations of the same name, but overloaded functions can't be used as values anymore, only as functions.
+
 Lambda functions are created by defining a function in an expression. A name can be given to create a self-reference inside the lambda function, or use `_` to make an anonymous function.
 
 ```mulem
