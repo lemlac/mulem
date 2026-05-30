@@ -305,7 +305,7 @@ fib(n) =
         fib(n - 1) + fib(n - 2)
 ```
 
-Functions can also be mutable. Create a mutable function and it becomes a function pointer. You can set it to point to different functions.
+Functions can also be mutable. You can set it to point to different functions.
 
 ```mulem
 mu cb(int): int
@@ -326,6 +326,16 @@ action(x) = x + 2   -- Previous action is now shadowed.
 array = map([1, 2, 3, 4], action)   -- Pass action as a value
 ```
 
+Function pointers have the same type strictness as immutable variables, so trying to overload a function pointer will result in an error.
+
+```mulem
+x: int = 5
+x = "hello"  -- Error! Type mismatch
+
+add(x: int) = x + 1       -- function pointer of type (int): int
+add(x: float) = x + 1.0   -- Error! Same as assigning wrong type to a variable
+```
+
 ### Function Declarations (`fn`)
 
 If you don't intend to use a function as a value, you can do a **function declaration** using the keyword `fn`. Analogous to `mu`, this changes the behavior of subsequent declarations. Functions declared with `fn` are visible to other functions in the scope. They can be overloaded with new `fn` declarations of the same name.
@@ -338,17 +348,7 @@ divide(5, 2)       -- Result: 2
 divide(5.0, 2.0    -- Reuslt: 2.5
 ```
 
-Function pointers have the same type strictness as immutable variables, so trying to overload a function pointer will result in an error.
-
-```mulem
-x: int = 5
-x = "hello"  -- Error! Type mismatch
-
-add(x: int) = x + 1       -- function pointer of type (int): int
-add(x: float) = x + 1.0   -- Error! Same as assigning wrong type to a variable
-```
-
-There are reasons to use both. Sometimes overloading creates ambiguities. Function pointers are always exact.
+There are reasons to use both `fn` and just `=`. Sometimes overloading creates ambiguities. Function pointers are always exact.
 
 ```
 fn add(a: int, b: int): int = a + b
