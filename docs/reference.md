@@ -253,25 +253,27 @@ xRef: T%mu = %mu x    -- Error!
 
 ## Functions
 
-Functions are declared with parentheses before the equals sign. Parameter types and return type can be inferred.
+Functions are declared using the keyword `fn`. Analogous to `mu`, this changes the behavior of subsequent declarations. Functions declared with `fn` are visible to other functions in the scope. They can be overloaded with new `fn` declarations of the same name.
 
 ```mulem
-f(x: int): int = x*x
-g(x) = x*x*x
-g(2)    -- Result: 8
+fn divide(a: int, b: int): int = a // b
+fn divide(a: float, b: float: float = a / b
+
+divide(5, 2)       -- Result: 2
+divide(5.0, 2.0)   -- Reuslt: 2.5
 ```
 
-Functions can have multiple lines by adding a line break after the `=` sign. The last expression evalued is the implied return.
+The parameters and return types can be inferred. Functions can have multiple lines by adding a line break after the `=` sign. The last expression evalued is the implied return.
 
 ```mulem
-isThirteen(x) =
+fn isThirteen(x) =
     if x == 13 then
         return True
     False
 ```
 
 ```mulem
-fib(n) = 
+fn fib(n) = 
     if n < 1 then
         0
     else if n < 2 then
@@ -280,16 +282,35 @@ fib(n) =
         fib(n - 1) + fib(n - 2)
 ```
 
-Functions can also be mutable. You can set it to point to different functions.
+Unlike normal assignment with just `=`, `fn` assignment returns the function that it creates. **Lambda functions** are created by defining a function inside an expression with `fn`. A name can optionally be given to create a self-reference inside the lambda function.
 
 ```mulem
-mu cb(int): int
-f1(x) = x + 1
-f2(x) = x - 1
-cb := f1
-cb(1)     -- Result: 2
-cb := f2
-cb(1)     -- Result: 0
+apiCall(fn(result) =
+    if result > 0 then
+        print("Success! {result}")
+    else
+        print("Failure! {result}")
+)
+```
+
+```
+startCountdown(fn count(n) =
+    if n > 0 then
+        print("{n}!")
+        count(n - 1)
+    else
+        print("Go!")
+, 10)
+```
+
+### Function Pointers
+
+Immutable function pointers are declared with parentheses before the equals sign. Parameter types and return type can be inferred.
+
+```mulem
+f(x: int): int = x*x
+g(x) = x*x*x
+g(2)    -- Result: 8
 ```
 
 These types of functions are analogous to regular assignment. They are known as **function pointers** which can either be immutable or mutable. Immutable function pointers can be shadowed, but they cannot be overloaded. You can pass them into other functions as values.
@@ -311,16 +332,23 @@ add(x: int) = x + 1       -- function pointer of type (int): int
 add(x: float) = x + 1.0   -- Error! Same as assigning wrong type to a variable
 ```
 
-### Function Declarations (`fn`)
-
-If you don't intend to use a function as a value, you can do a **function declaration** using the keyword `fn`. Analogous to `mu`, this changes the behavior of subsequent declarations. Functions declared with `fn` are visible to other functions in the scope. They can be overloaded with new `fn` declarations of the same name.
+Functions can also be mutable. You can set it to point to different functions.
 
 ```mulem
-fn divide(a: int, b: int): int = a // b
-fn divide(a: float, b: float: float = a / b
+mu cb(int): int
+f1(x) = x + 1
+f2(x) = x - 1
+cb := f1
+cb(1)     -- Result: 2
+cb := f2
+cb(1)     -- Result: 0
+```
 
-divide(5, 2)       -- Result: 2
-divide(5.0, 2.0    -- Reuslt: 2.5
+Function pointers can be assigned a lambda function too.
+
+```mulem
+cb := fn(x) = x * 2
+cb(2)     -- Result: 4
 ```
 
 There are reasons to use both `fn` and just `=`. Sometimes overloading creates ambiguities. Function pointers are always exact.
@@ -339,14 +367,8 @@ addInt(a: int, b: int): int = add(a, b)
 withOneAndTwo(addInt)   -- Resolved.
 ```
 
-`of` is another option. *See [Untagged Unions](#untagged-unions).*
-
-Unlike normal assignment with just `=`, `fn` assignment returns the function that it creates. **Lambda functions** are created by defining a function inside an expression with `fn`. A name can optionally be given to create a self-reference inside the lambda function.
-
-```mulem
-cb := fn(x) = x * 2
-cb(2)     -- Result: 4
-```
+`of` is another option. *See [Untagged Unions](#untagged-uni
+ons).*
 
 ### Capturing
 
