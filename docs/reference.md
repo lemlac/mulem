@@ -1170,6 +1170,8 @@ item = doubleArray^[1,0]      -- Or seperated with commas
 print("{item}")               -- Prints "3"
 ```
 
+`list^[i]` is the same as `(list+i)^` in Mulem like how `list[i]` means `*(list+i)` in C/C++.
+
 If access to an index in an array cannot be guaranteed, you can use the safe access operator `.[]`. For an array of `[*T]`, `.[]` will return type `T?` and `^[]` will return a type `T`.
 
 ```mulem
