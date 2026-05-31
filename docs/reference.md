@@ -1607,12 +1607,11 @@ MyEnum :: impl[MyPrototype] =
             "I am a MyEnum of Third \{ val={val} }"
 ```
 
-When importing a prototype, you need to call `impl` on it to activate it in the scope of the module.
+When importing a prototype, you need to bring it into the scope to activate it inside a module.
 
 ```
 {MyStruct, MyPrototype} :: import    -- Import types.
-
-impl MyPrototype                     -- Activate this prototype in scope.
+-- This prototype is active in this scope.
 
 me = MyStruct.init("Bob", 100)
 me.speak()                           -- Prints "I am Bob, and I have $100."
@@ -1767,13 +1766,11 @@ std.math{Arithmetic, Bitwise} :: import
 lhs = 1
 rhs = 2
 
-impl Arithmetic
-
+-- Arithmetic
 lhs rem rhs    -- Remainder (C-Style modulo) `%`
 lhs mod rhs    -- True Modulo
 
-impl Bitwise
-
+-- Bitwise
 lhs band rhs   -- Bitwise AND `&`
 lhs bor rhs    -- Bitwise OR `|`
 lhs xor rhs    -- Bitwise XOR `^`
@@ -1852,8 +1849,6 @@ Vector2D :: impl[Add] =
             y: lhs.y + rhs.y,
         )
 
-impl Add      -- Use this prototype in scope.
-
 v1 = Vector2D(x: 1, y: 2)
 v2 = Vector2D(x: 3, y: 4)
 
@@ -1869,8 +1864,6 @@ int :: impl[Remainder] =
     @inlined
     op[rem](self as lhs, rhs: int): int =
         lhs - rhs * (lhs // rhs)
-
-impl Remainder      -- Use this prototype in scope.
 
 15 rem 12    -- Result: 3
 ```
