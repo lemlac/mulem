@@ -2738,8 +2738,9 @@ do
     try
         -- Fetch the user, unwrap the exclamation, and pipe it forward
         fetchUser(1)!
-        |> do print($.speak()); $
-        |> print("User is {$.age} years old."); $
+        |> do
+            print($.speak())
+            print("User is {$.age} years old.")
     catch
     | FetchError(e) =
         print("Failed to fetch user: {e}")
