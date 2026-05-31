@@ -240,6 +240,11 @@ add(5, 6, x: 7, y: 8)    -- Result: 26
 
 Functions are declared using the keyword `fn`. Analogous to `mu`, this changes the behavior of subsequent declarations. Functions declared with `fn` are visible to other functions in the scope. They can be overloaded with new `fn` declarations of the same name.
 
+`fn` and `mu`/`=` have distinct purposes as will be demonstrated later in this section.
+
+- `fn` — *entering the dispatch system, it may have multiple overloads*
+- `mu`/`=` — *exact function value, one concrete type*
+
 ```mulem
 fn divide(a: int, b: int): int = a // b
 fn divide(a: float, b: float: float = a / b
@@ -278,7 +283,7 @@ apiCall(fn(result) =
 )
 ```
 
-```
+```mulem
 startCountdown(fn count(n) =
     if n > 0 then
         print("{n}!")
@@ -317,10 +322,10 @@ add(x: int) = x + 1       -- function pointer of type (int): int
 add(x: float) = x + 1.0   -- Error! Same as assigning wrong type to a variable
 ```
 
-Function pointers can also be mutable. You can set it to point to different functions or assigned a lambda function.
+Function pointers can also be mutable. You can set it to point to different functions or assigned a lambda function. The colon before the parameter `: (T): T` signifies that we are not defining a function, only declaring its type.
 
 ```mulem
-mu cb(int): int
+mu cb: (int): int
 f1(x) = x + 1
 f2(x) = x - 1
 cb := f1
