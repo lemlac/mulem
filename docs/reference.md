@@ -972,7 +972,7 @@ Last
   - `: T!E` – `Ok(T)` or `Err(E)`
   - `: T!` – Error type inferred
 - __[Custom Types](#custom-types):__
-  - `:: _` — Alias to another type
+  - `:: T` — Alias to another type
   - `:: struct` — Structural data
   - `:: enum` — Sum types / tagged unions
   - `:: error` — Custom error types
