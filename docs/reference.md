@@ -618,6 +618,8 @@ else
 
 Steps may optionally be added to the loop's subject line. This is done by adding a colon `:` between the subject and `then`. An expression after `:` will run at the end of each iteration of the loop. 
 
+`loop [under this condition] ; [doing this every iteration] then`
+
 ```mulem
 -- The Dangerous Way
 mu i = 1
@@ -632,7 +634,7 @@ loop i <= 100 then
 
 -- The Safe Way
 mu i = 1
-loop i <= 100: i +:= 1 then
+loop i <= 100; i +:= 1 then
     if i rem 10 == 0 then
         print("{i}!!!")
         continue    -- Automatically triggers `i +:= 1` before checking condition again
@@ -642,7 +644,7 @@ loop i <= 100: i +:= 1 then
 ```mulem
 -- Track index of `loop / in`
 mu idx = 0
-loop item in inventory: idx +:= 1 then
+loop item in inventory; idx +:= 1 then
     print("Slot {idx}: {item}")
 ```
 
@@ -650,7 +652,7 @@ Because `do` blocks isolate scopes and inline expressions sequence seamlessly, y
 
 ```mulem
 -- C-style for loop
-do mu i = 1; loop i <= 100: i +:= 1 then
+do mu i = 1; loop i <= 100; i +:= 1 then
     if i rem 10 == 0 then
         print("{i}!!!")
         continue
