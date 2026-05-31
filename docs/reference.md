@@ -1824,7 +1824,7 @@ __Compound Assignment Operators:__
 
 - __[Operator Overloading](#operator-overloading)__
 - __[Pipelining](#pipelining)__
-- __[Parameter Modifiers](#parameter-modifiers)__
+- __[Optional Parameters](#optional-parameters)__
 - __[Lambda Functions](#lambda-functions)__
 - __[Pattern Matching](#pattern-matching)__
 - __[References (`ref`}](#references-ref)__
@@ -2020,63 +2020,7 @@ This gives you a great deal of flexibility in how you choose to express your cod
 
 ---
 
-### Parameter Modifiers
-
-| Modifier         | Behavior          | Mutable inside function?           |
-|:-----------------|:------------------|:-----------------------------------|
-| *(none)*         | Pass by copy      | No                                 |
-| `mu`             | Pass by copy      | Yes                                |
-| `ref`            | Pass by reference | Yes / No                           |
-| `out`            | Unset reference   | Yes (Must be assigned)             |
-| `opt`            | Optional argument | Wraps in T?`                       |
-
-Function parameters can be declared like variables. Likewise, you can modify their mutability and reference-ness the same way.
-
-`ref` is used to infer a `T%` (immutable reference) or `T%mu` (mutable reference). Wether it's immutable or mutable depends on the usage in the function.
-
-```mulem
-fn increment(ref x) =
-    x +:= 1
-
-mu y = 0
-increment(y)
-```
-
-`out` parameters are guaranteed‑set references. They behave like `ref`, except they begin the function in an *unset* state. Use an `out` parameter when a function’s job is to produce a value rather than consume one. An `out` parameter must not remain unset in any branch of the function. It must either be:
-
-- Assigned directly, *or*
-- Passed to another function that also takes an out parameter.
-
-This guarantees that the variable is initialized after the call completes.
-
-```mulem
-fn setInt(out i): void =
-    i = 3
-
-mu x: int
-setInt(x)
-print("{x}")    -- Prints "3"
-```
-
-This is fine, but what if you just wanted to grab the `out` variable in one go? Normally you could just write `n = setInt()` for return values — but `out` parameters aren't retaurn values. We can inline a variable from the `out` parameter with the keyword `as` — just like how we use `as` for aliasing. This makes it clear that we're expecting a new variable at the call site. That way it's *explicit* that we're intentionally declaring a new variable instead of passing in an existing one.
-
-```mulem
-setInt(as n)    -- Declare a new variable as `n` that gets set by `setInt`.
-print("{n}")    -- Prints "3"
-```
-
-`setInt(as n)` → "Set int as n"—it says exactly what it does. This makes it clear that you're intentionally making a new variable. Using `as` makes the intent unambiguous: you are creating a variable, not passing an existing one. `as` already means "bind this to a name" throughout the language:
-
-```mulem
-{x as y} = {x: 2}           -- destructuring
-choice is Second(x as val)  -- pattern matching
-method(self as this)        -- self aliasing
-setInt(as n)                -- out parameter
-```
-
-Languages that use return values for this kind of thing (`n = setInt()`) imply the value comes out of the function through the normal return channel, which is misleading when the mechanism is actually a reference parameter. `setInt(as n)` makes the call-site declaration explicit without requiring you to pre-declare a `mu` variable just to hand it in.
-
-#### Optional Parameters
+### Optional Parameters
 
 Parameters can be made optional with the `opt` modifier. This wraps the variable in type `T?`. If the parameter is missing, it will be set to `None`.
 
@@ -2456,7 +2400,53 @@ if x is Some(x) then
 
 ---
 
-### References (`ref`}
+### References (`ref`)
+
+`ref` gives you a reference whose mutability is determined by what you're binding to, not by how you use it. This is like a pointer but it auto derefs, no `^` operator needed.
+
+```
+mu x = 5
+ref y = x     -- y: int%mu, x is mutable so ref inherits it
+
+x2 = 5
+ref y2 = x2   -- y2: int%, x2 is immutable
+```
+
+If the enum is immutable or mutable, then adding `ref` on a pattern's data should match its mutability like when using `ref` on another variable.
+
+```mulem
+mu s = SomeStruct(value: 42)
+match s is
+| SomeStruct(ref value) =   -- value: int%mu, s is mutable
+    value := 100            -- modifies s.value in-place, no copy
+
+s2 = SomeStruct(value: 42)
+match s2 is
+| SomeStruct(ref value) =   -- value: int%, s2 is immutable
+    print("{value}")        -- read-only, no copy
+```
+
+Function parameters/return types use reference types `T%`/`Y%mu` which determine if `ref` is mutable or immutable
+
+```mulem
+fn getField(s: SomeStruct%): int% = s.value
+
+ref x = getField(myStruct)   -- x: int%, immutable
+```
+
+```mulem
+fn increment(x: int%mu): void =
+    x +:= 1
+
+mu x = 0
+increment(x)
+x            -- Value is 1
+```
+
+```mulem
+loop nextValue() is Some(ref x) then
+    x := transform(x)   -- mutates in place if iterator yields mutable refs `iter[T%mu?]`
+```
 
 [Advanced](#advanced) / [TOC](#table-of-contents)
 
