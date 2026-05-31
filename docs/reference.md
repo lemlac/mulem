@@ -1873,7 +1873,6 @@ Custom operators can be defined with `op`. These must be defined above where the
 Remainder :: op[order: 5.0, symbol: "rem", side: op.Infix, rightAssoc: False]
 
 int :: impl[Remainder] =
-    @inlined
     op[rem](self as lhs, rhs: int): int =
         lhs - rhs * (lhs // rhs)
 
