@@ -28,8 +28,8 @@ Comments are made with two minus signs `--`.
 
 ```mulem
 -- Single Line Comment
-(-- Mulit-Line Comment --)
-(-- (-- Nested Comment --) --)
+{- Mulit-Line Comment -}
+{- {- Nested Comment -} -}
 ```
 
 ### Dual Whitespace-Bracket System
@@ -176,35 +176,6 @@ i = 1   -- OK!
 
 `:=`​ and `=`​ are separated so that you don't accidentally mistype a variable name and create a new variable in scope. It also makes it easier to create compound assignment of custom operators such as `rem:=`​. 
 
-### Destructuring
-
-Tuples can be destructured like this:
-
-```mulem
-(a, b) = (1, 2)        -- Positional tuple.
-{x, y} = (x: 3, y: 4)  -- Named tuple.
-```
-
-When tuples are mixed, you can either use `(…) & {…}` or `{0 as x, …}`.
-
-```mulem
-tuple = (1, 2, x: 3, y: 4)
-(a, b) & {x, y} = tuple
-{0 as a, 1 as b, x, y} = tuple
-```
-
-Tuples can be spread into a function using the `&` prefix operator. Functions can have named parameters in the same manner as desctructuring.
-
-```mulem
-add(a: int, b: int) & {x: int, y: int}: int =
-    a + b + x + y
-
-add(&tuple)              -- Result: 10
-add(5, 6, x: 7, y: 8)    -- Result: 26
-```
-
-### References
-
 A reference can be declared with `ref`. It points to the same memory location as another variable. Its mutability is carried over.
 
 ```mulem
@@ -232,6 +203,33 @@ A `T%` can reference any variable of type `T`, but a `T%mu` can only reference m
 x = 0
 xRef: T% = %x         -- OK!
 xRef: T%mu = %mu x    -- Error!
+```
+
+### Destructuring
+
+Tuples can be destructured like this:
+
+```mulem
+(a, b) = (1, 2)        -- Positional tuple.
+{x, y} = (x: 3, y: 4)  -- Named tuple.
+```
+
+When tuples are mixed, you can either use `(…) & {…}` or `{0 as x, …}`.
+
+```mulem
+tuple = (1, 2, x: 3, y: 4)
+(a, b) & {x, y} = tuple
+{0 as a, 1 as b, x, y} = tuple
+```
+
+Tuples can be spread into a function using the `&` prefix operator. Functions can have named parameters in the same manner as desctructuring.
+
+```mulem
+fn add(a: int, b: int) & {x: int, y: int}: int =
+    a + b + x + y
+
+add(&tuple)              -- Result: 10
+add(5, 6, x: 7, y: 8)    -- Result: 26
 ```
 
 [TOC](#table-of-contents)
@@ -2181,11 +2179,11 @@ curryFn(a: char) =
             print("In function 3: {c}")
 
 curryFn('a')('b')('c')
-(-- Prints:
+{- Prints:
 "In function 1: a"
 "In function 2: b"
 "In function 3: c"
---)
+-}
 ```
 
 When capturing variables, each returned function needs to capture them separately.
@@ -2576,9 +2574,9 @@ b = True
 
 increment(c)   -- T is inferred Counter
 increment(f)   -- T is inferred float
-(--
+{-
 increment(b)   -- T is inferred bool which has no implementation, compile-time error
---)
+-}
 ```
 
 [Advanced](#advanced) / [TOC](#table-of-contents)
@@ -2644,9 +2642,9 @@ std{print} :: import
 
 exampleApp :: mod
 
-(-- 
-    Define a struct and implement a prototype.
---)
+{-
+ - Define a struct and implement a prototype.
+ -}
 User :: struct = 
     name: str
     age: int
@@ -2659,20 +2657,21 @@ User :: impl[Speaker] =
 
 FetchError :: error = (str)
 
-(-- 
-    A function returning an exclamation type (User or an Error).
-    It captures no outside state.
---)
+{-
+ - A function returning an exclamation type
+ - (User or an Error).
+ - It captures no outside state.
+ -}
 fn fetchUser(id: int): User! =
     if id > 0 then
         User(name: "Alice", age: 30)
     else
         raise FetchError("Invalid ID")
 
-(-- 
-    Main logic demonstrating error unwrapping (!) 
-    and the pipeline operator (|>).
---)
+{-
+ - Main logic demonstrating error unwrapping (!) 
+ - and the pipeline operator (|>).
+ -}
 do
     try
         -- Fetch the user, unwrap the exclamation, and pipe it forward
