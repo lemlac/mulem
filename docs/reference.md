@@ -234,7 +234,7 @@ tuple = (1, 2, x: 3, y: 4)
 Tuples can be spread into a function using the `&` prefix operator. Functions can have named parameters in the same manner as desctructuring.
 
 ```mulem
-fn add(a: int, b: int) & {x: int, y: int}: int =
+add(a: int, b: int) & {x: int, y: int}: int =
     a + b + x + y
 
 add(&tuple)              -- Result: 10
