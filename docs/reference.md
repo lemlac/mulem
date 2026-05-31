@@ -272,6 +272,19 @@ fn fib(n) =
         fib(n - 1) + fib(n - 2)
 ```
 
+Function overloading can lead to ambiguities, so you need to use `of` in order to resolve which definition you mean when you pass a function by value. *See [Untagged Unions](#untagged-unions) for how to use the keyword `of`.*
+
+```mulem
+fn add(a: int, b: int): int = a + b
+fn add(a: float, b: float): float = a + b
+
+fn withOneAndTwo(f(int, int): int): int = f(1, 2)
+fn withOneAndTwo(f(float, float): float): float = f(1.0, 2.0)
+
+withOneAndTwo(add)      -- Is this for ints or floats?
+withOneAndTwo(add of (int, int): int)   -- Resolved.
+```
+
 Unlike normal assignment with just `=`, `fn` assignment returns the function that it creates. **Lambda functions** are created by defining a function inside an expression with `fn`. A name can optionally be given to create a self-reference inside the lambda function.
 
 ```mulem
@@ -338,7 +351,7 @@ cb(2)     -- Result: 4
 
 There are reasons to use both `fn` and just `=`. Sometimes overloading creates ambiguities. Function pointers are always exact.
 
-```
+```mulem
 fn add(a: int, b: int): int = a + b
 fn add(a: float, b: float): float = a + b
 
@@ -351,8 +364,6 @@ addInt(a: int, b: int): int = add(a, b)
 
 withOneAndTwo(addInt)   -- Resolved.
 ```
-
-`of` is another option. *See [Untagged Unions](#untagged-unions).*
 
 ### Capturing
 
