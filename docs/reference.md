@@ -352,12 +352,6 @@ cb(2)     -- Result: 4
 There are reasons to use both `fn` and just `=`. Sometimes overloading creates ambiguities. Function pointers are always exact.
 
 ```mulem
-fn add(a: int, b: int): int = a + b
-fn add(a: float, b: float): float = a + b
-
-fn withOneAndTwo(f(int, int): int): int = f(1, 2)
-fn withOneAndTwo(f(float, float): float): float = f(1.0, 2.0)
-
 withOneAndTwo(add)      -- Is this for ints or floats?
 
 addInt(a: int, b: int): int = add(a, b)
