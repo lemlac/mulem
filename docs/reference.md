@@ -284,15 +284,81 @@ withOneAndTwo(add)      -- Is this for ints or floats?
 withOneAndTwo(add of (int, int): int)   -- Resolved.
 ```
 
+### Capturing
+
+Functions capture immutable variables automatically. Mutable variables must be captured with `%` in the function signature. If the function mutates the variable, then it should have `mu` before the variable name.
+
+```mulem
+amount = 1     -- Automatically captured.
+mu count = 0   -- Must be explicitly captured.
+
+increment() % (mu count): void =
+    count +:= amount
+
+getCount() % (count): int =
+    count
+
+increment()      -- Result: 1
+increment()      -- Result: 2
+increment()      -- Result: 3
+getCount()       -- Result:
+3
+```
+
 ### Function Pointers
 
 Declaring a function and setting it to a function creates a **function pointer**. This holds a single function and is treated like a value. It can't be overloaded, but it doesn't require `of` to get a particular dispatch since it can only hold one function. Notice that there's a colon `:` before the parameter. This distinguishes declarations and definities. We're saying this function pointer takes these arguments and types — parameter names ommitted
 
 ```mulem
 addInt: (int, int): int = add
+-- Or...
+addInt = add of (int, int): int
 ```
 
-Unlike normal assignment with just `=`, `fn` assignment returns the function that it creates. **Lambda functions** are created by defining a function inside an expression with `fn`. A name can optionally be given to create a self-reference inside the lambda function.
+These types of functions are analogous to regular assignment. They can either be immutable or mutable. Immutable function pointers can be shadowed, but they cannot be overloaded. You can pass them into other functions as values.
+
+```mulem
+addOne(x) = x + 1
+addTwo(x) = x + 2
+
+action = addOne
+action = addTwo   -- Previous action is now shadowed.
+
+array = map([1, 2, 3, 4], action)   -- Pass action as a value
+```
+
+Function pointers have the same type strictness as immutable variables, so trying to overload a function pointer will result in an error.
+
+```mulem
+x: int = 5
+x = "hello"  -- Error! Type mismatch
+
+addOneInt(x: int) = x + 1
+addOneFloat(x: float) = x + 1.0
+
+action: (int): int       -- function pointer of type (int): int
+action = addOneInt       -- OK!
+action = addOneFloat     -- Error! Same as assigning wrong type to a variable
+```
+
+Function pointers can also be mutable. You can set it to point to different functions or assigned a lambda function. The colon before the parameter `: (T): T` signifies that we are not defining a function, only declaring its type.
+
+```mulem
+mu cb: (int): int
+f1(x) = x + 1
+f2(x) = x - 1
+cb := f1
+cb(1)     -- Result: 2
+cb := f2
+cb(1)     -- Result: 0
+cb := fn(x) = x * 2
+cb(2)     -- Resu
+lt: 4
+```
+
+### Lambda Functions (`fn`)
+
+The keyword `fn` starts a **lambda function.** This creates a function pointer inside an expression. A name can optionally be given to create a self-reference inside the lambda function.
 
 ```mulem
 apiCall(fn(result) =
@@ -313,77 +379,18 @@ startCountdown(fn count(n) =
 , 10)
 ```
 
-### Function Pointers
-
-Immutable function pointers are declared like immutable variables but with parentheses before the equals sign. Parameter types and return type can be inferred.
+When you define a lambda function in an expression by itself, the function will be assigned to a variable with its name in that scope. In other words, saying `fn name(x) = x` is the same as `name = fn name(x) = x`.
 
 ```mulem
-f(x: int): int = x*x
-g(x) = x*x*x
-g(2)    -- Result: 8
-```
+fn callback(result) =
+    if result > 0 then
+        print("Success! {result}")
+    else
+        print("Failure! {result}")
 
-These types of functions are analogous to regular assignment. They are known as **function pointers** which can either be immutable or mutable. Immutable function pointers can be shadowed, but they cannot be overloaded. You can pass them into other functions as values.
+-- `callback` is a function pointer in this scope.
 
-```mulem
-action(x) = x + 1
-action(x) = x + 2   -- Previous action is now shadowed.
-
-array = map([1, 2, 3, 4], action)   -- Pass action as a value
-```
-
-Function pointers have the same type strictness as immutable variables, so trying to overload a function pointer will result in an error.
-
-```mulem
-x: int = 5
-x = "hello"  -- Error! Type mismatch
-
-add(x: int) = x + 1       -- function pointer of type (int): int
-add(x: float) = x + 1.0   -- Error! Same as assigning wrong type to a variable
-```
-
-Function pointers can also be mutable. You can set it to point to different functions or assigned a lambda function. The colon before the parameter `: (T): T` signifies that we are not defining a function, only declaring its type.
-
-```mulem
-mu cb: (int): int
-f1(x) = x + 1
-f2(x) = x - 1
-cb := f1
-cb(1)     -- Result: 2
-cb := f2
-cb(1)     -- Result: 0
-cb := fn(x) = x * 2
-cb(2)     -- Result: 4
-```
-
-There are reasons to use both `fn` and just `=`. Sometimes overloading creates ambiguities. Function pointers are always exact.
-
-```mulem
-withOneAndTwo(add)      -- Is this for ints or floats?
-
-addInt(a: int, b: int): int = add(a, b)
-
-withOneAndTwo(addInt)   -- Resolved.
-```
-
-### Capturing
-
-Functions capture immutable variables automatically. Mutable variables must be captured with `%` in the function signature. If the function mutates the variable, then it should have `mu` before the variable name.
-
-```mulem
-amount = 1     -- Automatically captured.
-mu count = 0   -- Must be explicitly captured.
-
-fn increment() % (mu count): void =
-    count +:= amount
-
-fn getCount() % (count): int =
-    count
-
-increment()      -- Result: 1
-increment()      -- Result: 2
-increment()      -- Result: 3
-getCount()       -- Result: 3
+apiCall(callback)
 ```
 
 [TOC](#table-of-contents)
@@ -742,7 +749,7 @@ x = maybe f(a?) else "fallback"
 Using `?` inside a function automatically infers a question return type `T?`.
 
 ```mulem
-fn addStuff(a: int, b: int): int? =
+addStuff(a: int, b: int): int? =
     x = getA()?
     y = getB()?
     x + y
@@ -751,13 +758,13 @@ fn addStuff(a: int, b: int): int? =
 Nested questions unwrap with multiple `??`:
 
 ```mulem
-fn unnest(x: int??): int? = x??
+unnest(x: int??): int? = x??
 ```
 
 Chain multiple `maybe` / `else` together untill you get a fallback:
 
 ```mulem
-fn getFirst(a: int, b: int, c: int): int =
+getFirst(a: int, b: int, c: int): int =
     ( maybe getA(a)? else
       maybe getB(b)? else
       maybe getC(c)? else
@@ -854,7 +861,7 @@ result = divide(1, 0) !: 0.0
 Using `!` inside a function automatically infers a exclamation return type `T!`.
 
 ```mulem
-fn riskyFn(a: int): int! =
+riskyFn(a: int): int! =
     b = step1(a)!
     c = step2(b)!
     c
@@ -865,7 +872,7 @@ fn riskyFn(a: int): int! =
 __`return`__ – Exits out of a function. If a value is after it, that value is the return value, otherwise it's `void`. This must match the return type of the function. Last-line evaluation is still enabled by default.
 
 ```mulem
-fn isThirteen(x) =
+isThirteen(x) =
     if x == 13 then
         return True  -- Exits the function and returns true.
     False            -- Returns false.
@@ -875,7 +882,7 @@ __`raise`__ – Return out of the function with an error value. The function mus
 
 ```mulem
 -- T!E is inferred:
-fn alwaysFail() =
+alwaysFail() =
     raise MyError("error message")
 
 try
@@ -890,7 +897,7 @@ catch
 Runs after a function done. For iterator functions, this is when the iterator was broken or exhausted. For asynchronous functions, this is when the asynchronous type is resolved or rejected. Each `defer` statement go in reverse order: *first-in last-out*. It can be one line `defer …` or a block `defer do`. Generally though it's just one line like `defer cleanUp()`. 
 
 ```mulem
-fn deferPrint() =
+deferPrint() =
     defer print("Last")
     print("First")
     defer print("Second to last")
@@ -2074,13 +2081,13 @@ print("{addOptional(1, 1)}")  -- Prints "2"
 When calling a function with an explicit `T?`, you give it a value of `T?`. When calling a function with `opt`, you give it a value of `T`. 
 
 ```mulem
-fn optionalParam(opt val: int) =
+optionalParam(opt val: int) =
     if val is Some(x) then
         print("Some({x})")
     else
         print("None")
 
-fn requiredParam(val: int?) =
+requiredParam(val: int?) =
     if val is Some(x) then
         print("{x}")
     else
@@ -2098,7 +2105,7 @@ requiredParam(None)      -- Prints "None"
 `opt` parameters can also have default values. Use `=` to to give an optional parameter a default value. This will make it a type `T`, so unwrapping is unnecessary.
 
 ```mulem
-fn addOptional(opt a = 0, opt b = 0): int = a + b     -- `a` and `b` are always `int`s
+addOptional(opt a = 0, opt b = 0): int = a + b     -- `a` and `b` are always `int`s
 
 print("{addOptional()}")      -- Prints "0"
 print("{addOptional(1)}")     -- Prints "1"
@@ -2108,7 +2115,7 @@ print("{addOptional(1, 1)}")  -- Prints "2"
 Use `*` to collect all arguments into a single variable. The variable should be type `[*T]` (an array).
 
 ```mulem
-fn addAll(*nums: [*int]): int =
+addAll(*nums: [*int]): int =
     mu sum: int = 0
     loop n in nums:
         sum +:= n
@@ -2122,7 +2129,7 @@ print("{addAll(1, 2, 3)}")  -- Prints "6"
 
 ```mulem
 -- With pattern matching:
-fn addAll(*nums: [*int]): int =
+addAll(*nums: [*int]): int =
     match nums is
     | []            = 0
     | [x]           = x
@@ -2132,14 +2139,14 @@ fn addAll(*nums: [*int]): int =
 A name is optional after `*`. You can use the symbol by itself to pass it to another function or itself in a functional loop. 
 
 ```mulem
-fn addAll(x: int, *): int =
+addAll(x: int, *): int =
     x + addAll(*)
-fn addAll(x: int): int =
+addAll(x: int): int =
     x
-fn addAll(): int =
+addAll(): int =
     0
 
-fn logAndAdd(msg: str, *) =
+logAndAdd(msg: str, *) =
     print("{msg} {addAll(*)}")
 
 logAndAdd("Sum =")           -- Prints "Sum = 0"
@@ -2202,8 +2209,8 @@ forEach([1, 2, 3, 4], fn(x) % (mu count) =
 When a function returns another function, list each function parameters as the return type. Optionally, you can just let the return type be inferred.
 
 ```mulem
-curriedFn(a: int): (int): (int): int = _                 -- Immutable declaration
-mu curriedFnPtr(int): (int): (int): int = curriedFn      -- Mutable declaration. 
+fn curriedFn(a: int): (int): (int): int = _                 -- Immutable declaration
+mu curriedFnPtr: (int): (int): (int): int = curriedFn      -- Mutable declaration. 
 ```
 
 The return type can be implied. Each function defined at the bottom is the implied return.
@@ -2465,13 +2472,13 @@ match s2 is
 Function parameters/return types use reference types `T%`/`Y%mu` which determine if `ref` is mutable or immutable
 
 ```mulem
-fn getField(s: SomeStruct%): int% = s.value
+getField(s: SomeStruct%): int% = s.value
 
 ref x = getField(myStruct)   -- x: int%, immutable
 ```
 
 ```mulem
-fn increment(x: int%mu): void =
+increment(x: int%mu): void =
     x +:= 1
 
 mu x = 0
@@ -2495,7 +2502,7 @@ loop nextValue() is Some(ref x) then
 Exits out of a function with an `iter[_]` type. The return value of the function must be of type `iter[T]` where T is the yield type. When you have `yield` in your function, the actual return value in the function body is discarded, and using `return …` in it is a compile-time error. Use of `yield` will infer the return type to be `iter[_]`. 
 
 ```mulem
-fn countUpTo(n: int): iter[int] =
+countUpTo(n: int): iter[int] =
     loop i in 0..n then
         yield i
 ```
@@ -2503,7 +2510,7 @@ fn countUpTo(n: int): iter[int] =
 If you use `yield`, you can only use a void `return` to exit the function. 
 
 ```mulem
-fn countUntil(mu i: int, max: int): iter[int] =
+countUntil(mu i: int, max: int): iter[int] =
      loop
         if i >= max then
             return      -- Break out of the loop and the function.
@@ -2516,7 +2523,7 @@ fn countUntil(mu i: int, max: int): iter[int] =
 Exits out of a function with an `async[_]` type. The return type of the function must be of type `async[T]` where T is the type that the asynchronous value will resolve in the end. The return value of the asynchronous instance is determined the same way that a non-asynchronous function does it. Use of `await` will infer the return type to be `async[_]`. 
 
 ```mulem
-fn asyncFn(a, b): async[int] =
+asyncFn(a, b): async[int] =
     a = await fetch(a)
     b = await fetch(b)
     a + b
@@ -2525,12 +2532,12 @@ fn asyncFn(a, b): async[int] =
 Both `yield` and `await` can be used together in an `iter[async[_]]` type. The type suggests it—each yield is of type `async[_]`. Use `loop await` to wait for each async value to resolve in sequential order.
 
 ```mulem
-fn asyncIterFn(n): iter[async[int]] =
+asyncIterFn(n): iter[async[int]] =
     loop i in 0..n then
         val = await fetch(i)
         yield val
 
-fn asyncCollect(n): async[[*int]] =
+asyncCollect(n): async[[*int]] =
     mu ret: [*int] = []
     loop (await x) in asyncIterFn(n) then
         ret <>= x
@@ -2643,7 +2650,7 @@ someModule{thing} :: import "../../somewhere.mu"
 
 myModule :: mod
 
-fn addThing(x) = x + thing
+addThing(x) = x + thing
 ```
 
 In this example, you would import `addThing` like this (assuming the file is included):
@@ -2700,7 +2707,7 @@ FetchError :: error = (str)
  - (User or an Error).
  - It captures no outside state.
  -}
-fn fetchUser(id: int): User! =
+fetchUser(id: int): User! =
     if id > 0 then
         User(name: "Alice", age: 30)
     else
