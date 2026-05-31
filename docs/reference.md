@@ -391,6 +391,14 @@ startCountdown(fn count(n) =
 When you define a lambda function in an expression by itself, the function will be assigned to a variable with its name in that scope. In other words, saying `fn name(x) = x` is the same as `name = fn name(x) = x`.
 
 ```mulem
+callback = fn callback(result) =
+    if result > 0 then
+        print("Success! {result}")
+    else
+        print("Failure! {result}")
+
+-- Or just:
+
 fn callback(result) =
     if result > 0 then
         print("Success! {result}")
@@ -1834,6 +1842,8 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 |     `not rhs`  | Logical NOT                                          |
 |  `lhs ?: rhs`  | `None`- coalescing                                   |
 |  `lhs !: rhs`  | Error-coalescing                                     |
+
+`/=` was picked over `!=` to keep `!` related to errors. A coder can scan for `!` and know that's a potential error point.
 
 Some math operators will be put into a standard library. These will be inlined to ensure performance.
 
