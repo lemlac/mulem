@@ -196,22 +196,22 @@ x        -- Value: 1
 
 *For more info on `ref`, see [References](#references-ref) down below.*
 
-Explicit reference types are `T%` (immutable) and `T%mu` (mutable). Use `%` and `%mu` prefix operators to get a memory address.
+Explicit reference types are `%T` (immutable) and `%mu T` (mutable). Use `%` and `%mu` prefix operators to get a memory address.
 
 ```mulem
 mu x = 0
-xRef: T% = %x
+xRef: %int = %x
 xRef := 1  -- Error!
-xRef: T%mu = %mu x
+xRef: %mu int = %mu x
 xRef := 1  -- OK!
 ```
 
-A `T%` can reference any variable of type `T`, but a `T%mu` can only reference mutable variables.
+A `%T` can reference any variable of type `T`, but a `%mu T` can only reference mutable variables.
 
 ```mulem
 x = 0
-xRef: T% = %x         -- OK!
-xRef: T%mu = %mu x    -- Error!
+xRef: %int = %x         -- OK!
+xRef: %mu int = %mu x    -- Error!
 ```
 
 ### Destructuring
@@ -1393,14 +1393,14 @@ defer free[student]
 -- Use student freely below.
 ```
 
-When you are sure that a pointer exists, you can use `^.` for raw access, but if you aren't sure you can use just `.` to do a safe pointer check. This will return a `T%mu?` of that member.
+When you are sure that a pointer exists, you can use `^.` for raw access, but if you aren't sure you can use just `.` to do a safe pointer check. This will return a `%mu T?` of that member.
 
 ```
 student^.name := "John Smith"    -- Raw access
 student.name? := "John Smith"    -- Safe access
 ```
 
-`student.name` is a safe pointer operation like `.[]` for arrays, so you would write `student.name?`; because `student` isn't a question type `T?` but `student._` returns a question type of `T%mu?` of that member.
+`student.name` is a safe pointer operation like `.[]` for arrays, so you would write `student.name?`; because `student` isn't a question type `T?` but `student._` returns a question type of `%mu T?` of that member.
 
 This makes it easier to chain when you have a safe pointer `T^?`/`T^mu?`
 
@@ -1894,7 +1894,7 @@ __Compound Assignment Operators:__
 |  `T?`, `x?`    | Question           | Unwraps a question; propagates `None` to nearest `maybe`. |
 |  `T!`, `x!`    | Exclamation        | Unwraps a exclamation; propagates error to nearest `try`. |
 |  `T^`, `x^`    | Pointer            | Dereference a pointer.                                    |
-|  `T%`, `%x`    | Reference          | Get a reference to a place in memory.                     |
+|  `%T`, `%x`    | Reference          | Get a reference to a place in memory.                     |
 
 [TOC](#table-of-contents)
 
@@ -2466,10 +2466,10 @@ if x is Some(x) then
 
 ```
 mu x = 5
-ref y = x     -- y: int%mu, x is mutable so ref inherits it
+ref y = x     -- y: in%mu T, x is mutable so ref inherits it
 
 x2 = 5
-ref y2 = x2   -- y2: int%, x2 is immutable
+ref y2 = x2   -- y2: in%T, x2 is immutable
 ```
 
 If the enum is immutable or mutable, then adding `ref` on a pattern's data should match its mutability like when using `ref` on another variable.
@@ -2477,25 +2477,25 @@ If the enum is immutable or mutable, then adding `ref` on a pattern's data shoul
 ```mulem
 mu s = SomeStruct(value: 42)
 match s is
-| SomeStruct(ref value) =   -- value: int%mu, s is mutable
+| SomeStruct(ref value) =   -- value: in%mu T, s is mutable
     value := 100            -- modifies s.value in-place, no copy
 
 s2 = SomeStruct(value: 42)
 match s2 is
-| SomeStruct(ref value) =   -- value: int%, s2 is immutable
+| SomeStruct(ref value) =   -- value: in%T, s2 is immutable
     print("{value}")        -- read-only, no copy
 ```
 
-Function parameters/return types use reference types `T%`/`Y%mu` which determine if `ref` is mutable or immutable
+Function parameters/return types use reference types `%T`/`Y%mu` which determine if `ref` is mutable or immutable
 
 ```mulem
-getField(s: SomeStruct%): int% = s.value
+getField(s: SomeStruc%T): in%T = s.value
 
-ref x = getField(myStruct)   -- x: int%, immutable
+ref x = getField(myStruct)   -- x: in%T, immutable
 ```
 
 ```mulem
-increment(x: int%mu): void =
+increment(x: in%mu T): void =
     x +:= 1
 
 mu x = 0
@@ -2505,7 +2505,7 @@ x            -- Value is 1
 
 ```mulem
 loop nextValue() is Some(ref x) then
-    x := transform(x)   -- mutates in place if iterator yields mutable refs `iter[T%mu?]`
+    x := transform(x)   -- mutates in place if iterator yields mutable refs `iter[%mu T?]`
 ```
 
 [Advanced](#advanced) / [TOC](#table-of-contents)
