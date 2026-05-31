@@ -46,7 +46,7 @@ Comments are made with two minus signs `--`.
 Mulem is whitespace significant. Indentation determines when blocks start and end. Expressions are split by line-breaks and semi-colons (`;`). The value of each block is the last expression evaluated in it. 
 
 ```mulem
-block
+do
     expr
 
 expr
