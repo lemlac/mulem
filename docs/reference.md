@@ -4,6 +4,19 @@
 
 __The Mulem programming language__ is a general-purpose, expression-oriented language designed to balance conciseness and eloquence. It delivers highly readable syntax, robust safety mechanisms, granular execution control, and expressive data pipelining. Supporting both interpretation and compilation, Mulem is ideally suited for systems programming, AI, and game development.
 
+## Design Philosophy & Naming Choices
+
+Mulem is intentionally designed with a **compact, distinctive aesthetic**. We favor short keywords and symbols where they improve readability without sacrificing clarity.
+
+- `mu` is used instead of `mut` for mutable variables. This is a deliberate choice for brevity and to give Mulem its own voice, rather than following Rust conventions.
+- Similar short forms are used elsewhere (`rem`, `bor`, `band`, `bxor`, etc.) as part of a consistent minimalist naming strategy.
+- We are **not interested in changing these** to longer or more conventional alternatives. Feedback suggesting `mut`, `mutable`, or similar will be ignored.
+
+This design prioritizes:
+- **Conciseness** without excessive sigils
+- **Distinct identity** separate from existing languages
+- **Consistency** in short, pronounceable keywords
+
 ---
 
 ## Table of Contents
@@ -162,7 +175,7 @@ lunch =
         "sandwich"
 ```
 
-Mutable variables are declared with the keyword `mu` before it. They must be set with the `:=` operator or any compound assignment operators such as `+:=` or `-:=`. Shadowing a mutable variable with `=` will throw an error unless redeclared with `: T` / `: *`. 
+Mutable variables are declared with the keyword `mu` before it. They must be set with the `:=` operator or any compound assignment operators such as `+:=` or `-:=`. Shadowing a mutable variable with `=` will throw an error unless redeclared with `: T` / `: *`. `mu` is the keyword for mutable variables, deliberately chosen over `mut` for conciseness and language identity.
 
 ```mulem
 mu i = 0
