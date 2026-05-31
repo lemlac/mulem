@@ -1539,6 +1539,13 @@ withOneAndTwo(add of (int, int): int)
 withOneAndTwo(add of (float, float): float)
 ```
 
+`of` has a single consistent meaning of *give this specific type's interpretation of this thing that could be multiple types.* A coder who understands `of` on value unions will immediately understand what it means on overloaded functions, and vice versa.
+
+- `u of int` — select the int interpretation from a value union
+- `add of (int, int): int` — select the (int, int): int interpretation from a function union
+
+This explains *why* overload resolution sometimes needs manual help — for the same reason you sometimes need to tell the compiler which union member you mean. 
+
 ### Error Types (`error`)
 
 Errors are bit like both `struct` and `enum`. Each `error` type represents a member of a potential **error tagged union** that's summed up per function with a exclamation type `T!E` return type. Every `try` / `catch` block matches patterns to the summed error tagged union in its block based on each `!` point. Exclamation types flatten, so `Exclamation[Exclamation[T, E], F]` would become `Exclamation[T, E|F]` where `E|F` is a tagged union of each possible error in that exclamation. Instantiation works the same as structs.
