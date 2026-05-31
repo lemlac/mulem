@@ -615,6 +615,8 @@ loop item in inventory; idx +:= 1 then
     print("Slot {idx}: {item}")
 ```
 
+The only 2 keywords that allow sequenced expressions with `;` are `do` and `loop` and they do it for different reasons. `do` starts a normal sequence, and `loop` separates its subject from steps. There could have been a separate keyword like `each` or `step`, but then the subject line would get very long.
+
 Because `do` blocks isolate scopes and inline expressions sequence seamlessly, you can combine `do` and `loop` to create a traditional, strictly scoped counter loop without requiring a distinct `for` keyword:
 
 ```mulem
@@ -626,6 +628,16 @@ do mu i = 1; loop i <= 100; i +:= 1 then
     print("{i}")
 
 -- 'i' is automatically out of scope and cleaned up here
+```
+
+Note that even though it's possible to do a C-style for-loop, it's preferable to do a `loop in` with a range instead.
+
+```mulem
+loop i in 1..=100 then
+    if i rem 10 == 0 then
+        print("{i}!!!")
+        continue
+    print("{i}")
 ```
 
 Inlined `loop x in` returns a lazy iterator collected with `*`.
