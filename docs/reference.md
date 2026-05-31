@@ -94,7 +94,7 @@ In this example, the result is a tuple of `(expr3, expr4)`.
 The benefit of this is that you can mix the two when you need them, such as passing a lambda function into a function.
 
 ```mulem
-apiCall(_(result) =
+apiCall(fn(result) =
     if result > 0 then
         print("Success! {result}")
     else
