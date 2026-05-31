@@ -254,7 +254,7 @@ divide(a: int, b: int): int = a // b
 divide(a: float, b: float: float = a / b
 
 divide(5, 2)       -- Result: 2
-divide(5.0, 2.0)   -- Reuslt: 2.5
+divide(5.0, 2.0)   -- Result: 2.5
 ```
 
 The parameters and return types can be inferred. Functions can have multiple lines by adding a line break after the `=` sign. The last expression evalued is the implied return.
@@ -954,9 +954,9 @@ Last
   - `"""Multi-Line String"""`
   - `''Raw String''`
 - __[Arrays](#arrays):__
-  - `: [*T]` – dyanmic array
+  - `: [*T]` – dynamic array
   - `: [N*T]` – fixed array
-  - `: [**T]` – 2D dyanmic array
+  - `: [**T]` – 2D dynamic array
   - `: [N*M*T]` – 2D fixed array
 - __[Dictionaries](#dictionaries):__
   - `: [K:T]` – `K` is key type, `T` is value type
