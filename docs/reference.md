@@ -2466,10 +2466,10 @@ if x is Some(x) then
 
 ```
 mu x = 5
-ref y = x     -- y: in%mu T, x is mutable so ref inherits it
+ref y = x     -- y: %mu int, x is mutable so ref inherits it
 
 x2 = 5
-ref y2 = x2   -- y2: in%T, x2 is immutable
+ref y2 = x2   -- y2: %int, x2 is immutable
 ```
 
 If the enum is immutable or mutable, then adding `ref` on a pattern's data should match its mutability like when using `ref` on another variable.
@@ -2477,25 +2477,25 @@ If the enum is immutable or mutable, then adding `ref` on a pattern's data shoul
 ```mulem
 mu s = SomeStruct(value: 42)
 match s is
-| SomeStruct(ref value) =   -- value: in%mu T, s is mutable
+| SomeStruct(ref value) =   -- value: %mu int, s is mutable
     value := 100            -- modifies s.value in-place, no copy
 
 s2 = SomeStruct(value: 42)
 match s2 is
-| SomeStruct(ref value) =   -- value: in%T, s2 is immutable
+| SomeStruct(ref value) =   -- value: %int, s2 is immutable
     print("{value}")        -- read-only, no copy
 ```
 
-Function parameters/return types use reference types `%T`/`Y%mu` which determine if `ref` is mutable or immutable
+Function parameters/return types use reference types `%T`/`%mu T` which determine if `ref` is mutable or immutable
 
 ```mulem
-getField(s: SomeStruc%T): in%T = s.value
+getField(s: %SomeStruct): %int = s.value
 
-ref x = getField(myStruct)   -- x: in%T, immutable
+ref x = getField(myStruct)   -- x: %int, immutable
 ```
 
 ```mulem
-increment(x: in%mu T): void =
+increment(x: %mu int): void =
     x +:= 1
 
 mu x = 0
