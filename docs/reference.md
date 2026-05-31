@@ -214,6 +214,8 @@ xRef := 1
 x        -- Value: 1
 ```
 
+*For more info on `ref`, see [References](#references-ref) down below.*
+
 Explicit reference types are `T%` (immutable) and `T%mu` (mutable). Use `%` and `%mu` prefix operators to get a memory address.
 
 ```mulem
@@ -1825,6 +1827,7 @@ __Compound Assignment Operators:__
 - __[Parameter Modifiers](#parameter-modifiers)__
 - __[Lambda Functions](#lambda-functions)__
 - __[Pattern Matching](#pattern-matching)__
+- __[References (`ref`}](#references-ref)__
 - __[Iterator / Async Functions](#iterator-async-functions)__
 - __[Inheritance and Visibility](#inheritance-and-visibility)__
 - __[Manual Implementation](#manual-implementation)__
@@ -2448,6 +2451,12 @@ until getValue() is Pattern(opt x)
 if x is Some(x) then
     print("{x}")
 ```
+
+[Advanced](#advanced) / [TOC](#table-of-contents)
+
+---
+
+### References (`ref`}
 
 [Advanced](#advanced) / [TOC](#table-of-contents)
 
