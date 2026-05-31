@@ -4,13 +4,9 @@
 
 __The Mulem programming language__ is a general-purpose, expression-oriented language designed to balance conciseness and eloquence. It delivers highly readable syntax, robust safety mechanisms, granular execution control, and expressive data pipelining. Supporting both interpretation and compilation, Mulem is ideally suited for systems programming, AI, and game development.
 
-## Design Philosophy & Naming Choices
+## Design Philosophy
 
-Mulem is intentionally designed with a **compact, distinctive aesthetic**. We favor short keywords and symbols where they improve readability without sacrificing clarity.
-
-- `mu` is used instead of `mut` for mutable variables. This is a deliberate choice for brevity and to give Mulem its own voice, rather than following Rust conventions.
-- Similar short forms are used elsewhere (`rem`, `bor`, `band`, `bxor`, etc.) as part of a consistent minimalist naming strategy.
-- We are **not interested in changing these** to longer or more conventional alternatives. Feedback suggesting `mut`, `mutable`, or similar will be ignored.
+Mulem is intentionally designed with a **compact, distinctive aesthetic**. It favors short keywords and symbols where they improve readability without sacrificing clarity.
 
 This design prioritizes:
 - **Conciseness** without excessive sigils
