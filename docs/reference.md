@@ -242,8 +242,8 @@ Functions are declared using the keyword `fn`. Analogous to `mu`, this changes t
 
 `fn` and `mu`/`=` have distinct purposes as will be demonstrated later in this section.
 
-- `fn` — *entering the dispatch system, it may have multiple overloads*
-- `mu`/`=` — *exact function value, one concrete type*
+- `fn` — entering the dispatch system, it may have multiple overloads
+- `mu`/`=` — exact function value, one concrete type
 
 ```mulem
 fn divide(a: int, b: int): int = a // b
@@ -1965,23 +1965,6 @@ When mixed with `do`, multiple expressions separated by semicolons `;` on one li
 |> do print("{$}"); fetchB(&$)   -- Print result, then fetchB
 |> do print("{$}"); fetchC(&$)   -- Print result, then fetchC
 |> print("{$}")                  -- Print result.
-```
-
-Note that `|>` at the beginning of a line is different from `\ |>` which is a split expression on the next line. The pipe will continue after it.
-
-```mulem
-|> fetchA()
-\ |> fetchB(&$)
-|> fetchC(&$)
-|> print("{$}")
-```
-
-*Is the same as…*
-
-```mulem
-|> fetchA() |> fetchB(&$)    -- Goes back to this line.
-|> fetchC(&$)                -- Pipe from the previous statement.
-|> print("{$}")
 ```
 
 A **pipeline block** is started with `|> do` and a new line, either at the end of a line or on its own line. Within the block, `$` holds the piped-in value within the scope of that block.
