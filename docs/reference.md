@@ -238,16 +238,11 @@ add(5, 6, x: 7, y: 8)    -- Result: 26
 
 ## Functions
 
-Functions are declared using the keyword `fn`. Analogous to `mu`, this changes the behavior of subsequent declarations. Functions declared with `fn` are visible to other functions in the scope. They can be overloaded with new `fn` declarations of the same name. Overloaded functions are dispatched to the scope that they're defined in.
-
-`fn` and `mu`/`=` have distinct purposes as will be demonstrated later in this section.
-
-- `fn` — entering the dispatch system, it may have multiple overloads
-- `mu`/`=` — exact function value, one concrete type
+Functions are declared by adding parameters before the equals sign `() = `. Functions declared this way are visible to other functions in the scope no matter what order. They can be overloaded with new declarations of the same name. Overloaded functions are dispatched to the scope that they're defined in.
 
 ```mulem
-fn divide(a: int, b: int): int = a // b
-fn divide(a: float, b: float: float = a / b
+divide(a: int, b: int): int = a // b
+divide(a: float, b: float: float = a / b
 
 divide(5, 2)       -- Result: 2
 divide(5.0, 2.0)   -- Reuslt: 2.5
@@ -256,14 +251,14 @@ divide(5.0, 2.0)   -- Reuslt: 2.5
 The parameters and return types can be inferred. Functions can have multiple lines by adding a line break after the `=` sign. The last expression evalued is the implied return.
 
 ```mulem
-fn isThirteen(x) =
+isThirteen(x) =
     if x == 13 then
         return True
     False
 ```
 
 ```mulem
-fn fib(n) = 
+fib(n) = 
     if n < 1 then
         0
     else if n < 2 then
@@ -275,14 +270,26 @@ fn fib(n) =
 Function overloading can lead to ambiguities, so you need to use `of` in order to resolve which definition you mean when you pass a function by value. *See [Untagged Unions](#untagged-unions) for how to use the keyword `of`.*
 
 ```mulem
-fn add(a: int, b: int): int = a + b
-fn add(a: float, b: float): float = a + b
+add(a: int, b: int): int =
+    a + b
+add(a: float, b: float): float =
+    a + b
 
-fn withOneAndTwo(f(int, int): int): int = f(1, 2)
-fn withOneAndTwo(f(float, float): float): float = f(1.0, 2.0)
+fn withOneAndTwo(f(int, int): int): int =
+    f(1, 2)
+fn withOneAndTwo(f(float, float): float): float =
+    f(1.0, 2.0)
 
 withOneAndTwo(add)      -- Is this for ints or floats?
 withOneAndTwo(add of (int, int): int)   -- Resolved.
+```
+
+### Function Pointers
+
+Declaring a function and setting it to a function creates a **function pointer**. This holds a single function and is treated like a value. It can't be overloaded, but it doesn't require `of` to get a particular dispatch since it can only hold one function. Notice that there's a colon `:` before the parameter. This distinguishes declarations and definities. We're saying this function pointer takes these arguments and types — parameter names ommitted
+
+```mulem
+addInt: (int, int): int = add
 ```
 
 Unlike normal assignment with just `=`, `fn` assignment returns the function that it creates. **Lambda functions** are created by defining a function inside an expression with `fn`. A name can optionally be given to create a self-reference inside the lambda function.
