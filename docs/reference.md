@@ -1376,6 +1376,8 @@ Pointers and arrays follow the same model of safe and raw operators.
 | __Safe (`T?`)__ | `.member` | `.[index]` |
 | __Raw (`T`)__ | `^.member` | `^[index]` |
 
+`?:` can also work on pointers, but know that it only returns a **copy** of what a pointer is referencing, not the reference itself. Use it if you only care about the value and not the reference.
+
 ### Questions `T?` and Exclamations `T!E`
 
 These are Mulem's 2 built-in monadic types. 
