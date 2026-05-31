@@ -1369,6 +1369,13 @@ This makes it easier to chain when you have a safe pointer `T^?`/`T^mu?`
 pointer?.field1?.field2?.field3?    -- Unwrap each field
 ```
 
+Pointers and arrays follow the same model of safe and raw operators.
+
+| | Member (Pointers) | Index (Arrays) |
+|:--|:--|:--|
+| __Safe (`T?`)__ | `.member` | `.[index]` |
+| __Raw (`T`)__ | `^.member` | `^[index]` |
+
 ### Questions `T?` and Exclamations `T!E`
 
 These are Mulem's 2 built-in monadic types. 
