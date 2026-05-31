@@ -2147,7 +2147,7 @@ Capturing also works inside lambda functions just like with named functions.
 
 ```mulem
 mu count = 0
-forEach([1, 2, 3, 4], fn(x) / (count) =
+forEach([1, 2, 3, 4], fn(x) % (mu count) =
     count +:= x
 )
 ```
