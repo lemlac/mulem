@@ -238,7 +238,7 @@ add(5, 6, x: 7, y: 8)    -- Result: 26
 
 ## Functions
 
-Functions are declared using the keyword `fn`. Analogous to `mu`, this changes the behavior of subsequent declarations. Functions declared with `fn` are visible to other functions in the scope. They can be overloaded with new `fn` declarations of the same name.
+Functions are declared using the keyword `fn`. Analogous to `mu`, this changes the behavior of subsequent declarations. Functions declared with `fn` are visible to other functions in the scope. They can be overloaded with new `fn` declarations of the same name. Overloaded functions are dispatched to the scope that they're defined in.
 
 `fn` and `mu`/`=` have distinct purposes as will be demonstrated later in this section.
 
