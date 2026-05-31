@@ -607,9 +607,7 @@ else
     print("Never ran")
 ```
 
-When the parser encounters `loop`, it enters a *loop subject state.* Semicolons encountered in this state do not terminate the statement; they serve as delimiters for the step expressions. This state remains active until the parser matches the loop's body terminator (`then` or `until`).
-
-When you have one or more semicolons `;` in the subject of a `loop` before `then`, the first in the sequence will be the loop's subject field (such as a condition or `in` expression) and the other expressions will run at the end of each iteration of the loop. 
+Steps may optionally be added to the loop's subject line. This is done by adding a colon `:` between the subject and `then`. An expression after `:` will run at the end of each iteration of the loop. 
 
 ```mulem
 -- The Dangerous Way
@@ -625,7 +623,7 @@ loop i <= 100 then
 
 -- The Safe Way
 mu i = 1
-loop i <= 100; i +:= 1 then
+loop i <= 100: i +:= 1 then
     if i rem 10 == 0 then
         print("{i}!!!")
         continue    -- Automatically triggers `i +:= 1` before checking condition again
@@ -635,17 +633,15 @@ loop i <= 100; i +:= 1 then
 ```mulem
 -- Track index of `loop / in`
 mu idx = 0
-loop item in inventory; idx +:= 1 then
+loop item in inventory: idx +:= 1 then
     print("Slot {idx}: {item}")
 ```
-
-The only 2 keywords that allow sequenced expressions with `;` are `do` and `loop` and they do it for different reasons. `do` starts a normal sequence, and `loop` separates its subject from steps. There could have been a separate keyword like `each` or `step`, but then the subject line would get very long.
 
 Because `do` blocks isolate scopes and inline expressions sequence seamlessly, you can combine `do` and `loop` to create a traditional, strictly scoped counter loop without requiring a distinct `for` keyword:
 
 ```mulem
 -- C-style for loop
-do mu i = 1; loop i <= 100; i +:= 1 then
+do mu i = 1; loop i <= 100: i +:= 1 then
     if i rem 10 == 0 then
         print("{i}!!!")
         continue
