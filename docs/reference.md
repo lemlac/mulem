@@ -1193,6 +1193,22 @@ c = a <> b                  -- == [1, 2, 3, 0, 1, 2, 3, 4]
 d = [0, *a <> b, 5, *c, 6]  -- == [0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 1, 2, 3, 0, 1, 2, 3, 4, 6]
 ```
 
+The `<>` is used for concatenating two arrays, and its complement operators are `>>` *prepend* and `<<` *append.* For an array of type `[*T]`, these take a type `T` on the side opposite of where they point. `>>` is right associative, allow you to chain multiple prepends onto one array. 
+
+```mulem
+1 >> 2 >> 3 >> [4]  -- Value: [1, 2, 3, 4]
+[1] << 2 << 3 << 4  -- Value: [1, 2, 3, 4]
+1 >> [2] << 3 << 4  -- Value: [1, 2, 3, 4]
+```
+
+Splitting arrays is accomplished with destructuring, just like you can do with tuples.
+
+```mulem
+[head, *tail] = [1, 2, 3, 4]
+head    -- Value: 1
+tail    -- Value: [2, 3, 4]
+```
+
 If you spread an array into a tuple, the type must be known and the tuple must have compatible components. Positional components will map to array indexes or iterator yields based on where the spread is placed inside the tuple. If the tuple runs out of space, the spread will be truncated. This works similar to variadic parameters in functions.
 
 ```mulem
