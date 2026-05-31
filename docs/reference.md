@@ -284,9 +284,9 @@ add(a: int, b: int): int =
 add(a: float, b: float): float =
     a + b
 
-fn withOneAndTwo(f(int, int): int): int =
+withOneAndTwo(f(int, int): int): int =
     f(1, 2)
-fn withOneAndTwo(f(float, float): float): float =
+withOneAndTwo(f(float, float): float): float =
     f(1.0, 2.0)
 
 withOneAndTwo(add)      -- Is this for ints or floats?
