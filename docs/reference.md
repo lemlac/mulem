@@ -222,22 +222,22 @@ x        -- Value: 1
 
 *For more info on `ref`, see [References](#references-ref) down below.*
 
-Explicit reference types are `%T` (immutable) and `%mu T` (mutable). Use `%` and `%mu` prefix operators to get a memory address.
+Explicit reference types are `@T` (immutable) and `@mu T` (mutable). Use `@` and `@mu` prefix operators to get a memory address.
 
 ```mulem
 mu x = 0
-xRef: %int = %x
+xRef: @int = @x
 xRef := 1  -- Error!
-xRef: %mu int = %mu x
+xRef: @mu int = @mu x
 xRef := 1  -- OK!
 ```
 
-A `%T` can reference any variable of type `T`, but a `%mu T` can only reference mutable variables.
+A `@T` can reference any variable of type `T`, but a `@mu T` can only reference mutable variables.
 
 ```mulem
 x = 0
-xRef: %int = %x         -- OK!
-xRef: %mu int = %mu x    -- Error!
+xRef: @int = @x         -- OK!
+xRef: @mu int = @mu x    -- Error!
 ```
 
 ### Destructuring
@@ -321,16 +321,16 @@ withOneAndTwo(add of (int, int): int)   -- Resolved.
 
 ### Capturing
 
-Functions capture immutable variables automatically. Mutable variables must be captured with `%` in the function signature. If the function mutates the variable, then it should have `mu` before the variable name.
+Functions capture immutable variables automatically. Mutable variables must be captured with `@` in the function signature. If the function mutates the variable, then it should have `mu` before the variable name.
 
 ```mulem
 amount = 1     -- Automatically captured.
 mu count = 0   -- Must be explicitly captured.
 
-increment() % (mu count): void =
+increment() @ (mu count): void =
     count +:= amount
 
-getCount() % (count): int =
+getCount() @ (count): int =
     count
 
 increment()      -- Result: 1
@@ -1260,12 +1260,12 @@ c = a <> b                  -- == [1, 2, 3, 0, 1, 2, 3, 4]
 d = [0, *a <> b, 5, *c, 6]  -- == [0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 1, 2, 3, 0, 1, 2, 3, 4, 6]
 ```
 
-The `<>` is used for concatenating two arrays, and its complement operators are `>>` *prepend* and `<<` *append.* For an array of type `[*T]`, these take a type `T` on the side opposite of where they point. `>>` is right associative, allow you to chain multiple prepends onto one array. 
+The `<>` is used for concatenating two arrays, and its complement operators are `*>` *prepend* and `<*` *append.* For an array of type `[*T]`, these take a type `T` on the side opposite of where they point. `*>` is right associative, allow you to chain multiple prepends onto one array. 
 
 ```mulem
-1 >> 2 >> 3 >> [4]  -- Value: [1, 2, 3, 4]
-[1] << 2 << 3 << 4  -- Value: [1, 2, 3, 4]
-1 >> [2] << 3 << 4  -- Value: [1, 2, 3, 4]
+1 *> 2 *> 3 *> [4]  -- Value: [1, 2, 3, 4]
+[1] <* 2 <* 3 <* 4  -- Value: [1, 2, 3, 4]
+1 *> [2] <* 3 <* 4  -- Value: [1, 2, 3, 4]
 ```
 
 Splitting arrays is accomplished with destructuring, just like you can do with tuples.
@@ -1383,7 +1383,7 @@ Typed pointers are type `T^`. They're are like references but dereferenced with 
 
 ```mulem
 mu x = 0
-xPtr: int^mu = %mu x
+xPtr: int^mu = @mu x
 xPtr^ := 1
 x             -- Value: 1
 ```
@@ -1420,14 +1420,14 @@ defer free[student]
 -- Use student freely below.
 ```
 
-When you are sure that a pointer exists, you can use `^.` for raw access, but if you aren't sure you can use just `.` to do a safe pointer check. This will return a `%mu T?` of that member.
+When you are sure that a pointer exists, you can use `^.` for raw access, but if you aren't sure you can use just `.` to do a safe pointer check. This will return a `@mu T?` of that member.
 
 ```
 student^.name := "John Smith"    -- Raw access
 student.name? := "John Smith"    -- Safe access
 ```
 
-`student.name` is a safe pointer operation like `.[]` for arrays, so you would write `student.name?`; because `student` isn't a question type `T?` but `student._` returns a question type of `%mu T?` of that member.
+`student.name` is a safe pointer operation like `.[]` for arrays, so you would write `student.name?`; because `student` isn't a question type `T?` but `student._` returns a question type of `@mu T?` of that member.
 
 This makes it easier to chain when you have a safe pointer `T^?`/`T^mu?`
 
@@ -1745,20 +1745,20 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 
 ## Operators
 
-| Level | Category                   | Operators                        |
-|:------|:---------------------------|:---------------------------------|
-| 11    | Member access/Function     | `.` `^.` `.[]` `^[]` `?.` `?.[]` `()` |
-| 10    | Postfix/Prefix             | `?` `!` `^` `%` `%mu`          |
-| 9     | Unary                      | `+` `-` `not`                    |
-| 8     | Exponent                   | `**` (right-associative)       |
-| 7     | Multiplicative / Shift     | `*` `/` `//` `<<` `>>`          |
-| 6     | Additive / Concat          | `+` `-` `<>`                     |
-| 5     | Range                      | `..` `..=`                       |
-| 4     | Comparison                 | `==` `/=` `<` `>` `<=` `>=`      |
-| 3     | Logical AND                | `and`                            |
-| 2     | Logical OR / None-Coalesce | `or` `?:` `!:`               |
-| 1     | Pipeline                   | `\|>`                            |
-| 0     | Assignment / Spread        | `=` `:=` `+:=` `-:=` `&` `*`     |
+| Level | Category                   | Operators                                       |
+|:------|:---------------------------|:------------------------------------------------|
+| 11    | Member access/Function     | `.` `^.` `.[]` `^[]` `?.` `?.[]`                |
+| 10    | Postfix/Prefix             | `?` `!` `^` `@` `@mu` `.:`                      |
+| 9     | Unary                      | `+` `-` `not` `bnot`                            |
+| 8     | Exponent                   | `**` (right-associative)                        |
+| 7     | Multiplicative / Shift     | `*` `/` `//` `%` `%%` `<*` `*>` `<<` `>>` `>>>` |
+| 6     | Additive / Concat          | `+` `-` `<>` `band` `bor` `xor`                 |
+| 5     | Range                      | `..` `..=`                                      |
+| 4     | Comparison                 | `==` `/=` `<` `>` `<=` `>=`                     |
+| 3     | Logical AND                | `and`                                           |
+| 2     | Logical OR / None-Coalesce | `or` `?:` `!:`                                  |
+| 1     | Pipeline                   | `\|>`                                           |
+| 0     | Assignment / Spread        | `=` `:=` `+:=` `-:=` `&` `*`                    |
 
 | Operator       | Meaning                                              |
 |:--------------:|:-----------------------------------------------------|
@@ -1771,8 +1771,8 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 |   `lhs !`      | Unwrap exclamation, propagate error to nearest `try` |
 |   `lhs ^`      | Dereference typed pointer                            |
 |   `lhs ^. rhs` | Raw pointer member access                           |
-|       `% rhs`  | Get immutable reference                              |
-|     `%mu rhs`  | Get mutable reference                                |
+|       `@ rhs`  | Get immutable reference                              |
+|     `@mu rhs`  | Get mutable reference                                |
 |       `* rhs`  | Spread array into array                              |
 |       `& rhs`  | Spread tuple into tuple (same type)                  |
 |  `lhs .. rhs`  | Exclusive range                                      |
@@ -1787,6 +1787,8 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 |   `lhs * rhs`  | Multiplication                                       |
 |   `lhs / rhs`  | Exact division (float)                               |
 |  `lhs // rhs`  | Floor division (int)                                 |
+|   `lhs % rhs`  | Remainder, C-Style Modulo                            |
+|  `lhs %% rhs`  | True Modulo                                          |
 |  `lhs ** rhs`  | Exponentiation (right-associative)                   |
 |  `lhs == rhs`  | Equality                                             |
 |  `lhs /= rhs`  | Inequality                                           |
@@ -1794,26 +1796,33 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 |   `lhs < rhs`  | Less than                                            |
 |  `lhs >= rhs`  | Greater than or equal                                |
 |  `lhs <= rhs`  | Less than or equal                                   |
-|  `lhs << rhs`  | Append to array                                      |
-|  `lhs >> rhs`  | Prepend to array (right-associative)                 |
+|  `lhs <* rhs`  | Append to array                                      |
+|  `lhs *> rhs`  | Prepend to array (right-associative)                 |
 |  `lhs <> rhs`  | Concatenation                                        |
 | `lhs and rhs`  | Logical AND                                          |
 |  `lhs or rhs`  | Logical OR                                           |
 |     `not rhs`  | Logical NOT                                          |
 |  `lhs ?: rhs`  | `None`- coalescing                                   |
 |  `lhs !: rhs`  | Error-coalescing                                     |
+| `lhs band rhs` | Bitwise AND                                          |
+| `lhs bor rhs`  | Bitwise OR                                           |
+| `lhs xor rhs`  | Bitwise XOR                                          |
+|    `bnot rhs`  | Bitwise NOT                                          |
+|  `lhs << rhs`  | Bitshift Left                                        |
+|  `lhs >> rhs`  | Bitshift Right                                       |
+| `lhs >>> rhs`  | Unsigned Bitshift Right                              |
 
 `/=` was picked over `!=` to keep `!` related to errors. A coder can scan for `!` and know that's a potential error point.
 
 Other operators:
 
-- `~&` bitwise AND
-- `~|` bitwise OR
-- `~^` bitwise XOR
+- `&` bitwise AND
+- `|` bitwise OR
+- `^` bitwise XOR
 - `~` bitwise NOT
-- `~<<` bit shift left
-- `~>>` bit shift right
-- `~>>>` unsigned bit shift right
+- `<<` bit shift left
+- `>>` bit shift right
+- `>>>` unsigned bit shift right
 
 Some math operators will be put into a standard library. These will be inlined to ensure performance.
 
@@ -1824,7 +1833,7 @@ lhs = 1
 rhs = 2
 
 -- Arithmetic
-lhs rem rhs    -- Remainder (C-Style modulo) `%`
+lhs rem rhs    -- Remainder (C-Style modulo) `@`
 lhs mod rhs    -- True Modulo
 
 -- Bitwise
@@ -1846,16 +1855,18 @@ __Compound Assignment Operators:__
 |  `lhs -:= rhs`   | `lhs := lhs - rhs`              |
 |  `lhs *:= rhs`   | `lhs := lhs * rhs`              |
 |  `lhs /:= rhs`   | `lhs := lhs / rhs`              |
-| `lhs <<:= rhs`   | `lhs := lhs << rhs`             |
+| `lhs //:= rhs`   | `lhs := lhs // rhs`             |
+|  `lhs %:= rhs`   | `lhs := lhs rem rhs`            |
+| `lhs %%:= rhs`   | `lhs := lhs mod rhs`            |
+| `lhs <*:= rhs`   | `lhs := lhs <* rhs`             |
+| `lhs *>:= rhs`   | `lhs := rhs *> lhs`             |
 | `lhs <>:= rhs`   | `lhs := lhs <> rhs`             |
-| `lhs rem:= rhs`  | `lhs := lhs rem rhs`            |
-| `lhs mod:= rhs`  | `lhs := lhs mod rhs`            |
 | `lhs band:= rhs` | `lhs := lhs band rhs`           |
 | `lhs bor:= rhs`  | `lhs := lhs bor rhs`            |
 | `lhs xor:= rhs`  | `lhs := lhs xor rhs`            |
-| `lhs shl:= rhs`  | `lhs := lhs shl rhs`            |
-| `lhs shr:= rhs`  | `lhs := lhs shr rhs`            |
-| `lhs shru:= rhs` | `lhs := lhs shru rhs`           |
+|  `lhs <<:= rhs`  | `lhs := lhs << rhs`             |
+|  `lhs >>:= rhs`  | `lhs := lhs >> rhs`             |
+| `lhs >>>:= rhs`  | `lhs := lhs >>> rhs`            |
 
 ### Key Type Modifiers & Postfix Operators
 
@@ -1864,7 +1875,7 @@ __Compound Assignment Operators:__
 |  `T?`, `x?`    | Question           | Unwraps a question; propagates `None` to nearest `maybe`. |
 |  `T!`, `x!`    | Exclamation        | Unwraps a exclamation; propagates error to nearest `try`. |
 |  `T^`, `x^`    | Pointer            | Dereference a pointer.                                    |
-|  `%T`, `%x`    | Reference          | Get a reference to a place in memory.                     |
+|  `@T`, `@x`    | Reference          | Get a reference to a place in memory.                     |
 
 [TOC](#table-of-contents)
 
@@ -1874,6 +1885,7 @@ __Compound Assignment Operators:__
 
 [TOC](#table-of-contents)
 
+- __[Methods](#methods)__
 - __[Pipelining](#pipelining)__
 - __[Optional Para\meters](#optional-parameters)__
 - __[Lambda Functions](#lambda-functions)__
@@ -1886,6 +1898,12 @@ __Compound Assignment Operators:__
 
 - __[Code Sample](#putting-it-all-together)__
 - __[Reserved Keywords](#reserved-keywords)__
+
+---
+
+## Methods
+
+[Advanced](#advanced) / [TOC](#table-of-contents)
 
 ---
 
@@ -2007,7 +2025,7 @@ This gives you a great deal of flexibility in how you choose to express your cod
 
 ---
 
-### Optional Parameters
+## Optional Parameters
 
 Parameters can be made optional with the `opt` modifier. This wraps the variable in type `T?`. If the parameter is missing, it will be set to `None`.
 
@@ -2103,7 +2121,7 @@ logAndAdd("Sum =", 1, 2, 3)  -- Prints "Sum = 6"
 
 ---
 
-### Lambda Functions
+## Lambda Functions
 
 Define a function within an expression with `fn` + any name. For demonstration purposes, we'll be using anonymous functions in the pattern `fn(x) = x`. This is useful for passing functions to other functions.
 
@@ -2143,12 +2161,12 @@ Capturing also works inside lambda functions just like with named functions.
 
 ```mulem
 mu count = 0
-forEach([1, 2, 3, 4], fn(x) % (mu count) =
+forEach([1, 2, 3, 4], fn(x) @ (mu count) =
     count +:= x
 )
 ```
 
-#### Curried functions
+### Curried functions
 
 When a function returns another function, list each function parameters as the return type. Optionally, you can just let the return type be inferred.
 
@@ -2179,11 +2197,11 @@ When capturing variables, each returned function needs to capture them separatel
 
 ```mulem
 mu count = 0
-curryAddCount(a: int) % (mu count): (int): (int): int =
+curryAddCount(a: int) @ (mu count): (int): (int): int =
     count +:= a                                   -- (1) Evaluated immediately
-    fn(b: int) % (mu count): (int): int =         -- (2) Suspends and captures `count`
+    fn(b: int) @ (mu count): (int): int =         -- (2) Suspends and captures `count`
         count +:= b                               -- (3) Evaluated when second `fn` is called
-        fn(c: int) % (mu count): int =
+        fn(c: int) @ (mu count): int =
             count +:= c
             count
 
@@ -2194,7 +2212,7 @@ print("{ curryAddCount(1)(2)(3) } == { count }")   -- Prints "6 == 6"
 
 ---
 
-### Pattern Matching
+## Pattern Matching
 
 ```mulem
 match expr is
@@ -2221,7 +2239,7 @@ match choice is
     print("No match")
 ```
 
-#### Pattern Fallback
+### Pattern Fallback
 
 If a pattern can't be **guaranteed** for any reason, then you must have a **fallback.** There are two options available:
 
@@ -2252,7 +2270,7 @@ match choice is
     print("First, Second, or Third: {maybe val? else "None"}")
 ```
 
-#### Pattern Guards
+### Pattern Guards
 
 Add `if` inside a pattern to conditionally match.
 
@@ -2268,7 +2286,7 @@ match choice is
     print("No match")
 ```
 
-#### `is` / `then`
+### `is` / `then`
 
 ```mulem
 expr is ptrn then expr
@@ -2306,7 +2324,7 @@ getValue()
 |> doSomethingWith($)
 ```
 
-#### `if` + `is`
+### `if` + `is`
 
 ```mulem
 if expr is ptrn then expr else expr
@@ -2348,7 +2366,7 @@ else
     print("Either none of those nested patterns matched or x is negative.")
 ```
 
-#### `loop` + `is`
+### `loop` + `is`
 
 Loop while a pattern matches.
 
@@ -2357,7 +2375,7 @@ loop nextValue() is Some(x) then
     print("{x}")
 ```
 
-#### `until` + `is`
+### `until` + `is`
 
 Loop until a pattern matches. Bindings are in scope below the loop.
 
@@ -2387,16 +2405,16 @@ if x is Some(x) then
 
 ---
 
-### References (`ref`)
+## References (`ref`)
 
 `ref` gives you a reference whose mutability is determined by what you're binding to, not by how you use it. This is like a pointer but it auto derefs, no `^` operator needed.
 
 ```
 mu x = 5
-ref y = x     -- y: %mu int, x is mutable so ref inherits it
+ref y = x     -- y: @mu int, x is mutable so ref inherits it
 
 x2 = 5
-ref y2 = x2   -- y2: %int, x2 is immutable
+ref y2 = x2   -- y2: @int, x2 is immutable
 ```
 
 If the enum is immutable or mutable, then adding `ref` on a pattern's data should match its mutability like when using `ref` on another variable.
@@ -2404,25 +2422,25 @@ If the enum is immutable or mutable, then adding `ref` on a pattern's data shoul
 ```mulem
 mu s = SomeStruct(value: 42)
 match s is
-| SomeStruct(ref value) =   -- value: %mu int, s is mutable
+| SomeStruct(ref value) =   -- value: @mu int, s is mutable
     value := 100            -- modifies s.value in-place, no copy
 
 s2 = SomeStruct(value: 42)
 match s2 is
-| SomeStruct(ref value) =   -- value: %int, s2 is immutable
+| SomeStruct(ref value) =   -- value: @int, s2 is immutable
     print("{value}")        -- read-only, no copy
 ```
 
-Function parameters/return types use reference types `%T`/`%mu T` which determine if `ref` is mutable or immutable
+Function parameters/return types use reference types `@T`/`@mu T` which determine if `ref` is mutable or immutable
 
 ```mulem
-getField(s: %SomeStruct): %int = s.value
+getField(s: @SomeStruct): @int = s.value
 
-ref x = getField(myStruct)   -- x: %int, immutable
+ref x = getField(myStruct)   -- x: @int, immutable
 ```
 
 ```mulem
-increment(x: %mu int): void =
+increment(x: @mu int): void =
     x +:= 1
 
 mu x = 0
@@ -2432,16 +2450,16 @@ x            -- Value is 1
 
 ```mulem
 loop nextValue() is Some(ref x) then
-    x := transform(x)   -- mutates in place if iterator yields mutable refs `iter[%mu T?]`
+    x := transform(x)   -- mutates in place if iterator yields mutable refs `iter[@mu T?]`
 ```
 
 [Advanced](#advanced) / [TOC](#table-of-contents)
 
 ---
 
-### Iterator / Async Functions
+## Iterator / Async Functions
 
-#### `yield`
+### `yield`
 
 Exits out of a function with an `iter[_]` type. The return value of the function must be of type `iter[T]` where T is the yield type. When you have `yield` in your function, the actual return value in the function body is discarded, and using `return …` in it is a compile-time error. Use of `yield` will infer the return type to be `iter[_]`. 
 
@@ -2462,7 +2480,7 @@ countUntil(mu i: int, max: int): iter[int] =
         i +:= 1
 ```
 
-#### `await`
+### `await`
 
 Exits out of a function with an `async[_]` type. The return type of the function must be of type `async[T]` where T is the type that the asynchronous value will resolve in the end. The return value of the asynchronous instance is determined the same way that a non-asynchronous function does it. Use of `await` will infer the return type to be `async[_]`. 
 
@@ -2500,7 +2518,7 @@ Unlike in other languages where *promises* or *futures* can either resolve or re
 
 ---
 
-### Inheritance and Visibility
+## Inheritance and Visibility
 
 Even though structs cannot be extended the usual way, they can **inherit** from other structs using destructuring. This works similarly to **importing.** It marks members that map to members of another struct, making conversion possible. It follows the same convention for pattern matching like destructuring. *(See [Destructuring](#destructuring).)* 
 
@@ -2543,7 +2561,7 @@ A subtype cannot accidentally expose or clash with a private inherited member be
 
 ---
 
-### Manual Implementation
+## Manual Implementation
 
 Generics will automatically generate code based on their parameters, but you can also implement them by hand using pattern matching. If you only want to use the manual implementations for a generic function, you can set its body to `unimplemented[]`. This creates a virtual function that can be overloaded later. If you use a function that is defined with `unimplemented[]`, it will throw a compile-time error.
 
@@ -2576,7 +2594,7 @@ increment(b)   -- T is inferred bool which has no implementation, compile-time e
 
 ---
 
-### Importing and Modules
+## Importing and Modules
 
 * **Modules:** Declare with `moduleName :: mod`. Only one per file.
 * **Imports:** Must be explicit. `a.b{c, d} :: import`. Use `import "path"` for direct file imports.
@@ -2609,7 +2627,7 @@ myModule{addThing} :: import
 
 This connects the same explicit-list convention as inheriting and capturing — *no hidden dependencies, everything that can affect behavior is named.* The three together form a consistent rule across the language.
 
-#### Memory Models
+### Memory Models
 
 Mulem is multi-paradigm: different functions, structs, or modules can use different memory strategies in the same program. The model is controlled per-module. Boundary crossing between models follows FFI-like rules — automatic marshalling where possible, explicit escapes otherwise.
 
@@ -2684,10 +2702,10 @@ do
 
 ## Reserved Keywords
 
-Mulem has 31 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard question `T?` members (`Some`, `None`), are built-in symbols but *not* strict keywords.
+Mulem has 35 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard question `T?` members (`Some`, `None`), are built-in symbols but *not* strict keywords.
 
 **The Keyword List:**
-`and`, `as`, `await`, `break`, `catch`, `continue`, `defer`, `do`, `else`, `fallthrough`, `fn`, `if`, `impl`, `import`, `in`, `is`, `loop`, `match`, `maybe`, `mod`, `not`, `of`, `opt`, `or`, `raise`, `ref`, `return`, `self`, `then`, `try`, `until`, `void`, `yield`.
+`and`, `as`, `await`, `band`, `bor`, `break`, `bnot`, `catch`, `continue`, `defer`, `do`, `else`, `fallthrough`, `fn`, `if`, `impl`, `import`, `in`, `is`, `loop`, `match`, `maybe`, `mod`, `not`, `of`, `opt`, `or`, `raise`, `ref`, `return`, `self`, `then`, `try`, `until`, `void`, `xor`, `yield`.
 
 [TOC](#table-of-contents)
 
