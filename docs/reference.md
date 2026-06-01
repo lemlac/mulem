@@ -2648,10 +2648,10 @@ do
 
 ## Reserved Keywords
 
-Mulem has 36 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard question `T?` members (`Some`, `None`), are built-in symbols but *not* strict keywords.
+Mulem has 31 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard question `T?` members (`Some`, `None`), are built-in symbols but *not* strict keywords.
 
 **The Keyword List:**
-`and`, `as`, `await`, `break`, `catch`, `continue`, `defer`, `do`, `else`, `enum`, `error`, `fallthrough`, `fn`, `if`, `impl`, `import`, `in`, `is`, `loop`, `match`, `maybe`, `mod`, `not`, `of`, `opt`, `or`, `proto`, `raise`, `ref`, `return`, `self`, `struct`, `then`, `try`, `until`, `void`, `yield`.
+`and`, `as`, `await`, `break`, `catch`, `continue`, `defer`, `do`, `else`, `fallthrough`, `fn`, `if`, `impl`, `import`, `in`, `is`, `loop`, `match`, `maybe`, `mod`, `not`, `of`, `opt`, `or`, `raise`, `ref`, `return`, `self`, `then`, `try`, `until`, `void`, `yield`.
 
 [TOC](#table-of-contents)
 
