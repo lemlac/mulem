@@ -251,7 +251,7 @@ Functions are declared by adding parameters before the equals sign `() = `. Func
 
 ```mulem
 divide(a: int, b: int): int = a // b
-divide(a: float, b: float: float = a / b
+divide(a: float, b: float): float = a / b
 
 divide(5, 2)       -- Result: 2
 divide(5.0, 2.0)   -- Result: 2.5
