@@ -789,14 +789,14 @@ getFirst(a: int, b: int, c: int): int =
 Or use the `None`-coalescing operator (`?:`).
 
 ```mulem
-fn getFirst(a: int, b: int, c: int): int =
+getFirst(a: int, b: int, c: int): int =
     getA(a) ?: getB(b) ?: getC(c) ?: 0
 ```
 
 Another example of a use for `maybe`:
 
 ```mulem
-fn crunchData(): int?!Error!CustomError =                                -- Multiple error types
+crunchData(): int?!Error!CustomError =                                -- Multiple error types
     value: int? = someFunc()!
     -- Question to Exclamation
     data: int = maybe value? else raise CustomError("Not found")      -- Exist function on fallback
@@ -1367,9 +1367,10 @@ Safe pointers are made by wrapping `T^` or `T^mu` in `Some`. If you pass in `Som
 To allocate memory on the heap, use the `alloc[]` and `free[]` functions.
 
 ```mulem
-Student :: struct =
-    name: str
-    grade: char
+Student :: {
+    name: str,
+    grade: char,
+}
 
 student: Student^mu = alloc[ Student(name: "John", grade: 'A') ]?
 defer free[student]
@@ -1496,16 +1497,17 @@ sumUnion     ::  int | float | char                    -- Is the size of the lar
 .
 ```
 
-### Structural Types (`struct`)
+### Structural Types
 
 Structs are product types—or in other words—plain data containers. They cannot extend other structs, but can inherit members of other structs. *(See [Inheritance and Visibility](#inheritance-and-visibility).)*
 
 Put an equals sign after the `struct`. This makes it easier to tell type definitions from aliases and lets the parser know that it's starting a block since a block always starts after a `:` or `=`. `=` was chosen over `:` to show that the block is some sort of data rather than control flow. This makes it clear that when you see `=` at the end of a line, something is being defined. It also resembles the familiar `var: type = value` but the `::` makes it clear that this isn't a run-time value. 
 
 ```mulem
-MyStruct :: struct =
-    name: str
-    value: int
+MyStruct :: {
+    name: str,
+    value: int,
+}
 ```
 
 You can write it with one line, separating each member with a comma `,`.
