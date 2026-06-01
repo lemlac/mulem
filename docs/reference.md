@@ -1501,19 +1501,13 @@ sumUnion     ::  int | float | char                    -- Is the size of the lar
 
 Structs are product types—or in other words—plain data containers. They cannot extend other structs, but can inherit members of other structs. *(See [Inheritance and Visibility](#inheritance-and-visibility).)*
 
-Put an equals sign after the `struct`. This makes it easier to tell type definitions from aliases and lets the parser know that it's starting a block since a block always starts after a `:` or `=`. `=` was chosen over `:` to show that the block is some sort of data rather than control flow. This makes it clear that when you see `=` at the end of a line, something is being defined. It also resembles the familiar `var: type = value` but the `::` makes it clear that this isn't a run-time value. 
-
 ```mulem
 MyStruct :: {
     name: str,
     value: int,
 }
-```
 
-You can write it with one line, separating each member with a comma `,`.
-
-```mulem
-MyStruct :: struct = name: str, value: int
+MyStruct :: { name: str, value: int }
 ```
 
 Instantiate a struct by calling it like a function. Each member is treated like a named argument.
@@ -1525,29 +1519,31 @@ myObject = MyStruct(name: "Foobar", value: 1)
 Structs are transparent. They can be destructured like named tuples. 
 
 ```mulem
-TransparentThing :: struct =
-    a: int
-    b: int
+TransparentThing :: {
+    a: int,
+    b: int,
+}
 
 {a, b} = TransparentThing(a: 1, b: 2)
 print("a: {a}, b: {b}")
 ```
 
-### Enumerable Types (`enum`)
+### Enumerable Types
 
-Enums are sum types. They define a closed set of variants. Variants may carry data turning them into a tagged union. Like with `struct`, place an `=` after `enum` before starting the block. 
+Enums are sum types. They define a closed set of variants. Variants may carry data turning them into a tagged union. Start with a pair of parentheses and a vertical bar before the first variant `(|V)`. This distinguishes them from untagged unions which are just vertical bars between types `T|U`.
 
 ```mulem
-MyEnum :: enum =
-    First
-    Second(int)
-    Third{val: int}
+MyEnum :: (
+    | First
+    | Second(int)
+    | Third{val: int}
+)
 ```
 
 The inline version works the same.
 
 ```mulem
-MyEnum :: enum = First, Second(int), Third{val: int}
+MyEnum :: (| First | Second(int) | Third{val: int})
 ```
 
 Like structs, instantiate by calling the member like a function unless it doesn't carry any data.
@@ -1572,7 +1568,7 @@ match a is
 
 #### Untagged Unions
 
-`enum` can define a tagged union, but untagged unions can be defined with the `|` inside a type notation. When picking members of a union, use `of` with the type. 
+Untagged unions can be defined with the `|` between two or more types. When picking members of a union, use `of` with the type. 
 
 ```mulem
 sumUnion :: int | float | char
@@ -1614,14 +1610,14 @@ withOneAndTwo(add of (float, float): float)
 
 This explains *why* overload resolution sometimes needs manual help — for the same reason you sometimes need to tell the compiler which union member you mean. 
 
-### Error Types (`error`)
+### Error Types
 
-Errors are bit like both `struct` and `enum`. Each `error` type represents a member of a potential **error tagged union** that's summed up per function with a exclamation type `T!E` return type. Every `try` / `catch` block matches patterns to the summed error tagged union in its block based on each `!` point. Exclamation types flatten, so `Exclamation[Exclamation[T, E], F]` would become `Exclamation[T, E|F]` where `E|F` is a tagged union of each possible error in that exclamation. Instantiation works the same as structs.
+Errors are bit like both structs and enums. Each error type represents a member of a potential **error tagged union** that's summed up per function with a exclamation type `T!E` return type. Every `try` / `catch` block matches patterns to the summed error tagged union in its block based on each `!` point. Exclamation types flatten, so `Exclamation[Exclamation[T, E], F]` would become `Exclamation[T, E|F]` where `E|F` is a tagged union of each possible error in that exclamation. Instantiation works the same as structs.
 
 ```mulem
-OutOfBounds :: error                 -- No data.
-ErrorMessage :: error = (str)        -- Attach a position tuple.
-DivideByZero :: error = value: int   -- Attach named member
+OutOfBounds :: !void            -- No data.
+ErrorMessage :: !(str)          -- Attach a position tuple.
+DivideByZero :: !{value: int}   -- Attach named member
 ```
 
 ```mulem
@@ -1637,72 +1633,7 @@ catch
     print("Can't divide {val} by zero!")
 ```
 
-Uncaught errors in a `try` / `catch` block are implicitly reraised. Each `catch` pattern removes a possible error from the exclamation type of that block. When all possible errors have a `catch` arm, the value of that block is automatically unwrapped so that `Exclamation[T, ()]` becomes just `T`. 
-
-### Prototypes (`proto`)
-
-A `proto` is an abstract interface — a named contract with no data. It is equivalent to a `virtual class` / `trait` / `interface` in other languages. Each member is a function, also called a **method**. Methods that have a parameter named `self` at the beginning will be called like methods on the instance of that type, i.e. `self.method(*)`. This is equivalent to saying `typeof[self].method(self, *)`.
-
-```mulem
-MyPrototype :: proto =
-    speak(self): str
-```
-
-### Implementing (`impl`)
-
-Methods and trait implementations are added separately with `impl`. Much like `proto`, `self` in the first parameter of a method refers to the current instance. You can also add static values that are attached to the type itself. Use `.` to access static values and methods like with structs.
-
-```mulem
-MyStruct :: impl =
-    staticValue = 1234
-    init(name: str, value: int): MyStruct =
-        MyStruct(name: name, value: value)
-
-print("{ MyStruct.staticValue }")
-```
-
-A method with `self` as the first parameter are callable as a method on the instance. `self` refers to the instance, analogous to `self` / `this` in other languages. You can optionally give it another name with `as`. 
-
-```mulem
-MyType :: struct = foo: str
-
-MyType :: impl =
-    method1(self) = self.foo              -- `self` is a `MyType`.
-    method2(self as this) = this.foo      -- Can be aliased with `as`.
-    method3(self as myType) = myType.foo  -- Alias name can be any valid variable name.
-
-x = MyType(foo: "bar")
-print("{ x.method1() }")  -- Prints "foo"
-print("{ x.method2() }")  -- Prints "foo"
-print("{ x.method3() }")  -- Prints "foo"
-```
-
-To implement from a prototype, add the proto's name in the square brackets. Each implementation gets their own `impl[]` block. 
-
-```mulem
-MyStruct :: impl[MyPrototype] =
-    speak(self) = "I am a {self.name} and I have ${self.value}."
-
-MyEnum :: impl[MyPrototype] =
-    speak(self) =
-        match self is
-        | First =
-            "I am a MyEnum of First"
-        | Second(x) =
-            "I am a MyEnum of Second({x})"
-        | Third{val} =
-            "I am a MyEnum of Third \{ val={val} }"
-```
-
-When importing a prototype, you need to bring it into the scope to activate it inside a module.
-
-```
-{MyStruct, MyPrototype} :: import    -- Import types.
--- This prototype is active in this scope.
-
-me = MyStruct.init("Bob", 100)
-me.speak()                           -- Prints "I am Bob, and I have $100."
-```
+Uncaught errors in a `try` / `catch` block are implicitly reraised. Each `catch` pattern removes a possible error from the exclamation type of that block. When all possible errors have a `catch` arm, the value of that block is automatically unwrapped so that `Exclamation[T,]` becomes just `T`. 
 
 [TOC](#table-of-contents)
 
@@ -1760,9 +1691,10 @@ You can also define a type with a meta function. The meta functions parameters i
 
 ```mulem
 -- Note that this is not the actual definition for a question type `T?`. This is just a user-defined enum that uses the same pattern.
-Option[T] :: enum =
-    Some(T)
-    None
+Option[T] :: (
+    | Some(T)
+    | None
+)
 
 Some[T] :: Option[T].Some
 None[T] :: Option[T].None
@@ -1906,9 +1838,8 @@ __Compound Assignment Operators:__
 
 [TOC](#table-of-contents)
 
-- __[Operator Overloading](#operator-overloading)__
 - __[Pipelining](#pipelining)__
-- __[Optional Parameters](#optional-parameters)__
+- __[Optional Para\meters](#optional-parameters)__
 - __[Lambda Functions](#lambda-functions)__
 - __[Pattern Matching](#pattern-matching)__
 - __[References (`ref`}](#references-ref)__
@@ -1922,51 +1853,9 @@ __Compound Assignment Operators:__
 
 ---
 
-### Operator Overloading 
+## Pipelining
 
-Each operator is a prototype that can be implemented on a type.
-
-```
-Vector2D :: struct =
-    x: float
-    y: float
-
-Vector2D :: impl[Add] =
-    op[+](self as lhs, rhs: Vector2D): Vector2D =
-        Vector2D(
-            x: lhs.x + rhs.x,
-            y: lhs.y + rhs.y,
-        )
-
-v1 = Vector2D(x: 1, y: 2)
-v2 = Vector2D(x: 3, y: 4)
-
-v1 + v2   -- Result: Vector2D(x: 4, y: 6)
-```
-
-Custom operators can be defined with `op`. These must be defined above where they will be used so that the lexer can correctly identify user-defined operators. The symbol can be either entirely ASCII symbol characters or a valid variable name. It must not conflict with any other operator symbols in scope. If its a valid variable name, then that name can no longer be used as a variable name when the operator is in scope. 
-
-```
-Remainder :: op[order: 5.0, symbol: "rem", side: op.Infix, rightAssoc: False]
-
-int :: impl[Remainder] =
-    op[rem](self as lhs, rhs: int): int =
-        lhs - rhs * (lhs // rhs)
-
-15 rem 12    -- Result: 3
-```
-
-It has to be defined above where it's being used otherwise if the lexer finds `a b c d​`, it won't know an operator from a variable or in what order they need to go in. 
-
-You don't import the operator itself like `rem`​; you import the operator's prototype `Remainder` in this case​, and if that's in scope, then the operator is in use. Then, anytime the lexer sees `a rem b​` it knows that's an operation with a set order. It won't know what it does; that's for the parser who will look up the implementation of `Remainder​` on `a​`. If you used a custom operator on a type that doesn't implement it, then it would be the same kind of error you get if you used a built-in operator on the wrong types like `string + string`​ instead of `string <> string`​. 
-
-[Advanced](#advanced) / [TOC](#table-of-contents)
-
----
-
-### Pipelining `|>`
-
-When placed at the start of a line in a block, the pipelining operator `|>` takes on a special meaning: it takes the value of the previous line and makes it available in the next line as `$`. This symbol is known as the **pipeline context.** This makes it easy to chain a sequence of calls and read them in order.
+Functions can get messy.
 
 ```mulem
 print("{
@@ -1978,7 +1867,7 @@ print("{
 }")
 ```
 
-*Becomes…*
+To fix this, let's introduce a new system known as **pipelining.**
 
 ```mulem
 fetchA()
@@ -1987,7 +1876,7 @@ fetchA()
 |> print("{$}")
 ```
 
-This makes the order of operations easy to follow at a glance. It reads like a plain-English list:
+When placed at the start of a line, the pipelining operator `|>` takes on a special meaning: it takes the value of the previous line and makes it available in the next line as `$`. This symbol is known as the **pipeline context.** This makes it easy to chain a sequence of calls and read them in order. It reads like a plain-English list:
 
 - `fetchA`
 - *then* `fetchB`
@@ -2087,7 +1976,7 @@ This gives you a great deal of flexibility in how you choose to express your cod
 Parameters can be made optional with the `opt` modifier. This wraps the variable in type `T?`. If the parameter is missing, it will be set to `None`.
 
 ```mulem
-fn addOptional(opt a: int, opt b: int): int =
+addOptional(opt a: int, opt b: int): int =
     aVal = a ?: 0    -- Coalesce optional arguments with default value 0.
     bVal = b ?: 0    -- This unwraps their value if they exist or set them to 0.
     aVal + bVal      -- Add the unwrapped values.
@@ -2580,13 +2469,15 @@ Unlike in other languages where *promises* or *futures* can either resolve or re
 Even though structs cannot be extended the usual way, they can **inherit** from other structs using destructuring. This works similarly to **importing.** It marks members that map to members of another struct, making conversion possible. It follows the same convention for pattern matching like destructuring. *(See [Destructuring](#destructuring).)* 
 
 ```mulem
-Vector2 :: struct =
-    x: float
-    y: float
+Vector2 :: {
+    x: float,
+    y: float,
+}
 
-Vector3 :: struct =
-    {x, y}: Vector2        -- Grab members of Vector2
-    z: float
+Vector3 :: {
+    {x, y}: Vector2,        -- Grab members of Vector2
+    z: float,
+}
 
 v3 = Vector3(x: 1.0, y: 2.0, z: 3.0)
 
@@ -2599,13 +2490,15 @@ When you inherit, you don't just pick out some members. The entire parent struct
 All members of a type are public by default. When making a subtype, inherited members become private to the subtype unless explicitly redeclared. This encourages separating public and private data into distinct types rather than using access modifiers.
 
 ```mulem
-PrivateFields :: struct =
-    val: int
-    secret: int
+PrivateFields :: {
+    val: int,
+    secret: int,
+}
 
-PublicFields :: struct =
-    {val}: PrivateFields     -- Redeclared, `val` is public / `secret` is private
-    other: int
+PublicFields :: {
+    {val}: PrivateFields,     -- Redeclared, `val` is public / `secret` is private
+    other: int,
+}
 ```
 
 A subtype cannot accidentally expose or clash with a private inherited member because types only see members that have been explicitly declared within them. This mirrors the convention used for imports.
@@ -2622,7 +2515,7 @@ Generics will automatically generate code based on their parameters, but you can
 -- Forces every type to have its own implementation
 increment[T] :: (ref c: T): void = unimplemented[]
 
-Counter :: struct = value: int
+Counter :: {value: int}
 
 -- Specialized for Counter
 increment[Counter] :: (ref c: Counter): void =
@@ -2709,28 +2602,29 @@ exampleApp :: mod
 {-
  - Define a struct and implement a prototype.
  -}
-User :: struct = 
+User :: {
     name: str
     age: int
+}
 
 Speaker :: proto = 
     speak(self): str
 
-User :: impl[Speaker] =
-    speak(self) = "Hi, I'm {self.name}."
+(self: User).speak() =
+    "Hi, I'm {self.name}."
 
-FetchError :: error = (str)
+FetchError :: !(str)
 
 {-
  - A function returning an exclamation type
  - (User or an Error).
  - It captures no outside state.
  -}
-fetchUser(id: int): User! =
+fetchUser(id: int): User!FetchError =
     if id > 0 then
         User(name: "Alice", age: 30)
     else
-        raise FetchError("Invalid ID")
+        FetchError("Invalid ID")
 
 {-
  - Main logic demonstrating error unwrapping (!) 
