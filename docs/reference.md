@@ -15,6 +15,133 @@ This design prioritizes:
 
 ---
 
+## Basics
+
+Comments are made with `--` or `{- -}`.
+
+```mulem
+-- Line Comment
+{- Block Comment -}
+{- {- Nested Comment -} -}
+```
+
+A program in Mulem is divided into expressions and sequences. Sequences can either be delimited with whitespace and semi-colons (`;`) or brackets and commas (`,`). The default is a whitespace sequence, where each line is an expression. Multiple expressions can be on one line seperated by semi-colons (`;`).
+
+```mulem
+expr
+expr
+
+expr; expr
+```
+
+If an infix operator is at the start or end of a line, the expression will continue between lines. This is known as **expression splitting.**
+
+```mulem
+word +
+word +
+word
+-- 1 expression
+```
+
+### Blocks
+
+Certain keywords can start *blocks* if a line break follows them. This starts a whitespace sequence with a child scope. Indentation determines when a block ends. The last expression evaluated in a block is its value. Use `void` to leave a block empty.
+
+```mulem
+do
+    body
+
+do
+    void
+```
+
+```mulem
+object.method1()
+    .method2()
+    .method3()
+```
+
+Keywords that can start blocks:
+
+- `do`
+- `then`
+- `else`
+- `try`
+- `maybe`
+- `=` (assignment, functions, and patterns)
+
+Some keywords at the end of lines start a **pattern sequence**. Each line start with `|` is a part of that sequence.
+
+```mulem
+match expr is
+| Pattern(x) =
+    body
+```
+
+Keywords that can start pattern sequences:
+
+- `is`
+- `catch`
+
+### Dual Whitespace-Bracket System
+
+Brackets sequences and whitespace sequences can be mixed. When a whitespace sequence is inside a bracket sequence, it and all child whitespace sequences will have a bracket parent. Find a comma `,` or closing bracket will end all whitespace sequences with a matching bracket parent.
+
+```mulem
+apiCall(fn(result) =
+    if result > 0 then
+        print("Success! {result}")
+    else
+        print("Failure! {result}")
+)
+```
+
+### Declarations
+
+Variables are declared with just the equals sign (`=`). A type may be optionally added with a colon (`:`) after the variable name or inferred without it. This type of variable is **immutable.** Additional *assignments* to a variable **shadow** that variable. 
+
+```mulem
+a = 0
+b: int = 1
+a = 2      -- New `a`
+b = 3      -- New `b`
+```
+
+If a variable was declared with type inference, it may be shadowed with any type. However, declaring a variable with a type will lock that type for the rest of the scope. We say that the variable is **type-locked.**
+
+```mulem
+a = 'a'   -- OK!
+b = 'b'   -- Error: `b` is type-locked to `int`
+```
+
+Functions are declared with parentheses (`()`) before the equals sign (`=`). The return type can be infered based on the return value, and the types of parameters may be infered based on usage.
+
+```mulem
+f(x: int): int = x*x
+g(x) = x*x*x
+f(2)   -- Result: 4
+g(2)   -- Result: 8
+```
+
+Assigment or functions can have multiple lines by adding a line-break after the equals sign (`=`).
+
+```mulem
+lunch =
+    if getDayOfWeek() == "Tuesday" then
+        "tacos"
+    else
+        "sandwich"
+```
+
+```mulem
+isThirteen(x) =
+    if x == 13 then
+        return True
+    False
+```
+
+---
+
 ## Table of Contents
 
 - __[Basics](#basics)__
@@ -28,107 +155,6 @@ This design prioritizes:
 - __[Advanced](#advanced)__
 - __[Code Sample](#putting-it-all-together)__
 - __[Reserved Keywords](#reserved-keywords)__
-
----
-
-## Basics
-
-Comments are made with two minus signs `--`.
-
-```mulem
--- Single Line Comment
-{- Mulit-Line Comment -}
-{- {- Nested Comment -} -}
-```
-
-### Dual Whitespace-Bracket System
-
-Mulem is whitespace significant. Indentation determines when blocks start and end. Expressions are split by line-breaks and semi-colons (`;`). The value of each block is the last expression evaluated in it. 
-
-```mulem
-do
-    expr
-
-expr
-expr
-
-expr; expr
-```
-
-Certain keywords and symbols can start a block. Indentation can only increase if the previous line ends in a block-starting token. These tokens are:
-
-- `=`/`:` (any assignment) 
-- `do`
-- `then`
-- `else`
-- `try`
-- `maybe`
-
-Some keywords start a pattern-matching sequence. When these words are at the end of a line, each line below it starting with a `|` at the same indentation will belong to the same sequence. These are the words:
-
-- `is`
-- `catch`
-
-Whitespace becomes insignificant when inside brackets `()`/`[]`/`{}`. Slots in a bracket are delimited with commas `,`.
-
-```mulem
-(
-    expr1_0 +
-    expr1_1 +
-    expr1_2,
-    expr2_0
-)
-```
-
-The two systems can mix: when a block starter is in a bracket, it can start a whitespace significant zone within the brackets. All sequences end when a closing bracket or comma is found.
-
-```mulem
-(do
-    expr1
-    expr2
-    expr3, expr4)
-```
-
-In this example, the result is a tuple of `(expr3, expr4)`.
-
-The benefit of this is that you can mix the two when you need them, such as passing a lambda function into a function.
-
-```mulem
-apiCall(fn(result) =
-    if result > 0 then
-        print("Success! {result}")
-    else
-        print("Failure! {result}")
-)
-```
-
-Whitespace is strict when it's significant. Expressions always end when there's a line break.
-
-```mulem
-x = 0
-+ 1
-+ 2
---  `x` is 0
-```
-
-To prevent this, you have some options. The easiest is to surround an expression in brackets.
-
-```mulem
-x = (0
-+ 1
-+ 2)
--- `x` is 3
-```
-
-The exception is access operators. If a line starts with an accesss operator such as `.`, then it will be appended to the previous line.
-
-```mulem
-object.method1()
-    .method2()
-    .method3()
-```
-
-[TOC](#table-of-contents)
 
 ---
 
