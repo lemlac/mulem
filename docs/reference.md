@@ -1779,6 +1779,16 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 
 `/=` was picked over `!=` to keep `!` related to errors. A coder can scan for `!` and know that's a potential error point.
 
+Other operators:
+
+- `~&` bitwise AND
+- `~|` bitwise OR
+- `~^` bitwise XOR
+- `~` bitwise NOT
+- `~<<` bit shift left
+- `~>>` bit shift right
+- `~>>>` unsigned bit shift right
+
 Some math operators will be put into a standard library. These will be inlined to ensure performance.
 
 ```
