@@ -16,7 +16,7 @@ Comments are made with `--` or `{- -}`.
 {- {- Nested Comment -} -}
 ```
 
-A program in Mulem is divided into expressions and sequences. Sequences can either be delimited with whitespace and semi-colons (`;`) or brackets and commas (`,`). The default is a whitespace sequence, where each line is an expression. Multiple expressions can be on one line seperated by semi-colons (`;`).
+A program in Mulem is divided into expressions and sequences. Sequences can either be delimited with whitespace and semi-colons (`;`) or brackets and commas (`,`). The default is a whitespace sequence, where each line is an expression. Multiple expressions can be on one line separated by semi-colons (`;`).
 
 ```mulem
 expr
@@ -114,7 +114,7 @@ f(2)   -- Result: 4
 g(2)   -- Result: 8
 ```
 
-Assigment or functions can have multiple lines by adding a line-break after the equals sign (`=`).
+Assignment or functions can have multiple lines by adding a line-break after the equals sign (`=`).
 
 ```mulem
 lunch =
@@ -236,7 +236,7 @@ tuple = (1, 2, x: 3, y: 4)
 {0 as a, 1 as b, x, y} = tuple
 ```
 
-Tuples can be spread into a function using the `*` prefix operator. Functions can have named parameters in the same manner as desctructuring.
+Tuples can be spread into a function using the `*` prefix operator. Functions can have named parameters in the same manner as destructuring.
 
 ```mulem
 add(a: int, b: int) * {x: int, y: int}: int =
@@ -321,7 +321,7 @@ getCount()       -- Result:
 
 ### Function Pointers
 
-Declaring a function and setting it to a function creates a **function pointer**. This holds a single function and is treated like a value. It can't be overloaded, but it doesn't require `of` to get a particular dispatch since it can only hold one function. Notice that there's a colon `:` before the parameter. This distinguishes declarations and definities. We're saying this function pointer takes these arguments and types — parameter names ommitted
+Declaring a function and setting it to a function creates a **function pointer**. This holds a single function and is treated like a value. It can't be overloaded, but it doesn't require `of` to get a particular dispatch since it can only hold one function. Notice that there's a colon `:` before the parameter. This distinguishes declarations and definitions. We're saying this function pointer takes these arguments and types — parameter names omitted.
 
 ```mulem
 addInt: (int, int): int = add
@@ -865,7 +865,7 @@ catch
     raise Err(e)   -- Escape function with error
 ```
 
-Inline form. If you only have a whildcard case `(| (_) = x)`, you just write the value `x`.
+Inline form. If you only have a wildcard case `(| (_) = x)`, you just write the value `x`.
 
 ```mulem
 result = try divide(1, 0)! catch 0.0
@@ -1065,7 +1065,7 @@ There are several number types. More may be added in the future, but for now we'
 |:--------|:-----------------------|:----|:---------------------------------|
 | `int`   | signed integer         | `i` | `1`, `2i`, `10i`, `0xabcdef`     |
 | `uint`  | unsigned integer       | `u` | `1`, `0u`, `5u`, `0x10ff`        |
-| `float` | floating ploint number | `f` | `1.0`, `1.5f`, `100f`, `2.0e100` |
+| `float` | floating point number  | `f` | `1.0`, `1.5f`, `100f`, `2.0e100` |
 
 A number literal starts with a digit `0123456789` followed by zero or more other digits, letters, or underscores `_`. All number literals are case-insensitive, so `1.0f == 1.0F`.
 
@@ -1210,7 +1210,7 @@ print("length of list: {len(list)}")
 compressedList = [list^[0] + list^[1], list^[2] + list^[3]]
 doubleArray: [3,2:int] = [[1, 2], [3, 4], [5, 6]]
 item = doubleArray^[1]^[0]    -- The 2nd row, 1st column
-item = doubleArray^[1,0]      -- Or seperated with commas
+item = doubleArray^[1,0]      -- Or separated with commas
 print("{item}")               -- Prints "3"
 ```
 
@@ -2485,12 +2485,12 @@ asyncCollect(n): async[[int]] =
     ret
 ```
 
-Unlike in other languages where *promises* or *futures* can either resolve or reject, async types in Mulem **only resolve.** Instead you can use an exclamation type `T!E` inside an `async[T!E]` function. Unwrap it like you would an exclamation type. Because this is common, `await` has special rules in regards to the `!` and `?` opeerators when placed after it.
+Unlike in other languages where *promises* or *futures* can either resolve or reject, async types in Mulem **only resolve.** Instead you can use an exclamation type `T!E` inside an `async[T!E]` function. Unwrap it like you would an exclamation type. 
 
 ```mulem
-(await!  x) == (await x)!      -- Unwrap an `async[T!E]`
-(await?  x) == (await x)?      -- Unwrap an `async[T?]`
-(await!? x) == (await x)!?     -- Unwrap an `async[T?!E]`
+(await x)!      -- Unwrap an `async[T!E]`
+(await x)?      -- Unwrap an `async[T?]`
+(await x)!?     -- Unwrap an `async[T?!E]`
 ```
 
 [Advanced](#advanced) / [TOC](#table-of-contents)
