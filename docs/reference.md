@@ -2711,6 +2711,28 @@ Mulem has 35 reserved keywords. Note that built-in types (`int`, `str`), boolean
 
 ---
 
+```mulem
+MyStruct ::
+    name: str
+    value: int
+
+MyEnum ::
+    | First
+    | Second(int)
+    | Third{val: int}
+
+MyInterface ::
+    (self).speak(): void
+
+MyStruct / MyInterface ::
+    (self).speak(): void = 
+        print("I am {self.name} and have {self.value} dollars.")
+
+object.:MyInterface.speak()
+```
+
+---
+
 *This document captures the current state of the Mulem design. The language is still evolving.*
 
 
