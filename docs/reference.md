@@ -199,7 +199,7 @@ xRef := 1
 x        -- Value: 1
 ```
 
-*For more info on `@`, see [References](#references-ref) down below.*
+*For more info on `@`, see [References](#references) down below.*
 
 Explicit reference types are `@T` (immutable) and `~@T` (mutable). Use `@` and `~@` prefix operators to get a memory address.
 
@@ -1876,7 +1876,7 @@ __Compound Assignment Operators:__
 - __[Optional Para\meters](#optional-parameters)__
 - __[Lambda Functions](#lambda-functions)__
 - __[Pattern Matching](#pattern-matching)__
-- __[References (`ref`}](#references-ref)__
+- __[References](#references)__
 - __[Iterator / Async Functions](#iterator-async-functions)__
 - __[Inheritance and Visibility](#inheritance-and-visibility)__
 - __[Manual Implementation](#manual-implementation)__
@@ -2391,7 +2391,7 @@ if x is Some(x) then
 
 ---
 
-## References (`@`)
+## References
 
 `@` gives you a reference whose mutability is determined by what you're binding to, not by how you use it. This is like a pointer but it auto derefs, no `^` operator needed.
 
@@ -2422,7 +2422,7 @@ Function parameters/return types use reference types `@T`/`~@T` which determine 
 ```mulem
 getField(s: @SomeStruct): @int = s.value
 
-ref x = getField(myStruct)   -- x: @int, immutable
+@x = getField(myStruct)   -- x: @int, immutable
 ```
 
 ```mulem
@@ -2549,16 +2549,16 @@ Generics will automatically generate code based on their parameters, but you can
 
 ```mulem
 -- Forces every type to have its own implementation
-increment[T] :: (ref c: T): void = unimplemented[]
+increment[T] :: (c: ~@T): void = unimplemented[]
 
 Counter :: {value: int}
 
 -- Specialized for Counter
-increment[Counter] :: (ref c: Counter): void =
+increment[Counter] :: (c: ~@Counter): void =
     c.value += 1
 
 -- Specialized for float
-increment[float] :: (ref c: float): void =
+increment[float] :: (c: ~@float): void =
     c += 1.0
 
 c = Counter(value: 2)
