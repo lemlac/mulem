@@ -166,18 +166,6 @@ a = 2
 a = 'a'
 ```
 
-Declare a variable with a type and it will be locked to that type until declared again with `: T`. Use `: *` to remove the locked type.
-
-```mulem
-c: char
-c = 'c'
-c = 0        -- Error!
-c: int = 0   -- OK!
-c: *
-c = 'c'
-c = 0        -- OK!
-```
-
 Adding a new line and indentation after the `=` starts a block. The last expression evaluated in the block is the value of that variable.
 
 ```mulem
@@ -1839,7 +1827,7 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 |  `lhs !: rhs`  | Error-coalescing                                     |
 |   `lhs & rhs`  | Bitwise AND                                          |
 |   `lhs | rhs`  | Bitwise OR                                           |
-|   `lhs # rhs`  | Bitwise XOR                                          |
+|  `lhs >| rhs`  | Bitwise XOR                                          |
 |  `lhs << rhs`  | Bitshift Left                                        |
 |  `lhs >> rhs`  | Bitshift Right                                       |
 | `lhs >>> rhs`  | Unsigned Bitshift Right                              |
@@ -1861,7 +1849,7 @@ __Compound Assignment Operators:__
 | `lhs <>= rhs`   | `lhs := lhs <> rhs`  |
 |  `lhs &= rhs`   | `lhs := lhs & rhs`   |
 |  `lhs |= rhs`   | `lhs := lhs | rhs`   |
-|  `lhs #= rhs`   | `lhs := lhs # rhs`   |
+| `lhs >|= rhs`   | `lhs := lhs >< rhs`  |
 | `lhs <<= rhs`   | `lhs := lhs << rhs`  |
 | `lhs >>= rhs`   | `lhs := lhs >> rhs`  |
 | `lhs >>>= rhs`  | `lhs := lhs >>> rhs` |
