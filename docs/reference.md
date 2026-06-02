@@ -1189,10 +1189,10 @@ template = ''Insert here → {{variable}}''
 Array types are declared with square brackets around their type (`[..T]`). A number before a colon `:` makes it a fixed length array `[N;T]`. Arrays are statically sized when written `[N;T]`, while `[..T]` is the dynamic form. Items are separated with commas (`,`). Index is done with the `^[]` and `.[]` operators. 
 
 ```mulem
-list: [4:int] = [1, 2, 3, 4]
+list: [4;int] = [1, 2, 3, 4]
 print("length of list: {len(list)}")
 compressedList = [list^[0] + list^[1], list^[2] + list^[3]]
-doubleArray: [3,2:int] = [[1, 2], [3, 4], [5, 6]]
+doubleArray: [3;[2;int]] = [[1, 2], [3, 4], [5, 6]]
 item = doubleArray^[1]^[0]    -- The 2nd row, 1st column
 item = doubleArray^[1,0]      -- Or separated with commas
 print("{item}")               -- Prints "3"
