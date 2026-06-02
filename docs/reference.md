@@ -942,12 +942,12 @@ Last
   - `"""Multi-Line String"""`
   - `''Raw String''`
 - __[Arrays](#arrays):__
-  - `: T^[]` – dynamic array
-  - `: T^[N]` – fixed array
-  - `: T^[]^[]` – 2D dynamic array
-  - `: T^[N]^[M]` – 2D fixed array
+  - `: [..T]` – dynamic array
+  - `: [N;T]` – fixed array
+  - `: [..[..T]]` – 2D dynamic array
+  - `: [N;[M;T]]` – 2D fixed array
 - __[Dictionaries](#dictionaries):__
-  - `: T^[K]` – `K` is key type, `T` is value type
+  - `: [K:T]` – `K` is key type, `T` is value type
 - __[Tuples](#tuples):__
   - `: (T, U)` – Position tuple
   - `: {x: V}` – Named tuple
@@ -1186,7 +1186,7 @@ template = ''Insert here → {{variable}}''
 
 ### Arrays
 
-Array types are declared with square brackets around their type (`T^[]`). A number before a colon `:` makes it a fixed length array `T^[N]`. Arrays are statically sized when written `T^[N]`, while `T^[]` is the dynamic form. Items are separated with commas (`,`). Index is done with the `^[]` and `.[]` operators. 
+Array types are declared with square brackets around their type (`[..T]`). A number before a colon `:` makes it a fixed length array `[N;T]`. Arrays are statically sized when written `[N;T]`, while `[..T]` is the dynamic form. Items are separated with commas (`,`). Index is done with the `^[]` and `.[]` operators. 
 
 ```mulem
 list: [4:int] = [1, 2, 3, 4]
@@ -1200,7 +1200,7 @@ print("{item}")               -- Prints "3"
 
 `list^[i]` is the same as `(list+i)^` in Mulem like how `list[i]` means `*(list+i)` in C/C++.
 
-If access to an index in an array cannot be guaranteed, you can use the safe access operator `.[]`. For an array of `T^[]`, `.[]` will return type `T?` and `^[]` will return a type `T`.
+If access to an index in an array cannot be guaranteed, you can use the safe access operator `.[]`. For an array of `[..T]`, `.[]` will return type `T?` and `^[]` will return a type `T`.
 
 ```mulem
 i = randInt()    -- Undeterministic number.
@@ -1223,7 +1223,7 @@ c = a <> b                  -- == [1, 2, 3, 0, 1, 2, 3, 4]
 d = [0, ..a <> b, 5, ..c, 6]  -- == [0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 1, 2, 3, 0, 1, 2, 3, 4, 6]
 ```
 
-The `<>` is used for concatenating two arrays, and its complement operators are `*>` *prepend* and `<*` *append.* For an array of type `T^[]`, these take a type `T` on the side opposite of where they point. `*>` is right associative, allow you to chain multiple prepends onto one array. 
+The `<>` is used for concatenating two arrays, and its complement operators are `*>` *prepend* and `<*` *append.* For an array of type `[..T]`, these take a type `T` on the side opposite of where they point. `*>` is right associative, allow you to chain multiple prepends onto one array. 
 
 ```mulem
 1 *> 2 *> 3 *> [4]  -- Value: [1, 2, 3, 4]
@@ -1263,7 +1263,7 @@ d: TwoOrMoreInts = (-2, -1, 0, *list)   -- == (-2, -1, [0, 1, 2])
 
 ### Dictionaries
 
-Dictionaries are a subtype of arrays. Instead of numbers, each item is given a **key.** A dictionary's type is the type of the value `V` and the type of the key `K` join with a colon `:` in between: `[K: V]`. This makes it semantically clear that they are a subtype of arrays. Dictionaries also use the same operator to access items. The type passed to the `^[]` or `.[]` operators must match the key type. Each key is marked with `[]:` in the array.
+Dictionaries are a subtype of arrays. Instead of numbers, each item is given a **key.** A dictionary's type is the type of the value `V` and the type of the key `K` join with a colon `:` in between: `[K:V]`. This makes it semantically clear that they are a subtype of arrays. Dictionaries also use the same operator to access items. The type passed to the `^[]` or `.[]` operators must match the key type. Each key is marked with `[]:` in the array.
 
 ```mulem
 dict: [float: float] = [
@@ -1737,10 +1737,10 @@ optionInt = Some(1)
 Type parameters can be omitted at the call site if they can be fully inferred from the value arguments, in which case the call uses only parentheses `()`. It can also be called explicitly by making an alias for it or calling with both brackets at the same time `[]()`
 
 ```mulem
-SomeInt :: SomeT^[]]
+SomeInt :: Some[int]
 optionInt = SomeInt(1)
 
-optionInt = SomeT^[]](1)
+optionInt = Some[int](1)
 ```
 
 The syntax `[]` was chosen so that generic type inference will take precedence. `meta(a, b)` means to *call the instantiated function that `meta` returns with inferred types* whereas `meta[a, b]` means to *call the abstract function `meta` with these exact values.* This also makes it easy to distinguish actual function calls from macros/inlining. This removes the need for the more conventional arrow bracket `<>` syntax, which can get confusing. For example, in `f( g < a, b > ( c ) )`, is `g` a generic function or is that comparing two values and passing the results to `f`? The square bracket syntax removes this ambiguity, `f( g [ a, b ] ( c ) )`. This makes it semantically clear that you're doing a compile-time function call followed by a run-time function call. 
@@ -2039,10 +2039,10 @@ print("{addOptional(1)}")     -- Prints "1"
 print("{addOptional(1, 1)}")  -- Prints "2"
 ```
 
-Use `..` to collect all arguments into a single variable. The variable should be type `T^[]` (an array).
+Use `..` to collect all arguments into a single variable. The variable should be type `[..T]` (an array).
 
 ```mulem
-addAll(..nums: int^[]): int =
+addAll(..nums: [..int]): int =
     sum: ~int = 0
     loop n in nums then
         sum += n
@@ -2056,7 +2056,7 @@ print("{addAll(1, 2, 3)}")  -- Prints "6"
 
 ```mulem
 -- With pattern matching:
-addAll(..nums: int^[]]): int =
+addAll(..nums: [..int]]): int =
     match nums is
     | []            = 0
     | [x]           = x
@@ -2464,8 +2464,8 @@ asyncIterFn(n): iter[async[int]] =
         val = await fetch(i)
         yield val
 
-asyncCollect(n): async[int^[]] =
-    ret: ~int^[] = []
+asyncCollect(n): async[[..int]] =
+    ret: ~[..int] = []
     loop (await x) in asyncIterFn(n) then
         ret <>= x
     ret
