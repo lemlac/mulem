@@ -2724,7 +2724,7 @@ MyEnum ::
 MyInterface ::
     (self).speak(): void
 
-MyStruct / MyInterface ::
+MyStruct <= MyInterface ::
     (self).speak(): void = 
         print("I am {self.name} and have {self.value} dollars.")
 
