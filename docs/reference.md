@@ -959,9 +959,9 @@ Last
   - `''Raw String''`
 - __[Arrays](#arrays):__
   - `: [T]` – dynamic array
-  - `: [N:T]` – fixed array
+  - `: [T;N]` – fixed array
   - `: [[T]]` – 2D dynamic array
-  - `: [N,M:T]` – 2D fixed array
+  - `: [T;N,M]` – 2D fixed array
 - __[Dictionaries](#dictionaries):__
   - `: [K:T]` – `K` is key type, `T` is value type
 - __[Tuples](#tuples):__
@@ -1202,7 +1202,7 @@ template = ''Insert here → {{variable}}''
 
 ### Arrays
 
-Array types are declared with square brackets around their type (`[T]`). A number before a colon `:` makes it a fixed length array `[N:T]`. Arrays are statically sized when written `[N:T]`, while `[T]` is the dynamic form. Items are separated with commas (`,`). Index is done with the `^[]` and `.[]` operators. 
+Array types are declared with square brackets around their type (`[T]`). A number before a colon `:` makes it a fixed length array `[T;N]`. Arrays are statically sized when written `[T;N]`, while `[T]` is the dynamic form. Items are separated with commas (`,`). Index is done with the `^[]` and `.[]` operators. 
 
 ```mulem
 list: [4:int] = [1, 2, 3, 4]
