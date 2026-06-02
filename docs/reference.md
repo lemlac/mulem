@@ -1871,7 +1871,6 @@ __Compound Assignment Operators:__
 
 [TOC](#table-of-contents)
 
-- __[Methods](#methods)__
 - __[Pipelining](#pipelining)__
 - __[Optional Para\meters](#optional-parameters)__
 - __[Lambda Functions](#lambda-functions)__
@@ -1884,12 +1883,6 @@ __Compound Assignment Operators:__
 
 - __[Code Sample](#putting-it-all-together)__
 - __[Reserved Keywords](#reserved-keywords)__
-
----
-
-## Methods
-
-[Advanced](#advanced) / [TOC](#table-of-contents)
 
 ---
 
