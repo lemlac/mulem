@@ -189,9 +189,9 @@ Explicit reference types are `@T` (immutable) and `~@T` (mutable). Use `@` and `
 
 ```mulem
 x ~= 0
-xRef: @int = @x
+xRef: @int = x
 xRef := 1  -- Error!
-xRef: ~@int = ~@x
+xRef: ~@int = x
 xRef := 1  -- OK!
 ```
 
@@ -199,8 +199,8 @@ A `@T` can reference any variable of type `T`, but a `~@T` can only reference mu
 
 ```mulem
 x = 0
-xRef: @int = @x         -- OK!
-xRef: ~@int = ~@x    -- Error!
+xRef: @int = x     -- OK!
+xRef: ~@int = x    -- Error!
 ```
 
 ### Destructuring
