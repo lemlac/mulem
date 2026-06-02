@@ -188,13 +188,13 @@ lunch =
         "sandwich"
 ```
 
-Mutable variables are declared with the symbol `~` before the type. They must be set with the `:=` operator or any compound assignment operators such as `+:=` or `-:=`. Shadowing a mutable variable with `=` will throw an error unless redeclared with `: T` / `: *`.
+Mutable variables are declared with the symbol `~` before the type. They must be set with the `:=` operator or any compound assignment operators such as `+=` or `-=`. Shadowing a mutable variable with `=` will throw an error unless redeclared with `: T` / `: *`.
 
 ```mulem
 i: ~int = 0
 i := 1
-i +:= 1
-i -:= 1
+i += 1
+i -= 1
 i = 1   -- Error!
 i: int  -- Shadow i
 i = 1   -- OK!
@@ -319,7 +319,7 @@ amount = 1   -- Automatically captured.
 count ~= 0   -- Must be explicitly captured.
 
 increment() @ (~count): void =
-    count +:= amount
+    count += amount
 
 getCount() @ (count): int =
     count
@@ -651,24 +651,24 @@ loop i <= 100 then
     if i % 10 == 0 then
         print("{i}!!!")
         continue
-        -- OOPS! We forgot to do `i +:= 1` before continuing. 
+        -- OOPS! We forgot to do `i += 1` before continuing. 
         -- Infinite loop on i = 10!
     print("{i}")
-    i +:= 1
+    i += 1
 
 -- The Safe Way
 i ~= 1
-loop i <= 100; i +:= 1 then
+loop i <= 100; i += 1 then
     if i % 10 == 0 then
         print("{i}!!!")
-        continue    -- Automatically triggers `i +:= 1` before checking condition again
+        continue    -- Automatically triggers `i += 1` before checking condition again
     print("{i}")
 ```
 
 ```mulem
 -- Track index of `loop / in`
 idx ~= 0
-loop item in inventory; idx +:= 1 then
+loop item in inventory; idx += 1 then
     print("Slot {idx}: {item}")
 ```
 
@@ -676,7 +676,7 @@ Because `do` blocks isolate scopes and inline expressions sequence seamlessly, y
 
 ```mulem
 -- C-style for loop
-do i ~= 1; loop i <= 100; i +:= 1 then
+do i ~= 1; loop i <= 100; i += 1 then
     if i % 10 == 0 then
         print("{i}!!!")
         continue
@@ -1786,13 +1786,13 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 | 9     | Unary                      | `+` `-` `#`                                     |
 | 8     | Exponent                   | `**` (right-associative)                        |
 | 7     | Multiplicative / Shift     | `*` `/` `//` `%` `%%` `<*` `*>` `<<` `>>` `>>>` |
-| 6     | Additive / Concat          | `+` `-` `<>` `&` `|` `><`                       |
+| 6     | Additive / Concat          | `+` `-` `<>` `&` `|` `#`                        |
 | 5     | Range                      | `..` `..=`                                      |
 | 4     | Comparison                 | `==` `#=` `<` `>` `<=` `>=`                     |
 | 3     | Logical AND                | `&&`                                            |
 | 2     | Logical OR / None-Coalesce | `||` `?:` `!:`                                  |
 | 1     | Pipeline                   | `\|>`                                           |
-| 0     | Assignment / Spread        | `=` `:=` `+:=` `-:=` `&` `*`                    |
+| 0     | Assignment / Spread        | `=` `:=` `+=` `-=` `&` `*`                      |
 
 | Operator       | Meaning                                              |
 |:--------------:|:-----------------------------------------------------|
@@ -1839,32 +1839,32 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 |  `lhs !: rhs`  | Error-coalescing                                     |
 |   `lhs & rhs`  | Bitwise AND                                          |
 |   `lhs | rhs`  | Bitwise OR                                           |
-|  `lhs >< rhs`  | Bitwise XOR                                          |
+|   `lhs # rhs`  | Bitwise XOR                                          |
 |  `lhs << rhs`  | Bitshift Left                                        |
 |  `lhs >> rhs`  | Bitshift Right                                       |
 | `lhs >>> rhs`  | Unsigned Bitshift Right                              |
 
 __Compound Assignment Operators:__
 
-| Operator         | Meaning                         |
-|:----------------:|:--------------------------------|
-|  `lhs := rhs`    | Assignment                      |
-|  `lhs +:= rhs`   | `lhs := lhs + rhs`              |
-|  `lhs -:= rhs`   | `lhs := lhs - rhs`              |
-|  `lhs *:= rhs`   | `lhs := lhs * rhs`              |
-|  `lhs /:= rhs`   | `lhs := lhs / rhs`              |
-| `lhs //:= rhs`   | `lhs := lhs // rhs`             |
-|  `lhs %:= rhs`   | `lhs := lhs % rhs`              |
-| `lhs %%:= rhs`   | `lhs := lhs %% rhs`             |
-| `lhs <*:= rhs`   | `lhs := lhs <* rhs`             |
-| `lhs *>:= rhs`   | `lhs := rhs *> lhs`             |
-| `lhs <>:= rhs`   | `lhs := lhs <> rhs`             |
-|  `lhs &:= rhs`   | `lhs := lhs & rhs`              |
-|  `lhs |:= rhs`   | `lhs := lhs | rhs`              |
-|  `lhs ><:= rhs`  | `lhs := lhs >< rhs`             |
-|  `lhs <<:= rhs`  | `lhs := lhs << rhs`             |
-|  `lhs >>:= rhs`  | `lhs := lhs >> rhs`             |
-| `lhs >>>:= rhs`  | `lhs := lhs >>> rhs`            |
+| Operator        | Meaning              |
+|:---------------:|:---------------------|
+|  `lhs := rhs`   | *Assignment*         |
+|  `lhs += rhs`   | `lhs := lhs + rhs`   |
+|  `lhs -= rhs`   | `lhs := lhs - rhs`   |
+|  `lhs *= rhs`   | `lhs := lhs * rhs`   |
+|  `lhs /= rhs`   | `lhs := lhs / rhs`   |
+| `lhs //= rhs`   | `lhs := lhs // rhs`  |
+|  `lhs %= rhs`   | `lhs := lhs % rhs`   |
+| `lhs %%= rhs`   | `lhs := lhs %% rhs`  |
+| `lhs <*= rhs`   | `lhs := lhs <* rhs`  |
+| `lhs *>= rhs`   | `lhs := rhs *> lhs`  |
+| `lhs <>= rhs`   | `lhs := lhs <> rhs`  |
+|  `lhs &= rhs`   | `lhs := lhs & rhs`   |
+|  `lhs |= rhs`   | `lhs := lhs | rhs`   |
+|  `lhs #= rhs`   | `lhs := lhs # rhs`   |
+| `lhs <<= rhs`   | `lhs := lhs << rhs`  |
+| `lhs >>= rhs`   | `lhs := lhs >> rhs`  |
+| `lhs >>>= rhs`  | `lhs := lhs >>> rhs` |
 
 ### Key Type Modifiers & Postfix Operators
 
@@ -1991,7 +1991,7 @@ The variable type is always inferred, to avoid ambiguity with `:`. Mutability ca
 
 ```mulem
 fetchA() as ~x |> fetchB(x) |> do   -- Create a mutable variable `x`.
-    x +:= 1                         -- Mutate it.
+    x += 1                         -- Mutate it.
     print("{x}")                    -- Print it.
 ```
 
@@ -2078,7 +2078,7 @@ Use `*` to collect all arguments into a single variable. The variable should be 
 addAll(*nums: [int]): int =
     sum: ~int = 0
     loop n in nums:
-        sum +:= n
+        sum += n
     sum
 
 print("{addAll()}")         -- Prints "0"
@@ -2160,7 +2160,7 @@ Capturing also works inside lambda functions just like with named functions.
 ```mulem
 count ~= 0
 forEach([1, 2, 3, 4], \(x) @ (~count) =
-    count +:= x
+    count += x
 )
 ```
 
@@ -2196,11 +2196,11 @@ When capturing variables, each returned function needs to capture them separatel
 ```mulem
 count ~= 0
 curryAddCount(a: int) @ (~count): (int): (int): int =
-    count +:= a                                 -- (1) Evaluated immediately
+    count += a                                 -- (1) Evaluated immediately
     \(b: int) @ (~count): (int): int =          -- (2) Suspends and captures `count`
-        count +:= b                             -- (3) Evaluated when second lambda is called
+        count += b                             -- (3) Evaluated when second lambda is called
         \(c: int) @ (~count): int =
-            count +:= c
+            count += c
             count
 
 print("{ curryAddCount(1)(2)(3) } == { count }")   -- Prints "6 == 6"
@@ -2381,7 +2381,7 @@ Loop until a pattern matches. Bindings are in scope below the loop.
 i ~= 0
 loop
     print("Attempts: {i}")
-    i +:= 1
+    i += 1
 until getValue() is Pattern(x)
 
 print("{x}")    -- x is guaranteed set here.
@@ -2439,7 +2439,7 @@ ref x = getField(myStruct)   -- x: @int, immutable
 
 ```mulem
 increment(x: ~@int): void =
-    x +:= 1
+    x += 1
 
 x ~= 0
 increment(x)
@@ -2475,7 +2475,7 @@ countUntil(i: ~int, max: int): iter[int] =
         if i >= max then
             return      -- Break out of the loop and the function.
         yield i
-        i +:= 1
+        i += 1
 ```
 
 ### `await`
@@ -2567,11 +2567,11 @@ Counter :: {value: int}
 
 -- Specialized for Counter
 increment[Counter] :: (ref c: Counter): void =
-    c.value +:= 1
+    c.value += 1
 
 -- Specialized for float
 increment[float] :: (ref c: float): void =
-    c +:= 1.0
+    c += 1.0
 
 c = Counter(value: 2)
 f = 3.0
