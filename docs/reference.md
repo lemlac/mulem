@@ -2713,8 +2713,8 @@ Mulem has 35 reserved keywords. Note that built-in types (`int`, `str`), boolean
 
 ```mulem
 MyStruct ::
-    name: str
-    value: int
+    * name: str
+    * value: int
 
 MyEnum ::
     | First
