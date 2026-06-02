@@ -25,15 +25,6 @@ expr
 expr; expr
 ```
 
-If an infix operator is at the start or end of a line, the expression will continue between lines. This is known as **expression splitting.**
-
-```mulem
-word +
-word +
-word
--- 1 expression
-```
-
 ### Blocks
 
 Certain keywords can start *blocks* if a line break follows them. This starts a whitespace sequence with a child scope. Indentation determines when a block ends. The last expression evaluated in a block is its value. Use `void` to leave a block empty.
@@ -44,12 +35,6 @@ do
 
 do
     void
-```
-
-```mulem
-object.method1()
-    .method2()
-    .method3()
 ```
 
 Keywords that can start blocks:
