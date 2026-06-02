@@ -1758,11 +1758,11 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 | 9     | Unary                      | `+` `-` `#`                                     |
 | 8     | Exponent                   | `**` (right-associative)                        |
 | 7     | Multiplicative / Shift     | `*` `/` `//` `%` `%%` `<*` `*>` `<<` `>>` `>>>` |
-| 6     | Additive / Concat          | `+` `-` `<>` `&` `|` `#`                        |
+| 6     | Additive / Concat          | `+` `-` `<>` `&` `\|` `\|<`                        |
 | 5     | Range                      | `...` `..=`                                     |
 | 4     | Comparison                 | `==` `#=` `<` `>` `<=` `>=`                     |
 | 3     | Logical AND                | `&&`                                            |
-| 2     | Logical OR / None-Coalesce | `||` `?:` `!:`                                  |
+| 2     | Logical OR / None-Coalesce | `\|\|` `?:` `!:`                                  |
 | 1     | Pipeline                   | `\|>`                                           |
 | 0     | Assignment / Spread        | `=` `:=` `+=` `-=` `..`                         |
 
@@ -1779,12 +1779,10 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 |   `lhs ^. rhs` | Raw pointer member access                            |
 |       `@ rhs`  | Get immutable reference                              |
 |      `~@ rhs`  | Get mutable reference                                |
-|       `* rhs`  | Spread operator                                      |
-|  `lhs .. rhs`  | Exclusive range                                      |
+|      `.. rhs`  | Spread operator                                      |
+| `lhs ... rhs`  | Exclusive range                                      |
 | `lhs ..= rhs`  | Inclusive range                                      |
 | `lhs \|> rhs`  | Pipeline                                             |
-|   `lhs = rhs`  | Declaration                                          |
-| `lhs: T = rhs` | Explicit typed declaration                           |
 |   `lhs + rhs`  | Addition                                             |
 |   `lhs - rhs`  | Subtraction                                          |
 |       `+ rhs`  | Unary positive                                       |
@@ -1810,8 +1808,8 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 |  `lhs ?: rhs`  | `None`- coalescing                                   |
 |  `lhs !: rhs`  | Error-coalescing                                     |
 |   `lhs & rhs`  | Bitwise AND                                          |
-|   `lhs | rhs`  | Bitwise OR                                           |
-|  `lhs >| rhs`  | Bitwise XOR                                          |
+|  `lhs \| rhs`  | Bitwise OR                                           |
+|  `lhs >\| rhs` | Bitwise XOR                                          |
 |  `lhs << rhs`  | Bitshift Left                                        |
 |  `lhs >> rhs`  | Bitshift Right                                       |
 | `lhs >>> rhs`  | Unsigned Bitshift Right                              |
@@ -1834,8 +1832,8 @@ __Compound Assignment Operators:__
 | `lhs *>= rhs`   | `lhs := rhs *> lhs`  |
 | `lhs <>= rhs`   | `lhs := lhs <> rhs`  |
 |  `lhs &= rhs`   | `lhs := lhs & rhs`   |
-|  `lhs |= rhs`   | `lhs := lhs | rhs`   |
-| `lhs >|= rhs`   | `lhs := lhs >< rhs`  |
+|  `lhs \|= rhs`  | `lhs := lhs \| rhs`  |
+| `lhs >\|= rhs`  | `lhs := lhs >\| rhs` |
 | `lhs <<= rhs`   | `lhs := lhs << rhs`  |
 | `lhs >>= rhs`   | `lhs := lhs >> rhs`  |
 | `lhs >>>= rhs`  | `lhs := lhs >>> rhs` |
