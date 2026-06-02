@@ -2728,10 +2728,10 @@ MyUnion ::
     + char
 
 MyInterface ::
-    (self).speak(): void
+    (@self).speak(): void
 
 MyStruct <= MyInterface ::
-    (self).speak(): void = 
+    (@self).speak(): void = 
         print("I am {self.name} and have {self.value} dollars.")
 
 object.:MyInterface.speak()
