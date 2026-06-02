@@ -2721,6 +2721,11 @@ MyEnum ::
     | Second(int)
     | Third{val: int}
 
+MyUnion ::
+    + int
+    + float
+    + char
+
 MyInterface ::
     (self).speak(): void
 
