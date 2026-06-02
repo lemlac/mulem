@@ -540,18 +540,18 @@ else if a || b then       -- True or False == True
 ### `match` / `is`
 
 ```mulem
-match expr is (| ptrn(*) = expr | ptrn = expr | (*) = expr)
+match expr is (| ptrn(_) = expr | ptrn = expr | (_) = expr)
 
 match expr is
-| ptrn(*) =
+| ptrn(_) =
     body
 | ptrn =
     body
-| (*) =
+| (_) =
     body
 ```
 
-Enum/error branching. Exhaustive by default. `| (*) =` for the default case.
+Enum/error branching. Exhaustive by default. `| (_) =` for the default case.
 
 ```mulem
 match expr is
@@ -559,10 +559,10 @@ match expr is
     body
 | ptrn =
     body
-| (*) =
+| (_) =
     body
 
-match expr is (| ptrn = expr | ptrn = expr | (*) = expr)
+match expr is (| ptrn = expr | ptrn = expr | (_) = expr)
 ```
 
 When inline, the patterns after `is` need to be in parentheses.
@@ -572,7 +572,7 @@ When inline, the patterns after `is` need to be in parentheses.
 color = match status is (
     | Ok  = "green"
     | Err = "red"
-    | (*) =  "gray"
+    | (_) =  "gray"
 )
 
 -- Inside another expression
@@ -592,13 +592,13 @@ match choice is
     print("Second({x})")   -- ……
 | Third{val} =             -- ……
     print("Third \{ val={val} }")
-                           -- All choices were exhausted, so no `| (*) =` is necessary.
+                           -- All choices were exhausted, so no `| (_) =` is necessary.
 ```
 
 ```mulem
-result = match x is (| Ptrn1 = 5 | Ptrn2 = 6 | (*) = 7)
+result = match x is (| Ptrn1 = 5 | Ptrn2 = 6 | (_) = 7)
 --
-message = match e is (| OpenError{filename} = "Open error: {filename}" | (*) = "Unknown error")
+message = match e is (| OpenError{filename} = "Open error: {filename}" | (_) = "Unknown error")
 ```
 
 ### `loop`
@@ -824,16 +824,16 @@ crunchData(): int?!Error!CustomError =                                -- Multipl
 ```mulem
 try expr! catch expr
 
-try expr! catch (| ptrn(*) = expr | ptrn = expr | (*) = expr)
+try expr! catch (| ptrn(_) = expr | ptrn = expr | (_) = expr)
 
 try
     body!
 catch
-| ptrn(*) =
+| ptrn(_) =
     body
 | ptrn =
     body
-| (*) =
+| (_) =
     body
 ```
 
@@ -877,7 +877,7 @@ catch
     raise Err(e)   -- Escape function with error
 ```
 
-Inline form. If you only have a whildcard case `(| (*) = x)`, you just write the value `x`.
+Inline form. If you only have a whildcard case `(| (_) = x)`, you just write the value `x`.
 
 ```mulem
 result = try divide(1, 0)! catch 0.0
@@ -970,10 +970,10 @@ Last
   - `"""Multi-Line String"""`
   - `''Raw String''`
 - __[Arrays](#arrays):__
-  - `: [*T]` – dynamic array
-  - `: [N*T]` – fixed array
-  - `: [**T]` – 2D dynamic array
-  - `: [N*M*T]` – 2D fixed array
+  - `: [T]` – dynamic array
+  - `: [N:T]` – fixed array
+  - `: [[T]]` – 2D dynamic array
+  - `: [N,M:T]` – 2D fixed array
 - __[Dictionaries](#dictionaries):__
   - `: [K:T]` – `K` is key type, `T` is value type
 - __[Tuples](#tuples):__
@@ -1214,13 +1214,13 @@ template = ''Insert here → {{variable}}''
 
 ### Arrays
 
-Array types are declared with square brackets around their type (`[*T]`). A number before the multiplication mark `*` makes it a fixed length array `[N*T]`. Arrays are statically sized when written `[N*T]`, while `[*T]` is the dynamic form. Items are separated with commas (`,`). Index is done with the `^[]` and `.[]` operators. 
+Array types are declared with square brackets around their type (`[T]`). A number before a colon `:` makes it a fixed length array `[N:T]`. Arrays are statically sized when written `[N:T]`, while `[T]` is the dynamic form. Items are separated with commas (`,`). Index is done with the `^[]` and `.[]` operators. 
 
 ```mulem
-list: [4*int] = [1, 2, 3, 4]
+list: [4:int] = [1, 2, 3, 4]
 print("length of list: {len(list)}")
 compressedList = [list^[0] + list^[1], list^[2] + list^[3]]
-doubleArray: [3*2*int] = [[1, 2], [3, 4], [5, 6]]
+doubleArray: [3,2:int] = [[1, 2], [3, 4], [5, 6]]
 item = doubleArray^[1]^[0]    -- The 2nd row, 1st column
 item = doubleArray^[1,0]      -- Or seperated with commas
 print("{item}")               -- Prints "3"
@@ -1228,7 +1228,7 @@ print("{item}")               -- Prints "3"
 
 `list^[i]` is the same as `(list+i)^` in Mulem like how `list[i]` means `*(list+i)` in C/C++.
 
-If access to an index in an array cannot be guaranteed, you can use the safe access operator `.[]`. For an array of `[*T]`, `.[]` will return type `T?` and `^[]` will return a type `T`.
+If access to an index in an array cannot be guaranteed, you can use the safe access operator `.[]`. For an array of `[T]`, `.[]` will return type `T?` and `^[]` will return a type `T`.
 
 ```mulem
 i = randInt()    -- Undeterministic number.
@@ -1251,7 +1251,7 @@ c = a <> b                  -- == [1, 2, 3, 0, 1, 2, 3, 4]
 d = [0, *a <> b, 5, *c, 6]  -- == [0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 1, 2, 3, 0, 1, 2, 3, 4, 6]
 ```
 
-The `<>` is used for concatenating two arrays, and its complement operators are `*>` *prepend* and `<*` *append.* For an array of type `[*T]`, these take a type `T` on the side opposite of where they point. `*>` is right associative, allow you to chain multiple prepends onto one array. 
+The `<>` is used for concatenating two arrays, and its complement operators are `*>` *prepend* and `<*` *append.* For an array of type `[T]`, these take a type `T` on the side opposite of where they point. `*>` is right associative, allow you to chain multiple prepends onto one array. 
 
 ```mulem
 1 *> 2 *> 3 *> [4]  -- Value: [1, 2, 3, 4]
@@ -1592,7 +1592,7 @@ When pattern match, the fill path to the type doesn't need to named on each case
 match a is
 | First =
     print("first!")
-| Second(*) =
+| Second(_) =
     print("second!")
 | Third{*} =
     print("third!")
@@ -1748,7 +1748,7 @@ print("{ maxAdd[ f(0), g(0) ] (1) }")
 
 The compiler will read the body of the macro and understand where to insert its parameters, so if a parameter gets shadowed, then it will no longer insert it for the rest of that scope. 
 
-You can also define a type with a meta function. The meta functions parameters in `[]` will be inferred if it returns a function or type and you call it with parentheses `()`. In other words, `meta(*)` is equal to `meta[_](*)`. 
+You can also define a type with a meta function. The meta functions parameters in `[]` will be inferred if it returns a function or type and you call it with parentheses `()`. In other words, `meta(_)` is equal to `meta[_](_)`. 
 
 ```mulem
 -- Note that this is not the actual definition for a question type `T?`. This is just a user-defined enum that uses the same pattern.
@@ -2072,10 +2072,10 @@ print("{addOptional(1)}")     -- Prints "1"
 print("{addOptional(1, 1)}")  -- Prints "2"
 ```
 
-Use `*` to collect all arguments into a single variable. The variable should be type `[*T]` (an array).
+Use `*` to collect all arguments into a single variable. The variable should be type `[T]` (an array).
 
 ```mulem
-addAll(*nums: [*int]): int =
+addAll(*nums: [int]): int =
     sum: ~int = 0
     loop n in nums:
         sum +:= n
@@ -2089,7 +2089,7 @@ print("{addAll(1, 2, 3)}")  -- Prints "6"
 
 ```mulem
 -- With pattern matching:
-addAll(*nums: [*int]): int =
+addAll(*nums: [int]): int =
     match nums is
     | []            = 0
     | [x]           = x
@@ -2215,7 +2215,7 @@ print("{ curryAddCount(1)(2)(3) } == { count }")   -- Prints "6 == 6"
 ```mulem
 match expr is
 | Pattern1(x) = expr
-| (*) = expr
+| (_) = expr
 ```
 
 The next control flow methods are based on pattern match. Generally, you see the word `is`, you next thing to expect after it is a pattern: `value is Pattern(x)`.
@@ -2233,7 +2233,7 @@ match choice is
     if x is Some(x) then
         print("Definitely Second: {x}")
     -- Implicit break.
-| (*) =
+| (_) =
     print("No match")
 ```
 
@@ -2244,7 +2244,7 @@ If a pattern can't be **guaranteed** for any reason, then you must have a **fall
 - __Optional binding:__ `Pattern(opt x)` — wraps `x` in type `T?`, `Some(x)` if it matched, `None` if it didn't
 - __Default value:__ `Pattern(opt x = default)` — `x` is type `T`, if it didn't match `x` is set to `default`
 
-You can have multiple patterns match to one case. If any of the patterns destructure with a variable, the same variable name and type must be in all patterns. If not, use a wildcard `(*)` in each pattern or omit the data part entirely to disable destructuring. Otherwise, use a fallback in the pattern.
+You can have multiple patterns match to one case. If any of the patterns destructure with a variable, the same variable name and type must be in all patterns. If not, use a wildcard `(_)` in each pattern or omit the data part entirely to disable destructuring. Otherwise, use a fallback in the pattern.
 
 ```mulem
 match choice is
@@ -2280,7 +2280,7 @@ match choice is
     print("Negative: {x}")
 | Second(x) =
     print("Zero")
-| (*) =
+| (_) =
     print("No match")
 ```
 
@@ -2497,7 +2497,7 @@ asyncIterFn(n): iter[async[int]] =
         val = await fetch(i)
         yield val
 
-asyncCollect(n): async[[*int]] =
+asyncCollect(n): async[[int]] =
     ret: ~[int] = []
     loop (await x) in asyncIterFn(n) then
         ret <>= x
