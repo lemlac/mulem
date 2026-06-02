@@ -1245,20 +1245,20 @@ If you spread an array into a tuple, the type must be known and the tuple must h
 ThreeInts :: (int, int, int)
 
 list = [1, 2, 3]
-a: ThreeInts = (*list)      -- == (1, 2, 3)
-b: ThreeInts = (0, *list)   -- == (0, 1, 2), truncated at the end
+a: ThreeInts = (..list)      -- == (1, 2, 3)
+b: ThreeInts = (0, ..list)   -- == (0, 1, 2), truncated at the end
 ```
 
 Tuples may also collect any remaining positional components into an array, just like variadic parameters in functions.
 
 ```mulem
-TwoOrMoreInts :: (int, int, *int)
+TwoOrMoreInts :: (int, int, ..int)
 
 list = [1, 2]
-a: TwoOrMoreInts = (*list)              -- == (1, 2, [])
-b: TwoOrMoreInts = (0, *list)           -- == (0, 1, [2])
-c: TwoOrMoreInts = (-1, 0, *list)       -- == (-1, 0, [1, 2])
-d: TwoOrMoreInts = (-2, -1, 0, *list)   -- == (-2, -1, [0, 1, 2])
+a: TwoOrMoreInts = (..list)              -- == (1, 2, [])
+b: TwoOrMoreInts = (0, ..list)           -- == (0, 1, [2])
+c: TwoOrMoreInts = (-1, 0, ..list)       -- == (-1, 0, [1, 2])
+d: TwoOrMoreInts = (-2, -1, 0, ..list)   -- == (-2, -1, [0, 1, 2])
 ```
 
 ### Dictionaries
