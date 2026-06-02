@@ -105,7 +105,7 @@ a = 'a'   -- OK!
 b = 'b'   -- Error: `b` is type-locked to `int`
 ```
 
-Functions are declared with parentheses (`()`) before the equals sign (`=`). The return type can be infered based on the return value, and the types of parameters may be infered based on usage.
+Functions are declared with parentheses (`()`) before the equals sign (`=`). The return type can be inferred based on the return value, and the types of parameters may be inferred based on usage.
 
 ```mulem
 f(x: int): int = x*x
@@ -189,7 +189,7 @@ i = 1   -- OK!
 
 `:=`​ and `=`​ are separated so that you don't accidentally mistype a variable name and create a new variable in scope. 
 
-The type of a mutable variable can be infered with `~=`. A reference can be declared with `@` before the name. It points to the same memory location as another variable. Its mutability is carried over.
+The type of a mutable variable can be inferred with `~=`. A reference can be declared with `@` before the name. It points to the same memory location as another variable. Its mutability is carried over.
 
 ```mulem
 x ~= 0
@@ -235,13 +235,13 @@ tuple = (1, 2, x: 3, y: 4)
 {0 as a, 1 as b, x, y} = tuple
 ```
 
-Tuples can be spread into a function using the `*` prefix operator. Functions can have named parameters in the same manner as destructuring.
+Tuples can be spread into a function using the `..` prefix operator. Functions can have named parameters in the same manner as destructuring.
 
 ```mulem
 add(a: int, b: int) * {x: int, y: int}: int =
     a + b + x + y
 
-add(*tuple)              -- Result: 10
+add(..tuple)              -- Result: 10
 add(5, 6, x: 7, y: 8)    -- Result: 26
 ```
 
@@ -261,7 +261,7 @@ divide(5, 2)       -- Result: 2
 divide(5.0, 2.0)   -- Result: 2.5
 ```
 
-The parameters and return types can be inferred. Functions can have multiple lines by adding a line break after the `=` sign. The last expression evalued is the implied return.
+The parameters and return types can be inferred. Functions can have multiple lines by adding a line break after the `=` sign. The last expression evaluated is the implied return.
 
 ```mulem
 isThirteen(x) =
@@ -610,7 +610,7 @@ loop cond then
 loop x in expr then
     body
 
-[*loop x in expr then x]
+[..loop x in expr then x]
 
 -- Do-until (runs at least once):
 loop
@@ -682,10 +682,10 @@ loop i in 1..=100 then
     print("{i}")
 ```
 
-Inlined `loop x in` returns a lazy iterator collected with `*`.
+Inlined `loop x in` returns a lazy iterator collected with `..`.
 
 ```mulem
-doubled = [*loop x in list then x * 2]
+doubled = [..loop x in list then x * 2]
 ```
 
 Destructuring works in loop variables.
@@ -715,8 +715,8 @@ loop Pattern(opt x) in listOfPatterns then
 Both accept an optional label to target an outer loop.
 
 ```mulem
-loop.outer x in 0..100 then
-    loop y in 0..100 then
+loop.outer x in 0...100 then
+    loop y in 0...100 then
         if x * y >= 100 then
             continue.outer
         if x * y == 77 then
@@ -1229,13 +1229,13 @@ loop x in list then
     print("{x}")     -- No need to use `#`
 ```
 
-Use the spread operator `*` to spread an array into another array. This must be the first prefix operator in an expression, and it must be in a compatiable array or tuple literal. It always goes last in the slot's expression, so extra parentheses aren't necessary: `*a <> b` == `*(a <> b)`.
+Use the spread operator `..` to spread an array into another array. This must be the first prefix operator in an expression, and it must be in a compatiable array or tuple literal. It always goes last in the slot's expression, so extra parentheses aren't necessary: `..a <> b` == `*(a <> b)`.
 
 ```mulem
 a = [1, 2, 3]
-b = [0, *a, 4]              -- == [0, 1, 2, 3, 4]
+b = [0, ..a, 4]              -- == [0, 1, 2, 3, 4]
 c = a <> b                  -- == [1, 2, 3, 0, 1, 2, 3, 4]
-d = [0, *a <> b, 5, *c, 6]  -- == [0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 1, 2, 3, 0, 1, 2, 3, 4, 6]
+d = [0, ..a <> b, 5, ..c, 6]  -- == [0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 1, 2, 3, 0, 1, 2, 3, 4, 6]
 ```
 
 The `<>` is used for concatenating two arrays, and its complement operators are `*>` *prepend* and `<*` *append.* For an array of type `[T]`, these take a type `T` on the side opposite of where they point. `*>` is right associative, allow you to chain multiple prepends onto one array. 
@@ -1249,7 +1249,7 @@ The `<>` is used for concatenating two arrays, and its complement operators are 
 Splitting arrays is accomplished with destructuring, just like you can do with tuples.
 
 ```mulem
-[head, *tail] = [1, 2, 3, 4]
+[head, ..tail] = [1, 2, 3, 4]
 head    -- Value: 1
 tail    -- Value: [2, 3, 4]
 ```
@@ -1573,7 +1573,7 @@ b = MyEnum.Second(2)
 c = MyEnum.Third(val: 3)
 ```
 
-When pattern match, the fill path to the type doesn't need to named on each case, only the name of each member. Use `*` while destructuring to discard the members data.
+When pattern match, the fill path to the type doesn't need to named on each case, only the name of each member. Use `_` while destructuring to discard the members data.
 
 ```mulem
 match a is
@@ -1774,12 +1774,12 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 | 8     | Exponent                   | `**` (right-associative)                        |
 | 7     | Multiplicative / Shift     | `*` `/` `//` `%` `%%` `<*` `*>` `<<` `>>` `>>>` |
 | 6     | Additive / Concat          | `+` `-` `<>` `&` `|` `#`                        |
-| 5     | Range                      | `..` `..=`                                      |
+| 5     | Range                      | `...` `..=`                                     |
 | 4     | Comparison                 | `==` `#=` `<` `>` `<=` `>=`                     |
 | 3     | Logical AND                | `&&`                                            |
 | 2     | Logical OR / None-Coalesce | `||` `?:` `!:`                                  |
 | 1     | Pipeline                   | `\|>`                                           |
-| 0     | Assignment / Spread        | `=` `:=` `+=` `-=` `*`                          |
+| 0     | Assignment / Spread        | `=` `:=` `+=` `-=` `..`                         |
 
 | Operator       | Meaning                                              |
 |:--------------:|:-----------------------------------------------------|
@@ -1903,8 +1903,8 @@ To fix this, let's introduce a new system known as **pipelining.**
 
 ```mulem
 fetchA()
-|> fetchB(*$)
-|> fetchC(*$)
+|> fetchB(..$)
+|> fetchC(..$)
 |> print("{$}")
 ```
 
@@ -1921,8 +1921,8 @@ When mixed with `do`, multiple expressions separated by semicolons `;` on one li
 
 ```mulem
 |> fetchA()                      -- Run fetchA,
-|> do print("{$}"); fetchB(*$)   -- Print result, then fetchB
-|> do print("{$}"); fetchC(*$)   -- Print result, then fetchC
+|> do print("{$}"); fetchB(..$)   -- Print result, then fetchB
+|> do print("{$}"); fetchC(..$)   -- Print result, then fetchC
 |> print("{$}")                  -- Print result.
 ```
 
@@ -1930,19 +1930,19 @@ A **pipeline block** is started with `|> do` and a new line, either at the end o
 
 ```mulem
 |> fetchA()         -- Set up things.
-|> fetchB(*$)       -- …
-|> fetchC(*$)       -- …
+|> fetchB(..$)       -- …
+|> fetchC(..$)       -- …
 |> do               -- Pipeline context is now ready.
     print("{$}")    -- Use it here.
 
-fetchA() |> fetchB(*$) |> fetchC(*$) |> do   -- Or in one line.
+fetchA() |> fetchB(..$) |> fetchC(..$) |> do   -- Or in one line.
     print("{$}")                             -- Then use the result.
 
 -- Freely mix the two formats:
 fetchA() |> do         -- Start with this pipeline context.
     print("{$}")       -- Use the same `$` for these two lines.
-    fetchB(*$)         -- Same pipeline context `$`.
-    |> do print("{$}"); fetchC(*$) |> do  -- Start a new pipeline inline.
+    fetchB(..$)         -- Same pipeline context `$`.
+    |> do print("{$}"); fetchC(..$) |> do  -- Start a new pipeline inline.
         print("{$}")                      -- Print the final result.
 ```
 
@@ -1950,8 +1950,8 @@ To get a value within a pipeline, use `as x` after any step to store it into a l
 
 ```mulem
 |> fetchA()
-|> fetchB(*$)
-|> fetchC(*$) as x    -- Put the result into `x`.
+|> fetchB(..$)
+|> fetchC(..$) as x    -- Put the result into `x`.
 
 print("{x}")          -- Print the result.
 ```
@@ -1961,8 +1961,8 @@ This lets you extract the result of any step in a pipeline simply by appending `
 ```mulem
 -- Put all results of each step into variables.
 |> fetchA() as a
-|> fetchB(*$) as b
-|> fetchC(*$) as c
+|> fetchB(..$) as b
+|> fetchC(..$) as c
 
 print("a = {a}, b = {b}, c = {c}")
 ```
@@ -1979,8 +1979,8 @@ To put the final result of any pipeline into a variable, use `|> $ as x` at the 
 
 ```mulem
 |> fetchA()      -- Start.
-|> fetchB(*$)    -- Pass pipeline context.
-|> fetchC(*$)    -- Pass pipeline context.
+|> fetchB(..$)    -- Pass pipeline context.
+|> fetchC(..$)    -- Pass pipeline context.
 |> $ as x        -- Put the pipeline context into `x`.
 
 print("{x}")
@@ -2052,10 +2052,10 @@ print("{addOptional(1)}")     -- Prints "1"
 print("{addOptional(1, 1)}")  -- Prints "2"
 ```
 
-Use `*` to collect all arguments into a single variable. The variable should be type `[T]` (an array).
+Use `..` to collect all arguments into a single variable. The variable should be type `[T]` (an array).
 
 ```mulem
-addAll(*nums: [int]): int =
+addAll(..nums: [int]): int =
     sum: ~int = 0
     loop n in nums then
         sum += n
@@ -2069,25 +2069,25 @@ print("{addAll(1, 2, 3)}")  -- Prints "6"
 
 ```mulem
 -- With pattern matching:
-addAll(*nums: [int]): int =
+addAll(..nums: [int]): int =
     match nums is
     | []            = 0
     | [x]           = x
-    | [x, *rest]  = x + addAll(*rest)
+    | [x, ..rest]  = x + addAll(*rest)
 ```
 
-A name is optional after `*`. You can use the symbol by itself to pass it to another function or itself in a functional loop. 
+A name is optional after `..`. You can use the symbol by itself to pass it to another function or itself in a functional loop. 
 
 ```mulem
-addAll(x: int, *): int =
-    x + addAll(*)
+addAll(x: int, ..): int =
+    x + addAll(..)
 addAll(x: int): int =
     x
 addAll(): int =
     0
 
-logAndAdd(msg: str, *) =
-    print("{msg} {addAll(*)}")
+logAndAdd(msg: str, ..) =
+    print("{msg} {addAll(..)}")
 
 logAndAdd("Sum =")           -- Prints "Sum = 0"
 logAndAdd("Sum =", 1)        -- Prints "Sum = 1"
@@ -2112,7 +2112,7 @@ Define a function within an expression with `\` + any name. For demonstration pu
 ```
 
 ```mulem
-map(array, action) = [*loop x in array then action(x)]
+map(array, action) = [..loop x in array then action(x)]
 array0 = [1, 2, 3, 4]
 array1 = map(array0, \(x) = x + 1)   -- Inline
 array2 = map(array0, \(x) =          -- Multi-line
@@ -2443,7 +2443,7 @@ Exits out of a function with an `iter[_]` type. The return value of the function
 
 ```mulem
 countUpTo(n: int): iter[int] =
-    loop i in 0..n then
+    loop i in 0...n then
         yield i
 ```
 
@@ -2473,7 +2473,7 @@ Both `yield` and `await` can be used together in an `iter[async[_]]` type. The t
 
 ```mulem
 asyncIterFn(n): iter[async[int]] =
-    loop i in 0..n then
+    loop i in 0...n then
         val = await fetch(i)
         yield val
 
