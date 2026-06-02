@@ -2661,11 +2661,12 @@ User :: {
     age: int
 }
 
-Speaker :: proto = 
-    speak(self): str
+Speaker ::
+    (self).speak(): str
 
-(self: User).speak() =
-    "Hi, I'm {self.name}."
+User <= Speaker ::
+    (self).speak() =
+        "Hi, I'm {self.name}."
 
 FetchError :: !(str)
 
