@@ -1096,7 +1096,7 @@ Changing the base involves adding a `0` + either the letter `b`, `o`, or `x` to 
 
 #### Characters
 
-Characters or `char` are written with apostrophes (`'…'`) *(also called single quotes).* They store 1 byte of data. You can also do arithmetic on them like with numbers.
+Characters or `char` are written with apostrophes (`'…'`) *(also called single quotes).* You can do arithmetic on them like with numbers.
 
 ```mulem
 a = 'a'
@@ -1106,7 +1106,7 @@ c = b + 1
 print("{c}")   -- Print "c", the letter after 'b'
 ```
 
-Characters can be escaped with a backslash `\` between the quotes. Some letters have special values like `\t` for tabs, `\n` for new lines, etc. All the standard stuff you would expect from a modern language. 
+Characters within apostrophes or quotation marks can be escaped with a backslash `\`. Some letters have special values like `\t` for tabs, `\n` for new lines, etc. All the standard stuff you would expect from a modern language. 
 
 ```mulem
 apostrophe = '\''
@@ -1830,6 +1830,8 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 |  `lhs << rhs`  | Bitshift Left                                        |
 |  `lhs >> rhs`  | Bitshift Right                                       |
 | `lhs >>> rhs`  | Unsigned Bitshift Right                              |
+
+`#` was picked for **not** (logical and bitwise) to keep the `!` symbol seperated for **errors** and the `~` symbol seperated for **mutability.** Because of that, `#=` follows the same convention as `!=` in other languages. 
 
 __Compound Assignment Operators:__
 
