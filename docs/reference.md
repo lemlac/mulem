@@ -1520,7 +1520,7 @@ alsoTuple    :: (int , float , char)                   -- Optional parentheses.
 namedTuple   :: {count: int, scale: float, code: char} -- Position not guaranteed.
 mixedTuple   :: (int, float) * {code: char}            -- Has both positional and named components.
 productUnion ::  int * float * char                    -- Is the size of all types combined.
-sumUnion     ::  int | float | char                    -- Is the size of the largest type
+sumUnion     ::  int + float + char                    -- Is the size of the largest type
 .
 ```
 
@@ -2065,7 +2065,7 @@ Use `*` to collect all arguments into a single variable. The variable should be 
 ```mulem
 addAll(*nums: [int]): int =
     sum: ~int = 0
-    loop n in nums:
+    loop n in nums then
         sum += n
     sum
 
