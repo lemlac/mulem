@@ -200,7 +200,7 @@ i: int  -- Shadow i
 i = 1   -- OK!
 ```
 
-`:=`​ and `=`​ are separated so that you don't accidentally mistype a variable name and create a new variable in scope. It also makes it easier to create compound assignment of custom operators such as `rem:=`​. 
+`:=`​ and `=`​ are separated so that you don't accidentally mistype a variable name and create a new variable in scope. 
 
 The type of a mutable variable can be infered with `~=`. A reference can be declared with `@` before the name. It points to the same memory location as another variable. Its mutability is carried over.
 
@@ -648,7 +648,7 @@ Steps may optionally be added to the loop's subject line. This is done by adding
 -- The Dangerous Way
 i ~= 1
 loop i <= 100 then
-    if i rem 10 == 0 then
+    if i % 10 == 0 then
         print("{i}!!!")
         continue
         -- OOPS! We forgot to do `i +:= 1` before continuing. 
@@ -659,7 +659,7 @@ loop i <= 100 then
 -- The Safe Way
 i ~= 1
 loop i <= 100; i +:= 1 then
-    if i rem 10 == 0 then
+    if i % 10 == 0 then
         print("{i}!!!")
         continue    -- Automatically triggers `i +:= 1` before checking condition again
     print("{i}")
@@ -677,7 +677,7 @@ Because `do` blocks isolate scopes and inline expressions sequence seamlessly, y
 ```mulem
 -- C-style for loop
 do i ~= 1; loop i <= 100; i +:= 1 then
-    if i rem 10 == 0 then
+    if i % 10 == 0 then
         print("{i}!!!")
         continue
     print("{i}")
@@ -689,7 +689,7 @@ Note that even though it's possible to do a C-style for-loop, it's preferable to
 
 ```mulem
 loop i in 1..=100 then
-    if i rem 10 == 0 then
+    if i % 10 == 0 then
         print("{i}!!!")
         continue
     print("{i}")
@@ -1362,7 +1362,7 @@ Raw pointers are type `ptr`. These cannot be dereferenced. They are ideally used
 
 ```mulem
 o: ptr = externalLibrary.getObject()
-if o /= Null then
+if o #= Null then
     externalLibrary.useObject(o)
 else
     print("Initialization failed")
@@ -1783,14 +1783,14 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 |:------|:---------------------------|:------------------------------------------------|
 | 11    | Member access/Function     | `.` `^.` `.[]` `^[]` `?.` `?.[]`                |
 | 10    | Postfix/Prefix             | `?` `!` `^` `@` `~@` `.:` `()`                  |
-| 9     | Unary                      | `+` `-` `/`                                     |
+| 9     | Unary                      | `+` `-` `#`                                     |
 | 8     | Exponent                   | `**` (right-associative)                        |
 | 7     | Multiplicative / Shift     | `*` `/` `//` `%` `%%` `<*` `*>` `<<` `>>` `>>>` |
 | 6     | Additive / Concat          | `+` `-` `<>` `&` `|` `><`                       |
 | 5     | Range                      | `..` `..=`                                      |
-| 4     | Comparison                 | `==` `/=` `<` `>` `<=` `>=`                     |
-| 3     | Logical AND                | `and`                                           |
-| 2     | Logical OR / None-Coalesce | `or` `?:` `!:`                                  |
+| 4     | Comparison                 | `==` `#=` `<` `>` `<=` `>=`                     |
+| 3     | Logical AND                | `&&`                                            |
+| 2     | Logical OR / None-Coalesce | `||` `?:` `!:`                                  |
 | 1     | Pipeline                   | `\|>`                                           |
 | 0     | Assignment / Spread        | `=` `:=` `+:=` `-:=` `&` `*`                    |
 
@@ -1824,7 +1824,7 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 |  `lhs %% rhs`  | True Modulo                                          |
 |  `lhs ** rhs`  | Exponentiation (right-associative)                   |
 |  `lhs == rhs`  | Equality                                             |
-|  `lhs /= rhs`  | Inequality                                           |
+|  `lhs #= rhs`  | Inequality                                           |
 |   `lhs > rhs`  | Greater than                                         |
 |   `lhs < rhs`  | Less than                                            |
 |  `lhs >= rhs`  | Greater than or equal                                |
@@ -1834,7 +1834,7 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 |  `lhs <> rhs`  | Concatenation                                        |
 |  `lhs && rhs`  | Logical AND                                          |
 |  `lhs || rhs`  | Logical OR                                           |
-|       `/ rhs`  | Logical NOT / Bitwise NOT                            |
+|       `# rhs`  | Logical NOT / Bitwise NOT                            |
 |  `lhs ?: rhs`  | `None`- coalescing                                   |
 |  `lhs !: rhs`  | Error-coalescing                                     |
 |   `lhs & rhs`  | Bitwise AND                                          |
@@ -1843,8 +1843,6 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 |  `lhs << rhs`  | Bitshift Left                                        |
 |  `lhs >> rhs`  | Bitshift Right                                       |
 | `lhs >>> rhs`  | Unsigned Bitshift Right                              |
-
-`/=` was picked over `!=` to keep `!` related to errors. A coder can scan for `!` and know that's a potential error point.
 
 __Compound Assignment Operators:__
 
@@ -2698,7 +2696,7 @@ do
 
 ## Reserved Keywords
 
-Mulem has 25 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard question `T?` members (`Some`, `None`), are built-in symbols but *not* strict keywords.
+Mulem has 27 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard question `T?` members (`Some`, `None`), are built-in symbols but *not* strict keywords.
 
 **The Keyword List:**
 `as`, `await`, `break`, `catch`, `continue`, `defer`, `do`, `else`, `fallthrough`, `if`, `import`, `in`, `is`, `loop`, `match`, `maybe`, `mod`, `of`, `opt`, `raise`, `return`, `self`, `then`, `try`, `until`, `void`, `yield`.
