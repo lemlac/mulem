@@ -4,15 +4,6 @@
 
 __The Mulem programming language__ is a general-purpose, expression-oriented language designed to balance conciseness and eloquence. It delivers highly readable syntax, robust safety mechanisms, granular execution control, and expressive data pipelining. Supporting both interpretation and compilation, Mulem is ideally suited for systems programming, AI, and game development.
 
-## Design Philosophy
-
-Mulem is intentionally designed with a **compact, distinctive aesthetic**. It favors short keywords and symbols where they improve readability without sacrificing clarity.
-
-This design prioritizes:
-- **Conciseness** without excessive sigils
-- **Distinct identity** separate from existing languages
-- **Consistency** in short, pronounceable keywords
-
 ---
 
 ## Basics
@@ -88,7 +79,7 @@ Keywords that can start pattern sequences:
 Brackets sequences and whitespace sequences can be mixed. When a whitespace sequence is inside a bracket sequence, it and all child whitespace sequences will have a bracket parent. Find a comma `,` or closing bracket will end all whitespace sequences with a matching bracket parent.
 
 ```mulem
-apiCall(fn(result) =
+apiCall(\(result) =
     if result > 0 then
         print("Success! {result}")
     else
@@ -197,10 +188,10 @@ lunch =
         "sandwich"
 ```
 
-Mutable variables are declared with the keyword `mu` before it. They must be set with the `:=` operator or any compound assignment operators such as `+:=` or `-:=`. Shadowing a mutable variable with `=` will throw an error unless redeclared with `: T` / `: *`. `mu` is the keyword for mutable variables, deliberately chosen over `mut` for conciseness and language identity.
+Mutable variables are declared with the symbol `~` before the type. They must be set with the `:=` operator or any compound assignment operators such as `+:=` or `-:=`. Shadowing a mutable variable with `=` will throw an error unless redeclared with `: T` / `: *`.
 
 ```mulem
-mu i = 0
+i: ~int = 0
 i := 1
 i +:= 1
 i -:= 1
@@ -211,33 +202,33 @@ i = 1   -- OK!
 
 `:=`​ and `=`​ are separated so that you don't accidentally mistype a variable name and create a new variable in scope. It also makes it easier to create compound assignment of custom operators such as `rem:=`​. 
 
-A reference can be declared with `ref`. It points to the same memory location as another variable. Its mutability is carried over.
+The type of a mutable variable can be infered with `~=`. A reference can be declared with `@` before the name. It points to the same memory location as another variable. Its mutability is carried over.
 
 ```mulem
-mu x = 0
-ref xRef = x
+x ~= 0
+@xRef = x
 xRef := 1
 x        -- Value: 1
 ```
 
-*For more info on `ref`, see [References](#references-ref) down below.*
+*For more info on `@`, see [References](#references-ref) down below.*
 
-Explicit reference types are `@T` (immutable) and `@mu T` (mutable). Use `@` and `@mu` prefix operators to get a memory address.
+Explicit reference types are `@T` (immutable) and `~@T` (mutable). Use `@` and `~@` prefix operators to get a memory address.
 
 ```mulem
-mu x = 0
+x ~= 0
 xRef: @int = @x
 xRef := 1  -- Error!
-xRef: @mu int = @mu x
+xRef: ~@int = ~@x
 xRef := 1  -- OK!
 ```
 
-A `@T` can reference any variable of type `T`, but a `@mu T` can only reference mutable variables.
+A `@T` can reference any variable of type `T`, but a `~@T` can only reference mutable variables.
 
 ```mulem
 x = 0
 xRef: @int = @x         -- OK!
-xRef: @mu int = @mu x    -- Error!
+xRef: ~@int = ~@x    -- Error!
 ```
 
 ### Destructuring
@@ -249,21 +240,21 @@ Tuples can be destructured like this:
 {x, y} = (x: 3, y: 4)  -- Named tuple.
 ```
 
-When tuples are mixed, you can either use `(…) & {…}` or `{0 as x, …}`.
+When tuples are mixed, you can either use `(…) * {…}` or `{0 as x, …}`.
 
 ```mulem
 tuple = (1, 2, x: 3, y: 4)
-(a, b) & {x, y} = tuple
+(a, b) * {x, y} = tuple
 {0 as a, 1 as b, x, y} = tuple
 ```
 
-Tuples can be spread into a function using the `&` prefix operator. Functions can have named parameters in the same manner as desctructuring.
+Tuples can be spread into a function using the `*` prefix operator. Functions can have named parameters in the same manner as desctructuring.
 
 ```mulem
-add(a: int, b: int) & {x: int, y: int}: int =
+add(a: int, b: int) * {x: int, y: int}: int =
     a + b + x + y
 
-add(&tuple)              -- Result: 10
+add(*tuple)              -- Result: 10
 add(5, 6, x: 7, y: 8)    -- Result: 26
 ```
 
@@ -321,13 +312,13 @@ withOneAndTwo(add of (int, int): int)   -- Resolved.
 
 ### Capturing
 
-Functions capture immutable variables automatically. Mutable variables must be captured with `@` in the function signature. If the function mutates the variable, then it should have `mu` before the variable name.
+Functions capture immutable variables automatically. Mutable variables must be captured with `@` in the function signature. If the function mutates the variable, then it should have `~` before the variable name.
 
 ```mulem
-amount = 1     -- Automatically captured.
-mu count = 0   -- Must be explicitly captured.
+amount = 1   -- Automatically captured.
+count ~= 0   -- Must be explicitly captured.
 
-increment() @ (mu count): void =
+increment() @ (~count): void =
     count +:= amount
 
 getCount() @ (count): int =
@@ -379,24 +370,23 @@ action = addOneFloat     -- Error! Same as assigning wrong type to a variable
 Function pointers can also be mutable. You can set it to point to different functions or assigned a lambda function. The colon before the parameter `: (T): T` signifies that we are not defining a function, only declaring its type.
 
 ```mulem
-mu cb: (int): int
+cb: ~(int): int
 f1(x) = x + 1
 f2(x) = x - 1
 cb := f1
 cb(1)     -- Result: 2
 cb := f2
 cb(1)     -- Result: 0
-cb := fn(x) = x * 2
-cb(2)     -- Resu
-lt: 4
+cb := \(x) = x * 2
+cb(2)     -- Result: 4
 ```
 
-### Lambda Functions (`fn`)
+### Lambda Functions (`\`)
 
-The keyword `fn` starts a **lambda function.** This creates a function pointer inside an expression. A name can optionally be given to create a self-reference inside the lambda function.
+The symbol `\` starts a **lambda function.** This creates a function pointer inside an expression. A name can optionally be given to create a self-reference inside the lambda function.
 
 ```mulem
-apiCall(fn(result) =
+apiCall(\(result) =
     if result > 0 then
         print("Success! {result}")
     else
@@ -405,7 +395,7 @@ apiCall(fn(result) =
 ```
 
 ```mulem
-startCountdown(fn count(n) =
+startCountdown(\count(n) =
     if n > 0 then
         print("{n}!")
         count(n - 1)
@@ -414,10 +404,10 @@ startCountdown(fn count(n) =
 , 10)
 ```
 
-When you define a lambda function in an expression by itself, the function will be assigned to a variable with its name in that scope. In other words, saying `fn name(x) = x` is the same as `name = fn name(x) = x`.
+When you define a lambda function in an expression by itself, the function will be assigned to a variable with its name in that scope. In other words, saying `\name(x) = x` is the same as `name = \name(x) = x`.
 
 ```mulem
-callback = fn callback(result) =
+callback = \callback(result) =
     if result > 0 then
         print("Success! {result}")
     else
@@ -425,7 +415,7 @@ callback = fn callback(result) =
 
 -- Or just:
 
-fn callback(result) =
+\callback(result) =
     if result > 0 then
         print("Success! {result}")
     else
@@ -530,20 +520,20 @@ Basic Boolean branching.
 x = if x > 0 then x else -x
 
 if x > 0 then
-     print("positive")
+    print("positive")
 else
     print("non-positive")
 ```
 
-Use `or`/`and` to compare multiple booleans at once.
+Use `||`/`&&` to compare multiple booleans at once.
 
 ```mulem
 a = True
 b = False
 
-if a and b then           -- True and False == False
+if a && b then            -- True and False == False
     print("This will not print")
-else if a or b then       -- True or False == True
+else if a || b then       -- True or False == True
     print("This will print")
 ```
 
@@ -656,7 +646,7 @@ Steps may optionally be added to the loop's subject line. This is done by adding
 
 ```mulem
 -- The Dangerous Way
-mu i = 1
+i ~= 1
 loop i <= 100 then
     if i rem 10 == 0 then
         print("{i}!!!")
@@ -667,7 +657,7 @@ loop i <= 100 then
     i +:= 1
 
 -- The Safe Way
-mu i = 1
+i ~= 1
 loop i <= 100; i +:= 1 then
     if i rem 10 == 0 then
         print("{i}!!!")
@@ -677,7 +667,7 @@ loop i <= 100; i +:= 1 then
 
 ```mulem
 -- Track index of `loop / in`
-mu idx = 0
+idx ~= 0
 loop item in inventory; idx +:= 1 then
     print("Slot {idx}: {item}")
 ```
@@ -686,7 +676,7 @@ Because `do` blocks isolate scopes and inline expressions sequence seamlessly, y
 
 ```mulem
 -- C-style for loop
-do mu i = 1; loop i <= 100; i +:= 1 then
+do i ~= 1; loop i <= 100; i +:= 1 then
     if i rem 10 == 0 then
         print("{i}!!!")
         continue
@@ -989,7 +979,7 @@ Last
 - __[Tuples](#tuples):__
   - `: (T, U)` – Position tuple
   - `: {x: V}` – Named tuple
-  - `: (T, U) & {x: V}` or `: {0: T, 1: U, x: V}` – Mixed tuple
+  - `: (T, U) * {x: V}` or `: {0: T, 1: U, x: V}` – Mixed tuple
 - __[Pointers](#pointers-t):__
   - `: ptr` – Raw pointer
   - `: T^` – Typed pointer
@@ -999,10 +989,11 @@ Last
   - `: T!` – Error type inferred
 - __[Custom Types](#custom-types):__
   - `:: T` — Alias to another type
-  - `:: struct` — Structural data
-  - `:: enum` — Sum types / tagged unions
-  - `:: error` — Custom error types
-  - `:: proto` — Virtual interfaces
+  - `:: *` — Structural data
+  - `:: |` — Enumerable data / tagged unions
+  - `:: +` – Untagged unions
+  - `:: !` — Custom error types
+  - `:: .` — Virtual interfaces
 
 ### Built-in Types
 
@@ -1298,8 +1289,6 @@ c: TwoOrMoreInts = (-1, 0, *list)       -- == (-1, 0, [1, 2])
 d: TwoOrMoreInts = (-2, -1, 0, *list)   -- == (-2, -1, [0, 1, 2])
 ```
 
-*Mulem separates tuple and array spread to preserve =type safety and avoid runtime surprises. `&` always preserves tuple structure; `*` always preserves array structure.*
-
 ### Dictionaries
 
 Dictionaries are a subtype of arrays. Instead of numbers, each item is given a **key.** A dictionary's type is the type of the value `V` and the type of the key `K` join with a colon `:` in between: `[K: V]`. This makes it semantically clear that they are a subtype of arrays. Dictionaries also use the same operator to access items. The type passed to the `^[]` or `.[]` operators must match the key type. Each key is marked with `[]:` in the array.
@@ -1340,7 +1329,7 @@ loop (key, val) in dict then
 
 Tuples use commas (`,`) to separate components for both **positional** (`()`) and **named** (`{}`) tuples. 
 
-Product unions with the `&` operator can be used for both types and values. When combining two or more positional tuples, the positions of subsequent tuples get bumped up by the number of positions in the previous tuples, i.e. `(a, b) & (c, d)` becomes `(a, b, c, d)`. When you combine two or more named tuples, conflicting named parameters override each other with the last tuple taking priority—much like how shadowing works. So if you have `{x: 1} & {x: 2}`, the result is just `{x: 2}` since it overrides the `x` of the previous tuple. Positional tuples and named tuples can be combined together for example `(0, 1) & {x: 2}`. The shorthand for this is to write named parameters in a positional tuple like `(0, 1, x: 2)`. 
+Product unions with the `*` operator can be used for both types and values. When combining two or more positional tuples, the positions of subsequent tuples get bumped up by the number of positions in the previous tuples, i.e. `(a, b) * (c, d)` becomes `(a, b, c, d)`. When you combine two or more named tuples, conflicting named parameters override each other with the last tuple taking priority—much like how shadowing works. So if you have `{x: 1} * {x: 2}`, the result is just `{x: 2}` since it overrides the `x` of the previous tuple. Positional tuples and named tuples can be combined together for example `(0, 1) * {x: 2}`. The shorthand for this is to write named parameters in a positional tuple like `(0, 1, x: 2)`. 
 
 You can think of it like every tuple always having both dimensions, just with most slots empty:
 
@@ -1348,24 +1337,24 @@ You can think of it like every tuple always having both dimensions, just with mo
 |:-------------------------|:---------------|:---------|:---------|
 | `(int, int)`             | `(0, 1)`       | `(0, 1)` | `{}`     |
 | `{x: int}`               | `(x: 2)`       | `()`     | `{x: 2}` |
-| `(int, int) & {x: int}`  | `(0, 1, x: 2)` | `(0, 1)` | `{x: 2}` |
-| `{x: int} & (int, int)`  | `(x: 2, 0, 1)` | `(0, 1)` | `{x: 2}` |
+| `(int, int) * {x: int}`  | `(0, 1, x: 2)` | `(0, 1)` | `{x: 2}` |
+| `{x: int} * (int, int)`  | `(x: 2, 0, 1)` | `(0, 1)` | `{x: 2}` |
 
-So `&` has different commutativity rules depending on what's being combined:
+So `*` has different commutativity rules depending on what's being combined:
 
 |      Combination  | Commutative? |        Rule                 |
 |:-----------------------:|:---:|:-------------------------------|
-| Positional & Positional | No  | Positions concatenate in order |
-|      Named & Named      | No  | Conflicts resolve last-wins    |
-| Positional & Named      | Yes | Orthogonal, no interaction     |
+| Positional * Positional | No  | Positions concatenate in order |
+|      Named * Named      | No  | Conflicts resolve last-wins    |
+| Positional * Named      | Yes | Orthogonal, no interaction     |
 
 This makes the algebra quite principled. The only cases where order matters are also the cases where a conflict is actually possible — two positional slots or two named slots with the same key. When there's no possible conflict, order is irrelevant.
 
 It also means the shorthand `(0, 1, x: 2)` isn't really special syntax. It's the natural representation of a tuple that has both dimensions populated.
 
-Every opaque type by itself is its own tuple, so for example `char` and `(char)` are the same. This means that in the example, `int & float & char` is the equal to `(int, float, char)`.  Creating a product type of opaque types like primitives and enums coerce into a positional tuple, e.g. `int & float & char` becomes `(int, float, char)`. 
+Every opaque type by itself is its own tuple, so for example `char` and `(char)` are the same. This means that in the example, `int * float * char` is the equal to `(int, float, char)`.  Creating a product type of opaque types like primitives and enums coerce into a positional tuple, e.g. `int * float * char` becomes `(int, float, char)`. 
 
-Combining empty tuples produces an empty tuple `() & () == ()`. The same is true for empty named tuples `{} & {} == {}`. This also means that empty positional tuples and empty named tuples are equivalent `() == {}`. Both tuples have zero dimensions in both positional and named components; therefore they are equivalent. Saying `() & {} & ()` or `{} & ()` and any combination of empty tuples all are the same type.
+Combining empty tuples produces an empty tuple `() * () == ()`. The same is true for empty named tuples `{} * {} == {}`. This also means that empty positional tuples and empty named tuples are equivalent `() == {}`. Both tuples have zero dimensions in both positional and named components; therefore they are equivalent. Saying `() * {} * ()` or `{} * ()` and any combination of empty tuples all are the same type.
 
 ### Pointers `T^`
 
@@ -1382,29 +1371,28 @@ else
 Typed pointers are type `T^`. They're are like references but dereferenced with the `^` postfix operator.
 
 ```mulem
-mu x = 0
-xPtr: int^mu = @mu x
+x ~= 0
+xPtr: int^~ = ~@x
 xPtr^ := 1
 x             -- Value: 1
 ```
 
-Safe pointers are made by wrapping `T^` or `T^mu` in `Some`. If you pass in `Some(Null)`, it will be converted to `None`.
+Safe pointers are made by wrapping `T^` or `T^~` in `Some`. If you pass in `Some(Null)`, it will be converted to `None`.
 
 To allocate memory on the heap, use the `alloc[]` and `free[]` functions.
 
 ```mulem
-Student :: {
-    name: str,
-    grade: char,
-}
+Student ::
+    * name: str
+    * grade: char
 
-student: Student^mu = alloc[ Student(name: "John", grade: 'A') ]?
+student: Student^~ = alloc[ Student(name: "John", grade: 'A') ]?
 defer free[student]
 
 student^.name := "John Smith"
 ```
 
-`alloc` will check the size of the type passed to it and allocate that much space, returning a `T^mu?` (safe pointer). If successful, it will run the expression inside the square brackets and return `Some(T^mu)`. If not, it will return `None`. Hence `?` after it to unwrap the return value. `T^mu` can also be downgraded to `T^` if you don't plan to change the data.
+`alloc` will check the size of the type passed to it and allocate that much space, returning a `T^~?` (safe pointer). If successful, it will run the expression inside the square brackets and return `Some(T^~)`. If not, it will return `None`. Hence `?` after it to unwrap the return value. `T^~` can also be downgraded to `T^` if you don't plan to change the data.
 
 `free` will free the memory to a pointer and convert it to `Null` even if it was declared immutable to prevent dangling pointers.
 
@@ -1420,16 +1408,16 @@ defer free[student]
 -- Use student freely below.
 ```
 
-When you are sure that a pointer exists, you can use `^.` for raw access, but if you aren't sure you can use just `.` to do a safe pointer check. This will return a `@mu T?` of that member.
+When you are sure that a pointer exists, you can use `^.` for raw access, but if you aren't sure you can use just `.` to do a safe pointer check. This will return a `~@T?` of that member.
 
 ```
 student^.name := "John Smith"    -- Raw access
 student.name? := "John Smith"    -- Safe access
 ```
 
-`student.name` is a safe pointer operation like `.[]` for arrays, so you would write `student.name?`; because `student` isn't a question type `T?` but `student._` returns a question type of `@mu T?` of that member.
+`student.name` is a safe pointer operation like `.[]` for arrays, so you would write `student.name?`; because `student` isn't a question type `T?` but `student._` returns a question type of `~@T?` of that member.
 
-This makes it easier to chain when you have a safe pointer `T^?`/`T^mu?`
+This makes it easier to chain when you have a safe pointer `T^?`/`T^~?`
 
 ```
 pointer?.field1?.field2?.field3?    -- Unwrap each field
@@ -1501,6 +1489,31 @@ raise Error("message", code: -1)
 
 Custom types are made with `::` (meta assignment).
 
+```mulem
+MyStruct ::
+    * name: str
+    * value: int
+
+MyEnum ::
+    | First
+    | Second(int)
+    | Third{val: int}
+
+MyUnion ::
+    + int
+    + float
+    + char
+
+MyInterface ::
+    (@self).speak(): void
+
+MyStruct <= MyInterface ::
+    (@self).speak(): void = 
+        print("I am {self.name} and have {self.value} dollars.")
+
+object.:MyInterface.speak()
+```
+
 ### Aliases
 
 Assigning a type after `::` creates an alias. 
@@ -1517,8 +1530,8 @@ You can also create aliases for basic product types or sum types.
 tuple        ::  int , float , char                    -- Also called a "positional tuple".
 alsoTuple    :: (int , float , char)                   -- Optional parentheses.
 namedTuple   :: {count: int, scale: float, code: char} -- Position not guaranteed.
-mixedTuple   :: (int, float) & {code: char}            -- Has both positional and named components.
-productUnion ::  int & float & char                    -- Is the size of all types combined.
+mixedTuple   :: (int, float) * {code: char}            -- Has both positional and named components.
+productUnion ::  int * float * char                    -- Is the size of all types combined.
 sumUnion     ::  int | float | char                    -- Is the size of the largest type
 .
 ```
@@ -1528,12 +1541,11 @@ sumUnion     ::  int | float | char                    -- Is the size of the lar
 Structs are product types—or in other words—plain data containers. They cannot extend other structs, but can inherit members of other structs. *(See [Inheritance and Visibility](#inheritance-and-visibility).)*
 
 ```mulem
-MyStruct :: {
-    name: str,
-    value: int,
-}
+MyStruct ::
+    * name: str
+    * value: int
 
-MyStruct :: { name: str, value: int }
+MyStruct :: *name: str *value: int
 ```
 
 Instantiate a struct by calling it like a function. Each member is treated like a named argument.
@@ -1545,10 +1557,9 @@ myObject = MyStruct(name: "Foobar", value: 1)
 Structs are transparent. They can be destructured like named tuples. 
 
 ```mulem
-TransparentThing :: {
-    a: int,
-    b: int,
-}
+TransparentThing ::
+    * a: int
+    * b: int
 
 {a, b} = TransparentThing(a: 1, b: 2)
 print("a: {a}, b: {b}")
@@ -1556,20 +1567,15 @@ print("a: {a}, b: {b}")
 
 ### Enumerable Types
 
-Enums are sum types. They define a closed set of variants. Variants may carry data turning them into a tagged union. Start with a pair of parentheses and a vertical bar before the first variant `(|V)`. This distinguishes them from untagged unions which are just vertical bars between types `T|U`.
+Enums are sum types. They define a closed set of variants. Variants may carry data turning them into a tagged union. 
 
 ```mulem
-MyEnum :: (
+MyEnum ::
     | First
     | Second(int)
     | Third{val: int}
-)
-```
 
-The inline version works the same.
-
-```mulem
-MyEnum :: (| First | Second(int) | Third{val: int})
+MyEnum :: First | Second(int) | Third{val: int}
 ```
 
 Like structs, instantiate by calling the member like a function unless it doesn't carry any data.
@@ -1592,12 +1598,12 @@ match a is
     print("third!")
 ```
 
-#### Untagged Unions
+### Untagged Union Types
 
-Untagged unions can be defined with the `|` between two or more types. When picking members of a union, use `of` with the type. 
+Untagged unions – also called *sum types* – can be defined with the `+` between two or more types. When picking members of a union, use `of` with the type. 
 
 ```mulem
-sumUnion :: int | float | char
+sumUnion :: int + float + char
 
 u: sumUnion = 1
 
@@ -1661,6 +1667,35 @@ catch
 
 Uncaught errors in a `try` / `catch` block are implicitly reraised. Each `catch` pattern removes a possible error from the exclamation type of that block. When all possible errors have a `catch` arm, the value of that block is automatically unwrapped so that `Exclamation[T,]` becomes just `T`. 
 
+### Virtual Interfaces
+
+Methods can be defined on any type using this notation.
+
+```mulem
+Type(self).method(args) =
+    body
+```
+
+Before the method name is the self parameter. `self` can be any name. You can add `@` if the self is a reference or `~@` for a mutable reference. 
+
+An interface defines a set of methods that other types can implement with `<=`.
+
+```mulem
+Speakable ::
+    (@self).speak(): void
+
+MyStruct <= Speakable ::
+    (@self).speak() =
+        print("My name is {self.name} and I have {self.value} dollars.")
+```
+
+If a type implements an inferface, it can either called with `.` or with `.:Interface.`.
+
+```mulem
+object.speak()               -- If object implements Speakable.
+object.:Speakable.speak()    -- Full name of method.
+```
+
 [TOC](#table-of-contents)
 
 ---
@@ -1707,7 +1742,7 @@ print("{ max[1+2, 3+4] }")       -- Prints "7"
 
 f(x) = x * x
 g(x) = x + 2
-maxAdd[a, b] :: = if a > b then fn(c) = a + c else fn(c) = b + c
+maxAdd[a, b] :: = if a > b then \(c) = a + c else \(c) = b + c
 print("{ maxAdd[ f(0), g(0) ] (1) }")
 ```
 
@@ -1717,10 +1752,9 @@ You can also define a type with a meta function. The meta functions parameters i
 
 ```mulem
 -- Note that this is not the actual definition for a question type `T?`. This is just a user-defined enum that uses the same pattern.
-Option[T] :: (
+Option[T] ::
     | Some(T)
     | None
-)
 
 Some[T] :: Option[T].Some
 None[T] :: Option[T].None
@@ -1748,11 +1782,11 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 | Level | Category                   | Operators                                       |
 |:------|:---------------------------|:------------------------------------------------|
 | 11    | Member access/Function     | `.` `^.` `.[]` `^[]` `?.` `?.[]`                |
-| 10    | Postfix/Prefix             | `?` `!` `^` `@` `@mu` `.:`                      |
-| 9     | Unary                      | `+` `-` `not` `bnot`                            |
+| 10    | Postfix/Prefix             | `?` `!` `^` `@` `~@` `.:` `()`                  |
+| 9     | Unary                      | `+` `-` `/`                                     |
 | 8     | Exponent                   | `**` (right-associative)                        |
 | 7     | Multiplicative / Shift     | `*` `/` `//` `%` `%%` `<*` `*>` `<<` `>>` `>>>` |
-| 6     | Additive / Concat          | `+` `-` `<>` `band` `bor` `xor`                 |
+| 6     | Additive / Concat          | `+` `-` `<>` `&` `|` `><`                       |
 | 5     | Range                      | `..` `..=`                                      |
 | 4     | Comparison                 | `==` `/=` `<` `>` `<=` `>=`                     |
 | 3     | Logical AND                | `and`                                           |
@@ -1770,11 +1804,10 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 |  `lhs ?.[rhs]` | Safe array/dictionary index on a question type       |
 |   `lhs !`      | Unwrap exclamation, propagate error to nearest `try` |
 |   `lhs ^`      | Dereference typed pointer                            |
-|   `lhs ^. rhs` | Raw pointer member access                           |
+|   `lhs ^. rhs` | Raw pointer member access                            |
 |       `@ rhs`  | Get immutable reference                              |
-|     `@mu rhs`  | Get mutable reference                                |
-|       `* rhs`  | Spread array into array                              |
-|       `& rhs`  | Spread tuple into tuple (same type)                  |
+|      `~@ rhs`  | Get mutable reference                                |
+|       `* rhs`  | Spread operator                                      |
 |  `lhs .. rhs`  | Exclusive range                                      |
 | `lhs ..= rhs`  | Inclusive range                                      |
 | `lhs \|> rhs`  | Pipeline                                             |
@@ -1799,52 +1832,19 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 |  `lhs <* rhs`  | Append to array                                      |
 |  `lhs *> rhs`  | Prepend to array (right-associative)                 |
 |  `lhs <> rhs`  | Concatenation                                        |
-| `lhs and rhs`  | Logical AND                                          |
-|  `lhs or rhs`  | Logical OR                                           |
-|     `not rhs`  | Logical NOT                                          |
+|  `lhs && rhs`  | Logical AND                                          |
+|  `lhs || rhs`  | Logical OR                                           |
+|       `/ rhs`  | Logical NOT / Bitwise NOT                            |
 |  `lhs ?: rhs`  | `None`- coalescing                                   |
 |  `lhs !: rhs`  | Error-coalescing                                     |
-| `lhs band rhs` | Bitwise AND                                          |
-| `lhs bor rhs`  | Bitwise OR                                           |
-| `lhs xor rhs`  | Bitwise XOR                                          |
-|    `bnot rhs`  | Bitwise NOT                                          |
+|   `lhs & rhs`  | Bitwise AND                                          |
+|   `lhs | rhs`  | Bitwise OR                                           |
+|  `lhs >< rhs`  | Bitwise XOR                                          |
 |  `lhs << rhs`  | Bitshift Left                                        |
 |  `lhs >> rhs`  | Bitshift Right                                       |
 | `lhs >>> rhs`  | Unsigned Bitshift Right                              |
 
 `/=` was picked over `!=` to keep `!` related to errors. A coder can scan for `!` and know that's a potential error point.
-
-Other operators:
-
-- `&` bitwise AND
-- `|` bitwise OR
-- `^` bitwise XOR
-- `~` bitwise NOT
-- `<<` bit shift left
-- `>>` bit shift right
-- `>>>` unsigned bit shift right
-
-Some math operators will be put into a standard library. These will be inlined to ensure performance.
-
-```
-std.math{Arithmetic, Bitwise} :: import
-
-lhs = 1
-rhs = 2
-
--- Arithmetic
-lhs rem rhs    -- Remainder (C-Style modulo) `@`
-lhs mod rhs    -- True Modulo
-
--- Bitwise
-lhs band rhs   -- Bitwise AND `&`
-lhs bor rhs    -- Bitwise OR `|`
-lhs xor rhs    -- Bitwise XOR `^`
-bnot rhs       -- Bitwise NOT `~`
-lhs shl rhs    -- Bitshift Left `<<`
-lhs shr rhs    -- Bitshift Right `>>`
-lhs shru rhs   -- Unsigned Bitshift Right `>>>`
-```
 
 __Compound Assignment Operators:__
 
@@ -1856,14 +1856,14 @@ __Compound Assignment Operators:__
 |  `lhs *:= rhs`   | `lhs := lhs * rhs`              |
 |  `lhs /:= rhs`   | `lhs := lhs / rhs`              |
 | `lhs //:= rhs`   | `lhs := lhs // rhs`             |
-|  `lhs %:= rhs`   | `lhs := lhs rem rhs`            |
-| `lhs %%:= rhs`   | `lhs := lhs mod rhs`            |
+|  `lhs %:= rhs`   | `lhs := lhs % rhs`              |
+| `lhs %%:= rhs`   | `lhs := lhs %% rhs`             |
 | `lhs <*:= rhs`   | `lhs := lhs <* rhs`             |
 | `lhs *>:= rhs`   | `lhs := rhs *> lhs`             |
 | `lhs <>:= rhs`   | `lhs := lhs <> rhs`             |
-| `lhs band:= rhs` | `lhs := lhs band rhs`           |
-| `lhs bor:= rhs`  | `lhs := lhs bor rhs`            |
-| `lhs xor:= rhs`  | `lhs := lhs xor rhs`            |
+|  `lhs &:= rhs`   | `lhs := lhs & rhs`              |
+|  `lhs |:= rhs`   | `lhs := lhs | rhs`              |
+|  `lhs ><:= rhs`  | `lhs := lhs >< rhs`             |
 |  `lhs <<:= rhs`  | `lhs := lhs << rhs`             |
 |  `lhs >>:= rhs`  | `lhs := lhs >> rhs`             |
 | `lhs >>>:= rhs`  | `lhs := lhs >>> rhs`            |
@@ -1925,8 +1925,8 @@ To fix this, let's introduce a new system known as **pipelining.**
 
 ```mulem
 fetchA()
-|> fetchB(&$)
-|> fetchC(&$)
+|> fetchB(*$)
+|> fetchC(*$)
 |> print("{$}")
 ```
 
@@ -1943,8 +1943,8 @@ When mixed with `do`, multiple expressions separated by semicolons `;` on one li
 
 ```mulem
 |> fetchA()                      -- Run fetchA,
-|> do print("{$}"); fetchB(&$)   -- Print result, then fetchB
-|> do print("{$}"); fetchC(&$)   -- Print result, then fetchC
+|> do print("{$}"); fetchB(*$)   -- Print result, then fetchB
+|> do print("{$}"); fetchC(*$)   -- Print result, then fetchC
 |> print("{$}")                  -- Print result.
 ```
 
@@ -1952,28 +1952,28 @@ A **pipeline block** is started with `|> do` and a new line, either at the end o
 
 ```mulem
 |> fetchA()         -- Set up things.
-|> fetchB(&$)       -- …
-|> fetchC(&$)       -- …
+|> fetchB(*$)       -- …
+|> fetchC(*$)       -- …
 |> do               -- Pipeline context is now ready.
     print("{$}")    -- Use it here.
 
-fetchA() |> fetchB(&$) |> fetchC(&$) |> do   -- Or in one line.
+fetchA() |> fetchB(*$) |> fetchC(*$) |> do   -- Or in one line.
     print("{$}")                             -- Then use the result.
 
 -- Freely mix the two formats:
 fetchA() |> do         -- Start with this pipeline context.
     print("{$}")       -- Use the same `$` for these two lines.
-    fetchB(&$)         -- Same pipeline context `$`.
-    |> print("{$}"); fetchC(&$) |> do  -- Start a new pipeline inline.
-        print("{$}")                   -- Print the final result.
+    fetchB(*$)         -- Same pipeline context `$`.
+    |> do print("{$}"); fetchC(*$) |> do  -- Start a new pipeline inline.
+        print("{$}")                      -- Print the final result.
 ```
 
 To get a value within a pipeline, use `as x` after any step to store it into a local variable. The assignment is written in reverse order — the variable name goes on the right.
 
 ```mulem
 |> fetchA()
-|> fetchB(&$)
-|> fetchC(&$) as x    -- Put the result into `x`.
+|> fetchB(*$)
+|> fetchC(*$) as x    -- Put the result into `x`.
 
 print("{x}")          -- Print the result.
 ```
@@ -1983,16 +1983,16 @@ This lets you extract the result of any step in a pipeline simply by appending `
 ```mulem
 -- Put all results of each step into variables.
 |> fetchA() as a
-|> fetchB(&$) as b
-|> fetchC(&$) as c
+|> fetchB(*$) as b
+|> fetchC(*$) as c
 
 print("a = {a}, b = {b}, c = {c}")
 ```
 
-The variable type is always inferred, to avoid ambiguity with `:`. Mutability can be specified with `mu`. *(See [Mutability](#mutability).)*
+The variable type is always inferred, to avoid ambiguity with `:`. Mutability can be specified with `~`. *(See [Mutability](#mutability).)*
 
 ```mulem
-fetchA() as mu x |> fetchB(x) |> do   -- Create a mutable variable `x`.
+fetchA() as ~x |> fetchB(x) |> do   -- Create a mutable variable `x`.
     x +:= 1                         -- Mutate it.
     print("{x}")                    -- Print it.
 ```
@@ -2001,8 +2001,8 @@ To put the final result of any pipeline into a variable, use `|> $ as x` at the 
 
 ```mulem
 |> fetchA()      -- Start.
-|> fetchB(&$)    -- Pass pipeline context.
-|> fetchC(&$)    -- Pass pipeline context.
+|> fetchB(*$)    -- Pass pipeline context.
+|> fetchC(*$)    -- Pass pipeline context.
 |> $ as x        -- Put the pipeline context into `x`.
 
 print("{x}")
@@ -2078,7 +2078,7 @@ Use `*` to collect all arguments into a single variable. The variable should be 
 
 ```mulem
 addAll(*nums: [*int]): int =
-    mu sum: int = 0
+    sum: ~int = 0
     loop n in nums:
         sum +:= n
     sum
@@ -2123,12 +2123,12 @@ logAndAdd("Sum =", 1, 2, 3)  -- Prints "Sum = 6"
 
 ## Lambda Functions
 
-Define a function within an expression with `fn` + any name. For demonstration purposes, we'll be using anonymous functions in the pattern `fn(x) = x`. This is useful for passing functions to other functions.
+Define a function within an expression with `\` + any name. For demonstration purposes, we'll be using anonymous functions in the pattern `\(x) = x`. This is useful for passing functions to other functions.
 
 ```mulem
-(fn(arg) = expr)
+(\(arg) = expr)
 
-(fn(arg) =
+(\(arg) =
     body
 )
 ```
@@ -2136,8 +2136,8 @@ Define a function within an expression with `fn` + any name. For demonstration p
 ```mulem
 map(array, action) = [*loop x in array then action(x)]
 array0 = [1, 2, 3, 4]
-array1 = map(array0, fn(x) = x + 1)   -- Inline
-array2 = map(array0, fn(x) =          -- Multi-line
+array1 = map(array0, \(x) = x + 1)   -- Inline
+array2 = map(array0, \(x) =          -- Multi-line
     if x < 2 then
         x - 1
     else
@@ -2148,7 +2148,7 @@ array2 = map(array0, fn(x) =          -- Multi-line
 A name is optional. Adding a name creates an immutable reference of the function itself.
 
 ```mulem
-otherAction(fn callback(val) =
+otherAction(\ callback(val) =
     if val > 0 then
         print("{val}")
         callback(val - 1)
@@ -2160,8 +2160,8 @@ otherAction(fn callback(val) =
 Capturing also works inside lambda functions just like with named functions.
 
 ```mulem
-mu count = 0
-forEach([1, 2, 3, 4], fn(x) @ (mu count) =
+count ~= 0
+forEach([1, 2, 3, 4], \(x) @ (~count) =
     count +:= x
 )
 ```
@@ -2171,8 +2171,8 @@ forEach([1, 2, 3, 4], fn(x) @ (mu count) =
 When a function returns another function, list each function parameters as the return type. Optionally, you can just let the return type be inferred.
 
 ```mulem
-fn curriedFn(a: int): (int): (int): int = _                 -- Immutable declaration
-mu curriedFnPtr: (int): (int): (int): int = curriedFn      -- Mutable declaration. 
+\curriedFn(a: int): (int): (int): int = _                 -- Immutable declaration
+~curriedFnPtr: (int): (int): (int): int = curriedFn      -- Mutable declaration. 
 ```
 
 The return type can be implied. Each function defined at the bottom is the implied return.
@@ -2180,9 +2180,9 @@ The return type can be implied. Each function defined at the bottom is the impli
 ```mulem
 curryFn(a: char) =
     print("In function 1: {a}")
-    fn(b: char) =
+    \(b: char) =
         print("In function 2: {b}")
-        fn(c: char) =
+        \(c: char) =
             print("In function 3: {c}")
 
 curryFn('a')('b')('c')
@@ -2196,12 +2196,12 @@ curryFn('a')('b')('c')
 When capturing variables, each returned function needs to capture them separately.
 
 ```mulem
-mu count = 0
-curryAddCount(a: int) @ (mu count): (int): (int): int =
-    count +:= a                                   -- (1) Evaluated immediately
-    fn(b: int) @ (mu count): (int): int =         -- (2) Suspends and captures `count`
-        count +:= b                               -- (3) Evaluated when second `fn` is called
-        fn(c: int) @ (mu count): int =
+count ~= 0
+curryAddCount(a: int) @ (~count): (int): (int): int =
+    count +:= a                                 -- (1) Evaluated immediately
+    \(b: int) @ (~count): (int): int =          -- (2) Suspends and captures `count`
+        count +:= b                             -- (3) Evaluated when second lambda is called
+        \(c: int) @ (~count): int =
             count +:= c
             count
 
@@ -2380,7 +2380,7 @@ loop nextValue() is Some(x) then
 Loop until a pattern matches. Bindings are in scope below the loop.
 
 ```mulem
-mu i = 0
+i ~= 0
 loop
     print("Attempts: {i}")
     i +:= 1
@@ -2405,33 +2405,33 @@ if x is Some(x) then
 
 ---
 
-## References (`ref`)
+## References (`@`)
 
-`ref` gives you a reference whose mutability is determined by what you're binding to, not by how you use it. This is like a pointer but it auto derefs, no `^` operator needed.
+`@` gives you a reference whose mutability is determined by what you're binding to, not by how you use it. This is like a pointer but it auto derefs, no `^` operator needed.
 
 ```
-mu x = 5
-ref y = x     -- y: @mu int, x is mutable so ref inherits it
+x ~= 5
+@y = x     -- y: ~@int, x is mutable so ref inherits it
 
 x2 = 5
-ref y2 = x2   -- y2: @int, x2 is immutable
+@y2 = x2   -- y2: @int, x2 is immutable
 ```
 
-If the enum is immutable or mutable, then adding `ref` on a pattern's data should match its mutability like when using `ref` on another variable.
+If the enum is immutable or mutable, then adding `@` on a pattern's data should match its mutability like when using `@` on another variable.
 
 ```mulem
-mu s = SomeStruct(value: 42)
+s ~= SomeStruct(value: 42)
 match s is
-| SomeStruct(ref value) =   -- value: @mu int, s is mutable
-    value := 100            -- modifies s.value in-place, no copy
+| SomeStruct(@value) =   -- value: ~@int, s is mutable
+    value := 100         -- modifies s.value in-place, no copy
 
 s2 = SomeStruct(value: 42)
 match s2 is
-| SomeStruct(ref value) =   -- value: @int, s2 is immutable
-    print("{value}")        -- read-only, no copy
+| SomeStruct(@value) =   -- value: @int, s2 is immutable
+    print("{value}")     -- read-only, no copy
 ```
 
-Function parameters/return types use reference types `@T`/`@mu T` which determine if `ref` is mutable or immutable
+Function parameters/return types use reference types `@T`/`~@T` which determine if a reference is mutable or immutable
 
 ```mulem
 getField(s: @SomeStruct): @int = s.value
@@ -2440,17 +2440,17 @@ ref x = getField(myStruct)   -- x: @int, immutable
 ```
 
 ```mulem
-increment(x: @mu int): void =
+increment(x: ~@int): void =
     x +:= 1
 
-mu x = 0
+x ~= 0
 increment(x)
 x            -- Value is 1
 ```
 
 ```mulem
-loop nextValue() is Some(ref x) then
-    x := transform(x)   -- mutates in place if iterator yields mutable refs `iter[@mu T?]`
+loop nextValue() is Some(@x) then
+    x := transform(x)   -- mutates in place if iterator yields mutable refs `iter[~@T?]`
 ```
 
 [Advanced](#advanced) / [TOC](#table-of-contents)
@@ -2472,7 +2472,7 @@ countUpTo(n: int): iter[int] =
 If you use `yield`, you can only use a void `return` to exit the function. 
 
 ```mulem
-countUntil(mu i: int, max: int): iter[int] =
+countUntil(i: ~int, max: int): iter[int] =
      loop
         if i >= max then
             return      -- Break out of the loop and the function.
@@ -2500,7 +2500,7 @@ asyncIterFn(n): iter[async[int]] =
         yield val
 
 asyncCollect(n): async[[*int]] =
-    mu ret: [*int] = []
+    ret: ~[int] = []
     loop (await x) in asyncIterFn(n) then
         ret <>= x
     ret
@@ -2523,15 +2523,13 @@ Unlike in other languages where *promises* or *futures* can either resolve or re
 Even though structs cannot be extended the usual way, they can **inherit** from other structs using destructuring. This works similarly to **importing.** It marks members that map to members of another struct, making conversion possible. It follows the same convention for pattern matching like destructuring. *(See [Destructuring](#destructuring).)* 
 
 ```mulem
-Vector2 :: {
-    x: float,
-    y: float,
-}
+Vector2 ::
+    * x: float
+    * y: float
 
-Vector3 :: {
-    {x, y}: Vector2,        -- Grab members of Vector2
-    z: float,
-}
+Vector3 ::
+    * {x, y}: Vector2        -- Grab members of Vector2
+    * z: float
 
 v3 = Vector3(x: 1.0, y: 2.0, z: 3.0)
 
@@ -2544,15 +2542,13 @@ When you inherit, you don't just pick out some members. The entire parent struct
 All members of a type are public by default. When making a subtype, inherited members become private to the subtype unless explicitly redeclared. This encourages separating public and private data into distinct types rather than using access modifiers.
 
 ```mulem
-PrivateFields :: {
-    val: int,
-    secret: int,
-}
+PrivateFields ::
+    * val: int
+    * secret: int
 
-PublicFields :: {
-    {val}: PrivateFields,     -- Redeclared, `val` is public / `secret` is private
-    other: int,
-}
+PublicFields ::
+    * {val}: PrivateFields     -- Redeclared, `val` is public / `secret` is private
+    * other: int
 ```
 
 A subtype cannot accidentally expose or clash with a private inherited member because types only see members that have been explicitly declared within them. This mirrors the convention used for imports.
@@ -2656,10 +2652,9 @@ exampleApp :: mod
 {-
  - Define a struct and implement a prototype.
  -}
-User :: {
-    name: str
-    age: int
-}
+User ::
+    * name: str
+    * age: int
 
 Speaker ::
     (self).speak(): str
@@ -2703,39 +2698,12 @@ do
 
 ## Reserved Keywords
 
-Mulem has 35 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard question `T?` members (`Some`, `None`), are built-in symbols but *not* strict keywords.
+Mulem has 25 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard question `T?` members (`Some`, `None`), are built-in symbols but *not* strict keywords.
 
 **The Keyword List:**
-`and`, `as`, `await`, `band`, `bor`, `break`, `bnot`, `catch`, `continue`, `defer`, `do`, `else`, `fallthrough`, `fn`, `if`, `impl`, `import`, `in`, `is`, `loop`, `match`, `maybe`, `mod`, `not`, `of`, `opt`, `or`, `raise`, `ref`, `return`, `self`, `then`, `try`, `until`, `void`, `xor`, `yield`.
+`as`, `await`, `break`, `catch`, `continue`, `defer`, `do`, `else`, `fallthrough`, `if`, `import`, `in`, `is`, `loop`, `match`, `maybe`, `mod`, `of`, `opt`, `raise`, `return`, `self`, `then`, `try`, `until`, `void`, `yield`.
 
 [TOC](#table-of-contents)
-
----
-
-```mulem
-MyStruct ::
-    * name: str
-    * value: int
-
-MyEnum ::
-    | First
-    | Second(int)
-    | Third{val: int}
-
-MyUnion ::
-    + int
-    + float
-    + char
-
-MyInterface ::
-    (@self).speak(): void
-
-MyStruct <= MyInterface ::
-    (@self).speak(): void = 
-        print("I am {self.name} and have {self.value} dollars.")
-
-object.:MyInterface.speak()
-```
 
 ---
 
