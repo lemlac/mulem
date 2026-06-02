@@ -135,7 +135,6 @@ isThirteen(x) =
 
 ## Table of Contents
 
-- __[Basics](#basics)__
 - __[Assignment](#assignment)__
 - __[Functions](#functions)__
 - __[Meta Assignment](#meta-assignment)__
@@ -1582,7 +1581,7 @@ match a is
     print("first!")
 | Second(_) =
     print("second!")
-| Third{*} =
+| Third{_} =
     print("third!")
 ```
 
@@ -1780,11 +1779,11 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 | 3     | Logical AND                | `&&`                                            |
 | 2     | Logical OR / None-Coalesce | `||` `?:` `!:`                                  |
 | 1     | Pipeline                   | `\|>`                                           |
-| 0     | Assignment / Spread        | `=` `:=` `+=` `-=` `&` `*`                      |
+| 0     | Assignment / Spread        | `=` `:=` `+=` `-=` `*`                          |
 
 | Operator       | Meaning                                              |
 |:--------------:|:-----------------------------------------------------|
-|   `lhs . rhs`  | Member access / safe pointer member access                |
+|   `lhs . rhs`  | Member access / safe pointer member access           |
 |   `lhs .[rhs]` | Safe array/dictionary index                          |
 |   `lhs ^[rhs]` | Raw array/dictionary index                           |
 |   `lhs ?`      | Unwrap question, propagate `None` to nearest `maybe` |
