@@ -2655,6 +2655,25 @@ Mulem has 26 reserved keywords. Note that built-in types (`int`, `str`), boolean
 
 ---
 
+```mulem
+const A = "foobar"
+
+where x: int
+
+f(x) = x*x
+
+const MAX(a: const int, b: const int) =
+    if a > b then a else b
+
+where T: type
+where N: const uint
+
+List[T, N] ::
+    * data: [N;T]
+```
+
+---
+
 *This document captures the current state of the Mulem design. The language is still evolving.*
 
 
