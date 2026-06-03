@@ -457,7 +457,7 @@ do.label
 Inline `do` will start a sequence of expressions separated by semicolons `;` that ends at a new line or (when inside a bracket) at a comma or closing bracket. The last expression in that sequence is the value of that slot.
 
 ```mulem
-(a, do b(); c, d)    -- == (a, c, d) with side effect b()
+(a, do b(); c, d)    -- Value: (a, c, d) with side effect b()
 ```
 
 Adding `do` makes it's clear that `;` is connected to `do` and not the parentheses.
@@ -979,13 +979,13 @@ y: typeof[x] = 1    -- Ensures that x and y have the same type.
 You can also get the default value of any type with the compile-time function `default`. The type needs to have a default value defined which is yet to be determined how, but they're already defined for basic types.
 
 ```mulem
-x = default[byte]   -- == 0y
-x = default[int]    -- == 0
-x = default[float]  -- == 0.0
-x = default[bool]   -- == False
-x = default[char]   -- == '\0'
-x = default[str]    -- == ""
-x = default[ptr]    -- == Null
+x = default[byte]   -- Value: 0y
+x = default[int]    -- Value: 0
+x = default[float]  -- Value: 0.0
+x = default[bool]   -- Value: False
+x = default[char]   -- Value: '\0'
+x = default[str]    -- Value: ""
+x = default[ptr]    -- Value: Null
 ```
 
 `default` can also infer the type. This can be useful in certain situations, like if you want to leave a function that returns something empty so that you can implement it later.
@@ -997,9 +997,9 @@ implementLater(): int = default
 You can also get the size of any type with the compile-time function `sizeof`. It returns a constant `uint` (unsigned integer) with the number of bytes of memory that type requires. The exact sizes of some types like `int` or `float` might vary, but you can rely on `byte` and `bool` being 1 byte each. The size of `ptr` depends on the pointer size of the system. 
 
 ```mulem
-sizeOfByte = sizeof[byte]   -- == 1
-sizeOfBool = sizeof[bool]   -- == 1
-sizeOfPtr  = sizeof[ptr]    -- == 4 or 8
+sizeOfByte = sizeof[byte]   -- Value: 1
+sizeOfBool = sizeof[bool]   -- Value: 1
+sizeOfPtr  = sizeof[ptr]    -- Value: 4 or 8
 ```
 
 ### Primitives
@@ -1237,9 +1237,9 @@ Use the spread operator `..` to spread an array into another array. This must be
 
 ```mulem
 a = [1, 2, 3]
-b = [0, ..a, 4]              -- == [0, 1, 2, 3, 4]
-c = a <> b                  -- == [1, 2, 3, 0, 1, 2, 3, 4]
-d = [0, ..a <> b, 5, ..c, 6]  -- == [0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 1, 2, 3, 0, 1, 2, 3, 4, 6]
+b = [0, ..a, 4]               -- Value: [0, 1, 2, 3, 4]
+c = a <> b                    -- Value: [1, 2, 3, 0, 1, 2, 3, 4]
+d = [0, ..a <> b, 5, ..c, 6]  -- Value: [0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 1, 2, 3, 0, 1, 2, 3, 4, 6]
 ```
 
 The `<>` is used for concatenating two arrays, and its complement operators are `*>` *prepend* and `<*` *append.* For an array of type `[T]`, these take a type `T` on the side opposite of where they point. `*>` is right associative, allow you to chain multiple prepends onto one array. 
@@ -1264,8 +1264,8 @@ If you spread an array into a tuple, the type must be known and the tuple must h
 ThreeInts :: (int, int, int)
 
 list = [1, 2, 3]
-a: ThreeInts = (..list)      -- == (1, 2, 3)
-b: ThreeInts = (0, ..list)   -- == (0, 1, 2), truncated at the end
+a: ThreeInts = (..list)      -- Value: (1, 2, 3)
+b: ThreeInts = (0, ..list)   -- Value: (0, 1, 2), truncated at the end
 ```
 
 Tuples may also collect any remaining positional components into an array, just like variadic parameters in functions.
@@ -1274,10 +1274,10 @@ Tuples may also collect any remaining positional components into an array, just 
 TwoOrMoreInts :: (int, int, ..int)
 
 list = [1, 2]
-a: TwoOrMoreInts = (..list)              -- == (1, 2, [])
-b: TwoOrMoreInts = (0, ..list)           -- == (0, 1, [2])
-c: TwoOrMoreInts = (-1, 0, ..list)       -- == (-1, 0, [1, 2])
-d: TwoOrMoreInts = (-2, -1, 0, ..list)   -- == (-2, -1, [0, 1, 2])
+a: TwoOrMoreInts = (..list)              -- Value: (1, 2, [])
+b: TwoOrMoreInts = (0, ..list)           -- Value: (0, 1, [2])
+c: TwoOrMoreInts = (-1, 0, ..list)       -- Value: (-1, 0, [1, 2])
+d: TwoOrMoreInts = (-2, -1, 0, ..list)   -- Value: (-2, -1, [0, 1, 2])
 ```
 
 ### Dictionaries
@@ -1594,14 +1594,14 @@ u of int             -- 0x01000000 = 16777216
 Overloaded functions are also a kind of untagged union, one that holds different function pointers instead of types. When called, they are automatically determined by the compiler based on its arguments, but there are times when this cannot be determined. Use `of` to pick out a certain definition of an overloaded function when this happens. *(See [Functions](#functions).)*
 
 ```mulem
-withOneAndTwo(add of (int, int): int)
-withOneAndTwo(add of (float, float): float)
+withOneAndTwo(add of (int, int) -> int)
+withOneAndTwo(add of (float, float) -> float)
 ```
 
 `of` has a single consistent meaning of *give this specific type's interpretation of this thing that could be multiple types.* A coder who understands `of` on value unions will immediately understand what it means on overloaded functions, and vice versa.
 
 - `u of int` — select the int interpretation from a value union
-- `add of (int, int): int` — select the (int, int): int interpretation from a function union
+- `add of (int, int) -> int` — select the (int, int) -> int interpretation from a function union
 
 This explains *why* overload resolution sometimes needs manual help — for the same reason you sometimes need to tell the compiler which union member you mean. 
 
@@ -2111,9 +2111,9 @@ When capturing variables, each returned function needs to capture them separatel
 
 ```mulem
 = 0
-curryAddCount(a: int) @ (~count): (int): (int): int =
+curryAddCount(a: int) @ (~count): (int) -> (int) -> int =
     count += a                                 -- (1) Evaluated immediately
-    \(b: int) @ (~count): (int): int =       -- (2) Suspends and captures `count`
+    \(b: int) @ (~count): (int) -> int =       -- (2) Suspends and captures `count`
         count += b                             -- (3) Evaluated when second lambda is called
         \(c: int) @ (~count): int =
             count += c
@@ -2350,7 +2350,7 @@ match s2 is
 Function parameters/return types must use explicit pointers `T^`/`T^~` instead because `ref` does not work in contexts where the reference's life-time cannot be known. 
 
 ```mulem
-getField(s: SomeStruct^): int^ = @s^.value
+getField(s: SomeStruct^): int^ = @(s^.value)
 
 x = getField(@myStruct)   -- x: int^, immutable
 ```
