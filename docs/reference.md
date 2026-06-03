@@ -1553,6 +1553,8 @@ Mixed ::
 
 `int` and `float` would be in positional members in this example, so the members are `.0: int`, `.name: str`, and `.1: float`.
 
+You might think that the `*` as both a multiplication operator and product type joiner is doing too much. I'd argue that `*` is doing too much in other languages. `*` means both multiplication and pointer dereferencing in most C-based languages, which is confusing when you're using both in the same context. `*` for product types at least has some connection in the name *product* type, but both are used in different contexts all together: one in expressions and the other in type notation. 
+
 ### Enumerable Types
 
 Enums are sum types. They define a closed set of variants. Variants may carry data turning them into a tagged union. 
@@ -1679,6 +1681,8 @@ If a type implements an inferface, it can either called with `.` or with `.:Inte
 object.speak()               -- If object implements Speakable.
 object.:Speakable.speak()    -- Full name of method.
 ```
+
+The same argument as `*` for product types also applies to `<=` here. Even though it can mean both *less than or equals to* and *is a subset of*, each is used in different contexts: one in expressions and the other in type notation. Their meanings are also related: in the type `A <= B`, we're saying that every `A` is a `B`, therefore there will always be more `B`s than `A`s.
 
 [TOC](#table-of-contents)
 
@@ -2672,14 +2676,6 @@ Mulem has 28 reserved keywords. Note that built-in types (`int`, `str`), boolean
 `as`, `await`, `break`, `catch`, `const`, `continue`, `defer`, `do`, `else`, `fallthrough`, `if`, `import`, `in`, `is`, `loop`, `match`, `mod`, `of`, `opt`, `pass`, `raise`, `return`, `then`, `try`, `until`, `where`, `yield`.
 
 [TOC](#table-of-contents)
-
----
-
-Temporary Comments:
-
-I'd argue that `*` is doing too much in other languages. `*` means both multiplication and pointer dereferencing, which is confusing when you're using both in the same context. `*` for product types at least has some connection in the name *product* type and are used in different contexts, one in expressions and the other in type notation. 
-
-This argument also applies to `<=`. They are used in different contexts, one in expressions and the other in type notation, but their meanings are related: greater-than for expressions and subsets for types. In the type `A <= B`, we're saying that every `A` is a `B`, therefore there will always be more `B`s than `A`s.
 
 ---
 
