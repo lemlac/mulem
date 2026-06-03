@@ -385,7 +385,7 @@ apiCall(callback)
 
 ## Constants
 
-Constans are declared with `const`. This marks compile-time data, different from an immutable variable. It treats the expression as if it where a literal. The type can be inferred.
+Constants are declared with `const`. This marks compile-time data, different from an immutable variable. It treats the expression as if it where a literal. The type can be inferred.
 
 ```mulem
 const PI: float = 3.14159265
@@ -476,15 +476,15 @@ else
     print("non-positive")
 ```
 
-Use `||`/`&&` to compare multiple booleans at once.
+Use `and`/`or` to compare multiple booleans at once.
 
 ```mulem
 a = True
 b = False
 
-if a && b then            -- True and False == False
+if a and b then            -- True and False == False
     print("This will not print")
-else if a || b then       -- True or False == True
+else if a or b then        -- True or False == True
     print("This will print")
 ```
 
