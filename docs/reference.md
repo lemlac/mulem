@@ -1526,6 +1526,19 @@ TransparentThing ::
 print("a: {a}, b: {b}")
 ```
 
+Dereferencing is done with the `^` operator, so `*` can't be confused for a pointer. Lining up each member resembles a dotted list like in Markdown or YAML.
+
+If a member doesn't have a name, then it gets put into the next positional member.
+
+```
+Mixed ::
+    * int
+    * name: str
+    * float
+```
+
+`int` and `float` would be in positional members in this example, so the members are `.0: int`, `.name: str`, and `.1: float`.
+
 ### Enumerable Types
 
 Enums are sum types. They define a closed set of variants. Variants may carry data turning them into a tagged union. 
