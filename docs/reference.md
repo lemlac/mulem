@@ -2657,4 +2657,30 @@ Mulem has 28 reserved keywords. Note that built-in types (`int`, `str`), boolean
 
 ---
 
+Temporary Comments:
+
+I'd argue that `*` is doing too much in other languages. `*` means both multiplication and pointer dereferencing, which is confusing when you're using both in the same context. `*` for product types at least has some connection in the name *product* type and are used in different contexts, one in expressions and the other in type notation. 
+
+This argument also applies to `<=`. They are used in different contexts, one in expressions and the other in type notation, but their meanings are related: greater-than for expressions and subsets for types. In the type `A <= B`, we're saying that every `A` is a `B`, therefore there will always be more `B`s than `A`s. 
+
+It's not hard to figure out what `loop subject; step` means. If you see `;` in a loop notation, than the next part is the step. It's like a simplified C-style `for` loop. 
+
+Shadowing works like `let` in other languages. It's just that Mulem drops the `let` all together for the simpler `=` notation like in other white-space significant languages. 
+
+There's no need for a `bnot` keyword. Even if the type is a boolean, a binary NOT is identical to flipping a boolean value since a boolean is just 0 repeating for False and 1 repeating for True.
+
+The first time assigning a mutable variable is a declaration so it uses `=`. The next are mutations so they use `:=`. Saying `~i: int := 0` wouldn't make any sense, like you're trying to mutate a variable that doesn't exist yet. `=` always means a new variable, and `:=` means to modify an existing variable.
+
+Python uses `True` and `False` (capitalized) without any issues.
+
+`/=` can't be used for inequality because it's the compound division assignment. 
+
+Lambdas and multi-line strings won't conflict because you are required to continue a lambda with a name or parentheses after the `\`.
+
+Rust uses `!` for both boolean not and bitwise not without any issues. 
+
+`=` and `::` are not simple operators like in other languages. They are full expressions that must be on their own line and not inside brackets or other expressions. The notation on the left is not a simple expression but special declaration notation. That's why destructuring uses product type marker `*` because the left of the `=` is in a different context. Likewise, subsets use `<=` in their declaration because the left of the `::` sign is also in a different context than expressions.
+
+---
+
 *This document captures the current state of the Mulem design. The language is still evolving.*
