@@ -156,12 +156,15 @@ a = 0
 b: int = 2
 ```
 
-These are immutable variables. When the type is inferred, immutable variables can be shadowed with any type.
+These are immutable variables. When the type is inferred, immutable variables can be shadowed with any type. Use `where` if you want to constrain a variable name to a particular type. This is not the same as mutating the variable. You create a new variable with the same name with each `=`, which is called **shadowing.**
 
 ```mulem
 a = 1
 a = 2
 a = 'a'
+
+where b: int    -- `b` can only be an `int` now.
+b = 'b'         -- Error: `b` is constrained to type `int`, `char` found.
 ```
 
 Adding a new line and indentation after the `=` starts a block. The last expression evaluated in the block is the value of that variable.
