@@ -1827,6 +1827,8 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 |  `lhs >> rhs`  | Bitshift Right                                       |
 | `lhs >>> rhs`  | Unsigned Bitshift Right                              |
 
+`#` was picked for logical/bitwise NOT because it resembles a not-equals sign `≠`. `!` is used for error types, and `~` is used for mutability, so logical/bitwise NOT needed to be something different. `#=` follows the same pattern as `!=` in other languages since `#` means *not* in Mulem.
+
 __Compound Assignment Operators:__
 
 | Operator        | Meaning              |
