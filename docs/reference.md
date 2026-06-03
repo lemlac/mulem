@@ -1407,6 +1407,8 @@ defer free[student]
 
 **NOTE:** There is no `unsafe` block like in some languages. Programmers are responsible for assuring the safety of their own code.
 
+Mulem's memory model follows C conventions: values are copied by default, and pointers copy the address. There is no ownership model or double-free protection for heap-allocated data. The `alloc`, `free`, and `defer` utilities reduce boilerplate but do not enforce safety. That responsibility stays with the programmer.
+
 ### Questions `T?` and Exclamations `T!E`
 
 These are Mulem's 2 built-in monadic types. 
