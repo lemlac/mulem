@@ -700,8 +700,8 @@ loop Pattern(opt x) in listOfPatterns then
 Both accept an optional label to target an outer loop.
 
 ```mulem
-loop.outer x in 0..100 then
-    loop y in 0..100 then
+loop.outer x in 0...100 then
+    loop y in 0...100 then
         if x * y >= 100 then
             continue.outer
         if x * y == 77 then
@@ -1347,7 +1347,7 @@ Raw pointers are type `ptr`. These cannot be dereferenced. They are ideally used
 
 ```mulem
 o: ptr = externalLibrary.getObject()
-if o #= Null then
+if o =/= Null then
     externalLibrary.useObject(o)
 else
     print("Initialization failed")
@@ -1772,8 +1772,8 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 | 8     | Exponent                   | `**` (right-associative)                        |
 | 7     | Multiplicative / Shift     | `*` `/` `//` `%` `%%` `<*` `*>` `<<` `>>` `>>>` |
 | 6     | Additive / Concat          | `+` `-` `<>` `&` `\|` `\|<`                     |
-| 5     | Range                      | `..` `..=`                                     |
-| 4     | Comparison                 | `==` `#=` `<` `>` `<=` `>=`                     |
+| 5     | Range                      | `...` `..=`                                     |
+| 4     | Comparison                 | `==` `=/=` `<` `>` `<=` `>=`                    |
 | 3     | Logical AND                | `&&`                                            |
 | 2     | Logical OR / None-Coalesce | `\|\|` `?:` `!:`                                |
 | 1     | Pipeline                   | `\|>`                                           |
@@ -1807,7 +1807,7 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 |  `lhs %% rhs`  | True Modulo                                          |
 |  `lhs ** rhs`  | Exponentiation (right-associative)                   |
 |  `lhs == rhs`  | Equality                                             |
-|  `lhs #= rhs`  | Inequality                                           |
+| `lhs =/= rhs`  | Inequality                                           |
 |   `lhs > rhs`  | Greater than                                         |
 |   `lhs < rhs`  | Less than                                            |
 |  `lhs >= rhs`  | Greater than or equal                                |
@@ -1827,7 +1827,7 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 |  `lhs >> rhs`  | Bitshift Right                                       |
 | `lhs >>> rhs`  | Unsigned Bitshift Right                              |
 
-`#` was picked for logical/bitwise NOT because it resembles a not-equals sign `≠`. `!` is used for error types, and `~` is used for mutability, so logical/bitwise NOT needed to be something different. `#=` follows the same pattern as `!=` in other languages since `#` means *not* in Mulem.
+`#` was picked for logical/bitwise NOT because it resembles a not-equals sign `≠`. `!` is used for error types, and `~` is used for mutability, so logical/bitwise NOT needed to be something different. 
 
 __Compound Assignment Operators:__
 
@@ -2441,7 +2441,7 @@ Exits out of a function with an `iter[_]` type. The return value of the function
 
 ```mulem
 countUpTo(n: int): iter[int] =
-    loop i in 0..n then
+    loop i in 0...n then
         yield i
 ```
 
@@ -2471,7 +2471,7 @@ Both `yield` and `await` can be used together in an `iter[async[_]]` type. The t
 
 ```mulem
 asyncIterFn(n): iter[async[int]] =
-    loop i in 0..n then
+    loop i in 0...n then
         val = await fetch(i)
         yield val
 
