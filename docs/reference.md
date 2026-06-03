@@ -287,16 +287,16 @@ withOneAndTwo(add of (int, int) -> int)   -- Resolved.
 
 ### Capturing
 
-Functions capture immutable variables automatically. Mutable variables must be captured with `use` in the function signature. If the function mutates the variable, then the variable should have `~` before the variable name.
+Functions capture immutable variables automatically. Mutable variables must be captured with `@` in the function signature. If the function mutates the variable, then the variable should have `~` before the variable name.
 
 ```mulem
 amount = 1   -- Automatically captured.
 ~count = 0   -- Must be explicitly captured.
 
-increment() use (~count): void =
+increment() @ (~count): void =
     count += amount
 
-getCount() use (count): int =
+getCount() @ (count): int =
     count
 
 increment()      -- Result: 1
@@ -1863,13 +1863,13 @@ A **pipeline block** is started with `|> do` and a new line, either at the end o
 
 ```mulem
 |> fetchA()         -- Set up things.
-|> fetchB(..$)       -- …
-|> fetchC(..$)       -- …
+|> fetchB(..$)      -- …
+|> fetchC(..$)      -- …
 |> do               -- Pipeline context is now ready.
     print("{$}")    -- Use it here.
 
 fetchA() |> fetchB(..$) |> fetchC(..$) |> do   -- Or in one line.
-    print("{$}")                             -- Then use the result.
+    print("{$}")                               -- Then use the result.
 
 -- Freely mix the two formats:
 fetchA() |> do         -- Start with this pipeline context.
@@ -2048,7 +2048,7 @@ Capturing also works inside lambda functions just like with named functions.
 
 ```mulem
 ~count = 0
-forEach([1, 2, 3, 4], \(x) use (~count) =
+forEach([1, 2, 3, 4], \(x) @ (~count) =
     count += x
 )
 ```
@@ -2084,11 +2084,11 @@ When capturing variables, each returned function needs to capture them separatel
 
 ```mulem
 count: ~ = 0
-curryAddCount(a: int) use (~count): (int): (int): int =
+curryAddCount(a: int) @ (~count): (int): (int): int =
     count += a                                 -- (1) Evaluated immediately
-    \(b: int) use (~count): (int): int =       -- (2) Suspends and captures `count`
+    \(b: int) @ (~count): (int): int =       -- (2) Suspends and captures `count`
         count += b                             -- (3) Evaluated when second lambda is called
-        \(c: int) use (~count): int =
+        \(c: int) @ (~count): int =
             count += c
             count
 
@@ -2108,23 +2108,6 @@ match expr is
 ```
 
 The next control flow methods are based on pattern match. Generally, you see the word `is`, you next thing to expect after it is a pattern: `value is Pattern(x)`.
-
-#### `fallthrough`
-
-Proceeds to the next case, which must not destructure new values, unless fallbacks are used.
-
-```mulem
-match choice is
-| First =
-    print("First")
-    fallthrough
-| Second(x?) =              -- `?` in pattern wraps the variable in a question type
-    if x is Some(x) then
-        print("Definitely Second: {x}")
-    -- Implicit break.
-| (_) =
-    print("No match")
-```
 
 ### Pattern Fallback
 
@@ -2172,6 +2155,25 @@ match choice is
 | (_) =
     print("No match")
 ```
+
+### `fallthrough`
+
+Proceeds to the next case, which must not destructure new values, unless fallbacks are used.
+
+```mulem
+match choice is
+| First =
+    print("First")
+    fallthrough
+| Second(x?) =              -- `?` in pattern wraps the variable in a question type
+    if x is Some(x) then
+        print("Definitely Second: {x}")
+    -- Implicit break.
+| (_) =
+    print("No match")
+```
+
+`fallthrough`​ only goes to the next case. If the next case doesn't have a `fallthrough​` in it too, then it will break. It's a syntax error if you call `fallthrough` on the last case in the `match` block.
 
 ### `is` / `then`
 
@@ -2612,10 +2614,10 @@ rsqrt(number: float[32]): float[32] =
 
 ## Reserved Keywords
 
-Mulem has 29 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard question `T?` members (`Some`, `None`), are built-in symbols but *not* strict keywords.
+Mulem has 28 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard question `T?` members (`Some`, `None`), are built-in symbols but *not* strict keywords.
 
 **The Keyword List:**
-`as`, `await`, `break`, `catch`, `const`, `continue`, `defer`, `do`, `else`, `fallthrough`, `if`, `import`, `in`, `is`, `loop`, `match`, `mod`, `of`, `opt`, `pass`, `raise`, `return`, `then`, `try`, `until`, `use`, `where`, `yield`.
+`as`, `await`, `break`, `catch`, `const`, `continue`, `defer`, `do`, `else`, `fallthrough`, `if`, `import`, `in`, `is`, `loop`, `match`, `mod`, `of`, `opt`, `pass`, `raise`, `return`, `then`, `try`, `until`, `where`, `yield`.
 
 [TOC](#table-of-contents)
 
