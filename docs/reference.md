@@ -7,19 +7,11 @@ __The Mulem programming language__ is a general-purpose, expression-oriented lan
 Sample:
 
 ```mulem
-const A = "foobar"
-
 where x: int
 
-f(x) = x*x
+f(x) = x * x
 
-const MAX(a: int, b: int) = if a > b then a else b
-
-where T: type
-where N: const uint
-
-List[T, N] ::
-    * data: [N;T]
+f(2)   -- Value: 4
 ```
 
 ---
