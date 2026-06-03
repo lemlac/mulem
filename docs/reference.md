@@ -43,7 +43,7 @@ Keywords that can start blocks:
 - `then`
 - `else`
 - `try`
-- `maybe`
+- `opt`
 - `=` (assignment, functions, and patterns)
 
 Some keywords at the end of lines start a **pattern sequence**. Each line start with `|` is a part of that sequence.
@@ -433,7 +433,7 @@ MAX[7, 3]     -- Result: 7
 - __[`if` / `else`](#if--else)__ – Boolean branching
 - __[`match` / `is`](#match--is)__ – Pattern matching
 - __[`loop`](#loop)__ – Iteration
-- __[`maybe` / `else`](#maybe--else)__ – Coalescing
+- __[`opt` / `else`](#opt--else)__ – Coalescing
 - __[`try` / `catch`](#try--catch)__ – Error handling
 - __[`return` + `raise`](#try--catch)__ – Exiting a function
 - __[`defer`](#defer)__ – Clean-up
@@ -683,16 +683,16 @@ loop (x, y, z) in listOfTuples then
 Pattern matching works. All patterns must have fallbacks. *(See [Pattern Fallback](#pattern-fallbacks).)* This is because if you have an array/iterator of enums, it would be hard to determine if they're all a particular pattern. This ensures any mismatches are handled inside the loop. 
 
 ```mulem
-loop Pattern(opt x) in listOfPatterns then
+loop Pattern(x?) in listOfPatterns then
     if x is Some(x) then
         print("Found match: {x}")
 ```
 
-This can be combined with `maybe` to automatically skip when there's a mismatch.
+This can be combined with `opt` to automatically skip when there's a mismatch.
 
 ```mulem
-loop Pattern(opt x) in listOfPatterns then
-    maybe print("Found match: {x?}")
+loop Pattern(x?) in listOfPatterns then
+    opt print("Found match: {x?}")
 ```        
 
 #### `break` / `continue`
@@ -719,24 +719,24 @@ x = do.block
 print("{x}")     -- Prints either "4" or "5"
 ```
 
-### `maybe` / `else`
+### `opt` / `else`
 
 ```mulem
-maybe expr? else expr
+opt expr? else expr
 
-maybe
+opt
     body?
 else
     expr
 ```
 
-None-coalescing. Unwrap question types with `?` inside an `maybe` block. If any `?` returns `None`, the block short-circuits.
+None-coalescing. Unwrap question types with `?` inside an `opt` block. If any `?` returns `None`, the block short-circuits.
 
 ```mulem
-maybe
+opt
     a = getA()?
     b = getB()?
-    c = maybe getC()? else 0     -- Fallback
+    c = opt getC()? else 0     -- Fallback
     print("{a + b + c}")
 else
     print("Didn't work")
@@ -746,7 +746,7 @@ Inline form.
 
 ```mulem
 a = Some(10)
-x = maybe f(a?) else "fallback"
+x = opt f(a?) else "fallback"
 ```
 
 Using `?` inside a function automatically infers a question return type `T?`.
@@ -764,13 +764,13 @@ Nested questions unwrap with multiple `??`:
 unnest(x: int??): int? = x??
 ```
 
-Chain multiple `maybe` / `else` together untill you get a fallback:
+Chain multiple `opt` / `else` together untill you get a fallback:
 
 ```mulem
 getFirst(a: int, b: int, c: int): int =
-    ( maybe getA(a)? else
-      maybe getB(b)? else
-      maybe getC(c)? else
+    ( opt getA(a)? else
+      opt getB(b)? else
+      opt getC(c)? else
       0 )
 ```
 
@@ -781,13 +781,13 @@ getFirst(a: int, b: int, c: int): int =
     getA(a) ?: getB(b) ?: getC(c) ?: 0
 ```
 
-Another example of a use for `maybe`:
+Another example of a use for `opt`:
 
 ```mulem
 crunchData(): int?!Error!CustomError =                                -- Multiple error types
     value: int? = someFunc()!
     -- Question to Exclamation
-    data: int = maybe value? else raise CustomError("Not found")      -- Exist function on fallback
+    data: int = opt value? else raise CustomError("Not found")      -- Exist function on fallback
     data
 ```
 
@@ -1784,7 +1784,7 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 |   `lhs . rhs`  | Member access / safe pointer member access           |
 |   `lhs .[rhs]` | Safe array/dictionary index                          |
 |   `lhs ^[rhs]` | Raw array/dictionary index                           |
-|   `lhs ?`      | Unwrap question, propagate `None` to nearest `maybe` |
+|   `lhs ?`      | Unwrap question, propagate `None` to nearest `opt` |
 |  `lhs ?. rhs`  | Member access on a question type                     |
 |  `lhs ?.[rhs]` | Safe array/dictionary index on a question type       |
 |   `lhs !`      | Unwrap exclamation, propagate error to nearest `try` |
@@ -1855,7 +1855,7 @@ __Compound Assignment Operators:__
 
 | Syntax         | Meaning            | Note                                                      |
 |:---------------|:-------------------|:----------------------------------------------------------|
-|  `T?`, `x?`    | Question           | Unwraps a question; propagates `None` to nearest `maybe`. |
+|  `T?`, `x?`    | Question           | Unwraps a question; propagates `None` to nearest `opt`. |
 |  `T!`, `x!`    | Exclamation        | Unwraps a exclamation; propagates error to nearest `try`. |
 |  `T^`, `x^`    | Pointer            | Dereference a pointer.                                    |
 |  `@T`, `@x`    | Reference          | Get a reference to a place in memory.                     |
@@ -2003,51 +2003,27 @@ This gives you a great deal of flexibility in how you choose to express your cod
 
 ## Optional Parameters
 
-Parameters can be made optional with the `opt` modifier. This wraps the variable in type `T?`. If the parameter is missing, it will be set to `None`.
+Parameters can have default values. Use `=` to to give an optional parameter a default value.
 
 ```mulem
-addOptional(opt a: int, opt b: int): int =
+addOptional(a = 0, b = 0): int = a + b     -- `a` and `b` are always `int`s
+
+print("{addOptional()}")      -- Prints "0"
+print("{addOptional(1)}")     -- Prints "1"
+print("{addOptional(1, 1)}")  -- Prints "2"
+```
+
+Another option instead of giving a default value, you can it to a question type `T?` and default it to `None`.
+
+```mulem
+addOptional(a: int? = None, b: int? = None): int =
     aVal = a ?: 0    -- Coalesce optional arguments with default value 0.
     bVal = b ?: 0    -- This unwraps their value if they exist or set them to 0.
     aVal + bVal      -- Add the unwrapped values.
 
-print("{addOptional()}")      -- Prints "0"
-print("{addOptional(1)}")     -- Prints "1"
-print("{addOptional(1, 1)}")  -- Prints "2"
-```
-
-When calling a function with an explicit `T?`, you give it a value of `T?`. When calling a function with `opt`, you give it a value of `T`. 
-
-```mulem
-optionalParam(opt val: int) =
-    if val is Some(x) then
-        print("Some({x})")
-    else
-        print("None")
-
-requiredParam(val: int?) =
-    if val is Some(x) then
-        print("{x}")
-    else
-        print("None")
-
-x: int = 5
-optionalParam(x)         -- Prints "Some(5)"
-optionalParam()          -- Prints "None"
-requiredParam(Some(x))   -- Prints "Some(5)"
-requiredParam(None)      -- Prints "None"
--- requiredParam(x)      -- Error: `x` is not `int?`
--- requiredParam()       -- Error: missing parameter `val: int?`
-```
-
-`opt` parameters can also have default values. Use `=` to to give an optional parameter a default value. This will make it a type `T`, so unwrapping is unnecessary.
-
-```mulem
-addOptional(opt a = 0, opt b = 0): int = a + b     -- `a` and `b` are always `int`s
-
-print("{addOptional()}")      -- Prints "0"
-print("{addOptional(1)}")     -- Prints "1"
-print("{addOptional(1, 1)}")  -- Prints "2"
+print("{addOptional()}")                  -- Prints "0"
+print("{addOptional(Some(1))}")           -- Prints "1"
+print("{addOptional(Some(1), Some(1))}")  -- Prints "2"
 ```
 
 Use `..` to collect all arguments into a single variable. The variable should be type `[..T]` (an array).
@@ -2207,7 +2183,7 @@ match choice is
 | First =
     print("First")
     fallthrough
-| Second(opt x) =           -- `opt x` in pattern wraps the variable in a question type
+| Second(x?) =              -- `?` in pattern wraps the variable in a question type
     if x is Some(x) then
         print("Definitely Second: {x}")
     -- Implicit break.
@@ -2219,8 +2195,8 @@ match choice is
 
 If a pattern can't be **guaranteed** for any reason, then you must have a **fallback.** There are two options available:
 
-- __Optional binding:__ `Pattern(opt x)` — wraps `x` in type `T?`, `Some(x)` if it matched, `None` if it didn't
-- __Default value:__ `Pattern(opt x = default)` — `x` is type `T`, if it didn't match `x` is set to `default`
+- __Optional binding:__ `Pattern(x?)` — wraps `x` in type `T?`, `Some(x)` if it matched, `None` if it didn't
+- __Default value:__ `Pattern(x = default)` — `x` is type `T`, if it didn't match `x` is set to `default`
 
 You can have multiple patterns match to one case. If any of the patterns destructure with a variable, the same variable name and type must be in all patterns. If not, use a wildcard `(_)` in each pattern or omit the data part entirely to disable destructuring. Otherwise, use a fallback in the pattern.
 
@@ -2242,8 +2218,8 @@ match choice is
 ```mulem
 -- Fallback, `val` is converted to question type `T?`:
 match choice is
-| First | Second(opt val) | Third{opt val} =
-    print("First, Second, or Third: {maybe val? else "None"}")
+| First | Second(val?) | Third{val?} =
+    print("First, Second, or Third: {opt val? else "None"}")
 ```
 
 ### Pattern Guards
@@ -2277,26 +2253,26 @@ result = (value is Pattern(x) then x)
 
 ```mulem
 -- With fallback (non-exhaustive):
-result = (value is Pattern(opt x) then x)                              -- Get wrapped Some(x) or None
-result = (value is Pattern(opt x) then maybe x? else "fallback")       -- Unwrap with fallback
-result = (value is Pattern(opt x = "fallback") then x)                 -- Automatic fallback
+result = (value is Pattern(x?) then x)                              -- Get wrapped Some(x) or None
+result = (value is Pattern(x?) then opt x? else "fallback")       -- Unwrap with fallback
+result = (value is Pattern(x = "fallback") then x)                  -- Automatic fallback
 ```
 
 ```mulem
 -- Multiple bindings:
-result = (value is Pattern(opt x = 0, opt y = 0) then (x, y))
+result = (value is Pattern(x = 0, y = 0) then (x, y))
 ```
 
 ```mulem
 -- Arbitrary expression over bindings:
-result = (value is Pattern(opt x = 0, opt y = 0) then x + y)
+result = (value is Pattern(x = 0, y = 0) then x + y)
 ```
 
 Pairs naturally with pipelining.
 
 ```mulem
 getValue()
-|> ($ is Pattern(opt x = "fallback") then x)
+|> ($ is Pattern(x = "fallback") then x)
 |> doSomethingWith($)
 ```
 
@@ -2371,7 +2347,7 @@ If `break` is reachable inside the loop, optional bindings are required.
 loop
     if earlyCondition then
         break
-until getValue() is Pattern(opt x)
+until getValue() is Pattern(x?)
 
 if x is Some(x) then
     print("{x}")
@@ -2674,10 +2650,10 @@ do
 
 ## Reserved Keywords
 
-Mulem has 27 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard question `T?` members (`Some`, `None`), are built-in symbols but *not* strict keywords.
+Mulem has 26 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard question `T?` members (`Some`, `None`), are built-in symbols but *not* strict keywords.
 
 **The Keyword List:**
-`as`, `await`, `break`, `catch`, `continue`, `defer`, `do`, `else`, `fallthrough`, `if`, `import`, `in`, `is`, `loop`, `match`, `maybe`, `mod`, `of`, `opt`, `raise`, `return`, `self`, `then`, `try`, `until`, `void`, `yield`.
+`as`, `await`, `break`, `catch`, `continue`, `defer`, `do`, `else`, `fallthrough`, `if`, `import`, `in`, `is`, `loop`, `match`, `mod`, `of`, `opt`, `raise`, `return`, `self`, `then`, `try`, `until`, `void`, `yield`.
 
 [TOC](#table-of-contents)
 
