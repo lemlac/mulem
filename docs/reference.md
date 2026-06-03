@@ -1965,7 +1965,7 @@ Use `..` to collect all arguments into a single variable. The variable should be
 
 ```mulem
 addAll(..nums: [int]): int =
-    sum: ~int = 0
+    ~sum: int = 0
     loop n in nums then
         sum += n
     sum
@@ -2083,7 +2083,7 @@ curryFn('a')('b')('c')
 When capturing variables, each returned function needs to capture them separately.
 
 ```mulem
-count: ~ = 0
+= 0
 curryAddCount(a: int) @ (~count): (int): (int): int =
     count += a                                 -- (1) Evaluated immediately
     \(b: int) @ (~count): (int): int =       -- (2) Suspends and captures `count`
@@ -2269,7 +2269,7 @@ loop nextValue() is Some(x) then
 Loop until a pattern matches. Bindings are in scope below the loop.
 
 ```mulem
-i: ~ = 0
+~i = 0
 loop
     print("Attempts: {i}")
     i += 1
