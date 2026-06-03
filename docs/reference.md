@@ -1816,7 +1816,7 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 |  `lhs *> rhs`  | Prepend to array (right-associative)                 |
 |  `lhs <> rhs`  | Concatenation                                        |
 |  `lhs && rhs`  | Logical AND                                          |
-|  `lhs || rhs`  | Logical OR                                           |
+| `lhs \|\| rhs` | Logical OR                                           |
 |       `# rhs`  | Logical NOT / Bitwise NOT                            |
 |  `lhs ?: rhs`  | `None`- coalescing                                   |
 |  `lhs !: rhs`  | Error-coalescing                                     |
