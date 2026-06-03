@@ -4,6 +4,24 @@
 
 __The Mulem programming language__ is a general-purpose, expression-oriented language designed to balance conciseness and eloquence. It delivers highly readable syntax, robust safety mechanisms, granular execution control, and expressive data pipelining. Supporting both interpretation and compilation, Mulem is ideally suited for systems programming, AI, and game development.
 
+Sample:
+
+```mulem
+const A = "foobar"
+
+where x: int
+
+f(x) = x*x
+
+const MAX(a: int, b: int) = if a > b then a else b
+
+where T: type
+where N: const uint
+
+List[T, N] ::
+    * data: [N;T]
+```
+
 ---
 
 ## Table of Contents
@@ -1643,6 +1661,8 @@ object.:Speakable.speak()    -- Full name of method.
 
 Adding a parameter before the double colon (`::`) turns it into a generic. Parameters are put in square brackets `[]` to distinguish them from regular functions which use parentheses `()`. The result is treated like a constant for run-time code. The parameters in `[]` can be inferred if it returns a function or type. In other words, `meta(_)` is equal to `meta[_](_)`. 
 
+The syntax `[]` was chosen so that generic type inference will take precedence. `meta(a, b)` means to *call the instantiated function that `meta` returns with inferred types* whereas `meta[a, b]` means to *call the abstract function `meta` with these exact values.* This also makes it easy to distinguish actual function calls from macros/inlining. This removes the need for the more conventional arrow bracket `<>` syntax, which can get confusing. For example, in `f( g < a, b > ( c ) )`, is `g` a generic function or is that comparing two values and passing the results to `f`? The square bracket syntax removes this ambiguity, `f( g [ a, b ] ( c ) )`. This makes it semantically clear that you're doing a compile-time function call followed by a run-time function call. 
+
 ```mulem
 -- Note that this is not the actual definition for a question type `T?`. This is just a user-defined enum that uses the same pattern.
 Option[T] ::
@@ -1664,7 +1684,26 @@ optionInt = SomeInt(1)
 optionInt = Some[int](1)
 ```
 
-The syntax `[]` was chosen so that generic type inference will take precedence. `meta(a, b)` means to *call the instantiated function that `meta` returns with inferred types* whereas `meta[a, b]` means to *call the abstract function `meta` with these exact values.* This also makes it easy to distinguish actual function calls from macros/inlining. This removes the need for the more conventional arrow bracket `<>` syntax, which can get confusing. For example, in `f( g < a, b > ( c ) )`, is `g` a generic function or is that comparing two values and passing the results to `f`? The square bracket syntax removes this ambiguity, `f( g [ a, b ] ( c ) )`. This makes it semantically clear that you're doing a compile-time function call followed by a run-time function call. 
+Constraints can be made on parameters in the same manner as type notation for function parameters using `:`.
+
+```mulem
+List[T: type, N: const uint] ::
+    * data [N;T]
+```
+
+An alternative method is to declare the parameters with `where` about the generics definition. In this example, `T` is set to a `type` for both `Option` and `List`:
+
+```mulem
+where T: type
+where N: const uint
+
+Option[T] ::
+    | Some(T)
+    | None
+
+List[T, N] ::
+    * data [N;T]
+```
 
 [TOC](#table-of-contents)
 
@@ -2555,22 +2594,6 @@ do
 Here are some more examples:
 
 ```mulem
-const A = "foobar"
-
-where x: int
-
-f(x) = x*x
-
-const MAX(a: int, b: int) = if a > b then a else b
-
-where T: type
-where N: const uint
-
-List[T, N] ::
-    * data: [N;T]
-```
-
-```mulem
 swap(x: int^~, y: int^~): void =
     if x =/= y then
         x^ := x^ >| y^
@@ -2600,10 +2623,10 @@ rsqrt(number: float[32]): float[32] =
 
 ## Reserved Keywords
 
-Mulem has 30 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard question `T?` members (`Some`, `None`), are built-in symbols but *not* strict keywords.
+Mulem has 29 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard question `T?` members (`Some`, `None`), are built-in symbols but *not* strict keywords.
 
 **The Keyword List:**
-`as`, `await`, `break`, `catch`, `const`, `continue`, `defer`, `do`, `else`, `fallthrough`, `if`, `import`, `in`, `is`, `loop`, `match`, `mod`, `of`, `opt`, `pass`, `raise`, `return`, `then`, `try`, `until`, `use`, `void`, `where`, `yield`.
+`as`, `await`, `break`, `catch`, `const`, `continue`, `defer`, `do`, `else`, `fallthrough`, `if`, `import`, `in`, `is`, `loop`, `match`, `mod`, `of`, `opt`, `pass`, `raise`, `return`, `then`, `try`, `until`, `use`, `where`, `yield`.
 
 [TOC](#table-of-contents)
 
