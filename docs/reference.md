@@ -1771,7 +1771,7 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 | 9     | Unary                      | `+` `-` `#`                                     |
 | 8     | Exponent                   | `**` (right-associative)                        |
 | 7     | Multiplicative / Shift     | `*` `/` `//` `%` `%%` `<*` `*>` `<<` `>>` `>>>` |
-| 6     | Additive / Concat          | `+` `-` `<>` `&` `\|` `\|<`                     |
+| 6     | Additive / Concat          | `+` `-` `<>` `&` `\|` `>\|`                     |
 | 5     | Range                      | `...` `..=`                                     |
 | 4     | Comparison                 | `==` `=/=` `<` `>` `<=` `>=`                    |
 | 3     | Logical AND                | `&&`                                            |
