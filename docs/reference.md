@@ -1484,13 +1484,11 @@ This alias is unique to the scope. Modifying it only affects the alias and not t
 You can also create aliases for basic product types or sum types.
 
 ```mulem
-tuple        ::  int , float , char                    -- Also called a "positional tuple".
-alsoTuple    :: (int , float , char)                   -- Optional parentheses.
+tuple        :: (int , float , char)                   -- Also called a "positional tuple".
 namedTuple   :: {count: int, scale: float, code: char} -- Position not guaranteed.
 mixedTuple   :: (int, float) * {code: char}            -- Has both positional and named components.
 productUnion ::  int * float * char                    -- Is the size of all types combined.
-sumUnion     ::  int + float + char                    -- Is the size of the largest type
-.
+sumUnion     ::  int + float + char                    -- Is the size of the largest type.
 ```
 
 ### Structural Types
@@ -1502,7 +1500,7 @@ MyStruct ::
     * name: str
     * value: int
 
-MyStruct :: *name: str *value: int
+MyStruct :: name: str * value: int
 ```
 
 Instantiate a struct by calling it like a function. Each member is treated like a named argument.
