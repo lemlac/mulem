@@ -183,7 +183,7 @@ i += 1
 i -= 1
 ```
 
-The type of a mutable variable can be inferred. A reference can be declared with `ref` before the name. It points to the same memory location as another variable, and its mutability is carried over.
+The type of a mutable variable can be inferred. A reference can be declared with `ref` before the name. This is treated as an alias to the same spot in memory. Its mutability is carried over.
 
 ```mulem
 ~x = 0
@@ -596,6 +596,14 @@ else
     print("Never ran")
 ```
 
+Use `..`/`..=` with `loop x in` to loop over a range of integers.
+
+```mulem
+-- Count to 10
+loop i in 1..=10 then
+    print("{i}")
+```
+
 Steps may optionally be added to the loop's subject line. This is done by adding a semi-colon `;` between the subject and `then`. An expression after `;` will run at the end of each iteration of the loop. 
 
 `loop [under this condition] ; [doing this every iteration] then`
@@ -641,9 +649,12 @@ do ~i = 1; loop i <= 100; i += 1 then
 -- 'i' is automatically out of scope and cleaned up here
 ```
 
-Note that even though it's possible to do a C-style for-loop, it's preferable to do a `loop in` with a range instead.
+`;`​ means different things in different contexts. In a block, it separates expressions; after `do`​, it separates expression in an inline block; and after `loop`​, it separates the subject from steps. 
+
+Note that even though it's possible to do a C-style for-loop, it's hard to read and preferable to do a `loop x in` with a range instead.
 
 ```mulem
+-- Same thing but easier to read
 loop i in 1..=100 then
     if i % 10 == 0 then
         print("{i}!!!")
@@ -915,9 +926,9 @@ Last
   - `"""Multi-Line String"""`
   - `''Raw String''`
 - __[Arrays](#arrays):__
-  - `: [..T]` – dynamic array
+  - `: [T]` – dynamic array
   - `: [N;T]` – fixed array
-  - `: [..[..T]]` – 2D dynamic array
+  - `: [[T]]` – 2D dynamic array
   - `: [N;[M;T]]` – 2D fixed array
 - __[Dictionaries](#dictionaries):__
   - `: [K:T]` – `K` is key type, `T` is value type
@@ -994,7 +1005,7 @@ The following are types used for basic arithmetics such numbers are characters.
 
 #### Booleans
 
-`bool` is a built-in enum type with its only members being `False` and `True`. This means you can also pattern match with a bool, although it's recommended to use `if`/`else` instead. Enum-members are capitalized by convention. 
+`bool` is a built-in enum type with its only members being `False` and `True`. This means you can also pattern match with a bool, although it's recommended to use `if`/`else` instead. Enum-members are capitalized by convention, so that's why `True` and `False` are capitalized instead of being `true` and `false`. 
 
 ```mulem
 match value is
@@ -1171,7 +1182,7 @@ template = ''Insert here → {{variable}}''
 
 ### Arrays
 
-Array types are declared with square brackets around their type (`[..T]`). A number before a colon `:` makes it a fixed length array `[N;T]`. Arrays are statically sized when written `[N;T]`, while `[..T]` is the dynamic form. Items are separated with commas (`,`). Index is done with the `^[]` and `.[]` operators. 
+Array types are declared with square brackets around their type (`[T]`). A number before a colon `:` makes it a fixed length array `[N;T]`. Arrays are statically sized when written `[N;T]`, while `[T]` is the dynamic form. Items are separated with commas (`,`). Index is done with the `^[]` and `.[]` operators. 
 
 ```mulem
 list: [4;int] = [1, 2, 3, 4]
@@ -1185,7 +1196,7 @@ print("{item}")               -- Prints "3"
 
 `list^[i]` is the same as `(list+i)^` in Mulem like how `list[i]` means `*(list+i)` in C/C++.
 
-If access to an index in an array cannot be guaranteed, you can use the safe access operator `.[]`. For an array of `[..T]`, `.[]` will return type `T?` and `^[]` will return a type `T`.
+If access to an index in an array cannot be guaranteed, you can use the safe access operator `.[]`. For an array of `[T]`, `.[]` will return type `T?` and `^[]` will return a type `T`.
 
 ```mulem
 i = randInt()    -- Undeterministic number.
@@ -1208,7 +1219,7 @@ c = a <> b                  -- == [1, 2, 3, 0, 1, 2, 3, 4]
 d = [0, ..a <> b, 5, ..c, 6]  -- == [0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 1, 2, 3, 0, 1, 2, 3, 4, 6]
 ```
 
-The `<>` is used for concatenating two arrays, and its complement operators are `*>` *prepend* and `<*` *append.* For an array of type `[..T]`, these take a type `T` on the side opposite of where they point. `*>` is right associative, allow you to chain multiple prepends onto one array. 
+The `<>` is used for concatenating two arrays, and its complement operators are `*>` *prepend* and `<*` *append.* For an array of type `[T]`, these take a type `T` on the side opposite of where they point. `*>` is right associative, allow you to chain multiple prepends onto one array. 
 
 ```mulem
 1 *> 2 *> 3 *> [4]  -- Value: [1, 2, 3, 4]
@@ -1329,7 +1340,7 @@ Typed pointers are type `T^`. They're are like references but dereferenced with 
 
 ```mulem
 ~x = 0
-xPtr: int^~ = ~@x
+xPtr: int^~ = @x
 xPtr^ := 1
 x             -- Value: 1
 ```
@@ -1365,29 +1376,7 @@ defer free[student]
 -- Use student freely below.
 ```
 
-When you are sure that a pointer exists, you can use `^.` for raw access, but if you aren't sure you can use just `.` to do a safe pointer check. This will return a `~@T?` of that member.
-
-```
-student^.name := "John Smith"    -- Raw access
-student.name? := "John Smith"    -- Safe access
-```
-
-`student.name` is a safe pointer operation like `.[]` for arrays, so you would write `student.name?`; because `student` isn't a question type `T?` but `student._` returns a question type of `~@T?` of that member.
-
-This makes it easier to chain when you have a safe pointer `T^?`/`T^~?`
-
-```
-pointer?.field1?.field2?.field3?    -- Unwrap each field
-```
-
-Pointers and arrays follow the same model of safe and raw operators.
-
-| | Member (Pointers) | Index (Arrays) |
-|:--|:--|:--|
-| __Safe (`T?`)__ | `.member` | `.[index]` |
-| __Raw (`T`)__ | `^.member` | `^[index]` |
-
-`?:` can also work on pointers, but know that it only returns a **copy** of what a pointer is referencing, not the reference itself. Use it if you only care about the value and not the reference.
+**NOTE:** There is no `unsafe` block like in some languages. Programmers are responsible for assuring the safety of their own code.
 
 ### Questions `T?` and Exclamations `T!E`
 
@@ -1567,11 +1556,7 @@ u of float   -- Read binary representation of int 1 as if it were a float
 u of char    -- Read binary representation of int 1 as if it were a, value is '\1'
 ```
 
-This is similar to C unions where it doesn't do any conversion; it only reads whatever data is there with a different type.
-
-Unions will set overflow data to 0 so that if you set a small member and then read from a big member, you won't get undefined behavior. 
-
-The zero-padding interacts with endianness in a way that's deterministic but platform-dependent. The behavior is always defined, just not always portable. 
+This is similar to C unions where it doesn't do any conversion; it only reads whatever data is there with a different type. Unions will set overflow data to 0 so that if you set a small member and then read from a big member, you won't get undefined behavior. The zero-padding interacts with endianness in a way that's deterministic but platform-dependent. The behavior is always defined, just not always portable. 
 
 ```mulem
 u: sumUnion = '\1'   -- char (1 byte), remaining bytes zeroed
@@ -1703,6 +1688,8 @@ List[T, N] ::
     * data [N;T]
 ```
 
+`where` is used for both type constraints and generic parameters constraints. They're treated the same. A constraint for a generic parameter is its type. A variable with type `type` is expecting type notation, and a variable with type `const T` is expecting a constant or literal of type `T`.
+
 [TOC](#table-of-contents)
 
 ---
@@ -1712,7 +1699,7 @@ List[T, N] ::
 | Level | Category                   | Operators                                       |
 |:------|:---------------------------|:------------------------------------------------|
 | 11    | Member access/Function     | `.` `^.` `.[]` `^[]` `?.` `?.[]`                |
-| 10    | Postfix/Prefix             | `?` `!` `^` `@` `~@` `.:` `()`                  |
+| 10    | Postfix/Prefix             | `?` `!` `^` `@` `.:` `()`                       |
 | 9     | Unary                      | `+` `-` `not`                                   |
 | 8     | Exponent                   | `**` (right-associative)                        |
 | 7     | Multiplicative / Shift     | `*` `/` `//` `%` `%%` `<*` `*>` `<<` `>>` `>>>` |
@@ -1735,10 +1722,9 @@ List[T, N] ::
 |   `lhs !`      | Unwrap exclamation, propagate error to nearest `try` |
 |   `lhs ^`      | Dereference typed pointer                            |
 |   `lhs ^. rhs` | Raw pointer member access                            |
-|       `@ rhs`  | Get immutable reference                              |
-|      `~@ rhs`  | Get mutable reference                                |
+|       `@ rhs`  | Get reference                                        |
 |      `.. rhs`  | Spread operator                                      |
-| `lhs .. rhs`  | Exclusive range                                      |
+|  `lhs .. rhs`  | Exclusive range                                       |
 | `lhs ..= rhs`  | Inclusive range                                      |
 | `lhs \|> rhs`  | Pipeline                                             |
 |   `lhs + rhs`  | Addition                                             |
@@ -1794,6 +1780,8 @@ __Compound Assignment Operators:__
 | `lhs <<= rhs`   | `lhs := lhs << rhs`  |
 | `lhs >>= rhs`   | `lhs := lhs >> rhs`  |
 | `lhs >>>= rhs`  | `lhs := lhs >>> rhs` |
+
+`=/=`​ was picked over `!=` because `!`​ is excusely used for error operators, and `/=`​ is the compound division operator, so that leaves `=/=​` as the most obvious symbol left for the not-equals operator. The symbol also benifits by making it easy to switch between `==` and `=/=` with adding or removing the slash `/`.
 
 ### Key Type Modifiers & Postfix Operators
 
@@ -1970,10 +1958,10 @@ print("{addOptional(Some(1))}")           -- Prints "1"
 print("{addOptional(Some(1), Some(1))}")  -- Prints "2"
 ```
 
-Use `..` to collect all arguments into a single variable. The variable should be type `[..T]` (an array).
+Use `..` to collect all arguments into a single variable. The variable should be type `[T]` (an array).
 
 ```mulem
-addAll(..nums: [..int]): int =
+addAll(..nums: [int]): int =
     sum: ~int = 0
     loop n in nums then
         sum += n
@@ -1987,7 +1975,7 @@ print("{addAll(1, 2, 3)}")  -- Prints "6"
 
 ```mulem
 -- With pattern matching:
-addAll(..nums: [..int]): int =
+addAll(..nums: [int]): int =
     match nums is
     | []            = 0
     | [x]           = x
@@ -2395,8 +2383,8 @@ asyncIterFn(n): iter[async[int]] =
         val = await fetch(i)
         yield val
 
-asyncCollect(n): async[[..int]] =
-    ~ret: [..int] = []
+asyncCollect(n): async[[int]] =
+    ~ret: [int] = []
     loop (await x) in asyncIterFn(n) then
         ret <>= x
     ret
