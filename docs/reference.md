@@ -1347,7 +1347,7 @@ Raw pointers are type `ptr`. These cannot be dereferenced. They are ideally used
 
 ```mulem
 o: ptr = externalLibrary.getObject()
-if o != Null then
+if o #= Null then
     externalLibrary.useObject(o)
 else
     print("Initialization failed")
@@ -1768,12 +1768,12 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 |:------|:---------------------------|:------------------------------------------------|
 | 11    | Member access/Function     | `.` `^.` `.[]` `^[]` `?.` `?.[]`                |
 | 10    | Postfix/Prefix             | `?` `!` `^` `@` `~@` `.:` `()`                  |
-| 9     | Unary                      | `+` `-` `!`                                     |
+| 9     | Unary                      | `+` `-` `#`                                     |
 | 8     | Exponent                   | `**` (right-associative)                        |
 | 7     | Multiplicative / Shift     | `*` `/` `//` `%` `%%` `<*` `*>` `<<` `>>` `>>>` |
 | 6     | Additive / Concat          | `+` `-` `<>` `&` `\|` `\|<`                     |
 | 5     | Range                      | `..` `..=`                                     |
-| 4     | Comparison                 | `==` `!=` `<` `>` `<=` `>=`                     |
+| 4     | Comparison                 | `==` `#=` `<` `>` `<=` `>=`                     |
 | 3     | Logical AND                | `&&`                                            |
 | 2     | Logical OR / None-Coalesce | `\|\|` `?:` `!:`                                |
 | 1     | Pipeline                   | `\|>`                                           |
@@ -1807,7 +1807,7 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 |  `lhs %% rhs`  | True Modulo                                          |
 |  `lhs ** rhs`  | Exponentiation (right-associative)                   |
 |  `lhs == rhs`  | Equality                                             |
-|  `lhs != rhs`  | Inequality                                           |
+|  `lhs #= rhs`  | Inequality                                           |
 |   `lhs > rhs`  | Greater than                                         |
 |   `lhs < rhs`  | Less than                                            |
 |  `lhs >= rhs`  | Greater than or equal                                |
@@ -1817,7 +1817,7 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 |  `lhs <> rhs`  | Concatenation                                        |
 |  `lhs && rhs`  | Logical AND                                          |
 |  `lhs || rhs`  | Logical OR                                           |
-|       `! rhs`  | Logical NOT / Bitwise NOT                            |
+|       `# rhs`  | Logical NOT / Bitwise NOT                            |
 |  `lhs ?: rhs`  | `None`- coalescing                                   |
 |  `lhs !: rhs`  | Error-coalescing                                     |
 |   `lhs & rhs`  | Bitwise AND                                          |
