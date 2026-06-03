@@ -174,10 +174,10 @@ i = 1   -- OK!
 
 `:=`​ and `=`​ are separated so that you don't accidentally mistype a variable name and create a new variable in scope. 
 
-The type of a mutable variable can be inferred with `~=`. A reference can be declared with `@` before the name. It points to the same memory location as another variable. Its mutability is carried over.
+The type of a mutable variable can be inferred with `: ~ =`. A reference can be declared with `@` before the name. It points to the same memory location as another variable. Its mutability is carried over.
 
 ```mulem
-x ~= 0
+x: ~ = 0
 @xRef = x
 xRef := 1
 x        -- Value: 1
@@ -188,7 +188,7 @@ x        -- Value: 1
 Explicit reference types are `@T` (immutable) and `~@T` (mutable). Use `@` and `~@` prefix operators to get a memory address.
 
 ```mulem
-x ~= 0
+x: ~ = 0
 xRef: @int = x
 xRef := 1  -- Error!
 xRef: ~@int = x
@@ -288,7 +288,7 @@ Functions capture immutable variables automatically. Mutable variables must be c
 
 ```mulem
 amount = 1   -- Automatically captured.
-count ~= 0   -- Must be explicitly captured.
+count: ~ = 0   -- Must be explicitly captured.
 
 increment() @ (~count): void =
     count += amount
@@ -309,7 +309,7 @@ Declaring a function and setting it to a function creates a **function pointer**
 
 ```mulem
 addInt: (int, int): int = add
--- Or...
+-- Or…
 addInt = add of (int, int): int
 ```
 
@@ -618,7 +618,7 @@ Steps may optionally be added to the loop's subject line. This is done by adding
 
 ```mulem
 -- The Dangerous Way
-i ~= 1
+i: ~ = 1
 loop i <= 100 then
     if i % 10 == 0 then
         print("{i}!!!")
@@ -629,7 +629,7 @@ loop i <= 100 then
     i += 1
 
 -- The Safe Way
-i ~= 1
+i: ~ = 1
 loop i <= 100; i += 1 then
     if i % 10 == 0 then
         print("{i}!!!")
@@ -639,7 +639,7 @@ loop i <= 100; i += 1 then
 
 ```mulem
 -- Track index of `loop / in`
-idx ~= 0
+idx: ~ = 0
 loop item in inventory; idx += 1 then
     print("Slot {idx}: {item}")
 ```
@@ -648,7 +648,7 @@ Because `do` blocks isolate scopes and inline expressions sequence seamlessly, y
 
 ```mulem
 -- C-style for loop
-do i ~= 1; loop i <= 100; i += 1 then
+do i: ~ = 1; loop i <= 100; i += 1 then
     if i % 10 == 0 then
         print("{i}!!!")
         continue
@@ -700,8 +700,8 @@ loop Pattern(opt x) in listOfPatterns then
 Both accept an optional label to target an outer loop.
 
 ```mulem
-loop.outer x in 0...100 then
-    loop y in 0...100 then
+loop.outer x in 0..100 then
+    loop y in 0..100 then
         if x * y >= 100 then
             continue.outer
         if x * y == 77 then
@@ -1079,6 +1079,19 @@ Changing the base involves adding a `0` + either the letter `b`, `o`, or `x` to 
 | `0o`   | 8    | `01234567`                            |
 | `0x`   | 16   | `0123456789abcdef` (case insensitive) |
 
+Specific sized number types can be specified with `[N]` after the each type.
+
+- `int[8]` – 8-bit signed integer
+- `int[16]` – 16-bit signed integer
+- `int[32]` – 32-bit signed integer
+- `int[64]` – 64-bit signed integer
+- `uint[8]` – 8-bit unsigned integer
+- `uint[16]` – 16-bit unsigned integer
+- `uint[32]` – 32-bit unsigned integer
+- `uint[64]` – 64-bit unsigned integer
+- `float[32]` – 32-bit floating-point number
+- `float[64]` – 64-bit floating-point number
+
 #### Characters
 
 Characters or `char` are written with apostrophes (`'…'`) *(also called single quotes).* You can do arithmetic on them like with numbers.
@@ -1211,7 +1224,7 @@ In general, you'll mostly be using arrays by iterating or piping them.
 
 ```mulem
 loop x in list then
-    print("{x}")     -- No need to use `#`
+    print("{x}")
 ```
 
 Use the spread operator `..` to spread an array into another array. This must be the first prefix operator in an expression, and it must be in a compatiable array or tuple literal. It always goes last in the slot's expression, so extra parentheses aren't necessary: `..a <> b` == `*(a <> b)`.
@@ -1334,7 +1347,7 @@ Raw pointers are type `ptr`. These cannot be dereferenced. They are ideally used
 
 ```mulem
 o: ptr = externalLibrary.getObject()
-if o #= Null then
+if o != Null then
     externalLibrary.useObject(o)
 else
     print("Initialization failed")
@@ -1343,7 +1356,7 @@ else
 Typed pointers are type `T^`. They're are like references but dereferenced with the `^` postfix operator.
 
 ```mulem
-x ~= 0
+x: ~ = 0
 xPtr: int^~ = ~@x
 xPtr^ := 1
 x             -- Value: 1
@@ -1510,7 +1523,7 @@ sumUnion     ::  int + float + char                    -- Is the size of the lar
 
 ### Structural Types
 
-Structs are product types—or in other words—plain data containers. They cannot extend other structs, but can inherit members of other structs. *(See [Inheritance and Visibility](#inheritance-and-visibility).)*
+Structs are product types—or in other words—plain data containers. They cannot extend other structs but can *embed* members of other structs. *(See [Embedding and Visibility](#embedding-and-visibility).)*
 
 ```mulem
 MyStruct ::
@@ -1755,14 +1768,14 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 |:------|:---------------------------|:------------------------------------------------|
 | 11    | Member access/Function     | `.` `^.` `.[]` `^[]` `?.` `?.[]`                |
 | 10    | Postfix/Prefix             | `?` `!` `^` `@` `~@` `.:` `()`                  |
-| 9     | Unary                      | `+` `-` `#`                                     |
+| 9     | Unary                      | `+` `-` `!`                                     |
 | 8     | Exponent                   | `**` (right-associative)                        |
 | 7     | Multiplicative / Shift     | `*` `/` `//` `%` `%%` `<*` `*>` `<<` `>>` `>>>` |
-| 6     | Additive / Concat          | `+` `-` `<>` `&` `\|` `\|<`                        |
-| 5     | Range                      | `...` `..=`                                     |
-| 4     | Comparison                 | `==` `#=` `<` `>` `<=` `>=`                     |
+| 6     | Additive / Concat          | `+` `-` `<>` `&` `\|` `\|<`                     |
+| 5     | Range                      | `..` `..=`                                     |
+| 4     | Comparison                 | `==` `!=` `<` `>` `<=` `>=`                     |
 | 3     | Logical AND                | `&&`                                            |
-| 2     | Logical OR / None-Coalesce | `\|\|` `?:` `!:`                                  |
+| 2     | Logical OR / None-Coalesce | `\|\|` `?:` `!:`                                |
 | 1     | Pipeline                   | `\|>`                                           |
 | 0     | Assignment / Spread        | `=` `:=` `+=` `-=` `..`                         |
 
@@ -1780,7 +1793,7 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 |       `@ rhs`  | Get immutable reference                              |
 |      `~@ rhs`  | Get mutable reference                                |
 |      `.. rhs`  | Spread operator                                      |
-| `lhs ... rhs`  | Exclusive range                                      |
+|  `lhs .. rhs`  | Exclusive range                                      |
 | `lhs ..= rhs`  | Inclusive range                                      |
 | `lhs \|> rhs`  | Pipeline                                             |
 |   `lhs + rhs`  | Addition                                             |
@@ -1794,7 +1807,7 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 |  `lhs %% rhs`  | True Modulo                                          |
 |  `lhs ** rhs`  | Exponentiation (right-associative)                   |
 |  `lhs == rhs`  | Equality                                             |
-|  `lhs #= rhs`  | Inequality                                           |
+|  `lhs != rhs`  | Inequality                                           |
 |   `lhs > rhs`  | Greater than                                         |
 |   `lhs < rhs`  | Less than                                            |
 |  `lhs >= rhs`  | Greater than or equal                                |
@@ -1804,7 +1817,7 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 |  `lhs <> rhs`  | Concatenation                                        |
 |  `lhs && rhs`  | Logical AND                                          |
 |  `lhs || rhs`  | Logical OR                                           |
-|       `# rhs`  | Logical NOT / Bitwise NOT                            |
+|       `! rhs`  | Logical NOT / Bitwise NOT                            |
 |  `lhs ?: rhs`  | `None`- coalescing                                   |
 |  `lhs !: rhs`  | Error-coalescing                                     |
 |   `lhs & rhs`  | Bitwise AND                                          |
@@ -1813,8 +1826,6 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 |  `lhs << rhs`  | Bitshift Left                                        |
 |  `lhs >> rhs`  | Bitshift Right                                       |
 | `lhs >>> rhs`  | Unsigned Bitshift Right                              |
-
-`#` was picked for **not** (logical and bitwise) to keep the `!` symbol seperated for **errors** and the `~` symbol seperated for **mutability.** Because of that, `#=` follows the same convention as `!=` in other languages. 
 
 __Compound Assignment Operators:__
 
@@ -1861,7 +1872,7 @@ __Compound Assignment Operators:__
 - __[Pattern Matching](#pattern-matching)__
 - __[References](#references)__
 - __[Iterator / Async Functions](#iterator-async-functions)__
-- __[Inheritance and Visibility](#inheritance-and-visibility)__
+- __[Embedding and Visibility](#embedding-and-visibility)__
 - __[Manual Implementation](#manual-implementation)__
 - __[Importing and Modules](#importing-and-modules)__
 
@@ -2123,7 +2134,7 @@ otherAction(\ callback(val) =
 Capturing also works inside lambda functions just like with named functions.
 
 ```mulem
-count ~= 0
+count: ~ = 0
 forEach([1, 2, 3, 4], \(x) @ (~count) =
     count += x
 )
@@ -2159,7 +2170,7 @@ curryFn('a')('b')('c')
 When capturing variables, each returned function needs to capture them separately.
 
 ```mulem
-count ~= 0
+count: ~ = 0
 curryAddCount(a: int) @ (~count): (int): (int): int =
     count += a                                 -- (1) Evaluated immediately
     \(b: int) @ (~count): (int): int =          -- (2) Suspends and captures `count`
@@ -2343,7 +2354,7 @@ loop nextValue() is Some(x) then
 Loop until a pattern matches. Bindings are in scope below the loop.
 
 ```mulem
-i ~= 0
+i: ~ = 0
 loop
     print("Attempts: {i}")
     i += 1
@@ -2373,7 +2384,7 @@ if x is Some(x) then
 `@` gives you a reference whose mutability is determined by what you're binding to, not by how you use it. This is like a pointer but it auto derefs, no `^` operator needed.
 
 ```
-x ~= 5
+x: ~ = 5
 @y = x     -- y: ~@int, x is mutable so ref inherits it
 
 x2 = 5
@@ -2383,7 +2394,7 @@ x2 = 5
 If the enum is immutable or mutable, then adding `@` on a pattern's data should match its mutability like when using `@` on another variable.
 
 ```mulem
-s ~= SomeStruct(value: 42)
+s: ~ = SomeStruct(value: 42)
 match s is
 | SomeStruct(@value) =   -- value: ~@int, s is mutable
     value := 100         -- modifies s.value in-place, no copy
@@ -2406,7 +2417,7 @@ getField(s: @SomeStruct): @int = s.value
 increment(x: ~@int): void =
     x += 1
 
-x ~= 0
+x: ~ = 0
 increment(x)
 x            -- Value is 1
 ```
@@ -2428,7 +2439,7 @@ Exits out of a function with an `iter[_]` type. The return value of the function
 
 ```mulem
 countUpTo(n: int): iter[int] =
-    loop i in 0...n then
+    loop i in 0..n then
         yield i
 ```
 
@@ -2458,7 +2469,7 @@ Both `yield` and `await` can be used together in an `iter[async[_]]` type. The t
 
 ```mulem
 asyncIterFn(n): iter[async[int]] =
-    loop i in 0...n then
+    loop i in 0..n then
         val = await fetch(i)
         yield val
 
@@ -2481,9 +2492,9 @@ Unlike in other languages where *promises* or *futures* can either resolve or re
 
 ---
 
-## Inheritance and Visibility
+## Embedding and Visibility
 
-Even though structs cannot be extended the usual way, they can **inherit** from other structs using destructuring. This works similarly to **importing.** It marks members that map to members of another struct, making conversion possible. It follows the same convention for pattern matching like destructuring. *(See [Destructuring](#destructuring).)* 
+Even though structs cannot be extended the usual way, they can **embed** from other structs using destructuring. This works similarly to **importing.** It marks members that map to members of another struct, making conversion possible. It follows the same convention for pattern matching like destructuring. *(See [Destructuring](#destructuring).)* 
 
 ```mulem
 Vector2 ::
@@ -2497,12 +2508,12 @@ Vector3 ::
 v3 = Vector3(x: 1.0, y: 2.0, z: 3.0)
 
 radius2d(v: Vector2) = sqrt(v.x*v.x+v.y*v.y)
-print("{radius2d(v3)}") -- This works because Vector3 inherits from Vector2.
+print("{radius2d(v3)}") -- This works because Vector3 embeds from Vector2.
 ```
 
-When you inherit, you don't just pick out some members. The entire parent struct exists in the child struct in memory, but only some members are visible. 
+When you embed, you don't just pick out some members. The entire parent struct exists in the child struct in memory, but only some members are visible. 
 
-All members of a type are public by default. When making a subtype, inherited members become private to the subtype unless explicitly redeclared. This encourages separating public and private data into distinct types rather than using access modifiers.
+All members of a type are public by default. When making a subtype, embedded members become private to the subtype unless explicitly redeclared. This encourages separating public and private data into distinct types rather than using access modifiers.
 
 ```mulem
 PrivateFields ::
@@ -2514,7 +2525,7 @@ PublicFields ::
     * other: int
 ```
 
-A subtype cannot accidentally expose or clash with a private inherited member because types only see members that have been explicitly declared within them. This mirrors the convention used for imports.
+A subtype cannot accidentally expose or clash with a private embedded member because types only see members that have been explicitly declared within them. This mirrors the convention used for imports.
 
 [Advanced](#advanced) / [TOC](#table-of-contents)
 
@@ -2522,11 +2533,11 @@ A subtype cannot accidentally expose or clash with a private inherited member be
 
 ## Manual Implementation
 
-Generics will automatically generate code based on their parameters, but you can also implement them by hand using pattern matching. If you only want to use the manual implementations for a generic function, you can set its body to `unimplemented[]`. This creates a virtual function that can be overloaded later. If you use a function that is defined with `unimplemented[]`, it will throw a compile-time error.
+Generics will automatically generate code based on their parameters, but you can also implement them by hand using pattern matching. If you only want to use the manual implementations for a generic function, you can set its body to `abstract[]`. This creates a virtual function that can be overloaded later. If you use a function that is defined with `abstract[]`, it will throw a compile-time error.
 
 ```mulem
 -- Forces every type to have its own implementation
-increment[T] :: (c: ~@T): void = unimplemented[]
+increment[T] :: (c: ~@T): void = abstract[]
 
 Counter :: {value: int}
 
@@ -2584,7 +2595,7 @@ In this example, you would import `addThing` like this (assuming the file is inc
 myModule{addThing} :: import
 ```
 
-This connects the same explicit-list convention as inheriting and capturing — *no hidden dependencies, everything that can affect behavior is named.* The three together form a consistent rule across the language.
+This connects the same explicit-list convention as embeding and capturing — *no hidden dependencies, everything that can affect behavior is named.* The three together form a consistent rule across the language.
 
 ### Memory Models
 
