@@ -1577,10 +1577,10 @@ This is similar to C unions where it doesn't do any conversion; it only reads wh
 u: sumUnion = '\1'   -- char (1 byte), remaining bytes zeroed
 
 -- Little-endian: memory is [0x01, 0x00, 0x00, 0x00]
-u of int             -- 1
+u of int             -- Value: 1
 
 -- Big-endian: memory is [0x01, 0x00, 0x00, 0x00]  (same bytes)
-u of int             -- 0x01000000 = 16777216
+u of int             -- Value: 0x01000000 = 16777216
 ```
 
 Overloaded functions are also a kind of untagged union, one that holds different function pointers instead of types. When called, they are automatically determined by the compiler based on its arguments, but there are times when this cannot be determined. Use `of` to pick out a certain definition of an overloaded function when this happens. *(See [Functions](#functions).)*
