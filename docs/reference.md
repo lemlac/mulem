@@ -1499,6 +1499,8 @@ sumUnion     ::  int + float + char                    -- Is the size of the lar
 
 Structs are product types—or in other words—plain data containers. They cannot extend other structs but can *embed* members of other structs. *(See [Embedding and Visibility](#embedding-and-visibility).)*
 
+Being product types, structs are defined with `*` for each member. This is the same notation as a product type like `int * float * char`. Adding a name before a type like `* name: str` puts that item in a named member, otherwise it gets put into the next positional member like a tuple starting at `.0`. 
+
 ```mulem
 MyStruct ::
     * name: str
