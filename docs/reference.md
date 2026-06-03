@@ -2662,8 +2662,7 @@ where x: int
 
 f(x) = x*x
 
-const MAX(a: const int, b: const int) =
-    if a > b then a else b
+const MAX(a: int, b: int) = if a > b then a else b
 
 where T: type
 where N: const uint
