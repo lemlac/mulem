@@ -1793,7 +1793,7 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 |       `@ rhs`  | Get immutable reference                              |
 |      `~@ rhs`  | Get mutable reference                                |
 |      `.. rhs`  | Spread operator                                      |
-|  `lhs .. rhs`  | Exclusive range                                      |
+| `lhs ... rhs`  | Exclusive range                                      |
 | `lhs ..= rhs`  | Inclusive range                                      |
 | `lhs \|> rhs`  | Pipeline                                             |
 |   `lhs + rhs`  | Addition                                             |
