@@ -1119,6 +1119,7 @@ Strings (`str`) are immutable 1D arrays of characters `char`.
 |    `"…"`    | Regular string with `{expr}` interpolation                                 |
 |  `"""…"""`  | Multiline with interpolation; whitespace trimmed at closing `"""` position |
 |   `''…''`   | Inline raw string, no interpolation or escaping                            |
+|   `\\…`     | Multiline raw string, no interpolation or escaping                         |
 
 Strings are marked with quotation marks (`"…"`) *(also called double quotes)* and can be formatted with curly braces (`{expr}`) in the string. Use a backslash to write a literal opening curly brace (`\{`). Note that string insertion and named tuples both use curly braces. This shouldn't be an issue though since one is inside strings and the other isn't. Inserted expressions are implicitly converted to strings, so using `str()` isn't necessary. This string is only allowed on a single-line, but literal-line characters can be inserted with `\n`.
 
@@ -1181,6 +1182,25 @@ Write a basic raw string with `''…''` (two apostrophes). Although apostrophes 
 rawString = ''It's okay to put an apostrophe (') in the string.''
 filePath = ''C:\files\on\windows.txt''
 template = ''Insert here → {{variable}}''
+```
+
+Multi-line raw strings can be written with `\\` (2 backslashes). This works like line comments, escaping everything up to the line break into the string. Each consecutive line starting with `\\` is part of the same string and joined with line-breaks (`\n`).
+
+```mulem
+const multiline = 
+   \\This is line 1.
+   \\This is line 2.
+   \\No need to escape \n or \"
+
+print(multiline)
+```
+
+What it will print:
+
+```
+This is line 1.
+This is line 2.
+No need to escape \n or \"
 ```
 
 ### Arrays
@@ -1785,6 +1805,13 @@ __Compound Assignment Operators:__
 | `lhs >>>= rhs`  | `lhs := lhs >>> rhs` |
 
 `=/=`​ was picked over `!=` because `!`​ is excusely used for error operators, and `/=`​ is the compound division operator, so that leaves `=/=​` as the most obvious symbol left for the not-equals operator. The symbol also benifits by making it easy to switch between `==` and `=/=` with adding or removing the slash `/`.
+
+Chaining comparitive operators `>`/`<` works like in mathematics, a shorthand for `and` between operations. Each consecutive comparitive operator should point the same way, i.e. only `<` and `<=` or `>` and `>=`.
+
+```mulem
+(a < b <= c < d) == (a < b and b <= c and c < d)
+(a > b >= c > d) == (a > b and b >= c and c > d)
+```
 
 ### Key Type Modifiers & Postfix Operators
 
