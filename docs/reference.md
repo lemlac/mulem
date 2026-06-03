@@ -612,7 +612,7 @@ else
     print("Never ran")
 ```
 
-Steps may optionally be added to the loop's subject line. This is done by adding a colon `:` between the subject and `then`. An expression after `:` will run at the end of each iteration of the loop. 
+Steps may optionally be added to the loop's subject line. This is done by adding a semi-colon `;` between the subject and `then`. An expression after `;` will run at the end of each iteration of the loop. 
 
 `loop [under this condition] ; [doing this every iteration] then`
 
