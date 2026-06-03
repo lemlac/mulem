@@ -6,6 +6,22 @@ __The Mulem programming language__ is a general-purpose, expression-oriented lan
 
 ---
 
+## Table of Contents
+
+- __[Basics](#basics)__
+- __[Assignment](#assignment)__
+- __[Functions](#functions)__
+- __[Constants](#constants)__
+- __[Control Flow](#control-flow)__
+- __[Types](#types)__
+- __[Generics](#generics)__
+- __[Operators](#operators)__
+- __[Advanced](#advanced)__
+- __[Code Sample](#putting-it-all-together)__
+- __[Reserved Keywords](#reserved-keywords)__
+
+---
+
 ## Basics
 
 Comments are made with `--` or `{- -}`.
@@ -27,14 +43,14 @@ expr; expr
 
 ### Blocks
 
-Certain keywords can start *blocks* if a line break follows them. This starts a whitespace sequence with a child scope. Indentation determines when a block ends. The last expression evaluated in a block is its value. Use `void` to leave a block empty.
+Certain keywords can start *blocks* if a line break follows them. This starts a whitespace sequence with a child scope. Indentation determines when a block ends. The last expression evaluated in a block is its value. Use `pass` to leave a block empty.
 
 ```mulem
 do
     body
 
 do
-    void
+    pass
 ```
 
 Keywords that can start blocks:
@@ -109,20 +125,7 @@ isThirteen(x) =
     False
 ```
 
----
-
-## Table of Contents
-
-- __[Assignment](#assignment)__
-- __[Functions](#functions)__
-- __[Meta Assignment](#meta-assignment)__
-- __[Control Flow](#control-flow)__
-- __[Types](#types)__
-- __[Meta Functions](#meta-functions)__
-- __[Operators](#operators)__
-- __[Advanced](#advanced)__
-- __[Code Sample](#putting-it-all-together)__
-- __[Reserved Keywords](#reserved-keywords)__
+[TOC](#table-of-contents)
 
 ---
 
@@ -153,47 +156,33 @@ lunch =
         "sandwich"
 ```
 
-Mutable variables are declared with the symbol `~` before the type. They must be set with the `:=` operator or any compound assignment operators such as `+=` or `-=`. Shadowing a mutable variable with `=` will throw an error unless redeclared with `: T` / `: *`.
+Mutable variables are declared with the symbol `~` before the name. They must be set with the `:=` operator or any compound assignment operators such as `+=` or `-=`. `:=`​ and `=`​ are separated so that you don't accidentally mistype a variable name and create a new variable in scope. 
 
 ```mulem
-i: ~int = 0
+~i: int = 0
 i := 1
 i += 1
 i -= 1
-i = 1   -- Error!
-i: int  -- Shadow i
-i = 1   -- OK!
 ```
 
-`:=`​ and `=`​ are separated so that you don't accidentally mistype a variable name and create a new variable in scope. 
-
-The type of a mutable variable can be inferred with `: ~ =`. A reference can be declared with `@` before the name. It points to the same memory location as another variable. Its mutability is carried over.
+The type of a mutable variable can be inferred. A reference can be declared with `ref` before the name. It points to the same memory location as another variable, and its mutability is carried over.
 
 ```mulem
-x: ~ = 0
-@xRef = x
+~x = 0
+ref xRef = x
 xRef := 1
 x        -- Value: 1
 ```
 
-*For more info on `@`, see [References](#references) down below.*
+*For more info on `ref`, see [References](#references) down below.*
 
-Explicit reference types are `@T` (immutable) and `~@T` (mutable). Use `@` and `~@` prefix operators to get a memory address.
-
-```mulem
-x: ~ = 0
-xRef: @int = x
-xRef := 1  -- Error!
-xRef: ~@int = x
-xRef := 1  -- OK!
-```
-
-A `@T` can reference any variable of type `T`, but a `~@T` can only reference mutable variables.
+A variable can have its type constrained by declaring it with `where`. This will lock any variable with the same name to that type in any scope or child scope.
 
 ```mulem
-x = 0
-xRef: @int = x     -- OK!
-xRef: ~@int = x    -- Error!
+where x: int
+
+x = 0     -- OK!
+x = 1.0   -- Error: `x` constrained to type `int`, found `float`
 ```
 
 ### Destructuring
@@ -258,7 +247,7 @@ fib(n) =
         fib(n - 1) + fib(n - 2)
 ```
 
-Function overloading can lead to ambiguities, so you need to use `of` in order to resolve which definition you mean when you pass a function by value. *See [Untagged Unions](#untagged-unions) for how to use the keyword `of`.*
+Function overloading can lead to ambiguities, so you need to use `of` in order to resolve which definition you mean when you pass a function by value. *See [Untagged Unions](#untagged-unions) for how to use the keyword `of`.* The type notation of a function uses `->` between the parameters and the return type.
 
 ```mulem
 add(a: int, b: int): int =
@@ -266,27 +255,27 @@ add(a: int, b: int): int =
 add(a: float, b: float): float =
     a + b
 
-withOneAndTwo(f(int, int): int): int =
+withOneAndTwo(f: (int, int) -> int): int =
     f(1, 2)
-withOneAndTwo(f(float, float): float): float =
+withOneAndTwo(f: (float, float) -> float): float =
     f(1.0, 2.0)
 
 withOneAndTwo(add)      -- Is this for ints or floats?
-withOneAndTwo(add of (int, int): int)   -- Resolved.
+withOneAndTwo(add of (int, int) -> int)   -- Resolved.
 ```
 
 ### Capturing
 
-Functions capture immutable variables automatically. Mutable variables must be captured with `@` in the function signature. If the function mutates the variable, then it should have `~` before the variable name.
+Functions capture immutable variables automatically. Mutable variables must be captured with `use` in the function signature. If the function mutates the variable, then the variable should have `~` before the variable name.
 
 ```mulem
 amount = 1   -- Automatically captured.
-count: ~ = 0   -- Must be explicitly captured.
+~count = 0   -- Must be explicitly captured.
 
-increment() @ (~count): void =
+increment() use (~count): void =
     count += amount
 
-getCount() @ (count): int =
+getCount() use (count): int =
     count
 
 increment()      -- Result: 1
@@ -298,12 +287,12 @@ getCount()       -- Result:
 
 ### Function Pointers
 
-Declaring a function and setting it to a function creates a **function pointer**. This holds a single function and is treated like a value. It can't be overloaded, but it doesn't require `of` to get a particular dispatch since it can only hold one function. Notice that there's a colon `:` before the parameter. This distinguishes declarations and definitions. We're saying this function pointer takes these arguments and types — parameter names omitted.
+Declaring a function and setting it to a function creates a **function pointer**. This holds a single function and is treated like a value. It can't be overloaded, but it doesn't require `of` to get a particular dispatch since it can only hold one function. Notice that there's a colon `:` before the parameter and the colon before the return type is replaced with `->`. This distinguishes declarations and definitions. We're saying this function pointer takes these arguments and types — parameter names omitted.
 
 ```mulem
-addInt: (int, int): int = add
+addInt: (int, int) -> int = add
 -- Or…
-addInt = add of (int, int): int
+addInt = add of (int, int) -> int
 ```
 
 These types of functions are analogous to regular assignment. They can either be immutable or mutable. Immutable function pointers can be shadowed, but they cannot be overloaded. You can pass them into other functions as values.
@@ -318,24 +307,10 @@ action = addTwo   -- Previous action is now shadowed.
 array = map([1, 2, 3, 4], action)   -- Pass action as a value
 ```
 
-Function pointers have the same type strictness as immutable variables, so trying to overload a function pointer will result in an error.
+Function pointers can also be mutable. You can set it to point to different functions or assigned a lambda function. Remember the colon before the parameter `: (T) -> T` signifies that we are not defining a function, only declaring a function pointer.
 
 ```mulem
-x: int = 5
-x = "hello"  -- Error! Type mismatch
-
-addOneInt(x: int) = x + 1
-addOneFloat(x: float) = x + 1.0
-
-action: (int): int       -- function pointer of type (int): int
-action = addOneInt       -- OK!
-action = addOneFloat     -- Error! Same as assigning wrong type to a variable
-```
-
-Function pointers can also be mutable. You can set it to point to different functions or assigned a lambda function. The colon before the parameter `: (T): T` signifies that we are not defining a function, only declaring its type.
-
-```mulem
-cb: ~(int): int
+~cb: (int) -> int
 f1(x) = x + 1
 f2(x) = x - 1
 cb := f1
@@ -395,25 +370,23 @@ apiCall(callback)
 
 ---
 
-## Meta Assignment
+## Constants
 
-Meta assignments are made with `::`. These mark special data that tells the compiler the meaning of words and symbols. This includes things like constants, aliases, types, compile-time functions, and generics. This unifies many different concepts in programming without needing a lot of prefixed keywords, helping keep the name of assignments to the left. More on each of those later in this document.
+Constans are declared with `const`. This marks compile-time data, different from an immutable variable. It treats the expression as if it where a literal. The type can be inferred.
 
-To make a constant, you can replace `: T =` with `:: const T =`. This is different from an immutable variable. It treats the expression as if it where a literal. To infer the type, drop the `const T` so you just have `:: =`.
-
-```
-PI :: const float = 3.14159265
-NAMESPACE :: = "development"
+```mulem
+const PI: float = 3.14159265
+const NAMESPACE = "development"
 ```
 
-Constants can have arguments like functions to make inline functions. These use the square brackets `[]` instead of parentheses `()`. *See [Meta Functions](#meta-functions) for more details.*
+Constants can have arguments like functions to make compile-time functions. 
 
-```
-MAX[a: int, b: int] :: const int =
+```mulem
+const MAX(a: int, b: int) =
     if a > b then a else b
 
-MAX[5, 10]    -- Result: 10
-MAX[7, 3]     -- Result: 7
+MAX(5, 10)    -- Result: 10
+MAX(7, 3)     -- Result: 7
 ```
 
 [TOC](#table-of-contents)
@@ -600,7 +573,7 @@ until cond
 
 ```mulem
 loop False then
-    void
+    pass
 else
     print("Never ran")
 ```
@@ -611,7 +584,7 @@ Steps may optionally be added to the loop's subject line. This is done by adding
 
 ```mulem
 -- The Dangerous Way
-i: ~ = 1
+~i = 1
 loop i <= 100 then
     if i % 10 == 0 then
         print("{i}!!!")
@@ -622,7 +595,7 @@ loop i <= 100 then
     i += 1
 
 -- The Safe Way
-i: ~ = 1
+~i = 1
 loop i <= 100; i += 1 then
     if i % 10 == 0 then
         print("{i}!!!")
@@ -632,7 +605,7 @@ loop i <= 100; i += 1 then
 
 ```mulem
 -- Track index of `loop / in`
-idx: ~ = 0
+~idx = 0
 loop item in inventory; idx += 1 then
     print("Slot {idx}: {item}")
 ```
@@ -641,7 +614,7 @@ Because `do` blocks isolate scopes and inline expressions sequence seamlessly, y
 
 ```mulem
 -- C-style for loop
-do i: ~ = 1; loop i <= 100; i += 1 then
+do ~i = 1; loop i <= 100; i += 1 then
     if i % 10 == 0 then
         print("{i}!!!")
         continue
@@ -696,8 +669,8 @@ loop Pattern(x?) in listOfPatterns then
 Both accept an optional label to target an outer loop.
 
 ```mulem
-loop.outer x in 0...100 then
-    loop y in 0...100 then
+loop.outer x in 0..100 then
+    loop y in 0..100 then
         if x * y >= 100 then
             continue.outer
         if x * y == 77 then
@@ -751,13 +724,13 @@ Using `?` inside a function automatically infers a question return type `T?`.
 addStuff(a: int, b: int): int? =
     x = getA()?
     y = getB()?
-    x + y
+    Some(x + y)
 ```
 
 Nested questions unwrap with multiple `??`:
 
 ```mulem
-unnest(x: int??): int? = x??
+unnest(x: int??): int? = Some(x??)
 ```
 
 Chain multiple `opt` / `else` together untill you get a fallback:
@@ -780,7 +753,7 @@ getFirst(a: int, b: int, c: int): int =
 Another example of a use for `opt`:
 
 ```mulem
-crunchData(): int?!Error!CustomError =                                -- Multiple error types
+crunchData(): int?!Err!CustomError =                                -- Multiple error types
     value: int? = someFunc()!
     -- Question to Exclamation
     data: int = opt value? else raise CustomError("Not found")      -- Exist function on fallback
@@ -813,7 +786,7 @@ try
     b = doSomething2(a)!
     b
 catch
-| Error(e) =
+| Err(e) =
     print("Error: {e}")
     0
 ```
@@ -823,13 +796,13 @@ try
     data = riskyOperation()!
     data2 = anotherRisky()!
     final = process(data, data2)
-    final
+    Ok(final)
 catch
 | IOError(e) =
     print("IO failed: {e}")
-    defaultValue
+    Ok(defaultValue)
 | ValidationError(e) =
-    raise Err(e)
+    Err(e)
 ```
 
 ```mulem
@@ -842,7 +815,7 @@ catch
     print("IO failed: {e}")
     0              -- fallback value
 | ValidationError(e) =
-    raise Err(e)   -- Escape function with error
+    return Err(e)   -- Escape function with error
 ```
 
 Inline form. If you only have a wildcard case `(| (_) = x)`, you just write the value `x`.
@@ -863,10 +836,10 @@ Using `!` inside a function automatically infers a exclamation return type `T!`.
 riskyFn(a: int): int! =
     b = step1(a)!
     c = step2(b)!
-    c
+    Ok(c)
 ```
 
-### `return` + `raise`
+### `return`
 
 __`return`__ – Exits out of a function. If a value is after it, that value is the return value, otherwise it's `void`. This must match the return type of the function. Last-line evaluation is still enabled by default.
 
@@ -875,20 +848,6 @@ isThirteen(x) =
     if x == 13 then
         return True  -- Exits the function and returns true.
     False            -- Returns false.
-```
-
-__`raise`__ – Return out of the function with an error value. The function must return a exclamation type `T!`. If declared `T!E` where `E` is an `error` type, then the type passed to `raise` must match.
-
-```mulem
--- T!E is inferred:
-alwaysFail() =
-    raise MyError("error message")
-
-try
-    alwaysFail()!
-catch
-| (e) =                -- Catch all errors.
-    print("Error: {e}")
 ```
 
 ### `defer`
@@ -978,7 +937,7 @@ myStr: str = "Hello"
 myPtr: ptr = ExternalLib.getSomething()
 ```
 
-You can get the type of any variable with the compile-time function `typeof`. This fetches the type of that symbol at that point during compile time. *(See [Meta Functions](#meta-functions).)*
+You can get the type of any variable with the compile-time function `typeof`. This fetches the type of that symbol at that point during compile time. *(See [Generics](#generics).)*
 
 ```mulem
 x = 0
@@ -997,18 +956,17 @@ x = default[str]    -- == ""
 x = default[ptr]    -- == Null
 ```
 
-`default[]` can also infer the type. This can be useful in certain situations, like if you want to leave a function that returns something empty so that you can implement it later.
+`default` can also infer the type. This can be useful in certain situations, like if you want to leave a function that returns something empty so that you can implement it later.
 
 ```mulem
-implementLater(): int = default[]
+implementLater(): int = default
 ```
 
-You can also get the size of any type with the compile-time function `sizeof`. It returns a constant `uint` (unsigned integer) with the number of bytes of memory that type requires. The exact sizes of some types like `int` or `float` might vary, but you can rely on `byte` and `bool` being 1 byte each. There's also the `void` type which represents no data. `ptr` depends on the pointer size of the system. 
+You can also get the size of any type with the compile-time function `sizeof`. It returns a constant `uint` (unsigned integer) with the number of bytes of memory that type requires. The exact sizes of some types like `int` or `float` might vary, but you can rely on `byte` and `bool` being 1 byte each. The size of `ptr` depends on the pointer size of the system. 
 
 ```mulem
 sizeOfByte = sizeof[byte]   -- == 1
 sizeOfBool = sizeof[bool]   -- == 1
-sizeOfVoid = sizeof[void]   -- == 0
 sizeOfPtr  = sizeof[ptr]    -- == 4 or 8
 ```
 
@@ -1352,7 +1310,7 @@ else
 Typed pointers are type `T^`. They're are like references but dereferenced with the `^` postfix operator.
 
 ```mulem
-x: ~ = 0
+~x = 0
 xPtr: int^~ = ~@x
 xPtr^ := 1
 x             -- Value: 1
@@ -1446,29 +1404,29 @@ y =
 ```
 
 ```mulem
-x: int!Error = getRiskyInt()   -- Get wrapped value.
+x: int!Err = getRiskyInt()   -- Get wrapped value.
 y: int = x!                    -- Unwrap the exclamation
                                -- Which is equivalent to…
 y =
     match x is
-    | Success(val) =
+    | Ok(val) =
         val                    -- Get the Ok value.
-    | Error(e) =
-        return Error(e)        -- Exit block, return error if a function
+    | Err(e) =
+        return Err(e)          -- Exit block, return error if a function
 ```
 
-For basic errors, use the built-in `Error` type. It optionally takes either a `string` (message) or an `int` named parameter `code:`, or both. If a message is missing, it will construct one based on the code, and if a code is missing, it will default to `-1`. 
+For basic errors, use the built-in `Err` type. It optionally takes either a `string` (message) or an `int` named parameter `code:`, or both. If a message is missing, it will construct one based on the code, and if a code is missing, it will default to `-1`. 
 
 ```
-raise Error()
-raise Error("message")
-raise Error(code: -1)
-raise Error("message", code: -1)
+Err()
+Err("message")
+Err(code: -1)
+Err("message", code: -1)
 ```
 
 ## Custom Types
 
-Custom types are made with `::` (meta assignment).
+Custom types are made with `::`.
 
 ```mulem
 MyStruct ::
@@ -1486,11 +1444,11 @@ MyUnion ::
     + char
 
 MyInterface ::
-    (@self).speak(): void
+    (self^).speak(): void
 
 MyStruct <= MyInterface ::
-    (@self).speak(): void = 
-        print("I am {self.name} and have {self.value} dollars.")
+    (self^).speak(): void = 
+        print("I am {self^.name} and have {self^.value} dollars.")
 
 object.:MyInterface.speak()
 ```
@@ -1657,16 +1615,16 @@ Type(self).method(args) =
     body
 ```
 
-Before the method name is the self parameter. `self` can be any name. You can add `@` if the self is a reference or `~@` for a mutable reference. 
+Before the method name is the self parameter. `self` can be any name. You can add `^`/`^~` to use a pointer to the self parameter instead of copying its value.
 
 An interface defines a set of methods that other types can implement with `<=`.
 
 ```mulem
 Speakable ::
-    (@self).speak(): void
+    (self^).speak(): void
 
 MyStruct <= Speakable ::
-    (@self).speak() =
+    (self^).speak() =
         print("My name is {self.name} and I have {self.value} dollars.")
 ```
 
@@ -1681,55 +1639,9 @@ object.:Speakable.speak()    -- Full name of method.
 
 ---
 
-## Meta Functions
+## Generics
 
-Adding a parameter before the double colon (`::`) turns it into a **meta function.** *A meta‑function is a compile‑time function that returns code, types, or values.* Parameters are put in square brackets `[]` to distinguish them from regular functions which use parentheses `()`. The result is treated like a constant for run-time code. 
-
-You can define a meta function by adding a parameter before the double colons and writing an expression after it. Like constants, they don't output a value in memory when compiled, useful for collecting repeated code. Unlike regular functions, meta function cannot be passed to another function. They only exist at compile-time. Each parameter is a variable within the expression, so you don't need to wrap them in parentheses `()` like with C macros. 
-
-```mulem
-max[a, b] :: = if a > b then a else b
-min[a, b] :: = if a < b then a else b
-```
-
-You can also have multi-line meta function like regular functions. Each meta function creates a new scope. Defining variables that could bleed into the surrounding scope is not allowed. The last expression is the return value. Call it like a function using `[]`. 
-
-```mulem
-doSomethingComplicated[x] :: =
-    x = x + 1
-    x = x / 2
-    x * x
-
-value = doSomethingComplicated[3]
-```
-
-These two are the same thing:
-
-```mulem
-value =
-    x = (3) + 1
-    x = x / 2
-    x * x
-```
-
-Some more examples using the `[]` notation:
-
-```mulem
-max[a, b] :: = if a > b then a else b
-min[a, b] :: = if a < b then a else b
-print("{ max[0, 1] }")           -- Prints "1"
-print("{ min[0, 1] }")           -- Prints "0"
-print("{ max[1+2, 3+4] }")       -- Prints "7"
-
-f(x) = x * x
-g(x) = x + 2
-maxAdd[a, b] :: = if a > b then \(c) = a + c else \(c) = b + c
-print("{ maxAdd[ f(0), g(0) ] (1) }")
-```
-
-The compiler will read the body of the macro and understand where to insert its parameters, so if a parameter gets shadowed, then it will no longer insert it for the rest of that scope. 
-
-You can also define a type with a meta function. The meta functions parameters in `[]` will be inferred if it returns a function or type and you call it with parentheses `()`. In other words, `meta(_)` is equal to `meta[_](_)`. 
+Adding a parameter before the double colon (`::`) turns it into a generic. Parameters are put in square brackets `[]` to distinguish them from regular functions which use parentheses `()`. The result is treated like a constant for run-time code. The parameters in `[]` can be inferred if it returns a function or type. In other words, `meta(_)` is equal to `meta[_](_)`. 
 
 ```mulem
 -- Note that this is not the actual definition for a question type `T?`. This is just a user-defined enum that uses the same pattern.
@@ -1764,14 +1676,14 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 |:------|:---------------------------|:------------------------------------------------|
 | 11    | Member access/Function     | `.` `^.` `.[]` `^[]` `?.` `?.[]`                |
 | 10    | Postfix/Prefix             | `?` `!` `^` `@` `~@` `.:` `()`                  |
-| 9     | Unary                      | `+` `-` `#`                                     |
+| 9     | Unary                      | `+` `-` `not`                                   |
 | 8     | Exponent                   | `**` (right-associative)                        |
 | 7     | Multiplicative / Shift     | `*` `/` `//` `%` `%%` `<*` `*>` `<<` `>>` `>>>` |
-| 6     | Additive / Concat          | `+` `-` `<>` `&` `+\|` `-\|`                     |
-| 5     | Range                      | `...` `..=`                                     |
+| 6     | Additive / Concat          | `+` `-` `<>` `&` `\|` `>\|`                     |
+| 5     | Range                      | `..` `..=`                                      |
 | 4     | Comparison                 | `==` `=/=` `<` `>` `<=` `>=`                    |
-| 3     | Logical AND                | `&&`                                            |
-| 2     | Logical OR / None-Coalesce | `\|\|` `?:` `!:`                                |
+| 3     | Logical AND                | `and`                                           |
+| 2     | Logical OR / None-Coalesce | `or` `?:` `!:`                                  |
 | 1     | Pipeline                   | `\|>`                                           |
 | 0     | Assignment / Spread        | `=` `:=` `+=` `-=` `..`                         |
 
@@ -1789,7 +1701,7 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 |       `@ rhs`  | Get immutable reference                              |
 |      `~@ rhs`  | Get mutable reference                                |
 |      `.. rhs`  | Spread operator                                      |
-| `lhs ... rhs`  | Exclusive range                                      |
+| `lhs .. rhs`  | Exclusive range                                      |
 | `lhs ..= rhs`  | Inclusive range                                      |
 | `lhs \|> rhs`  | Pipeline                                             |
 |   `lhs + rhs`  | Addition                                             |
@@ -1811,19 +1723,17 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 |  `lhs <* rhs`  | Append to array                                      |
 |  `lhs *> rhs`  | Prepend to array (right-associative)                 |
 |  `lhs <> rhs`  | Concatenation                                        |
-|  `lhs && rhs`  | Logical AND                                          |
-| `lhs \|\| rhs` | Logical OR                                           |
-|       `# rhs`  | Logical NOT / Bitwise NOT                            |
+| `lhs and rhs`  | Logical AND                                          |
+|  `lhs or rhs`  | Logical OR                                           |
+|     `not rhs`  | Logical NOT / Bitwise NOT                            |
 |  `lhs ?: rhs`  | `None`- coalescing                                   |
 |  `lhs !: rhs`  | Error-coalescing                                     |
-|  `lhs *\| rhs` | Bitwise AND                                          |
-|  `lhs +\| rhs` | Bitwise OR                                           |
-|  `lhs -\| rhs` | Bitwise XOR                                          |
+|   `lhs & rhs`  | Bitwise AND                                          |
+|  `lhs \| rhs`  | Bitwise OR                                           |
+| `lhs >\| rhs`  | Bitwise XOR                                          |
 |  `lhs << rhs`  | Bitshift Left                                        |
 |  `lhs >> rhs`  | Bitshift Right                                       |
 | `lhs >>> rhs`  | Unsigned Bitshift Right                              |
-
-`#` was picked for logical/bitwise NOT because it resembles a not-equals sign `≠`. `!` is used for error types, and `~` is used for mutability, so logical/bitwise NOT needed to be something different. 
 
 __Compound Assignment Operators:__
 
@@ -1837,12 +1747,13 @@ __Compound Assignment Operators:__
 | `lhs //= rhs`   | `lhs := lhs // rhs`  |
 |  `lhs %= rhs`   | `lhs := lhs % rhs`   |
 | `lhs %%= rhs`   | `lhs := lhs %% rhs`  |
+| `lhs **= rhs`   | `lhs := lhs ** rhs`  |
 | `lhs <*= rhs`   | `lhs := lhs <* rhs`  |
 | `lhs *>= rhs`   | `lhs := rhs *> lhs`  |
 | `lhs <>= rhs`   | `lhs := lhs <> rhs`  |
-| `lhs *\|= rhs`  | `lhs := lhs *\| rhs` |
-| `lhs +\|= rhs`  | `lhs := lhs +\| rhs` |
-| `lhs -\|= rhs`  | `lhs := lhs -\| rhs` |
+|  `lhs &= rhs`   | `lhs := lhs & rhs`   |
+| `lhs \|= rhs`   | `lhs := lhs \| rhs`  |
+| `lhs >\|= rhs`  | `lhs := lhs >\| rhs` |
 | `lhs <<= rhs`   | `lhs := lhs << rhs`  |
 | `lhs >>= rhs`   | `lhs := lhs >> rhs`  |
 | `lhs >>>= rhs`  | `lhs := lhs >>> rhs` |
@@ -2039,7 +1950,7 @@ print("{addAll(1, 2, 3)}")  -- Prints "6"
 
 ```mulem
 -- With pattern matching:
-addAll(..nums: [..int]]): int =
+addAll(..nums: [..int]): int =
     match nums is
     | []            = 0
     | [x]           = x
@@ -2096,7 +2007,7 @@ array2 = map(array0, \(x) =          -- Multi-line
 A name is optional. Adding a name creates an immutable reference of the function itself.
 
 ```mulem
-otherAction(\ callback(val) =
+otherAction(\callback(val) =
     if val > 0 then
         print("{val}")
         callback(val - 1)
@@ -2108,8 +2019,8 @@ otherAction(\ callback(val) =
 Capturing also works inside lambda functions just like with named functions.
 
 ```mulem
-count: ~ = 0
-forEach([1, 2, 3, 4], \(x) @ (~count) =
+~count = 0
+forEach([1, 2, 3, 4], \(x) use (~count) =
     count += x
 )
 ```
@@ -2119,8 +2030,8 @@ forEach([1, 2, 3, 4], \(x) @ (~count) =
 When a function returns another function, list each function parameters as the return type. Optionally, you can just let the return type be inferred.
 
 ```mulem
-\curriedFn(a: int): (int): (int): int = _                 -- Immutable declaration
-~curriedFnPtr: (int): (int): (int): int = curriedFn      -- Mutable declaration. 
+\curriedFn(a: int): (int) -> (int) -> int = _                 -- Immutable declaration
+~curriedFnPtr: (int) -> (int) -> (int) -> int = curriedFn      -- Mutable declaration. 
 ```
 
 The return type can be implied. Each function defined at the bottom is the implied return.
@@ -2145,11 +2056,11 @@ When capturing variables, each returned function needs to capture them separatel
 
 ```mulem
 count: ~ = 0
-curryAddCount(a: int) @ (~count): (int): (int): int =
+curryAddCount(a: int) use (~count): (int): (int): int =
     count += a                                 -- (1) Evaluated immediately
-    \(b: int) @ (~count): (int): int =          -- (2) Suspends and captures `count`
+    \(b: int) use (~count): (int): int =       -- (2) Suspends and captures `count`
         count += b                             -- (3) Evaluated when second lambda is called
-        \(c: int) @ (~count): int =
+        \(c: int) use (~count): int =
             count += c
             count
 
@@ -2192,7 +2103,7 @@ match choice is
 If a pattern can't be **guaranteed** for any reason, then you must have a **fallback.** There are two options available:
 
 - __Optional binding:__ `Pattern(x?)` — wraps `x` in type `T?`, `Some(x)` if it matched, `None` if it didn't
-- __Default value:__ `Pattern(x = default)` — `x` is type `T`, if it didn't match `x` is set to `default`
+- __Default value:__ `Pattern(x ?: default)` — `x` is type `T`, if it didn't match `x` is set to `default`
 
 You can have multiple patterns match to one case. If any of the patterns destructure with a variable, the same variable name and type must be in all patterns. If not, use a wildcard `(_)` in each pattern or omit the data part entirely to disable destructuring. Otherwise, use a fallback in the pattern.
 
@@ -2249,26 +2160,26 @@ result = (value is Pattern(x) then x)
 
 ```mulem
 -- With fallback (non-exhaustive):
-result = (value is Pattern(x?) then x)                              -- Get wrapped Some(x) or None
+result = (value is Pattern(x?) then x)                            -- Get wrapped Some(x) or None
 result = (value is Pattern(x?) then opt x? else "fallback")       -- Unwrap with fallback
-result = (value is Pattern(x = "fallback") then x)                  -- Automatic fallback
+result = (value is Pattern(x ?: "fallback") then x)               -- Automatic fallback
 ```
 
 ```mulem
 -- Multiple bindings:
-result = (value is Pattern(x = 0, y = 0) then (x, y))
+result = (value is Pattern(x ?: 0, y ?: 0) then (x, y))
 ```
 
 ```mulem
 -- Arbitrary expression over bindings:
-result = (value is Pattern(x = 0, y = 0) then x + y)
+result = (value is Pattern(x ?: 0, y ?: 0) then x + y)
 ```
 
 Pairs naturally with pipelining.
 
 ```mulem
 getValue()
-|> ($ is Pattern(x = "fallback") then x)
+|> ($ is Pattern(x ?: "fallback") then x)
 |> doSomethingWith($)
 ```
 
@@ -2355,50 +2266,50 @@ if x is Some(x) then
 
 ## References
 
-`@` gives you a reference whose mutability is determined by what you're binding to, not by how you use it. This is like a pointer but it auto derefs, no `^` operator needed.
+`ref` gives you a reference whose mutability is determined by what you're binding to, not by how you use it. This is like a pointer but it auto derefs, no `^` operator needed.
 
 ```
-x: ~ = 5
-@y = x     -- y: ~@int, x is mutable so ref inherits it
+~x = 5
+ref y = x     -- y: int^~, x is mutable so ref inherits it
 
 x2 = 5
-@y2 = x2   -- y2: @int, x2 is immutable
+ref y2 = x2   -- y2: int^, x2 is immutable
 ```
 
 If the enum is immutable or mutable, then adding `@` on a pattern's data should match its mutability like when using `@` on another variable.
 
 ```mulem
-s: ~ = SomeStruct(value: 42)
+~s = SomeStruct(value: 42)
 match s is
-| SomeStruct(@value) =   -- value: ~@int, s is mutable
-    value := 100         -- modifies s.value in-place, no copy
+| SomeStruct{ref value} =   -- value: int^~, s is mutable
+    value := 100            -- modifies s.value in-place, no copy
 
 s2 = SomeStruct(value: 42)
 match s2 is
-| SomeStruct(@value) =   -- value: @int, s2 is immutable
-    print("{value}")     -- read-only, no copy
+| SomeStruct{ref value} =   -- value: int^~, s2 is immutable
+    print("{value}")        -- read-only, no copy
 ```
 
-Function parameters/return types use reference types `@T`/`~@T` which determine if a reference is mutable or immutable
+Function parameters/return types must use explicit pointers `T^`/`T^~` instead because `ref` does not work in contexts where the reference's life-time cannot be known. 
 
 ```mulem
-getField(s: @SomeStruct): @int = s.value
+getField(s: SomeStruct^): int^ = @s^.value
 
-@x = getField(myStruct)   -- x: @int, immutable
+x = getField(@myStruct)   -- x: int^, immutable
 ```
 
 ```mulem
-increment(x: ~@int): void =
-    x += 1
+increment(x: int^~): void =
+    x^ += 1
 
-x: ~ = 0
-increment(x)
+~x = 0
+increment(@x)
 x            -- Value is 1
 ```
 
 ```mulem
-loop nextValue() is Some(@x) then
-    x := transform(x)   -- mutates in place if iterator yields mutable refs `iter[~@T?]`
+loop nextValue() is Some(x) then
+    x^ := transform(x^)   -- mutates in place if iterator yields mutable refs `iter[T^~?]`
 ```
 
 [Advanced](#advanced) / [TOC](#table-of-contents)
@@ -2413,14 +2324,14 @@ Exits out of a function with an `iter[_]` type. The return value of the function
 
 ```mulem
 countUpTo(n: int): iter[int] =
-    loop i in 0...n then
+    loop i in 0..n then
         yield i
 ```
 
 If you use `yield`, you can only use a void `return` to exit the function. 
 
 ```mulem
-countUntil(i: ~int, max: int): iter[int] =
+countUntil(~i: int, max: int): iter[int] =
      loop
         if i >= max then
             return      -- Break out of the loop and the function.
@@ -2443,12 +2354,12 @@ Both `yield` and `await` can be used together in an `iter[async[_]]` type. The t
 
 ```mulem
 asyncIterFn(n): iter[async[int]] =
-    loop i in 0...n then
+    loop i in 0..n then
         val = await fetch(i)
         yield val
 
 asyncCollect(n): async[[..int]] =
-    ret: ~[..int] = []
+    ~ret: [..int] = []
     loop (await x) in asyncIterFn(n) then
         ret <>= x
     ret
@@ -2540,25 +2451,25 @@ increment(@b)   -- T is inferred bool which has no implementation, compile-time 
 
 ## Importing and Modules
 
-* **Modules:** Declare with `moduleName :: mod`. Only one per file.
-* **Imports:** Must be explicit. `a.b{c, d} :: import`. Use `import "path"` for direct file imports.
+* **Modules:** Declare with `mod ModuleName`. Only one per file.
+* **Imports:** Must be explicit. `import a.b{c, d}`. Add `in "path"` for direct file imports.
 
-Use `import` to import something, optionally giving the import an alias with `as`. You can either import a single export like `a.b{c} :: import` or multiple at once using destructuring rules `a.b{c, d} :: import`. *(See [Destructuring](#destructuring).)* This follows the same convention as destructuring with tuples. All imports must be **explicitly** declared—no `import a.b.*`. This helps prevent naming conflicts and track where things have been defined.
+Use `import` to import something, optionally giving the import an alias with `as`. You can either import a single export like `import a.b{c}` or multiple at once using destructuring rules `import a.b{c, d}`. *(See [Destructuring](#destructuring).)* This follows the same convention as destructuring with tuples. All imports must be **explicitly** declared—no `import a.b.*`. This helps prevent naming conflicts and track where things have been defined.
 
 The most common import will likely be the `print` function, which will be defined somewhere in a standard library.
 
 ```mulem
-std{print} :: import    -- This is just an example and not final.
+import std{print}    -- This is just an example and not final.
 
 print("Hello, world!")
 ```
 
-Modules are named with the keyword `mod` near the top before anything is defined. This is the name you'll use when importing your module. **There can only be one `mod` declaration per file.** Multiple `mod` declarations is a syntax error. Imports are based on the include path when compiling or running a script. To import from a file by direct filepath, use `import "path"`.
+Modules are named with the keyword `mod` near the top before anything is defined. This is the name you'll use when importing your module. **There can only be one `mod` declaration per file.** Multiple `mod` declarations is a syntax error. Imports are based on the include path when compiling or running a script. To import from a file by direct filepath, use `in "path"`.
 
 ```mulem
-someModule{thing} :: import "../../somewhere.mu"
+import someModule{thing} in "../../somewhere.mu"
 
-myModule :: mod
+mod myModule
 
 addThing(x) = x + thing
 ```
@@ -2566,7 +2477,7 @@ addThing(x) = x + thing
 In this example, you would import `addThing` like this (assuming the file is included):
 
 ```mulem
-myModule{addThing} :: import
+import myModule{addThing}
 ```
 
 This connects the same explicit-list convention as embeding and capturing — *no hidden dependencies, everything that can affect behavior is named.* The three together form a consistent rule across the language.
@@ -2578,10 +2489,11 @@ Mulem is multi-paradigm: different functions, structs, or modules can use differ
 Modules define how memory is handled with the `memory` module setting. By default, modules use a garbage collector. Some options include `Collect(GC)` (default),  `Count(ARC)` (reference counting), and `Manual`. `GC` and `ARC` represent the standard garbage collector and reference counter respectively, but others can be defined and used instead.
 
 ```mulem
-std.mem{Count, ARC} :: import
+import std.mem{Count, ARC}
 
-moduleThatUsesReferenceCounting :: mod =
-    memory: Count[ARC]
+mod moduleThatUsesReferenceCounting {
+    memory: Count[ARC],
+}
 ```
 
 [Advanced](#advanced) / [TOC](#table-of-contents)
@@ -2593,9 +2505,9 @@ moduleThatUsesReferenceCounting :: mod =
 Here is a quick synthesized example showing how Mulem's structs, implementations, pipelining, and error handling might look in a real script:
 
 ```mulem
-std{print} :: import
+import std{print}
 
-exampleApp :: mod
+mod exampleApp
 
 {-
  - Define a struct and implement a prototype.
@@ -2640,20 +2552,7 @@ do
         print("Failed to fetch user: {e}")
 ```
 
-[TOC](#table-of-contents)
-
----
-
-## Reserved Keywords
-
-Mulem has 26 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard question `T?` members (`Some`, `None`), are built-in symbols but *not* strict keywords.
-
-**The Keyword List:**
-`as`, `await`, `break`, `catch`, `continue`, `defer`, `do`, `else`, `fallthrough`, `if`, `import`, `in`, `is`, `loop`, `match`, `mod`, `of`, `opt`, `raise`, `return`, `self`, `then`, `try`, `until`, `void`, `yield`.
-
-[TOC](#table-of-contents)
-
----
+Here are some more examples:
 
 ```mulem
 const A = "foobar"
@@ -2695,8 +2594,19 @@ rsqrt(number: float[32]): float[32] =
     y
 ```
 
+[TOC](#table-of-contents)
+
+---
+
+## Reserved Keywords
+
+Mulem has 30 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard question `T?` members (`Some`, `None`), are built-in symbols but *not* strict keywords.
+
+**The Keyword List:**
+`as`, `await`, `break`, `catch`, `const`, `continue`, `defer`, `do`, `else`, `fallthrough`, `if`, `import`, `in`, `is`, `loop`, `match`, `mod`, `of`, `opt`, `pass`, `raise`, `return`, `then`, `try`, `until`, `use`, `void`, `where`, `yield`.
+
+[TOC](#table-of-contents)
+
 ---
 
 *This document captures the current state of the Mulem design. The language is still evolving.*
-
-
