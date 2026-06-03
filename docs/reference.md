@@ -2683,7 +2683,7 @@ swap(x: int^~, y: int^~): void =
 rsqrt(number: float[32]): float[32] =
     ~i: int[32]
     ~x2: float[32]
-    ~y: float[32] + int[32])
+    ~y: float[32] + int[32]
     threehalfs = 1.5f
     x2 := number * 0.5f
     y := number
