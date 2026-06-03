@@ -2486,16 +2486,16 @@ Generics will automatically generate code based on their parameters, but you can
 
 ```mulem
 -- Forces every type to have its own implementation
-increment[T] :: (c: T^~): void = abstract[]
+increment[T](c: T^~): void = abstract[]
 
 Counter :: *value: int
 
 -- Specialized for Counter
-increment[Counter] :: (c: Counter^~): void =
+increment[Counter](c: Counter^~): void =
     c^.value += 1
 
 -- Specialized for float
-increment[float] :: (c: float^~): void =
+increment[float](c: float^~): void =
     c^ += 1.0
 
 ~c = Counter(value: 2)
