@@ -1767,7 +1767,7 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 | 9     | Unary                      | `+` `-` `#`                                     |
 | 8     | Exponent                   | `**` (right-associative)                        |
 | 7     | Multiplicative / Shift     | `*` `/` `//` `%` `%%` `<*` `*>` `<<` `>>` `>>>` |
-| 6     | Additive / Concat          | `+` `-` `<>` `&` `\|` `>\|`                     |
+| 6     | Additive / Concat          | `+` `-` `<>` `&` `+\|` `-\|`                     |
 | 5     | Range                      | `...` `..=`                                     |
 | 4     | Comparison                 | `==` `=/=` `<` `>` `<=` `>=`                    |
 | 3     | Logical AND                | `&&`                                            |
@@ -1816,9 +1816,9 @@ The syntax `[]` was chosen so that generic type inference will take precedence. 
 |       `# rhs`  | Logical NOT / Bitwise NOT                            |
 |  `lhs ?: rhs`  | `None`- coalescing                                   |
 |  `lhs !: rhs`  | Error-coalescing                                     |
-|   `lhs & rhs`  | Bitwise AND                                          |
-|  `lhs \| rhs`  | Bitwise OR                                           |
-|  `lhs >\| rhs` | Bitwise XOR                                          |
+|  `lhs *\| rhs` | Bitwise AND                                          |
+|  `lhs +\| rhs` | Bitwise OR                                           |
+|  `lhs -\| rhs` | Bitwise XOR                                          |
 |  `lhs << rhs`  | Bitshift Left                                        |
 |  `lhs >> rhs`  | Bitshift Right                                       |
 | `lhs >>> rhs`  | Unsigned Bitshift Right                              |
@@ -1840,9 +1840,9 @@ __Compound Assignment Operators:__
 | `lhs <*= rhs`   | `lhs := lhs <* rhs`  |
 | `lhs *>= rhs`   | `lhs := rhs *> lhs`  |
 | `lhs <>= rhs`   | `lhs := lhs <> rhs`  |
-|  `lhs &= rhs`   | `lhs := lhs & rhs`   |
-|  `lhs \|= rhs`  | `lhs := lhs \| rhs`  |
-| `lhs >\|= rhs`  | `lhs := lhs >\| rhs` |
+| `lhs *\|= rhs`  | `lhs := lhs *\| rhs` |
+| `lhs +\|= rhs`  | `lhs := lhs +\| rhs` |
+| `lhs -\|= rhs`  | `lhs := lhs -\| rhs` |
 | `lhs <<= rhs`   | `lhs := lhs << rhs`  |
 | `lhs >>= rhs`   | `lhs := lhs >> rhs`  |
 | `lhs >>>= rhs`  | `lhs := lhs >>> rhs` |
@@ -2669,6 +2669,30 @@ where N: const uint
 
 List[T, N] ::
     * data: [N;T]
+```
+
+```mulem
+swap(x: int^~, y: int^~): void =
+    if x =/= y then
+        x^ := x^ >| y^
+        y^ := x^ >| y^
+        x^ := x^ >| y^
+```
+
+```mulem
+rsqrt(number: float[32]): float[32] =
+    ~i: int[32]
+    ~x2: float[32]
+    ~y: float[32] + int[32])
+    threehalfs = 1.5f
+    x2 := number * 0.5f
+    y := number
+    i := y of int
+    i := 0x5f3759df - ( i >> 1 )
+    y := i
+    y := y of float * ( threehalfs - ( x2 * y of float * y of float ) )    -- 1st iteration
+    -- y := y of float * ( threehalfs - ( x2 * y of float * y of float ) ) -- 2nd iteration, this can be removed
+    y
 ```
 
 ---
