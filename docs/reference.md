@@ -2352,7 +2352,7 @@ if x is Some(x) then
 
 ## References
 
-`ref` gives you a reference whose mutability is determined by what you're binding to, not by how you use it. This is like a pointer but it auto derefs, no `^` operator needed.
+`ref` gives you a reference whose mutability is determined by what you're binding to, not by how you use it. This is like a pointer but it auto derefs, no `^` operator needed. It's sometimes also called **co-lifetime** or **scope-bound** borrowing. 
 
 ```
 ~x = 5
@@ -2362,7 +2362,9 @@ x2 = 5
 ref y2 = x2   -- y2: int^, x2 is immutable
 ```
 
-If the enum is immutable or mutable, then adding `@` on a pattern's data should match its mutability like when using `@` on another variable.
+The core idea is a `ref` binding is valid for exactly as long as its source — the reference and its source share a lifetime, bounded by the scope they're both in.
+
+If the enum is immutable or mutable, then adding `ref` on a pattern's data should match its mutability like when using `ref` on another variable.
 
 ```mulem
 ~s = SomeStruct(value: 42)
@@ -2397,6 +2399,8 @@ x            -- Value is 1
 loop nextValue() is Some(x) then
     x^ := transform(x^)   -- mutates in place if iterator yields mutable refs `iter[T^~?]`
 ```
+
+A `ref` binding shares the lifetime of its source. Because both exist in the same scope, the compiler can verify this automatically: the reference expires when the original goes out of scope. This is why `ref` is restricted to local bindings: at function boundaries, the source's scope is no longer visible to the compiler, so the lifetime relationship can't be verified, and explicit typed pointers `T^` must be used instead.
 
 [Advanced](#advanced) / [TOC](#table-of-contents)
 
