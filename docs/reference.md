@@ -692,8 +692,11 @@ This can be combined with `opt` to automatically skip when there's a mismatch.
 
 ```mulem
 loop Pattern(x?) in listOfPatterns then
-    opt print("Found match: {x?}")
-```        
+    opt
+        print("Found match: {x?}")
+    else
+        continue
+```
 
 #### `break` / `continue`
 
