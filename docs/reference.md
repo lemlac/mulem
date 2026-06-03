@@ -83,13 +83,6 @@ a = 2      -- New `a`
 b = 3      -- New `b`
 ```
 
-If a variable was declared with type inference, it may be shadowed with any type. However, declaring a variable with a type will lock that type for the rest of the scope. We say that the variable is **type-locked.**
-
-```mulem
-a = 'a'   -- OK!
-b = 'b'   -- Error: `b` is type-locked to `int`
-```
-
 Functions are declared with parentheses (`()`) before the equals sign (`=`). The return type can be inferred based on the return value, and the types of parameters may be inferred based on usage.
 
 ```mulem
