@@ -109,6 +109,8 @@ a = 2      -- New `a`
 b = 3      -- New `b`
 ```
 
+Shadowing works like `let` in other languages. It's just that Mulem drops the `let` all together for the simpler `=` notation like in other white-space significant languages. 
+
 Functions are declared with parentheses (`()`) before the equals sign (`=`). The return type can be inferred based on the return value, and the types of parameters may be inferred based on usage.
 
 ```mulem
@@ -177,6 +179,8 @@ i := 1
 i += 1
 i -= 1
 ```
+
+The first time assigning a mutable variable is a declaration so it uses `=`. The next are mutations so they use `:=`. Saying `~i: int := 0` wouldn't make any sense. It would be like you're trying to mutate a variable that doesn't exist yet. `=` always means a new variable, and `:=` means to modify an existing variable.
 
 The type of a mutable variable can be inferred. A reference can be declared with `ref` before the name. This is treated as an alias to the same spot in memory. Its mutability is carried over.
 
@@ -646,7 +650,9 @@ do ~i = 1; loop i <= 100; i += 1 then
 
 `;`​ means different things in different contexts. In a block, it separates expressions; after `do`​, it separates expression in an inline block; and after `loop`​, it separates the subject from steps. 
 
-Note that even though it's possible to do a C-style for-loop, it's hard to read and preferable to do a `loop x in` with a range instead.
+It's not hard to figure out what `loop subject; step` means. If you see `;` in a loop notation, than the next part is the step. It's like a simplified C-style `for`-loop. 
+
+Note that even though it's possible to do a C-style `for`-loop, it's hard to read and preferable to do a `loop x in` with a range instead.
 
 ```mulem
 -- Same thing but easier to read
@@ -1000,7 +1006,10 @@ The following are types used for basic arithmetics such numbers are characters.
 
 #### Booleans
 
-`bool` is a built-in enum type with its only members being `False` and `True`. This means you can also pattern match with a bool, although it's recommended to use `if`/`else` instead. Enum-members are capitalized by convention, so that's why `True` and `False` are capitalized instead of being `true` and `false`. 
+`bool` is a built-in enum type with its only members being `False` and `True`. This means you can also pattern match with a bool, although it's recommended to use `if`/`else` instead.
+
+Enum-members are capitalized by convention, so that's why `True` and `False` are capitalized instead of being `true` and `false`. This also follows the convention of other whitespace significant languages (such as Python) which use `True` and `False` (capitalized).
+
 
 ```mulem
 match value is
@@ -1194,6 +1203,11 @@ This is line 1.
 This is line 2.
 No need to escape \n or \"
 ```
+
+Lambdas and multi-line strings won't conflict because you are required to continue a lambda with a name or parentheses after the `\`.
+
+- `\(` = lambda
+- `\\` = raw string
 
 ### Arrays
 
@@ -1739,7 +1753,7 @@ List[T, N] ::
 | 3     | Logical AND                | `and`                                           |
 | 2     | Logical OR / None-Coalesce | `or` `?:` `!:`                                  |
 | 1     | Pipeline                   | `\|>`                                           |
-| 0     | Assignment / Spread        | `=` `:=` `+=` `-=` `..`                         |
+| 0     | Assignment / Spread        | `:=` `+=` `-=` `..`                         |
 
 | Operator       | Meaning                                              |
 |:--------------:|:-----------------------------------------------------|
@@ -1776,9 +1790,9 @@ List[T, N] ::
 |  `lhs <* rhs`  | Append to array                                      |
 |  `lhs *> rhs`  | Prepend to array (right-associative)                 |
 |  `lhs <> rhs`  | Concatenation                                        |
-| `lhs and rhs`  | Logical AND                                          |
-|  `lhs or rhs`  | Logical OR                                           |
-|     `not rhs`  | Logical NOT / Bitwise NOT                            |
+| `lhs and rhs`  | Logical *AND*                                        |
+|  `lhs or rhs`  | Logical *OR*                                         |
+|     `not rhs`  | Logical *NOT* / Bitwise *NOT*                   |
 |  `lhs ?: rhs`  | `None`- coalescing                                   |
 |  `lhs !: rhs`  | Error-coalescing                                     |
 |   `lhs & rhs`  | Bitwise AND                                          |
@@ -1811,7 +1825,9 @@ __Compound Assignment Operators:__
 | `lhs >>= rhs`   | `lhs := lhs >> rhs`  |
 | `lhs >>>= rhs`  | `lhs := lhs >>> rhs` |
 
-`=/=`​ was picked over `!=` because `!`​ is excusely used for error operators, and `/=`​ is the compound division operator, so that leaves `=/=​` as the most obvious symbol left for the not-equals operator. The symbol also benifits by making it easy to switch between `==` and `=/=` with adding or removing the slash `/`.
+`=/=`​ was picked over `!=` because `!`​ is excusely used for error operators. `/=` can't be used for inequality either because it's for *compound division assignment.* That leaves `=/=​` as the most obvious symbol left for the *inequality operator.* The merit of this symbol is that it's easy to switch between `==` and `=/=` with the addition or removal of the slash `/`.
+
+`not` is used for both Boolean and bitwise *NOT,* but other languages (for example `!` in Rust) uses the same operator for both without any issues. There's no need for separate `bnot` or `bitnot` keyword. 
 
 Chaining comparitive operators `>`/`<` works like in mathematics, a shorthand for `and` between operations. Each consecutive comparitive operator should point the same way, i.e. only `<` and `<=` or `>` and `>=`.
 
@@ -1828,6 +1844,8 @@ Chaining comparitive operators `>`/`<` works like in mathematics, a shorthand fo
 |  `T!`, `x!`    | Exclamation        | Unwraps a exclamation; propagates error to nearest `try`. |
 |  `T^`, `x^`    | Pointer            | Dereference a pointer.                                    |
 |  `@T`, `@x`    | Reference          | Get a reference to a place in memory.                     |
+
+`=` and `::` are not simple operators like in other languages. They are full expressions that must be on their own line and not inside brackets or other expressions. The notation on the left is not a simple expression but special declaration notation. That's why destructuring uses product type marker `*` because the left of the `=` is in a different context. Likewise, subsets use `<=` in their declaration because the left of the `::` sign is also in a different context than expressions.
 
 [TOC](#table-of-contents)
 
@@ -2661,25 +2679,7 @@ Temporary Comments:
 
 I'd argue that `*` is doing too much in other languages. `*` means both multiplication and pointer dereferencing, which is confusing when you're using both in the same context. `*` for product types at least has some connection in the name *product* type and are used in different contexts, one in expressions and the other in type notation. 
 
-This argument also applies to `<=`. They are used in different contexts, one in expressions and the other in type notation, but their meanings are related: greater-than for expressions and subsets for types. In the type `A <= B`, we're saying that every `A` is a `B`, therefore there will always be more `B`s than `A`s. 
-
-It's not hard to figure out what `loop subject; step` means. If you see `;` in a loop notation, than the next part is the step. It's like a simplified C-style `for` loop. 
-
-Shadowing works like `let` in other languages. It's just that Mulem drops the `let` all together for the simpler `=` notation like in other white-space significant languages. 
-
-There's no need for a `bnot` keyword. Even if the type is a boolean, a binary NOT is identical to flipping a boolean value since a boolean is just 0 repeating for False and 1 repeating for True.
-
-The first time assigning a mutable variable is a declaration so it uses `=`. The next are mutations so they use `:=`. Saying `~i: int := 0` wouldn't make any sense, like you're trying to mutate a variable that doesn't exist yet. `=` always means a new variable, and `:=` means to modify an existing variable.
-
-Python uses `True` and `False` (capitalized) without any issues.
-
-`/=` can't be used for inequality because it's the compound division assignment. 
-
-Lambdas and multi-line strings won't conflict because you are required to continue a lambda with a name or parentheses after the `\`.
-
-Rust uses `!` for both boolean not and bitwise not without any issues. 
-
-`=` and `::` are not simple operators like in other languages. They are full expressions that must be on their own line and not inside brackets or other expressions. The notation on the left is not a simple expression but special declaration notation. That's why destructuring uses product type marker `*` because the left of the `=` is in a different context. Likewise, subsets use `<=` in their declaration because the left of the `::` sign is also in a different context than expressions.
+This argument also applies to `<=`. They are used in different contexts, one in expressions and the other in type notation, but their meanings are related: greater-than for expressions and subsets for types. In the type `A <= B`, we're saying that every `A` is a `B`, therefore there will always be more `B`s than `A`s.
 
 ---
 
