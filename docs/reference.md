@@ -19,14 +19,17 @@ where N: const uint
 List[T,N] ::
     * data: [N;T]
 
-List[T,N](self).at(index: uint): T? =
-    if index < N then
+List[T,N](self).at(~index: int): T? =
+    if index < 0 then
+        index := N + index
+    if 0 <= index < N then
         Some(self.data^[index])
     else
         None
 
 list = List(data: [1, 2, 3, 4])
 list.at(0)    -- Value: Some(1)
+list.at(-1)   -- Value: Some(4)
 list.at(4)    -- Value: None
 ```
 
