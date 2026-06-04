@@ -2040,7 +2040,7 @@ addAll(..nums: [int]): int =
     match nums is
     | []            = 0
     | [x]           = x
-    | [x, ..rest]  = x + addAll(*rest)
+    | [x, ..rest]  = x + addAll(..rest)
 ```
 
 A name is optional after `..`. You can use the symbol by itself to pass it to another function or itself in a functional loop. 
