@@ -2,9 +2,9 @@
 
 *Version 0.1 (Draft)*
 
-__The Mulem programming language__ is a general-purpose, expression-oriented language designed to balance conciseness and eloquence. It delivers highly readable syntax, robust safety mechanisms, granular execution control, and expressive data pipelining. Supporting both interpretation and compilation, Mulem is ideally suited for systems programming, AI, and game development.
+__The Mulem programming language__ is a general-purpose, expression-oriented language designed to balance conciseness and eloquence. It delivers highly readable syntax, robust safety mechanisms, granular execution control, and expressive data pipelining. Supporting both interpretation and compilation, Mulem is ideally suited for systems programming, AI, and game development. It's not trying to be the next *Go* or *Rust.* This is more like *C* with significant whitespace. 
 
-Sample:
+Code sample:
 
 ```mulem
 where x: int
@@ -12,6 +12,22 @@ where x: int
 f(x) = x * x
 
 f(2)   -- Value: 4
+
+where T: type
+where N: const uint
+
+List[T,N] ::
+    * data: [N;T]
+
+List[T,N](self).at(index: uint): T? =
+    if index < N then
+        Some(self.data^[index])
+    else
+        None
+
+list = List(data: [1, 2, 3, 4])
+list.at(0)    -- Value: Some(1)
+list.at(4)    -- Value: None
 ```
 
 ---
