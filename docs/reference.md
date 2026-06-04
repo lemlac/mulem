@@ -4,7 +4,7 @@
 
 __The Mulem programming language__ is a general-purpose, expression-oriented language designed to balance conciseness and eloquence. It delivers highly readable syntax, robust safety mechanisms, granular execution control, and expressive data pipelining. Supporting both interpretation and compilation, Mulem is ideally suited for systems programming, AI, and game development. It's not trying to be the next *Go* or *Rust.* This is more like *C* with significant whitespace. 
 
-Code sample:
+Code samples:
 
 ```mulem
 where x: int
@@ -12,7 +12,9 @@ where x: int
 f(x) = x * x
 
 f(2)   -- Value: 4
+```
 
+```mulem
 where T: type
 where N: const uint
 
