@@ -1900,8 +1900,7 @@ _What about `=` and `::`?_
 - __[Embedding and Visibility](#embedding-and-visibility)__
 - __[Manual Implementation](#manual-implementation)__
 - __[Importing and Modules](#importing-and-modules)__
-
-- __[Code Sample](#putting-it-all-together)__
+- __[Memory Models](#memory-models)__
 - __[Reserved Keywords](#reserved-keywords)__
 
 ---
@@ -2604,7 +2603,11 @@ import myModule{addThing}
 
 This connects the same explicit-list convention as embeding and capturing — *no hidden dependencies, everything that can affect behavior is named.* The three together form a consistent rule across the language.
 
-### Memory Models
+[Advanced](#advanced) / [TOC](#table-of-contents)
+
+---
+
+## Memory Models
 
 Mulem is multi-paradigm: different functions, structs, or modules can use different memory strategies in the same program. The model is controlled per-module. Boundary crossing between models follows FFI-like rules — automatic marshalling where possible, explicit escapes otherwise.
 
