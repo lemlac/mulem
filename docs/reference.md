@@ -1045,6 +1045,16 @@ else
     print("It's false!")
 ```
 
+`if` and other conditional checkers only work on `bool` types. If you want to do an `if` on another type — say a number — then you should either use a comparative operator like `==` or convert it to a `bool`.
+
+```mulem
+if x == 0 then
+    print("x is 0")
+
+if bool(x) then
+    print("x is truthy")
+```
+
 #### Numbers
 
 There are several number types. More may be added in the future, but for now we'll focus on the 3 main types. For any of these types, you can add a suffix to explicitly declare a number literal with a particular type. This one works for regular base 10 notation, not scientific notation or alternative base notation.
