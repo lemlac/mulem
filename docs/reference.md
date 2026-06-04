@@ -634,9 +634,9 @@ loop i in 1..=10 then  -- Inclusive range
     print("{i}")
 ```
 
-Steps may optionally be added to the loop's subject line. This is done by adding a semi-colon `;` between the subject and `then`. An expression after `;` will run at the end of each iteration of the loop. 
+Steps may optionally be added to the loop's subject line. This is done by adding a the keyword `each` between the subject and `then`. An expression after `each` will run at the end of each iteration of the loop. 
 
-`loop [under this condition] ; [doing this every iteration] then`
+`loop [under this condition] each [doing this every iteration] then`
 
 ```mulem
 -- The Dangerous Way
@@ -652,21 +652,14 @@ loop i <= 100 then
 
 -- The Safe Way
 ~i = 1
-loop i <= 100; i += 1 then
+loop i <= 100 each i += 1 then
     if i % 10 == 0 then
         print("{i}!!!")
         continue    -- Automatically triggers `i += 1` before checking condition again
     print("{i}")
 ```
 
-```mulem
--- Track index of `loop / in`
-~idx = 0
-loop item in inventory; idx += 1 then
-    print("Slot {idx}: {item}")
-```
-
-`;`​ means different things in different contexts. In a block, it separates expressions; after `do`​, it separates expression in an inline block; and after `loop`​, it separates the subject from steps. It's not hard to figure out what `loop subject; step` means if you're familiar with C-style `for`-loops. Note that even though it's possible to do a C-style `for`-loop, it's preferable to do a `loop x in` with a range instead.
+Note that even though it's possible to do a C-style `for`-loop this way, it's preferable to do a `loop x in` with a range instead.
 
 ```mulem
 -- Same thing but easier to read
@@ -675,6 +668,16 @@ loop i in 1..=100 then
         print("{i}!!!")
         continue
     print("{i}")
+```
+
+`each` may optionally be placed on the next line to improve readability. The body of the loop only starts after `then`.
+
+```mulem
+-- Track index of `loop / in`
+~idx = 0
+loop item in inventory
+each idx += 1 then
+    print("Slot {idx}: {item}")
 ```
 
 Inlined `loop x in` returns a lazy iterator collected with `..`.
@@ -1223,7 +1226,7 @@ Lambdas and multi-line strings won't conflict because you are required to contin
 - `\(` = lambda
 - `\\` = raw string
 
-Some languages (such as Zig) also use `\\` for multi-line strings, so the syntax wouldn't be foreign to those programmers. 
+Some languages (such as Zig) also use `\\` for multi-line strings, so the syntax wouldn't be foreign to those programmers. You might think that a double backslash `\\` means a literal backslash `\`, but this is only true inside formatted strings. In this case, `\\` is a sigil meaning to start or continue a raw multi-line string.
 
 ### Arrays
 
@@ -2701,10 +2704,10 @@ rsqrt(number: float[32]): float[32] =
 
 ## Reserved Keywords
 
-Mulem has 26 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard question `T?` members (`Some`, `None`), are built-in symbols but *not* strict keywords.
+Mulem has 27 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard question `T?` members (`Some`, `None`), are built-in symbols but *not* strict keywords.
 
 **The Keyword List:**
-`as`, [`await`](#await), [`break`](#break--continue), [`catch`](#try--catch), [`const`](#constants), [`continue`](#break--continue), [`defer`](#defer), [`do`](#do), `else`, [`fallthrough`](#fallthrough), [`if`](#if--else), [`import`](#importing-and-modules), `in`, `is`, [`loop`](#loop), [`match`](#match--is), [`mod`](##memory-models), [`of`](#untagged-unions), [`opt`](#opt--else), `pass`, [`return`](#return), `then`, [`try`](#try--catch), [`until`](#loop), `where`, [`yield`](#yield).
+`as`, [`await`](#await), [`break`](#break--continue), [`catch`](#try--catch), [`const`](#constants), [`continue`](#break--continue), [`defer`](#defer), [`do`](#do), [`each`](#loop), `else`, [`fallthrough`](#fallthrough), [`if`](#if--else), [`import`](#importing-and-modules), `in`, `is`, [`loop`](#loop), [`match`](#match--is), [`mod`](##memory-models), [`of`](#untagged-unions), [`opt`](#opt--else), `pass`, [`return`](#return), `then`, [`try`](#try--catch), [`until`](#loop), `where`, [`yield`](#yield).
 
 [TOC](#table-of-contents)
 
@@ -2729,10 +2732,6 @@ No, there's no point. This isn't Rust. In Rust, `unsafe` has actual mechanical m
 `~` is easier to scan for than `mut` or `var`, especially if there are no syntax highlighting. Like in the inverse square root example, I can see 3 mutable variables just by counting the `~` at the top of the function. It reads like a list with dashes.
 
 If you're conserned about `~` being absent on some keyboards, `~` is also used in most programming languages as the bitwise *NOT* operator, so if they can't use it for mutability in Mulem, then they can't use it for bitwise *NOT* for those languages either. 
-
-> `;` has different meanings in different contexts.
-
-The same is true for other languages, especially ones that do the C-style `for (init; cond; step)` syntax for loops. Mulem's is simpler – it's only `loop cond; step then`. 
 
 > Why `=/=` instead of `!=`?
 
