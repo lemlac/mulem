@@ -558,6 +558,8 @@ result = match x is (| Ptrn1 = 5 | Ptrn2 = 6 | (_) = 7)
 message = match e is (| OpenError{filename} = "Open error: {filename}" | (_) = "Unknown error")
 ```
 
+Each case in a `match` block automatically breaks by default. If you want to fall through like in a C-style `switch` block, see [`fallthrough`](#fallthrough).
+
 ### `loop`
 
 The universal loop keyword. All loop forms share the same `loop` keyword.
