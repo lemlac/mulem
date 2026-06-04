@@ -2725,6 +2725,10 @@ If functions used `:` for all type notation, curried functions would be hard to 
 
 No, it's actually the same thing. It may be different than how other languages use `where`, but it's pretty straitforward when you get used to it. It just does what it sounds: `where x: int` – *where* there's an x, expect an int; `where T: type` – *where* there's a T, expect a type; `where N: const uint` – *where* there's an N, expect a constant uint. 
 
+> `..` seems overloaded.
+
+You're probably used to languages where `...` means *spread* and `..` means *range.* However, spread is generally more used than the range operator, so it makes more sense to give it the shorter symbol. Range is separated by the addition of `<` and `=` at the end. If you see `..x`, then you know it's a spread. If you see `..<` or `..=`, then you know it's a range.
+
 ---
 
 *This document captures the current state of the Mulem design. The language is still evolving.*
