@@ -2617,7 +2617,7 @@ import std.mem{Count, ARC}
 mod moduleThatUsesReferenceCounting
 ```
 
-### `alloc`/`free`
+### `alloc` / `free`
 
 Safe pointers are made by wrapping `T^` or `T^~` in `Some`. If you pass in `Some(ptr.NULL)`, it will be converted to `None`.
 
