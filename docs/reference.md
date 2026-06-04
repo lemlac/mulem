@@ -2719,7 +2719,7 @@ The problem with `!=`​ is not that it would be confused with `!` when parsing.
 
 > Why do functions use `:` for the return type when defining them but `->` when declaring them?
 
-If functions used `:` for all type notation, curried functions would be hard to read, example: `curryFn(x: int): (int): (int): int` *versus* `curryFn(x: int): (int) -> (int) -> int`. Declaring functions retains the `:` so that it uses the same `: T =` notation as variables. It makes it easier to tell when you're actually declaring parameters `(x: T, y: T): T` *versus* only notating the parameter's types `(T, T) -> T`. 
+If functions used `:` for all type notation, curried functions would be hard to read, example: `curryFn(x: int): (int): (int): int` *versus* `curryFn(x: int): (int) -> (int) -> int`. Declaring functions retains the `:` so that it uses the same `: T =` notation as variables. It makes it easier to tell when you're actually defining parameters `(x: T, y: T): T` *versus* only notating the parameter's types `(T, T) -> T`. 
 
 > `where` serves two different purposes!
 
