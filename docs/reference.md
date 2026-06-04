@@ -204,6 +204,8 @@ x = 0     -- OK!
 x = 1.0   -- Error: `x` constrained to type `int`, found `float`
 ```
 
+`where x: int` is not a declaration. It's a type constraint on the word `x`. It's saying that if you declare a variable named `x` anywhere such as a variable or a parameter of a function, then it should be of type `int`.
+
 ### Destructuring
 
 Tuples can be destructured like this:
@@ -2721,8 +2723,7 @@ If functions used `:` for all type notation, curried functions would be hard to 
 
 > `where` serves two different purposes!
 
-No, it's actually the same thing. It may be different than how other languages use `where`, but it's pretty straitforward when you get used to it. It just does what it sounds: `where x: int` – *where* there's an x, expect an int; `where T: type` – *where* there's a T, expect a type; `where N: const uint` – *where* there's an N, expect a constant uint.
-
+No, it's actually the same thing. It may be different than how other languages use `where`, but it's pretty straitforward when you get used to it. It just does what it sounds: `where x: int` – *where* there's an x, expect an int; `where T: type` – *where* there's a T, expect a type; `where N: const uint` – *where* there's an N, expect a constant uint. 
 ---
 
 *This document captures the current state of the Mulem design. The language is still evolving.*
