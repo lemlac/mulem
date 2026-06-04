@@ -2578,14 +2578,13 @@ This connects the same explicit-list convention as embeding and capturing — *n
 
 Mulem is multi-paradigm: different functions, structs, or modules can use different memory strategies in the same program. The model is controlled per-module. Boundary crossing between models follows FFI-like rules — automatic marshalling where possible, explicit escapes otherwise.
 
-Modules define how memory is handled with the `memory` module setting. By default, modules use a garbage collector. Some options include `Collect(GC)` (default),  `Count(ARC)` (reference counting), and `Manual`. `GC` and `ARC` represent the standard garbage collector and reference counter respectively, but others can be defined and used instead.
+Modules define how memory is handled with the `memory` attribute. By default, modules use a garbage collector. Some options include `Collect(GC)` (default),  `Count(ARC)` (reference counting), and `Manual`. `GC` and `ARC` represent the standard garbage collector and reference counter respectively, but others can be defined and used instead.
 
 ```mulem
 import std.mem{Count, ARC}
 
-mod moduleThatUsesReferenceCounting {
-    memory: Count[ARC],
-}
+#[memory(Count[ARC])]
+mod moduleThatUsesReferenceCounting
 ```
 
 [Advanced](#advanced) / [TOC](#table-of-contents)
