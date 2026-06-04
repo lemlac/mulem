@@ -1481,10 +1481,10 @@ y =
 For basic errors, use the built-in `!Err` type. It optionally takes either a `string` (message) or an `int` named parameter `code:`, or both. If a message is missing, it will construct one based on the code, and if a code is missing, it will default to `-1`. 
 
 ```
-!Err()
-!Err("message")
-!Err(code: -1)
-!Err("message", code: -1)
+Err()
+Err("message")
+Err(code: -1)
+Err("message", code: -1)
 ```
 
 ## Custom Types
