@@ -191,7 +191,7 @@ xRef := 1
 x        -- Value: 1
 ```
 
-*For more info on `ref`, see [References](#references) down below.*
+*For more info on `ref`, see [References](#references).*
 
 A variable can have its type constrained by declaring it with `where`. This will lock any variable with the same name to that type in any scope or child scope.
 
@@ -280,6 +280,8 @@ withOneAndTwo(f: (float, float) -> float): float =
 withOneAndTwo(add)      -- Is this for ints or floats?
 withOneAndTwo(add of (int, int) -> int)   -- Resolved.
 ```
+
+Function parameters/return types cannot use `ref`. You must use explicit pointers `T^`/`T^~` instead. *(See [References](#references).)*
 
 ### Capturing
 
