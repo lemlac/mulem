@@ -1429,40 +1429,7 @@ xPtr^ := 1
 x             -- Value: 1
 ```
 
-Safe pointers are made by wrapping `T^` or `T^~` in `Some`. If you pass in `Some(ptr.NULL)`, it will be converted to `None`.
-
-To allocate memory on the heap, use the `alloc[]` and `free[]` functions.
-
-```mulem
-Student ::
-    * name: str
-    * grade: char
-
-student: Student^~ = alloc[ Student(name: "John", grade: 'A') ]?
-defer free[student]
-
-student^.name := "John Smith"
-```
-
-`alloc` will check the size of the type passed to it and allocate that much space, returning a `T^~?` (safe pointer). If successful, it will run the expression inside the square brackets and return `Some(T^~)`. If not, it will return `None`. Hence `?` after it to unwrap the return value. `T^~` can also be downgraded to `T^` if you don't plan to change the data.
-
-`free` will free the memory to a pointer and convert it to `ptr.NULL` even if it was declared immutable to prevent dangling pointers.
-
-`defer` will run an expression at the end of a function.
-
-This won't prevent all memory safety issues. Mulem isn't aiming to be the next Rust. Think of this memory model as more of an upgraded C — less need to do arithmetics like `malloc(N * sizeof(T))` or remembering to call `free(p)` before the end of a function.
-
-By default, they're isn't an ownership model in Mulem. If you don't plan on using a pointer after getting one from a function, you can put `defer free[p]` on the next line.
-
-```mulem
-student = getStudent()
-defer free[student]
--- Use student freely below.
-```
-
-**NOTE:** There is no `unsafe` block like in some languages. Programmers are responsible for assuring the safety of their own code.
-
-Mulem's memory model follows C conventions: values are copied by default, and pointers copy the address. There is no ownership model or double-free protection for heap-allocated data. The `alloc`, `free`, and `defer` utilities reduce boilerplate but do not enforce safety. That responsibility stays with the programmer.
+In this example, we used a pointer on memory allocated on the **stack.** For allocating on the **heap,** *see [`alloc`/`free`](#alloc--free).*
 
 ### Questions `T?` and Exclamations `T!E`
 
@@ -2650,6 +2617,43 @@ import std.mem{Count, ARC}
 mod moduleThatUsesReferenceCounting
 ```
 
+### `alloc`/`free`
+
+Safe pointers are made by wrapping `T^` or `T^~` in `Some`. If you pass in `Some(ptr.NULL)`, it will be converted to `None`.
+
+To allocate memory on the heap, use the `alloc[]` and `free[]` functions.
+
+```mulem
+Student ::
+    * name: str
+    * grade: char
+
+student: Student^~ = alloc[ Student(name: "John", grade: 'A') ]?
+defer free[student]
+
+student^.name := "John Smith"
+```
+
+`alloc` will check the size of the type passed to it and allocate that much space, returning a `T^~?` (safe pointer). If successful, it will run the expression inside the square brackets and return `Some(T^~)`. If not, it will return `None`. Hence `?` after it to unwrap the return value. `T^~` can also be downgraded to `T^` if you don't plan to change the data.
+
+`free` will free the memory to a pointer and convert it to `ptr.NULL` even if it was declared immutable to prevent dangling pointers.
+
+`defer` will run an expression at the end of a function.
+
+This won't prevent all memory safety issues. Mulem isn't aiming to be the next Rust. Think of this memory model as more of an upgraded C — less need to do arithmetics like `malloc(N * sizeof(T))` or remembering to call `free(p)` before the end of a function.
+
+By default, they're isn't an ownership model in Mulem. If you don't plan on using a pointer after getting one from a function, you can put `defer free[p]` on the next line.
+
+```mulem
+student = getStudent()
+defer free[student]
+-- Use student freely below.
+```
+
+**NOTE:** There is no `unsafe` block like in some languages. Programmers are responsible for assuring the safety of their own code.
+
+Mulem's memory model follows C conventions: values are copied by default, and pointers copy the address. There is no ownership model or double-free protection for heap-allocated data. The `alloc`, `free`, and `defer` utilities reduce boilerplate but do not enforce safety. That responsibility stays with the programmer.
+
 [Advanced](#advanced) / [TOC](#table-of-contents)
 
 ---
@@ -2712,10 +2716,10 @@ do
 
 ## Reserved Keywords
 
-Mulem has 27 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard question `T?` members (`Some`, `None`), are built-in symbols but *not* strict keywords.
+Mulem has 29 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard question `T?` members (`Some`, `None`), are built-in symbols but *not* strict keywords.
 
 **The Keyword List:**
-`as`, [`await`](#await), [`break`](#break--continue), [`catch`](#try--catch), [`const`](#constants), [`continue`](#break--continue), [`defer`](#defer), [`do`](#do), [`each`](#loop), `else`, [`fallthrough`](#fallthrough), [`if`](#if--else), [`import`](#importing-and-modules), `in`, `is`, [`loop`](#loop), [`match`](#match--is), [`mod`](##memory-models), [`of`](#untagged-unions), [`opt`](#opt--else), `pass`, [`return`](#return), `then`, [`try`](#try--catch), [`until`](#loop), `where`, [`yield`](#yield).
+`as`, [`await`](#await), [`alloc`](#alloc--free), [`break`](#break--continue), [`catch`](#try--catch), [`const`](#constants), [`continue`](#break--continue), [`defer`](#defer), [`do`](#do), [`each`](#loop), `else`, [`fallthrough`](#fallthrough), [`free`](#alloc--free), [`if`](#if--else), [`import`](#importing-and-modules), `in`, `is`, [`loop`](#loop), [`match`](#match--is), [`mod`](##memory-models), [`of`](#untagged-unions), [`opt`](#opt--else), `pass`, [`return`](#return), `then`, [`try`](#try--catch), [`until`](#loop), `where`, [`yield`](#yield).
 
 [TOC](#table-of-contents)
 
