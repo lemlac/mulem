@@ -72,7 +72,6 @@ rsqrt(number: float[32]): float[32] =
 - __[Generics](#generics)__
 - __[Operators](#operators)__
 - __[Advanced](#advanced)__
-- __[Code Sample](#putting-it-all-together)__
 - __[Reserved Keywords](#reserved-keywords)__
 
 ---
@@ -1905,7 +1904,7 @@ _What about `=` and `::`?_
 - __[Manual Implementation](#manual-implementation)__
 - __[Importing and Modules](#importing-and-modules)__
 - __[Memory Models](#memory-models)__
-- __[Reserved Keywords](#reserved-keywords)__
+- __[Putting It All Together…](#putting-it-all-together)__
 
 ---
 
