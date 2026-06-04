@@ -2626,7 +2626,7 @@ mod moduleThatUsesReferenceCounting
 
 ### `alloc` / `free`
 
-To allocate memory on the heap, use the `alloc` and `free` keywords. Similar to `raise`, `alloc` must be used in an errorable contexts like `try` or a `T!` function. Use `try alloc` if you want to just capture the result as a `T^~!` type. 
+To allocate memory on the heap, use the `alloc` and `free` keywords. Similar to `raise`, `alloc` must be used in an errorable contexts like `try` or a `T!` function. Use `try alloc` if you want to just capture the result as a `T^~!` type, *an [exclamation type](#questions-t-and-exclamations-te) to a [mutable pointer](#pointers).*
 
 ```mulem
 Student ::
@@ -2648,7 +2648,7 @@ makeStudent(name: str, grade: char): Student^~! =
     alloc Student(name: name, grade: grade)
 ```
 
-`alloc` will check the size of the type passed to it and allocate that much space, returning a `T^~` (mutable pointer). If successful, it will run the expression after it and return the pointer. If not, it will invoke `raise Err(code: ...)`, passing in the error number (`errno`) to the `code` property. 
+`alloc` will check the size of the type passed to it and allocate that much space, returning a `T^~` *(a [mutable pointer](#pointers)).* If successful, it will run the expression after it and return the pointer. If not, it will invoke `raise Err(code: ...)`, passing in the error number (`errno`) to the `code` property. 
 
 `free` will free the memory to a pointer and convert it to `ptr.NULL` even if it was declared immutable to prevent dangling pointers.
 
