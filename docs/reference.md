@@ -33,6 +33,30 @@ list.at(-1)   -- Value: Some(4)
 list.at(4)    -- Value: None
 ```
 
+```mulem
+swap(x: int^~, y: int^~): void =
+    if x =/= y then
+        x^ := x^ >< y^
+        y^ := x^ >< y^
+        x^ := x^ >< y^
+```
+
+```mulem
+rsqrt(number: float[32]): float[32] =
+    ~i: int[32]
+    ~x2: float[32]
+    ~y: float[32] + int[32]
+    threehalfs = 1.5f
+    x2 := number * 0.5f
+    y := number
+    i := y of int
+    i := 0x5f3759df - ( i >> 1 )
+    y := i
+    y := y of float * ( threehalfs - ( x2 * y of float * y of float ) )    -- 1st iteration
+    -- y := y of float * ( threehalfs - ( x2 * y of float * y of float ) ) -- 2nd iteration, this can be removed
+    y
+```
+
 ---
 
 ## Table of Contents
@@ -2678,32 +2702,6 @@ do
     catch
     | FetchError(e) =
         print("Failed to fetch user: {e}")
-```
-
-Here are some more examples:
-
-```mulem
-swap(x: int^~, y: int^~): void =
-    if x =/= y then
-        x^ := x^ >< y^
-        y^ := x^ >< y^
-        x^ := x^ >< y^
-```
-
-```mulem
-rsqrt(number: float[32]): float[32] =
-    ~i: int[32]
-    ~x2: float[32]
-    ~y: float[32] + int[32]
-    threehalfs = 1.5f
-    x2 := number * 0.5f
-    y := number
-    i := y of int
-    i := 0x5f3759df - ( i >> 1 )
-    y := i
-    y := y of float * ( threehalfs - ( x2 * y of float * y of float ) )    -- 1st iteration
-    -- y := y of float * ( threehalfs - ( x2 * y of float * y of float ) ) -- 2nd iteration, this can be removed
-    y
 ```
 
 [TOC](#table-of-contents)
