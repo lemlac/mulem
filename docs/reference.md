@@ -161,6 +161,8 @@ where b: int    -- `b` can only be an `int` now.
 b = 'b'         -- Error: `b` is constrained to type `int`, `char` found.
 ```
 
+`where` doesn't affect a name globally. It only constrains a name inside a scope similar to `const`.
+
 Adding a new line and indentation after the `=` starts a block. The last expression evaluated in the block is the value of that variable.
 
 ```mulem
