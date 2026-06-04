@@ -2689,6 +2689,14 @@ No, there's no point. This isn't Rust. In Rust, `unsafe` has actual mechanical m
 
 `~` is easier to see than mut or var, especially if there are no syntax highlighting. Like in the inverse square root example, I can see 3 mutable variables just by counting the `~` at the top of the function. It reads like a list with dashes.
 
+> `;` has different meanings in different contexts.
+
+The same is true for other languages, especially ones that do the C-style `for (init; cond; step)` syntax for loops. Mulem's is simpler – it's only `loop cond; step then`. 
+
+> Why `=/=` instead of `!=`?
+
+The problem with `!=`​ is not that it would be confused with `!` when parsing. It would be easy to distinguish `!` and `!=` as separate operators. The real problem is that it would make it harder to scan the code with your eyes for potential error points since the `!` sigil would mean *error* in some place and *not equals to* in other places. 
+
 ---
 
 *This document captures the current state of the Mulem design. The language is still evolving.*
