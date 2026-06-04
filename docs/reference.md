@@ -829,7 +829,7 @@ Another example of a use for `opt`:
 crunchData(): int?!Err!CustomError =                                  -- Multiple error types
     value: int? = someFunc()!
     -- Question to Exclamation
-    data: int = opt value? else return !CustomError("Not found")      -- Exist function on fallback
+    data: int = opt value? else raise CustomError("Not found")      -- Exist function on fallback
     Ok(Some(data))
 ```
 
@@ -1476,7 +1476,7 @@ y =
     | Ok(val) =
         val                  -- Get the Ok value.
     | Err(e) =
-        return !Err(e)        -- Exit block, return error if a function
+        raise Err(e)        -- Exit block, return error if a function
 ```
 
 For basic errors, use the built-in `!Err` type. It optionally takes either a `string` (message) or an `int` named parameter `code:`, or both. If a message is missing, it will construct one based on the code, and if a code is missing, it will default to `-1`. 
@@ -1673,7 +1673,7 @@ Like mutable variables with `~`, error types are marked with `!` before the name
 ```mulem
 divide(num: float, dem: float): float!DivideByZero =
     if dem == 0.0 then
-        return !DivideByZero(val: num)     -- Causes branch in `try` block when called with `!`.
+        raise DivideByZero(val: num)     -- Causes branch in `try` block when called with `!`.
     Ok(num / dem)
 
 try
@@ -2626,22 +2626,26 @@ mod moduleThatUsesReferenceCounting
 
 ### `alloc` / `free`
 
-Safe pointers are made by wrapping `T^` or `T^~` in `Some`. If you pass in `Some(ptr.NULL)`, it will be converted to `None`.
-
-To allocate memory on the heap, use the `alloc[]` and `free[]` functions.
+To allocate memory on the heap, use the `alloc` and `free` keywords. Similar to `raise`, `alloc` must be used in an errorable contexts like `try` or a `T!` function. Use `try alloc` if you want to just capture the result as a `T^~!` type. 
 
 ```mulem
 Student ::
     * name: str
     * grade: char
 
-student: Student^~ = alloc[ Student(name: "John", grade: 'A') ]?
-defer free[student]
+student: Student^~ = try
+   alloc Student(name: "John", grade: 'A')
+catch
+| Err{code} =
+   print("Error: {code}")
+   raise Err(code: code)
+
+defer free student
 
 student^.name := "John Smith"
 ```
 
-`alloc` will check the size of the type passed to it and allocate that much space, returning a `T^~?` (safe pointer). If successful, it will run the expression inside the square brackets and return `Some(T^~)`. If not, it will return `None`. Hence `?` after it to unwrap the return value. `T^~` can also be downgraded to `T^` if you don't plan to change the data.
+`alloc` will check the size of the type passed to it and allocate that much space, returning a `T^~` (mutable pointer). If successful, it will run the expression after it and return the pointer. If not, it will invoke `raise Err(code: ...)`, passing in the error number (`errno`) to the `code` property. 
 
 `free` will free the memory to a pointer and convert it to `ptr.NULL` even if it was declared immutable to prevent dangling pointers.
 
@@ -2649,11 +2653,11 @@ student^.name := "John Smith"
 
 This won't prevent all memory safety issues. Mulem isn't aiming to be the next Rust. Think of this memory model as more of an upgraded C — less need to do arithmetics like `malloc(N * sizeof(T))` or remembering to call `free(p)` before the end of a function.
 
-By default, they're isn't an ownership model in Mulem. If you don't plan on using a pointer after getting one from a function, you can put `defer free[p]` on the next line.
+By default, they're isn't an ownership model in Mulem. If you don't plan on using a pointer after getting one from a function, you can put `defer free p` on the next line.
 
 ```mulem
 student = getStudent()
-defer free[student]
+defer free student
 -- Use student freely below.
 ```
 
@@ -2699,7 +2703,7 @@ fetchUser(id: int): User!FetchError =
     if id > 0 then
         Ok(User(name: "Alice", age: 30))
     else
-        !FetchError("Invalid ID")
+        raise FetchError("Invalid ID")
 
 {-
  - Main logic demonstrating error unwrapping (!) 
