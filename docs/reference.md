@@ -2681,6 +2681,14 @@ Operator overloading and custom defaults will be defined with interfaces, someth
 
 No, there's no point. This isn't Rust. In Rust, `unsafe` has actual mechanical meaning because it opts out of the borrow checker's guarantees, which exist in the first place. Without an ownership model as a baseline, there's nothing to opt out of. `unsafe` in Mulem would be a no-op annotation with no enforcement, which means it's not meaningfully different from a comment.
 
+> `ref` vs `T^`/`T^~`?
+
+`ref` is used within a block to create an alias to another variable. Pointers (`T^`/`T^~`) are used when you need to store a reference and use it later. 
+
+> Why not use a keyword like `mut` or `var` for mutable variables?
+
+`~` is easier to see than mut or var, especially if there are no syntax highlighting. Like in the inverse square root example, I can see 3 mutable variables just by counting the `~` at the top of the function. It reads like a list with dashes.
+
 ---
 
 *This document captures the current state of the Mulem design. The language is still evolving.*
