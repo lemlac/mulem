@@ -182,6 +182,8 @@ i -= 1
 
 The first time assigning a mutable variable is a declaration so it uses `=`. The next are mutations so they use `:=`. Saying `~i: int := 0` wouldn't make any sense. It would be like you're trying to mutate a variable that doesn't exist yet. `=` always means a new variable, and `:=` means to modify an existing variable.
 
+The only time you'd use `=` is to declare a new variable. It's not like other languages where `=` can mean to declare *or* assign. You can think of `=` in Mulem as like `let =` in other languages, and `:=` in Mulem as like just `=` in other other languages. 
+
 The type of a mutable variable can be inferred. A reference can be declared with `ref` before the name. This is treated as an alias to the same spot in memory. Its mutability is carried over.
 
 ```mulem
@@ -1826,10 +1828,6 @@ __Compound Assignment Operators:__
 | `lhs >>= rhs`   | `lhs := lhs >> rhs`  |
 | `lhs >>>= rhs`  | `lhs := lhs >>> rhs` |
 
-`=/=`​ was picked over `!=` because `!`​ is excusely used for error operators. `/=` can't be used for inequality either because it's for *compound division assignment.* That leaves `=/=​` as the most obvious symbol left for the *inequality operator.* The merit of this symbol is that it's easy to switch between `==` and `=/=` with the addition or removal of the slash `/`. `=/=` is the generally understood representation of `≠` when you're limited to ASCII characters. Some programming languages (like Erlang) use `=/=`, and people who don't know programming would recognise `=/=` more than `!=`. 
-
-`not` is used for both Boolean and bitwise *NOT,* but other languages (for example `!` in Rust) uses the same operator for both without any issues. There's no need for separate `bnot` or `bitnot` keyword. 
-
 Chaining comparitive operators `>`/`<` works like in mathematics, a shorthand for `and` between operations. Each consecutive comparitive operator should point the same way, i.e. only `<` and `<=` or `>` and `>=`.
 
 ```mulem
@@ -1845,6 +1843,16 @@ Chaining comparitive operators `>`/`<` works like in mathematics, a shorthand fo
 |  `T!`, `x!`    | Exclamation        | Unwraps a exclamation; propagates error to nearest `try`. |
 |  `T^`, `x^`    | Pointer            | Dereference a pointer.                                    |
 |  `@T`, `@x`    | Reference          | Get a reference to a place in memory.                     |
+
+_On the choice of symbols…_
+
+`=/=`​ was picked over `!=` because `!`​ is excusely used for error operators. `/=` can't be used for inequality either because it's for *compound division assignment.* That leaves `=/=​` as the most obvious symbol left for the *inequality operator.* The merit of this symbol is that it's easy to switch between `==` and `=/=` with the addition or removal of the slash `/`. `=/=` is the generally understood representation of `≠` when you're limited to ASCII characters. Some programming languages (like Erlang) use `=/=`, and people who don't know programming would recognise `=/=` more than `!=`. 
+
+`not` is used for both Boolean and bitwise *NOT,* but other languages (for example `!` in Rust) uses the same operator for both without any issues. There's no need for separate `bnot` or `bitnot` keyword. 
+
+`>|` is different from other languages, but after some testing, most people where able to figure out it meant exclusive *OR* when shown code examples out of context. Other options where considered but had problems: `^^` can also mean a double dereference for `T^^` types, and `xor` would look odd when bitwise *AND* (`&`) and bitwise *OR* (`|`) uses symbols. This symbol makes the relationship clear between *OR* (`|`) and exclusive *OR* (`>|`). You can read it as "greater OR".
+
+_What about `=` and `::`?_
 
 `=` and `::` are not simple operators like in other languages. They are full expressions that must be on their own line and not inside brackets or other expressions. The notation on the left is not a simple expression but special declaration notation. That's why destructuring uses product type marker `*` because the left of the `=` is in a different context. Likewise, subsets use `<=` in their declaration because the left of the `::` sign is also in a different context than expressions.
 
@@ -2038,10 +2046,10 @@ addAll(..nums: [int]): int =
     | [x, ..rest]  = x + addAll(..rest)
 ```
 
-A name is optional after `..`. You can use the symbol by itself to pass it to another function or itself in a functional loop. 
+Instead of collecting into a variable, you can put `...` a the end and forward it to another function or itself in a recursive function. 
 
 ```mulem
-addAll(x: int, ..): int =
+addAll(x: int, ...): int =
     x + addAll(..)
 addAll(x: int): int =
     x
@@ -2609,7 +2617,7 @@ User <= Speaker ::
     (self).speak() =
         "Hi, I'm {self.name}."
 
-!Fe!tchError :: (str)
+!FetchError :: (str)
 
 {-
  - A function returning an exclamation type
@@ -2702,6 +2710,10 @@ The same is true for other languages, especially ones that do the C-style `for (
 > Why `=/=` instead of `!=`?
 
 The problem with `!=`​ is not that it would be confused with `!` when parsing. It would be easy to distinguish `!` and `!=` as separate operators. The real problem is that it would make it harder to scan the code with your eyes for potential error points since the `!` sigil would mean *error* in some place and *not equals to* in other places. 
+
+> Why do functions use `:` for the return type when defining them but `->` when declaring them?
+
+If functions used `:` for all type notation, curried functions would be hard to read, example: `curryFn(x: int): (int): (int): int` *versus* `curryFn(x: int): (int) -> (int) -> int`. Declaring functions retains the `:` so that it uses the same `: T =` notation as variables. It makes it easier to tell when you're actually declaring parameters `(x: T, y: T): T` *versus* only notating the parameter's types `(T, T) -> T`. 
 
 ---
 
