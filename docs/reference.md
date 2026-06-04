@@ -2683,6 +2683,10 @@ Mulem has 28 reserved keywords. Note that built-in types (`int`, `str`), boolean
 
 [TOC](#table-of-contents)
 
+### Other Notes
+
+Operator overloading and custom defaults will be defined with interfaces, something like `Type <= std.ops.Add ::` and `Type <= std.Default ::` or something. I'm still working out what the API will look like for that, but the focus right now is to get the syntax of the language down and work on the standard library API later.
+
 ---
 
 *This document captures the current state of the Mulem design. The language is still evolving.*
