@@ -875,7 +875,7 @@ catch
     print("IO failed: {e}")
     Ok(defaultValue)
 | ValidationError(e) =
-    !Err(e)
+    Err(e)
 ```
 
 ```mulem
@@ -888,7 +888,7 @@ catch
     print("IO failed: {e}")
     0              -- fallback value
 | ValidationError(e) =
-    return !Err(e)   -- Escape function with error
+    raise Err(e)   -- Escape function with error
 ```
 
 Inline form. If you only have a wildcard case `(| (_) = x)`, you just write the value `x`.
@@ -922,6 +922,10 @@ isThirteen(x) =
         return True  -- Exits the function and returns true.
     False            -- Returns false.
 ```
+
+### `raise`
+
+Invoke `!` on an error. It will go to the nearest `try` block or exit the function if the return type is `T!`. Like with `!`, it must be in used in those contexts or it's a syntax error.
 
 ### `defer`
 
@@ -2719,10 +2723,10 @@ do
 
 ## Reserved Keywords
 
-Mulem has 29 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard question `T?` members (`Some`, `None`), are built-in symbols but *not* strict keywords.
+Mulem has 30 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard question `T?` members (`Some`, `None`), are built-in symbols but *not* strict keywords.
 
 **The Keyword List:**
-`as`, [`await`](#await), [`alloc`](#alloc--free), [`break`](#break--continue), [`catch`](#try--catch), [`const`](#constants), [`continue`](#break--continue), [`defer`](#defer), [`do`](#do), [`each`](#loop), `else`, [`fallthrough`](#fallthrough), [`free`](#alloc--free), [`if`](#if--else), [`import`](#importing-and-modules), `in`, `is`, [`loop`](#loop), [`match`](#match--is), [`mod`](##memory-models), [`of`](#untagged-unions), [`opt`](#opt--else), `pass`, [`return`](#return), `then`, [`try`](#try--catch), [`until`](#loop), `where`, [`yield`](#yield).
+`as`, [`await`](#await), [`alloc`](#alloc--free), [`break`](#break--continue), [`catch`](#try--catch), [`const`](#constants), [`continue`](#break--continue), [`defer`](#defer), [`do`](#do), [`each`](#loop), `else`, [`fallthrough`](#fallthrough), [`free`](#alloc--free), [`if`](#if--else), [`import`](#importing-and-modules), `in`, `is`, [`loop`](#loop), [`match`](#match--is), [`mod`](##memory-models), [`of`](#untagged-unions), [`opt`](#opt--else), `pass`, [`raise`](#raise), [`return`](#return), `then`, [`try`](#try--catch), [`until`](#loop), `where`, [`yield`](#yield).
 
 [TOC](#table-of-contents)
 
