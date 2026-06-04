@@ -2667,7 +2667,7 @@ rsqrt(number: float[32]): float[32] =
 Mulem has 26 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard question `T?` members (`Some`, `None`), are built-in symbols but *not* strict keywords.
 
 **The Keyword List:**
-`as`, [`await`](#await), [`break`](#break--continue), `catch`, `const`, [`continue`](#break--continue), [`defer`](#defer), [`do`](#do), [`else`](#if--else), [`fallthrough`](#fallthrough), [`if`](#if--else), [`import`](#importing-and-modules), `in`, `is`, [`loop`](#loop), [`match`](#match--is), `mod`, `of`, [`opt`](#opt--else), `pass`, [`return`](#return), `then`, [`try`](#try--catch), [`until`](#loop), `where`, [`yield`](#yield).
+`as`, [`await`](#await), [`break`](#break--continue), [`catch`](#try--catch), [`const`](#constants), [`continue`](#break--continue), [`defer`](#defer), [`do`](#do), `else`, [`fallthrough`](#fallthrough), [`if`](#if--else), [`import`](#importing-and-modules), `in`, `is`, [`loop`](#loop), [`match`](#match--is), `mod`, `of`, [`opt`](#opt--else), `pass`, [`return`](#return), `then`, [`try`](#try--catch), [`until`](#loop), `where`, [`yield`](#yield).
 
 [TOC](#table-of-contents)
 
