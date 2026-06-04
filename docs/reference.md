@@ -1758,7 +1758,7 @@ List[T, N] ::
 | 3     | Logical AND                | `and`                                           |
 | 2     | Logical OR / None-Coalesce | `or` `?:` `!:`                                  |
 | 1     | Pipeline                   | `\|>`                                           |
-| 0     | Assignment / Spread        | `:=` `+=` `-=` `..`                         |
+| 0     | Assignment / Spread        | `:=` `+=` `-=` `..`                           |
 
 | Operator       | Meaning                                              |
 |:--------------:|:-----------------------------------------------------|
@@ -1773,7 +1773,7 @@ List[T, N] ::
 |   `lhs ^. rhs` | Raw pointer member access                            |
 |       `@ rhs`  | Get reference                                        |
 |      `.. rhs`  | Spread operator                                      |
-| `lhs ..< rhs`  | Exclusive range                                       |
+| `lhs ..< rhs`  | Exclusive range                                      |
 | `lhs ..= rhs`  | Inclusive range                                      |
 | `lhs \|> rhs`  | Pipeline                                             |
 |   `lhs + rhs`  | Addition                                             |
@@ -1837,6 +1837,18 @@ Chaining comparitive operators `>`/`<` works like in mathematics, a shorthand fo
 (a > b >= c > d) == (a > b and b >= c and c > d)
 ```
 
+_On the choice of symbols…_
+
+`=/=` was picked over `!=` because `!` is excusely used for error operators. `/=` can't be used for inequality either because it's for *compound division assignment.* That leaves `=/=` as the most obvious symbol left for the *inequality operator.* The merit of this symbol is that it's easy to switch between `==` and `=/=` with the addition or removal of the slash `/`. `=/=` is the generally understood representation of `≠` when you're limited to ASCII characters. Some programming languages (like Erlang) use `=/=`, and people who don't know programming would recognise `=/=` more than `!=`. 
+
+`not` is used for both Boolean and bitwise *NOT,* but other languages (for example `!` in Rust) uses the same operator for both without any issues. There's no need for separate `bnot` or `bitnot` keyword. Mulem's `not` doesn't work like `!` in dynamic scripting languages (such as Python or JavaScript). It doesn't do any conversion. Its return type is the same as its input: give it a Boolean, it's a logical *NOT;* give it a number, it's a bitwise *NOT.* If you wanted to do a logical *NOT* on any type, you should write `not bool(x)` instead of `not x`.
+
+`>|` is different from other languages, but after some testing, most people where able to figure out it meant exclusive *OR* when shown code examples out of context. Other options where considered but had problems: `^^` can also mean a double dereference for `T^^` types, and `xor` would look odd when bitwise *AND* (`&`) and bitwise *OR* (`|`) use symbols. This symbol makes the relationship clear between *OR* (`|`) and exclusive *OR* (`>|`). You can read it as "greater OR".
+
+_What about `=` and `::`?_
+
+`=` and `::` are not simple operators like in other languages. They are full expressions that must be on their own line and not inside brackets or other expressions. The notation on the left is not a simple expression but special declaration notation. That's why destructuring uses product type marker `*` because the left of the `=` is in a different context. Likewise, subsets use `<=` in their declaration because the left of the `::` sign is also in a different context than expressions.
+
 ### Key Type Modifiers & Postfix Operators
 
 | Syntax         | Meaning            | Note                                                      |
@@ -1845,18 +1857,6 @@ Chaining comparitive operators `>`/`<` works like in mathematics, a shorthand fo
 |  `T!`, `x!`    | Exclamation        | Unwraps a exclamation; propagates error to nearest `try`. |
 |  `T^`, `x^`    | Pointer            | Dereference a pointer.                                    |
 |  `@T`, `@x`    | Reference          | Get a reference to a place in memory.                     |
-
-_On the choice of symbols…_
-
-`=/=`​ was picked over `!=` because `!`​ is excusely used for error operators. `/=` can't be used for inequality either because it's for *compound division assignment.* That leaves `=/=​` as the most obvious symbol left for the *inequality operator.* The merit of this symbol is that it's easy to switch between `==` and `=/=` with the addition or removal of the slash `/`. `=/=` is the generally understood representation of `≠` when you're limited to ASCII characters. Some programming languages (like Erlang) use `=/=`, and people who don't know programming would recognise `=/=` more than `!=`. 
-
-`not` is used for both Boolean and bitwise *NOT,* but other languages (for example `!` in Rust) uses the same operator for both without any issues. There's no need for separate `bnot` or `bitnot` keyword. Mulem's `not` doesn't work like `!` in dynamic scripting languages (such as Python or JavaScript). It doesn't do any conversion. Its return type is the same as its input: give it a Boolean, it's a logical NOT; give it a number, it's a bitwise NOT.
-
-`>|` is different from other languages, but after some testing, most people where able to figure out it meant exclusive *OR* when shown code examples out of context. Other options where considered but had problems: `^^` can also mean a double dereference for `T^^` types, and `xor` would look odd when bitwise *AND* (`&`) and bitwise *OR* (`|`) use symbols. This symbol makes the relationship clear between *OR* (`|`) and exclusive *OR* (`>|`). You can read it as "greater OR".
-
-_What about `=` and `::`?_
-
-`=` and `::` are not simple operators like in other languages. They are full expressions that must be on their own line and not inside brackets or other expressions. The notation on the left is not a simple expression but special declaration notation. That's why destructuring uses product type marker `*` because the left of the `=` is in a different context. Likewise, subsets use `<=` in their declaration because the left of the `::` sign is also in a different context than expressions.
 
 [TOC](#table-of-contents)
 
