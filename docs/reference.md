@@ -1246,9 +1246,9 @@ Multi-line raw strings can be written with `\\` (2 backslashes). This works like
 
 ```mulem
 const multiline = 
-   \\This is line 1.
-   \\This is line 2.
-   \\No need to escape \n or \"
+    \\This is line 1.
+    \\This is line 2.
+    \\No need to escape \n or \"
 
 print(multiline)
 ```
@@ -2457,7 +2457,7 @@ If you use `yield`, you can only use a void `return` to exit the function.
 
 ```mulem
 countUntil(~i: int, max: int): iter[int] =
-     loop
+    loop
         if i >= max then
             return      -- Break out of the loop and the function.
         yield i
@@ -2634,15 +2634,18 @@ Student ::
     * grade: char
 
 student: Student^~ = try
-   alloc Student(name: "John", grade: 'A')
+    alloc Student(name: "John", grade: 'B')
 catch
 | Err{code} =
-   print("Error: {code}")
-   raise Err(code: code)
+    print("Error: {code}")
+    raise Err(code: code)
 
 defer free student
 
 student^.name := "John Smith"
+
+makeStudent(name: str, grade: char): Student^~! =
+    alloc Student(name: name, grade: grade)
 ```
 
 `alloc` will check the size of the type passed to it and allocate that much space, returning a `T^~` (mutable pointer). If successful, it will run the expression after it and return the pointer. If not, it will invoke `raise Err(code: ...)`, passing in the error number (`errno`) to the `code` property. 
@@ -2656,7 +2659,7 @@ This won't prevent all memory safety issues. Mulem isn't aiming to be the next R
 By default, they're isn't an ownership model in Mulem. If you don't plan on using a pointer after getting one from a function, you can put `defer free p` on the next line.
 
 ```mulem
-student = getStudent()
+student = makeStudent("Alice", 'A')!
 defer free student
 -- Use student freely below.
 ```
