@@ -637,24 +637,7 @@ loop item in inventory; idx += 1 then
     print("Slot {idx}: {item}")
 ```
 
-Because `do` blocks isolate scopes and inline expressions sequence seamlessly, you can combine `do` and `loop` to create a traditional, strictly scoped counter loop without requiring a distinct `for` keyword:
-
-```mulem
--- C-style for loop
-do ~i = 1; loop i <= 100; i += 1 then
-    if i % 10 == 0 then
-        print("{i}!!!")
-        continue
-    print("{i}")
-
--- 'i' is automatically out of scope and cleaned up here
-```
-
-`;`​ means different things in different contexts. In a block, it separates expressions; after `do`​, it separates expression in an inline block; and after `loop`​, it separates the subject from steps. 
-
-It's not hard to figure out what `loop subject; step` means. If you see `;` in a loop notation, than the next part is the step. It's like a simplified C-style `for`-loop. 
-
-Note that even though it's possible to do a C-style `for`-loop, it's hard to read and preferable to do a `loop x in` with a range instead.
+`;`​ means different things in different contexts. In a block, it separates expressions; after `do`​, it separates expression in an inline block; and after `loop`​, it separates the subject from steps. It's not hard to figure out what `loop subject; step` means if you're familiar with C-style `for`-loops. Note that even though it's possible to do a C-style `for`-loop, it's preferable to do a `loop x in` with a range instead.
 
 ```mulem
 -- Same thing but easier to read
