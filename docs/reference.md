@@ -1850,7 +1850,7 @@ _On the choice of symbols…_
 
 `=/=`​ was picked over `!=` because `!`​ is excusely used for error operators. `/=` can't be used for inequality either because it's for *compound division assignment.* That leaves `=/=​` as the most obvious symbol left for the *inequality operator.* The merit of this symbol is that it's easy to switch between `==` and `=/=` with the addition or removal of the slash `/`. `=/=` is the generally understood representation of `≠` when you're limited to ASCII characters. Some programming languages (like Erlang) use `=/=`, and people who don't know programming would recognise `=/=` more than `!=`. 
 
-`not` is used for both Boolean and bitwise *NOT,* but other languages (for example `!` in Rust) uses the same operator for both without any issues. There's no need for separate `bnot` or `bitnot` keyword. 
+`not` is used for both Boolean and bitwise *NOT,* but other languages (for example `!` in Rust) uses the same operator for both without any issues. There's no need for separate `bnot` or `bitnot` keyword. Mulem's `not` doesn't work like `!` in dynamic scripting languages (such as Python or JavaScript). It doesn't do any conversion. Its return type is the same as its input: give it a Boolean, it's a logical NOT; give it a number, it's a bitwise NOT.
 
 `>|` is different from other languages, but after some testing, most people where able to figure out it meant exclusive *OR* when shown code examples out of context. Other options where considered but had problems: `^^` can also mean a double dereference for `T^^` types, and `xor` would look odd when bitwise *AND* (`&`) and bitwise *OR* (`|`) use symbols. This symbol makes the relationship clear between *OR* (`|`) and exclusive *OR* (`>|`). You can read it as "greater OR".
 
