@@ -2685,6 +2685,8 @@ Mulem has 26 reserved keywords. Note that built-in types (`int`, `str`), boolean
 
 [TOC](#table-of-contents)
 
+---
+
 ### Other Notes
 
 > Operator overloading? Custom defaults?
