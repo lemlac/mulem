@@ -599,11 +599,13 @@ else
     print("Never ran")
 ```
 
-Use `..`/`..=` with `loop x in` to loop over a range of integers.
+Use `..<`/`..=` with `loop x in` to loop over a range of integers.
 
 ```mulem
 -- Count to 10
-loop i in 1..=10 then
+loop i in 1..<11 then  -- Exclusive range
+    print("{i}")
+loop i in 1..=10 then  -- Inclusive range
     print("{i}")
 ```
 
@@ -686,8 +688,8 @@ loop Pattern(x?) in listOfPatterns then
 Both accept an optional label to target an outer loop.
 
 ```mulem
-loop.outer x in 0..100 then
-    loop y in 0..100 then
+loop.outer x in 0..<100 then
+    loop y in 0..<100 then
         if x * y >= 100 then
             continue.outer
         if x * y == 77 then
@@ -770,10 +772,10 @@ getFirst(a: int, b: int, c: int): int =
 Another example of a use for `opt`:
 
 ```mulem
-crunchData(): int?!Err!CustomError =                                -- Multiple error types
+crunchData(): int?!Err!CustomError =                                  -- Multiple error types
     value: int? = someFunc()!
     -- Question to Exclamation
-    data: int = opt value? else return CustomError("Not found")      -- Exist function on fallback
+    data: int = opt value? else return !CustomError("Not found")      -- Exist function on fallback
     Ok(Some(data))
 ```
 
@@ -819,7 +821,7 @@ catch
     print("IO failed: {e}")
     Ok(defaultValue)
 | ValidationError(e) =
-    Err(e)
+    !Err(e)
 ```
 
 ```mulem
@@ -832,7 +834,7 @@ catch
     print("IO failed: {e}")
     0              -- fallback value
 | ValidationError(e) =
-    return Err(e)   -- Escape function with error
+    return !Err(e)   -- Escape function with error
 ```
 
 Inline form. If you only have a wildcard case `(| (_) = x)`, you just write the value `x`.
@@ -929,15 +931,15 @@ Last
   - `: T^` – Typed pointer
 - __[Questions and Exclamations](#questions-t-and-exclamations-te):__
   - `: T?` – `Some(T)` or `None`
-  - `: T!E` – `Ok(T)` or `Err(E)`
+  - `: T!E` – `Ok(T)` or `!Err(E)`
   - `: T!` – Error type inferred
 - __[Custom Types](#custom-types):__
   - `:: T` — Alias to another type
   - `:: *` — Structural data
   - `:: |` — Enumerable data / tagged unions
   - `:: +` – Untagged unions
-  - `:: !` — Custom error types
-  - `:: .` — Virtual interfaces
+  - `! ::` — Custom error types
+  - `<= ::` — Virtual interfaces
 
 ### Built-in Types
 
@@ -1439,16 +1441,16 @@ y =
     | Ok(val) =
         val                  -- Get the Ok value.
     | Err(e) =
-        return Err(e)        -- Exit block, return error if a function
+        return !Err(e)        -- Exit block, return error if a function
 ```
 
-For basic errors, use the built-in `Err` type. It optionally takes either a `string` (message) or an `int` named parameter `code:`, or both. If a message is missing, it will construct one based on the code, and if a code is missing, it will default to `-1`. 
+For basic errors, use the built-in `!Err` type. It optionally takes either a `string` (message) or an `int` named parameter `code:`, or both. If a message is missing, it will construct one based on the code, and if a code is missing, it will default to `-1`. 
 
 ```
-Err()
-Err("message")
-Err(code: -1)
-Err("message", code: -1)
+!Err()
+!Err("message")
+!Err(code: -1)
+!Err("message", code: -1)
 ```
 
 ## Custom Types
@@ -1625,16 +1627,18 @@ This explains *why* overload resolution sometimes needs manual help — for the 
 
 Errors are bit like both structs and enums. Each error type represents a member of a potential **error tagged union** that's summed up per function with a exclamation type `T!E` return type. Every `try` / `catch` block matches patterns to the summed error tagged union in its block based on each `!` point. Exclamation types flatten, so `Exclamation[Exclamation[T, E], F]` would become `Exclamation[T, E|F]` where `E|F` is a tagged union of each possible error in that exclamation. Instantiation works the same as structs.
 
+Like mutable variables with `~`, error types are marked with `!` before the name. Put a tuple on the right side like with enum members. Initiate an error type by calling it as a function like with other types but prefixed with `!`. This makes it easy to tell when an error occurs: `!Err()` means a definite error and `function()!` means a possible error.
+
 ```mulem
-OutOfBounds :: !void            -- No data.
-ErrorMessage :: !(str)          -- Attach a position tuple.
-DivideByZero :: !{value: int}   -- Attach named member
+!OutOfBounds :: ()              -- No data.
+!ErrorMessage :: (str)          -- Attach a position tuple.
+!DivideByZero :: {value: int}   -- Attach named member
 ```
 
 ```mulem
 divide(num: float, dem: float): float!DivideByZero =
     if dem == 0.0 then
-        return DivideByZero(val: num)     -- Causes branch in `try` block when called with `!`.
+        return !DivideByZero(val: num)     -- Causes branch in `try` block when called with `!`.
     Ok(num / dem)
 
 try
@@ -1745,7 +1749,7 @@ List[T, N] ::
 | 8     | Exponent                   | `**` (right-associative)                        |
 | 7     | Multiplicative / Shift     | `*` `/` `//` `%` `%%` `<*` `*>` `<<` `>>` `>>>` |
 | 6     | Additive / Concat          | `+` `-` `<>` `&` `\|` `>\|`                     |
-| 5     | Range                      | `..` `..=`                                      |
+| 5     | Range                      | `..<` `..=`                                     |
 | 4     | Comparison                 | `==` `=/=` `<` `>` `<=` `>=`                    |
 | 3     | Logical AND                | `and`                                           |
 | 2     | Logical OR / None-Coalesce | `or` `?:` `!:`                                  |
@@ -1765,7 +1769,7 @@ List[T, N] ::
 |   `lhs ^. rhs` | Raw pointer member access                            |
 |       `@ rhs`  | Get reference                                        |
 |      `.. rhs`  | Spread operator                                      |
-|  `lhs .. rhs`  | Exclusive range                                       |
+| `lhs ..< rhs`  | Exclusive range                                       |
 | `lhs ..= rhs`  | Inclusive range                                      |
 | `lhs \|> rhs`  | Pipeline                                             |
 |   `lhs + rhs`  | Addition                                             |
@@ -1822,7 +1826,7 @@ __Compound Assignment Operators:__
 | `lhs >>= rhs`   | `lhs := lhs >> rhs`  |
 | `lhs >>>= rhs`  | `lhs := lhs >>> rhs` |
 
-`=/=`​ was picked over `!=` because `!`​ is excusely used for error operators. `/=` can't be used for inequality either because it's for *compound division assignment.* That leaves `=/=​` as the most obvious symbol left for the *inequality operator.* The merit of this symbol is that it's easy to switch between `==` and `=/=` with the addition or removal of the slash `/`.
+`=/=`​ was picked over `!=` because `!`​ is excusely used for error operators. `/=` can't be used for inequality either because it's for *compound division assignment.* That leaves `=/=​` as the most obvious symbol left for the *inequality operator.* The merit of this symbol is that it's easy to switch between `==` and `=/=` with the addition or removal of the slash `/`. `=/=` is the generally understood representation of `≠` when you're limited to ASCII characters. Some programming languages (like Erlang) use `=/=`, and people who don't know programming would recognise `=/=` more than `!=`. 
 
 `not` is used for both Boolean and bitwise *NOT,* but other languages (for example `!` in Rust) uses the same operator for both without any issues. There's no need for separate `bnot` or `bitnot` keyword. 
 
@@ -2407,7 +2411,7 @@ Exits out of a function with an `iter[_]` type. The return value of the function
 
 ```mulem
 countUpTo(n: int): iter[int] =
-    loop i in 0..n then
+    loop i in 0..<n then
         yield i
 ```
 
@@ -2437,7 +2441,7 @@ Both `yield` and `await` can be used together in an `iter[async[_]]` type. The t
 
 ```mulem
 asyncIterFn(n): iter[async[int]] =
-    loop i in 0..n then
+    loop i in 0..<n then
         val = await fetch(i)
         yield val
 
@@ -2605,7 +2609,7 @@ User <= Speaker ::
     (self).speak() =
         "Hi, I'm {self.name}."
 
-FetchError :: !(str)
+!Fe!tchError :: (str)
 
 {-
  - A function returning an exclamation type
@@ -2616,7 +2620,7 @@ fetchUser(id: int): User!FetchError =
     if id > 0 then
         Ok(User(name: "Alice", age: 30))
     else
-        FetchError("Invalid ID")
+        !FetchError("Invalid ID")
 
 {-
  - Main logic demonstrating error unwrapping (!) 
