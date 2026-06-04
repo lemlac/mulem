@@ -2667,7 +2667,7 @@ rsqrt(number: float[32]): float[32] =
 Mulem has 26 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard question `T?` members (`Some`, `None`), are built-in symbols but *not* strict keywords.
 
 **The Keyword List:**
-`as`, `await`, `break`, `catch`, `const`, `continue`, `defer`, `do`, `else`, [`fallthrough`](#fallthrough), `if`, `import`, `in`, `is`, `loop`, `match`, `mod`, `of`, `opt`, `pass`, `return`, `then`, `try`, `until`, `where`, `yield`.
+`as`, [`await`](#await), [`break`](#break--continue), `catch`, `const`, [`continue`](#break--continue), [`defer`](#defer), [`do`](#do), [`else`](#if--else), [`fallthrough`](#fallthrough), [`if`](#if--else), [`import`](#importing-and-modules), `in`, `is`, [`loop`](#loop), [`match`](#match--is), `mod`, `of`, [`opt`](#opt--else), `pass`, [`return`](#return), `then`, [`try`](#try--catch), [`until`](#loop), `where`, [`yield`](#yield).
 
 [TOC](#table-of-contents)
 
