@@ -418,7 +418,7 @@ MAX(7, 3)     -- Result: 7
 - __[`loop`](#loop)__ – Iteration
 - __[`opt` / `else`](#opt--else)__ – Coalescing
 - __[`try` / `catch`](#try--catch)__ – Error handling
-- __[`return` + `raise`](#try--catch)__ – Exiting a function
+- __[`return`](#return)__ – Exiting a function
 - __[`defer`](#defer)__ – Clean-up
 
 ### `do`
@@ -786,8 +786,8 @@ Another example of a use for `opt`:
 crunchData(): int?!Err!CustomError =                                -- Multiple error types
     value: int? = someFunc()!
     -- Question to Exclamation
-    data: int = opt value? else raise CustomError("Not found")      -- Exist function on fallback
-    data
+    data: int = opt value? else return CustomError("Not found")      -- Exist function on fallback
+    Ok(Some(data))
 ```
 
 ### `try` / `catch`
@@ -1443,14 +1443,14 @@ y =
 
 ```mulem
 x: int!Err = getRiskyInt()   -- Get wrapped value.
-y: int = x!                    -- Unwrap the exclamation
-                               -- Which is equivalent to…
+y: int = x!                  -- Unwrap the exclamation
+                             -- Which is equivalent to…
 y =
     match x is
     | Ok(val) =
-        val                    -- Get the Ok value.
+        val                  -- Get the Ok value.
     | Err(e) =
-        return Err(e)          -- Exit block, return error if a function
+        return Err(e)        -- Exit block, return error if a function
 ```
 
 For basic errors, use the built-in `Err` type. It optionally takes either a `string` (message) or an `int` named parameter `code:`, or both. If a message is missing, it will construct one based on the code, and if a code is missing, it will default to `-1`. 
@@ -1643,8 +1643,8 @@ DivideByZero :: !{value: int}   -- Attach named member
 ```mulem
 divide(num: float, dem: float): float!DivideByZero =
     if dem == 0.0 then
-        raise DivideByZero(val: num)     -- Causes branch in `try` block when called with `!`.
-    num / dem
+        return DivideByZero(val: num)     -- Causes branch in `try` block when called with `!`.
+    Ok(num / dem)
 
 try
     divide(1, 0)!
@@ -1653,7 +1653,7 @@ catch
     print("Can't divide {val} by zero!")
 ```
 
-Uncaught errors in a `try` / `catch` block are implicitly reraised. Each `catch` pattern removes a possible error from the exclamation type of that block. When all possible errors have a `catch` arm, the value of that block is automatically unwrapped so that `Exclamation[T,]` becomes just `T`. 
+Uncaught errors in a `try` / `catch` block are implicitly returned. Each `catch` pattern removes a possible error from the exclamation type of that block. When all possible errors have a `catch` arm, the value of that block is automatically unwrapped so that `Exclamation[T,]` becomes just `T`. 
 
 ### Virtual Interfaces
 
@@ -2623,7 +2623,7 @@ FetchError :: !(str)
  -}
 fetchUser(id: int): User!FetchError =
     if id > 0 then
-        User(name: "Alice", age: 30)
+        Ok(User(name: "Alice", age: 30))
     else
         FetchError("Invalid ID")
 
@@ -2675,10 +2675,10 @@ rsqrt(number: float[32]): float[32] =
 
 ## Reserved Keywords
 
-Mulem has 28 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard question `T?` members (`Some`, `None`), are built-in symbols but *not* strict keywords.
+Mulem has 27 reserved keywords. Note that built-in types (`int`, `str`), boolean values (`True`, `False`), standard question `T?` members (`Some`, `None`), are built-in symbols but *not* strict keywords.
 
 **The Keyword List:**
-`as`, `await`, `break`, `catch`, `const`, `continue`, `defer`, `do`, `else`, `fallthrough`, `if`, `import`, `in`, `is`, `loop`, `match`, `mod`, `of`, `opt`, `pass`, `raise`, `return`, `then`, `try`, `until`, `where`, `yield`.
+`as`, `await`, `break`, `catch`, `const`, `continue`, `defer`, `do`, `else`, `fallthrough`, `if`, `import`, `in`, `is`, `loop`, `match`, `mod`, `of`, `opt`, `pass`, `return`, `then`, `try`, `until`, `where`, `yield`.
 
 [TOC](#table-of-contents)
 
