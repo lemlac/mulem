@@ -2671,7 +2671,13 @@ Mulem has 26 reserved keywords. Note that built-in types (`int`, `str`), boolean
 
 ### Other Notes
 
+> Operator overloading? Custom defaults?
+
 Operator overloading and custom defaults will be defined with interfaces, something like `Type <= std.ops.Add ::` and `Type <= std.Default ::` or something. I'm still working out what the API will look like for that, but the focus right now is to get the syntax of the language down and work on the standard library API later.
+
+> Is there an `unsafe` block?
+
+No, there's no point. This isn't Rust. In Rust, `unsafe` has actual mechanical meaning because it opts out of the borrow checker's guarantees, which exist in the first place. Without an ownership model as a baseline, there's nothing to opt out of. `unsafe` in Mulem would be a no-op annotation with no enforcement, which means it's not meaningfully different from a comment.
 
 ---
 
