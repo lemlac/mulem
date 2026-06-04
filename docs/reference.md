@@ -1850,7 +1850,7 @@ _On the choice of symbols…_
 
 `not` is used for both Boolean and bitwise *NOT,* but other languages (for example `!` in Rust) uses the same operator for both without any issues. There's no need for separate `bnot` or `bitnot` keyword. 
 
-`>|` is different from other languages, but after some testing, most people where able to figure out it meant exclusive *OR* when shown code examples out of context. Other options where considered but had problems: `^^` can also mean a double dereference for `T^^` types, and `xor` would look odd when bitwise *AND* (`&`) and bitwise *OR* (`|`) uses symbols. This symbol makes the relationship clear between *OR* (`|`) and exclusive *OR* (`>|`). You can read it as "greater OR".
+`>|` is different from other languages, but after some testing, most people where able to figure out it meant exclusive *OR* when shown code examples out of context. Other options where considered but had problems: `^^` can also mean a double dereference for `T^^` types, and `xor` would look odd when bitwise *AND* (`&`) and bitwise *OR* (`|`) use symbols. This symbol makes the relationship clear between *OR* (`|`) and exclusive *OR* (`>|`). You can read it as "greater OR".
 
 _What about `=` and `::`?_
 
@@ -2704,6 +2704,8 @@ No, there's no point. This isn't Rust. In Rust, `unsafe` has actual mechanical m
 > Why not use a keyword like `mut` or `var` for mutable variables?
 
 `~` is easier to scan for than `mut` or `var`, especially if there are no syntax highlighting. Like in the inverse square root example, I can see 3 mutable variables just by counting the `~` at the top of the function. It reads like a list with dashes.
+
+If you're conserned about `~` being absent on some keyboards, `~` is also used in most programming languages as the bitwise *NOT* operator, so if they can't use it for mutability in Mulem, then they can't use it for bitwise *NOT* for those languages either. 
 
 > `;` has different meanings in different contexts.
 
