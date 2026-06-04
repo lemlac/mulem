@@ -1544,6 +1544,8 @@ Mixed ::
 
 You might think that the `*` as both a multiplication operator and product type joiner is doing too much. I'd argue that `*` is doing too much in other languages. `*` means both multiplication and pointer dereferencing in most C-based languages, which is confusing when you're using both in the same context. `*` for product types at least has some connection in the name *product* type, but both are used in different contexts all together: one in expressions and the other in type notation. 
 
+This style of defining structs has the benifit that the block form and inline form are nearly identical, which means that even if whitespace is messed up, it will still be valid code. It's much like how `if cond then expr else expr` can be an inline or block expression depending on if there's a line break after `then` and `else` or not. You'll gennerally only see `*` at the start of lines when defining structs, so it's a dead give away that you have a custom type when scanning through code. Doing something else like `.name: str` would be worse because if you inlined it, it would look like you're getting a member of the previous type. Compare `* name: str * value: int` and `.name: str .value: int`.
+
 ### Enumerable Types
 
 Enums are sum types. They define a closed set of variants. Variants may carry data turning them into a tagged union. 
