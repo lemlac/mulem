@@ -985,7 +985,7 @@ x = default[float]  -- Value: 0.0
 x = default[bool]   -- Value: False
 x = default[char]   -- Value: '\0'
 x = default[str]    -- Value: ""
-x = default[ptr]    -- Value: Null
+x = default[ptr]    -- Value: ptr.NULL
 ```
 
 `default` can also infer the type. This can be useful in certain situations, like if you want to leave a function that returns something empty so that you can implement it later.
@@ -1211,6 +1211,8 @@ Lambdas and multi-line strings won't conflict because you are required to contin
 - `\(` = lambda
 - `\\` = raw string
 
+Some languages (such as Zig) also use `\\` for multi-line strings, so the syntax wouldn't be foreign to those programmers. 
+
 ### Arrays
 
 Array types are declared with square brackets around their type (`[T]`). A number before a colon `:` makes it a fixed length array `[N;T]`. Arrays are statically sized when written `[N;T]`, while `[T]` is the dynamic form. Items are separated with commas (`,`). Index is done with the `^[]` and `.[]` operators. 
@@ -1357,11 +1359,11 @@ Combining empty tuples produces an empty tuple `() * () == ()`. The same is true
 
 ### Pointers `T^`
 
-Raw pointers are type `ptr`. These cannot be dereferenced. They are ideally used for FFI to pass to functions of external libraries. You can also check if it's `Null`.
+Raw pointers are type `ptr`. These cannot be dereferenced. They are ideally used for FFI to pass to functions of external libraries. You can also check if it's null with the `ptr.NULL` constant.
 
 ```mulem
 o: ptr = externalLibrary.getObject()
-if o =/= Null then
+if o =/= ptr.NULL then
     externalLibrary.useObject(o)
 else
     print("Initialization failed")
@@ -1376,7 +1378,7 @@ xPtr^ := 1
 x             -- Value: 1
 ```
 
-Safe pointers are made by wrapping `T^` or `T^~` in `Some`. If you pass in `Some(Null)`, it will be converted to `None`.
+Safe pointers are made by wrapping `T^` or `T^~` in `Some`. If you pass in `Some(ptr.NULL)`, it will be converted to `None`.
 
 To allocate memory on the heap, use the `alloc[]` and `free[]` functions.
 
@@ -1393,7 +1395,7 @@ student^.name := "John Smith"
 
 `alloc` will check the size of the type passed to it and allocate that much space, returning a `T^~?` (safe pointer). If successful, it will run the expression inside the square brackets and return `Some(T^~)`. If not, it will return `None`. Hence `?` after it to unwrap the return value. `T^~` can also be downgraded to `T^` if you don't plan to change the data.
 
-`free` will free the memory to a pointer and convert it to `Null` even if it was declared immutable to prevent dangling pointers.
+`free` will free the memory to a pointer and convert it to `ptr.NULL` even if it was declared immutable to prevent dangling pointers.
 
 `defer` will run an expression at the end of a function.
 
