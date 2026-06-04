@@ -2719,6 +2719,10 @@ The problem with `!=`​ is not that it would be confused with `!` when parsing.
 
 If functions used `:` for all type notation, curried functions would be hard to read, example: `curryFn(x: int): (int): (int): int` *versus* `curryFn(x: int): (int) -> (int) -> int`. Declaring functions retains the `:` so that it uses the same `: T =` notation as variables. It makes it easier to tell when you're actually declaring parameters `(x: T, y: T): T` *versus* only notating the parameter's types `(T, T) -> T`. 
 
+> `where` serves two different purposes!
+
+No, it's actually the same thing. It may be different than how other languages use `where`, but it's pretty straitforward when you get used to it. It just does what it sounds: `where x: int` – *where* there's an x, expect an int; `where T: type` – *where* there's a T, expect a type; `where N: const uint` – *where* there's an N, expect a constant uint.
+
 ---
 
 *This document captures the current state of the Mulem design. The language is still evolving.*
