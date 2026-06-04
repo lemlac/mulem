@@ -2687,7 +2687,7 @@ No, there's no point. This isn't Rust. In Rust, `unsafe` has actual mechanical m
 
 > Why not use a keyword like `mut` or `var` for mutable variables?
 
-`~` is easier to see than mut or var, especially if there are no syntax highlighting. Like in the inverse square root example, I can see 3 mutable variables just by counting the `~` at the top of the function. It reads like a list with dashes.
+`~` is easier to scan for than `mut` or `var`, especially if there are no syntax highlighting. Like in the inverse square root example, I can see 3 mutable variables just by counting the `~` at the top of the function. It reads like a list with dashes.
 
 > `;` has different meanings in different contexts.
 
